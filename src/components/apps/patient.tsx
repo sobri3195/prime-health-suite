@@ -426,12 +426,18 @@ export function PatientAI() {
       {/* Hasil */}
       {loading && (
         <Card>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-[#6b5a16]" />
-            Prime AI Engine sedang memproses gejala…
+            {t("ai.processing")}
           </div>
+          <SkeletonList rows={2} />
         </Card>
       )}
+
+      {!loading && !hasil && (
+        <EmptyState title={t("ai.empty.title")} hint={t("ai.empty.hint")} />
+      )}
+
 
       {hasil && !loading && (
         <>
