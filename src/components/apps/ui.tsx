@@ -1,6 +1,90 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
+/* ----- Unified buttons (use across patient-facing apps) ----- */
+
+export function GoldButton({
+  children,
+  onClick,
+  full = true,
+  type = "button",
+  disabled,
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  full?: boolean;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${full ? "w-full" : ""} rounded-xl bg-[#6b5a16] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#574811] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function OutlineButton({
+  children,
+  onClick,
+  type = "button",
+  disabled,
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 py-2 text-sm font-medium text-[#5a4a14] transition hover:bg-[#f6ecc8] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ----- Skeletons for loading states ----- */
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-muted/70 ${className}`}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function SkeletonList({
+  rows = 3,
+  className = "",
+}: { rows?: number; className?: string }) {
+  return (
+    <div className={`space-y-3 ${className}`}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-border bg-card p-4">
+          <Skeleton className="mb-3 h-4 w-2/3" />
+          <Skeleton className="mb-2 h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+
 export function PageContainer({ children }: { children: ReactNode }) {
   return <div className="space-y-6">{children}</div>;
 }
