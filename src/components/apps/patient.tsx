@@ -635,6 +635,7 @@ export function PatientProfil() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { t } = useI18n();
   const callProfile = useServerFn(getMyProfile);
   const callUpdate = useServerFn(updateMyProfile);
   const callBookings = useServerFn(listMyBookings);
