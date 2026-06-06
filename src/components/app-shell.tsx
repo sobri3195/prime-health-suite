@@ -60,32 +60,10 @@ export function AppShell({ system, children }: { system: System; children: React
           <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
         </nav>
 
-        <div className="shrink-0 border-t border-border p-3">
-          <div className="mb-1.5 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Switch system
-          </div>
-          <div className="space-y-1">
-            {(Object.keys(SYSTEM_LABEL) as System[]).map((s) => {
-              const allowed = user ? canAccess(user.role, s) : false;
-              return (
-                <button
-                  key={s}
-                  disabled={!allowed}
-                  onClick={() => navigate({ to: `/${s}` })}
-                  className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
-                    s === system
-                      ? "bg-muted font-medium text-foreground"
-                      : allowed
-                      ? "text-muted-foreground hover:bg-muted"
-                      : "cursor-not-allowed text-muted-foreground/40"
-                  }`}
-                >
-                  {SYSTEM_LABEL[s]} {!allowed && "·  🔒"}
-                </button>
-              );
-            })}
-          </div>
+        <div className="shrink-0 border-t border-border p-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+          © {new Date().getFullYear()} {SYSTEM_LABEL[system]}
         </div>
+
       </aside>
       )}
 
