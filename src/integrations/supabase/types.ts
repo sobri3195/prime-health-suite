@@ -690,7 +690,12 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      apps_slot_terisi_for: {
+        Args: { _dokter_id: string; _tanggal: string }
+        Returns: {
+          jam_slot: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
