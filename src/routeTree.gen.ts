@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SimKlinikRouteImport } from './routes/sim-klinik'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SimKlinikRoute = SimKlinikRouteImport.update({
+  id: '/sim-klinik',
+  path: '/sim-klinik',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppsRoute = AppsRouteImport.update({
   id: '/apps',
   path: '/apps',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/apps'
+  fullPaths: '/' | '/apps' | '/sim-klinik'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apps'
-  id: '__root__' | '/' | '/apps'
+  to: '/' | '/apps' | '/sim-klinik'
+  id: '__root__' | '/' | '/apps' | '/sim-klinik'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppsRoute: typeof AppsRoute
+  SimKlinikRoute: typeof SimKlinikRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sim-klinik': {
+      id: '/sim-klinik'
+      path: '/sim-klinik'
+      fullPath: '/sim-klinik'
+      preLoaderRoute: typeof SimKlinikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/apps': {
       id: '/apps'
       path: '/apps'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppsRoute: AppsRoute,
+  SimKlinikRoute: SimKlinikRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
