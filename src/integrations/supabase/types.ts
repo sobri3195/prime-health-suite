@@ -16,8 +16,10 @@ export type Database = {
     Tables: {
       apps_ai_history: {
         Row: {
+          booking_id: string | null
           created_at: string
           durasi: string | null
+          foto_url: string | null
           gejala: string[] | null
           hasil: Json | null
           id: string
@@ -28,8 +30,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_id?: string | null
           created_at?: string
           durasi?: string | null
+          foto_url?: string | null
           gejala?: string[] | null
           hasil?: Json | null
           id?: string
@@ -40,8 +44,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_id?: string | null
           created_at?: string
           durasi?: string | null
+          foto_url?: string | null
           gejala?: string[] | null
           hasil?: Json | null
           id?: string
@@ -50,6 +56,48 @@ export type Database = {
           risk?: string | null
           summary?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      apps_artikel: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          judul: string
+          kategori: string
+          konten: string
+          published_at: string
+          ringkasan: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          judul: string
+          kategori?: string
+          konten: string
+          published_at?: string
+          ringkasan?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          judul?: string
+          kategori?: string
+          konten?: string
+          published_at?: string
+          ringkasan?: string | null
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -106,6 +154,97 @@ export type Database = {
           },
         ]
       }
+      apps_cart_item: {
+        Row: {
+          created_at: string
+          id: string
+          produk_id: string
+          qty: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produk_id: string
+          qty?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produk_id?: string
+          qty?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_cart_item_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "apps_produk"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps_chat_msg: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          room_id: string
+          sender: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          room_id: string
+          sender: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_chat_msg_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "apps_chat_room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps_chat_room: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       apps_notif: {
         Row: {
           body: string | null
@@ -138,6 +277,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      apps_order: {
+        Row: {
+          alamat_kirim: string | null
+          catatan: string | null
+          created_at: string
+          id: string
+          metode_bayar: string
+          no_order: string
+          status: string
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alamat_kirim?: string | null
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          metode_bayar?: string
+          no_order: string
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alamat_kirim?: string | null
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          metode_bayar?: string
+          no_order?: string
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apps_order_item: {
+        Row: {
+          created_at: string
+          harga: number
+          id: string
+          order_id: string
+          produk_id: string
+          produk_nama: string
+          qty: number
+          subtotal: number
+        }
+        Insert: {
+          created_at?: string
+          harga?: number
+          id?: string
+          order_id: string
+          produk_id: string
+          produk_nama: string
+          qty?: number
+          subtotal?: number
+        }
+        Update: {
+          created_at?: string
+          harga?: number
+          id?: string
+          order_id?: string
+          produk_id?: string
+          produk_nama?: string
+          qty?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_order_item_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "apps_order"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       apps_pasien: {
         Row: {
@@ -192,6 +411,149 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      apps_poin: {
+        Row: {
+          alasan: string
+          created_at: string
+          delta: number
+          id: string
+          ref_id: string | null
+          ref_type: string | null
+          user_id: string
+        }
+        Insert: {
+          alasan: string
+          created_at?: string
+          delta: number
+          id?: string
+          ref_id?: string | null
+          ref_type?: string | null
+          user_id: string
+        }
+        Update: {
+          alasan?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          ref_id?: string | null
+          ref_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apps_produk: {
+        Row: {
+          created_at: string
+          deskripsi: string | null
+          foto_url: string | null
+          harga: number
+          id: string
+          is_active: boolean
+          kategori: string
+          kode: string
+          nama: string
+          stok: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deskripsi?: string | null
+          foto_url?: string | null
+          harga?: number
+          id?: string
+          is_active?: boolean
+          kategori?: string
+          kode: string
+          nama: string
+          stok?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deskripsi?: string | null
+          foto_url?: string | null
+          harga?: number
+          id?: string
+          is_active?: boolean
+          kategori?: string
+          kode?: string
+          nama?: string
+          stok?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      apps_reward: {
+        Row: {
+          created_at: string
+          deskripsi: string | null
+          harga_poin: number
+          id: string
+          is_active: boolean
+          kode: string
+          nama: string
+          stok: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deskripsi?: string | null
+          harga_poin: number
+          id?: string
+          is_active?: boolean
+          kode: string
+          nama: string
+          stok?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deskripsi?: string | null
+          harga_poin?: number
+          id?: string
+          is_active?: boolean
+          kode?: string
+          nama?: string
+          stok?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      apps_reward_redeem: {
+        Row: {
+          created_at: string
+          id: string
+          kode_voucher: string
+          reward_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kode_voucher: string
+          reward_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kode_voucher?: string
+          reward_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_reward_redeem_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "apps_reward"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fin_coa: {
         Row: {
@@ -732,11 +1094,28 @@ export type Database = {
       }
     }
     Functions: {
+      apps_leaderboard_mingguan: {
+        Args: never
+        Returns: {
+          is_me: boolean
+          nama_mask: string
+          rank: number
+          total_poin: number
+        }[]
+      }
+      apps_my_poin_total: { Args: never; Returns: number }
       apps_queue_position: {
         Args: { _booking_id: string }
         Returns: {
           posisi: number
           total: number
+        }[]
+      }
+      apps_redeem_reward: {
+        Args: { _reward_id: string }
+        Returns: {
+          kode_voucher: string
+          redeem_id: string
         }[]
       }
       apps_send_booking_reminders: { Args: never; Returns: number }
