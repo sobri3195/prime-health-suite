@@ -3,11 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, Check, CheckCheck, Trash2, Loader2, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import {
   listMyNotifications, markNotifRead, markAllNotifRead, deleteNotif,
 } from "@/lib/apps-patient.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { EmptyState, SkeletonList } from "@/components/apps/ui";
+import { useI18n } from "@/lib/i18n";
 
 /** Realtime subscription untuk notif & queue refresh */
 export function useAppsRealtime(userId: string | undefined) {
@@ -49,6 +51,7 @@ export function NotifBellBadge() {
 }
 
 export function NotificationsPagePatient() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const callList = useServerFn(listMyNotifications);
   const callRead = useServerFn(markNotifRead);
@@ -65,46 +68,42 @@ export function NotificationsPagePatient() {
   });
   const readAllM = useMutation({
     mutationFn: () => callReadAll(),
-    onSuccess: () => { toast.success("Semua notifikasi ditandai dibaca"); qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
+    onSuccess: () => { toast.success(t("notif.mark_all")); qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
   });
   const delM = useMutation({
     mutationFn: (id: string) => callDelete({ data: { id } }),
-    onSuccess: () => { toast.success("Notifikasi dihapus"); qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
   });
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Notifikasi</h1>
+          <h1 className="text-2xl font-bold">{t("notif.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {unread > 0 ? `${unread} belum dibaca` : "Semua sudah dibaca"}
+            {unread > 0 ? t("notif.unread", { n: unread }) : t("notif.all_read")}
           </p>
         </div>
         {unread > 0 && (
           <button
             onClick={() => readAllM.mutate()}
             disabled={readAllM.isPending}
-            className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-xs font-semibold text-[#5a4a14]"
+            className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-xs font-semibold text-[#5a4a14] disabled:opacity-50"
           >
-            <CheckCheck className="h-3.5 w-3.5" /> Tandai semua
+            <CheckCheck className="h-3.5 w-3.5" /> {t("notif.mark_all")}
           </button>
         )}
       </div>
 
-      {q.isLoading && (
-        <div className="rounded-2xl border border-[#e9dfb8] bg-white p-5 text-sm opacity-60">
-          <Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…
-        </div>
-      )}
+      {q.isLoading && <SkeletonList rows={4} />}
 
       {!q.isLoading && notifs.length === 0 && (
-        <div className="rounded-2xl border border-[#e9dfb8] bg-white p-8 text-center">
-          <Inbox className="mx-auto h-8 w-8 text-[#6b5a16]" />
-          <div className="mt-2 text-sm font-semibold">Belum ada notifikasi</div>
-          <p className="mt-1 text-xs text-muted-foreground">Notifikasi booking, pengingat, dan resep akan muncul di sini.</p>
-        </div>
+        <EmptyState
+          title={t("notif.empty.title")}
+          hint={t("notif.empty.hint")}
+        />
       )}
+
 
       <ul className="space-y-2">
         {notifs.map((n) => (
@@ -132,7 +131,7 @@ export function NotificationsPagePatient() {
                       onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
                       className="text-xs font-semibold text-[#6b5a16]"
                     >
-                      Buka →
+                      {t("notif.open")} →
                     </a>
                   )}
                 </div>
