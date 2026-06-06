@@ -235,6 +235,7 @@ const GEJALA = [
 ];
 
 export function PatientAI() {
+  const navigate = useNavigate();
   const [keluhan, setKeluhan] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [durasi, setDurasi] = useState("");
@@ -243,31 +244,51 @@ export function PatientAI() {
   const [riwayat, setRiwayat] = useState("");
   const [loading, setLoading] = useState(false);
   const [hasil, setHasil] = useState<DiagnoseResult | null>(null);
+  const [fotoPath, setFotoPath] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const callDiagnose = useServerFn(diagnoseEye);
+  const callSave = useServerFn(saveAiHistory);
+  const callSignUpload = useServerFn(signEyePhotoUpload);
 
   const toggle = (g: string) =>
     setPicked((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
 
-  const analisa = async () => {
-    if (!keluhan.trim() || !durasi) {
-      toast.error("Lengkapi keluhan dan durasi.");
-      return;
+  async function uploadFoto(file: File) {
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error("Format harus JPG/PNG/WEBP");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5 MB");
+    setUploading(true);
+    try {
+      const sig = await callSignUpload({ data: { ext } });
+      const { error } = await supabase.storage.from("apps-mata")
+        .uploadToSignedUrl(sig.path, sig.token, file, { contentType: file.type });
+      if (error) throw error;
+      setFotoPath(sig.path);
+      toast.success("Foto mata terunggah");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal unggah");
+    } finally {
+      setUploading(false);
     }
-    setLoading(true);
-    setHasil(null);
+  }
+
+  const analisa = async () => {
+    if (!keluhan.trim() || !durasi) { toast.error("Lengkapi keluhan dan durasi."); return; }
+    setLoading(true); setHasil(null);
     try {
       const res = await callDiagnose({
-        data: {
-          keluhan,
-          gejala: picked,
-          durasi,
-          nyeri,
-          usia: usia ? Number(usia) : null,
-          riwayat,
-        },
+        data: { keluhan, gejala: picked, durasi, nyeri, usia: usia ? Number(usia) : null, riwayat },
       });
       setHasil(res);
-      toast.success("AI engine selesai menganalisis");
+      try {
+        const r = await callSave({
+          data: { keluhan, gejala: picked, durasi, nyeri, hasil: res,
+            summary: res.summary, risk: res.risk, foto_url: fotoPath },
+        });
+        toast.success(`Analisis tersimpan (+${r.poin} poin)`);
+      } catch {
+        toast.success("AI engine selesai menganalisis");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal menganalisis");
     } finally {
@@ -277,7 +298,7 @@ export function PatientAI() {
 
   const reset = () => {
     setKeluhan(""); setPicked([]); setDurasi(""); setNyeri(0);
-    setUsia(""); setRiwayat(""); setHasil(null);
+    setUsia(""); setRiwayat(""); setHasil(null); setFotoPath(null);
   };
 
   const riskTone = (r: string) => r === "Tinggi" ? "rose" : r === "Sedang" ? "amber" : "green";
