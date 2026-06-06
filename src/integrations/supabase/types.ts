@@ -14,6 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
+      apps_ai_history: {
+        Row: {
+          created_at: string
+          durasi: string | null
+          gejala: string[] | null
+          hasil: Json | null
+          id: string
+          keluhan: string
+          nyeri: number | null
+          risk: string | null
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          durasi?: string | null
+          gejala?: string[] | null
+          hasil?: Json | null
+          id?: string
+          keluhan: string
+          nyeri?: number | null
+          risk?: string | null
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          durasi?: string | null
+          gejala?: string[] | null
+          hasil?: Json | null
+          id?: string
+          keluhan?: string
+          nyeri?: number | null
+          risk?: string | null
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apps_booking: {
+        Row: {
+          created_at: string
+          dokter_id: string | null
+          dokter_nama: string
+          id: string
+          jam_slot: string
+          keluhan: string | null
+          no_antrean: string | null
+          status: string
+          tanggal: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dokter_id?: string | null
+          dokter_nama: string
+          id?: string
+          jam_slot: string
+          keluhan?: string | null
+          no_antrean?: string | null
+          status?: string
+          tanggal: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dokter_id?: string | null
+          dokter_nama?: string
+          id?: string
+          jam_slot?: string
+          keluhan?: string | null
+          no_antrean?: string | null
+          status?: string
+          tanggal?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_booking_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps_pasien: {
+        Row: {
+          alamat: string | null
+          alergi: string | null
+          created_at: string
+          id: string
+          jenis_kelamin: string | null
+          kontak_darurat: string | null
+          nama: string
+          no_bpjs: string | null
+          patient_code: string
+          telp: string | null
+          tgl_lahir: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alamat?: string | null
+          alergi?: string | null
+          created_at?: string
+          id?: string
+          jenis_kelamin?: string | null
+          kontak_darurat?: string | null
+          nama?: string
+          no_bpjs?: string | null
+          patient_code?: string
+          telp?: string | null
+          tgl_lahir?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alamat?: string | null
+          alergi?: string | null
+          created_at?: string
+          id?: string
+          jenis_kelamin?: string | null
+          kontak_darurat?: string | null
+          nama?: string
+          no_bpjs?: string | null
+          patient_code?: string
+          telp?: string | null
+          tgl_lahir?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fin_coa: {
         Row: {
           code: string
@@ -118,6 +255,7 @@ export type Database = {
       }
       fin_invoice: {
         Row: {
+          apps_user_id: string | null
           catatan: string | null
           created_at: string
           dokter_id: string | null
@@ -135,6 +273,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          apps_user_id?: string | null
           catatan?: string | null
           created_at?: string
           dokter_id?: string | null
@@ -152,6 +291,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          apps_user_id?: string | null
           catatan?: string | null
           created_at?: string
           dokter_id?: string | null
@@ -522,7 +662,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      apps_slot_terisi: {
+        Row: {
+          dokter_id: string | null
+          jam_slot: string | null
+          tanggal: string | null
+        }
+        Insert: {
+          dokter_id?: string | null
+          jam_slot?: string | null
+          tanggal?: string | null
+        }
+        Update: {
+          dokter_id?: string | null
+          jam_slot?: string | null
+          tanggal?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_booking_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
