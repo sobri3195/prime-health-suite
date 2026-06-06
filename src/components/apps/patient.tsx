@@ -5,10 +5,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen,
-  ChevronRight, Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
-  Download, AlertCircle, Camera, Trophy, Phone, Mail, MapPin, Shield, LogOut,
+  Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
+  Download, AlertCircle, Camera, Trophy, Phone, MapPin, Shield, LogOut,
   Stethoscope, FileText, MessageCircle, Loader2, Activity, ShieldAlert, ListChecks,
-  Save, X,
+  Save, X, ChevronRight,
 } from "lucide-react";
 import { diagnoseEye, type DiagnoseResult } from "@/lib/diagnose.functions";
 import {
