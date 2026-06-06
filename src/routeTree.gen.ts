@@ -18,6 +18,10 @@ import { Route as AuthenticatedAppsRouteImport } from './routes/_authenticated.a
 import { Route as AuthenticatedSimKlinikIndexRouteImport } from './routes/_authenticated.sim-klinik.index'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated.finance.index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated.apps.index'
+import { Route as AuthenticatedSimKlinikRegistrasiRouteImport } from './routes/_authenticated.sim-klinik.registrasi'
+import { Route as AuthenticatedSimKlinikPasienRouteImport } from './routes/_authenticated.sim-klinik.pasien'
+import { Route as AuthenticatedSimKlinikMasterRouteImport } from './routes/_authenticated.sim-klinik.master'
+import { Route as AuthenticatedSimKlinikJadwalRouteImport } from './routes/_authenticated.sim-klinik.jadwal'
 import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_authenticated.sim-klinik.$section'
 import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
@@ -68,6 +72,30 @@ const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppsRoute,
 } as any)
+const AuthenticatedSimKlinikRegistrasiRoute =
+  AuthenticatedSimKlinikRegistrasiRouteImport.update({
+    id: '/registrasi',
+    path: '/registrasi',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedSimKlinikPasienRoute =
+  AuthenticatedSimKlinikPasienRouteImport.update({
+    id: '/pasien',
+    path: '/pasien',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedSimKlinikMasterRoute =
+  AuthenticatedSimKlinikMasterRouteImport.update({
+    id: '/master',
+    path: '/master',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedSimKlinikJadwalRoute =
+  AuthenticatedSimKlinikJadwalRouteImport.update({
+    id: '/jadwal',
+    path: '/jadwal',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
 const AuthenticatedSimKlinikSectionRoute =
   AuthenticatedSimKlinikSectionRouteImport.update({
     id: '/$section',
@@ -96,6 +124,10 @@ export interface FileRoutesByFullPath {
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
+  '/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
+  '/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
+  '/sim-klinik/registrasi': typeof AuthenticatedSimKlinikRegistrasiRoute
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
@@ -106,6 +138,10 @@ export interface FileRoutesByTo {
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
+  '/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
+  '/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
+  '/sim-klinik/registrasi': typeof AuthenticatedSimKlinikRegistrasiRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik': typeof AuthenticatedSimKlinikIndexRoute
@@ -121,6 +157,10 @@ export interface FileRoutesById {
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/_authenticated/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/_authenticated/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
+  '/_authenticated/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
+  '/_authenticated/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
+  '/_authenticated/sim-klinik/registrasi': typeof AuthenticatedSimKlinikRegistrasiRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
@@ -136,6 +176,10 @@ export interface FileRouteTypes {
     | '/apps/$section'
     | '/finance/$section'
     | '/sim-klinik/$section'
+    | '/sim-klinik/jadwal'
+    | '/sim-klinik/master'
+    | '/sim-klinik/pasien'
+    | '/sim-klinik/registrasi'
     | '/apps/'
     | '/finance/'
     | '/sim-klinik/'
@@ -146,6 +190,10 @@ export interface FileRouteTypes {
     | '/apps/$section'
     | '/finance/$section'
     | '/sim-klinik/$section'
+    | '/sim-klinik/jadwal'
+    | '/sim-klinik/master'
+    | '/sim-klinik/pasien'
+    | '/sim-klinik/registrasi'
     | '/apps'
     | '/finance'
     | '/sim-klinik'
@@ -160,6 +208,10 @@ export interface FileRouteTypes {
     | '/_authenticated/apps/$section'
     | '/_authenticated/finance/$section'
     | '/_authenticated/sim-klinik/$section'
+    | '/_authenticated/sim-klinik/jadwal'
+    | '/_authenticated/sim-klinik/master'
+    | '/_authenticated/sim-klinik/pasien'
+    | '/_authenticated/sim-klinik/registrasi'
     | '/_authenticated/apps/'
     | '/_authenticated/finance/'
     | '/_authenticated/sim-klinik/'
@@ -236,6 +288,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
       parentRoute: typeof AuthenticatedAppsRoute
     }
+    '/_authenticated/sim-klinik/registrasi': {
+      id: '/_authenticated/sim-klinik/registrasi'
+      path: '/registrasi'
+      fullPath: '/sim-klinik/registrasi'
+      preLoaderRoute: typeof AuthenticatedSimKlinikRegistrasiRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/sim-klinik/pasien': {
+      id: '/_authenticated/sim-klinik/pasien'
+      path: '/pasien'
+      fullPath: '/sim-klinik/pasien'
+      preLoaderRoute: typeof AuthenticatedSimKlinikPasienRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/sim-klinik/master': {
+      id: '/_authenticated/sim-klinik/master'
+      path: '/master'
+      fullPath: '/sim-klinik/master'
+      preLoaderRoute: typeof AuthenticatedSimKlinikMasterRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/sim-klinik/jadwal': {
+      id: '/_authenticated/sim-klinik/jadwal'
+      path: '/jadwal'
+      fullPath: '/sim-klinik/jadwal'
+      preLoaderRoute: typeof AuthenticatedSimKlinikJadwalRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
     '/_authenticated/sim-klinik/$section': {
       id: '/_authenticated/sim-klinik/$section'
       path: '/$section'
@@ -288,12 +368,21 @@ const AuthenticatedFinanceRouteWithChildren =
 
 interface AuthenticatedSimKlinikRouteChildren {
   AuthenticatedSimKlinikSectionRoute: typeof AuthenticatedSimKlinikSectionRoute
+  AuthenticatedSimKlinikJadwalRoute: typeof AuthenticatedSimKlinikJadwalRoute
+  AuthenticatedSimKlinikMasterRoute: typeof AuthenticatedSimKlinikMasterRoute
+  AuthenticatedSimKlinikPasienRoute: typeof AuthenticatedSimKlinikPasienRoute
+  AuthenticatedSimKlinikRegistrasiRoute: typeof AuthenticatedSimKlinikRegistrasiRoute
   AuthenticatedSimKlinikIndexRoute: typeof AuthenticatedSimKlinikIndexRoute
 }
 
 const AuthenticatedSimKlinikRouteChildren: AuthenticatedSimKlinikRouteChildren =
   {
     AuthenticatedSimKlinikSectionRoute: AuthenticatedSimKlinikSectionRoute,
+    AuthenticatedSimKlinikJadwalRoute: AuthenticatedSimKlinikJadwalRoute,
+    AuthenticatedSimKlinikMasterRoute: AuthenticatedSimKlinikMasterRoute,
+    AuthenticatedSimKlinikPasienRoute: AuthenticatedSimKlinikPasienRoute,
+    AuthenticatedSimKlinikRegistrasiRoute:
+      AuthenticatedSimKlinikRegistrasiRoute,
     AuthenticatedSimKlinikIndexRoute: AuthenticatedSimKlinikIndexRoute,
   }
 
