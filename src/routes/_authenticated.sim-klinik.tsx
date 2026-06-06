@@ -11,12 +11,12 @@ function Layout() {
   const user = userFor("sim-klinik");
 
   useEffect(() => {
-    if (user && !canAccess(user.role, "sim-klinik")) {
+    if (!user || !canAccess(user.role, "sim-klinik")) {
       navigate({ to: "/sim-klinik/login", search: { redirect: pathname }, replace: true });
     }
   }, [user, navigate, pathname]);
 
-  if (user && !canAccess(user.role, "sim-klinik")) return null;
+  if (!user || !canAccess(user.role, "sim-klinik")) return null;
   return (
     <AppShell system="sim-klinik">
       <Outlet />
