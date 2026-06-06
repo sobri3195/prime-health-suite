@@ -147,6 +147,7 @@ function NewVisitDialog({
     onCreate(v);
     onOpenChange(false);
     setComplaint("");
+    clinicAudit("Registrasi", "create", v.id, { patient: p.id, doctor, payer });
     toast.success(`Kunjungan ${v.id} terdaftar untuk ${p.name}`);
   };
 

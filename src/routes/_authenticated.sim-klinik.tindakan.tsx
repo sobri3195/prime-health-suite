@@ -13,6 +13,7 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { formatIDR } from "@/lib/sync-log";
+import { clinicAudit } from "@/lib/clinic-audit";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/tindakan")({
   component: TindakanPage,
@@ -75,6 +76,7 @@ function TindakanPage() {
 
   const setStatus = (code: string, s: TStatus) => {
     setRows((rs) => rs.map((r) => r.code === code ? { ...r, status: s } : r));
+    clinicAudit("Tindakan", "update", code, { status: s });
     toast.success(`Tindakan ${code} → ${s}`);
   };
 
