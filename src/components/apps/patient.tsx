@@ -216,6 +216,7 @@ const GEJALA = [
 ];
 
 export function PatientAI() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [keluhan, setKeluhan] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
