@@ -1,9 +1,9 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Activity, Bell, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
+  Activity, Bell, ChevronDown, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
-import { NAV, SYSTEM_LABEL, findNav } from "@/lib/nav-config";
+import { NAV, SYSTEM_LABEL, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, canAccess, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 
@@ -34,11 +34,11 @@ export function AppShell({ system, children }: { system: System; children: React
       {/* Sidebar (hidden for Prime Apps which uses bottom nav) */}
       {!isApps && (
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-border bg-card transition-transform md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 transform flex-col border-r border-border bg-card transition-transform md:static md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-border px-4">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
               <Activity className="h-4 w-4" />
@@ -55,29 +55,11 @@ export function AppShell({ system, children }: { system: System; children: React
           </button>
         </div>
 
-        <nav className="space-y-0.5 p-3">
-          {items.map((it) => {
-            const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
-            const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
-            return (
-              <Link
-                key={it.label}
-                to={href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? "bg-navy text-navy-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <it.icon className="h-4 w-4" />
-                <span>{it.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-3">
+          <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
         </nav>
 
-        <div className="mt-2 border-t border-border p-3">
+        <div className="shrink-0 border-t border-border p-3">
           <div className="mb-1.5 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
             Switch system
           </div>
@@ -263,6 +245,71 @@ export function PlaceholderPage({ title }: { title: string }) {
           Halaman <span className="font-medium text-foreground">{title}</span> sedang dalam pengembangan.
         </p>
       </div>
+    </div>
+  );
+}
+
+function SidebarNav({
+  system, items, pathname, onNavigate,
+}: { system: System; items: NavItem[]; pathname: string; onNavigate: () => void }) {
+  const groups = useMemo(() => {
+    const map = new Map<string, NavItem[]>();
+    items.forEach((it) => {
+      const g = it.group ?? "";
+      if (!map.has(g)) map.set(g, []);
+      map.get(g)!.push(it);
+    });
+    return Array.from(map.entries());
+  }, [items]);
+
+  const linkOf = (it: NavItem) => (it.slug ? `/${system}/${it.slug}` : `/${system}`);
+  const isActive = (it: NavItem) => {
+    const href = linkOf(it);
+    return pathname === href || (it.slug === "" && pathname === `/${system}`);
+  };
+  const activeGroup = items.find((it) => isActive(it))?.group ?? "";
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const isOpen = (g: string) => openGroups[g] ?? (g === "" || g === activeGroup || g === "Dashboard");
+
+  const Item = (it: NavItem) => {
+    const active = isActive(it);
+    return (
+      <Link
+        key={it.label}
+        to={linkOf(it)}
+        onClick={onNavigate}
+        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
+          active
+            ? "bg-navy text-navy-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <it.icon className="h-4 w-4" />
+        <span className="truncate">{it.label}</span>
+      </Link>
+    );
+  };
+
+  return (
+    <div className="space-y-1">
+      {groups.map(([group, list]) => {
+        if (!group) return <div key="_root" className="space-y-0.5">{list.map(Item)}</div>;
+        const open = isOpen(group);
+        return (
+          <div key={group} className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setOpenGroups((s) => ({ ...s, [group]: !open }))}
+              className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/60"
+            >
+              <span>{group}</span>
+              {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            </button>
+            {open && <div className="space-y-0.5">{list.map(Item)}</div>}
+          </div>
+        );
+      })}
     </div>
   );
 }

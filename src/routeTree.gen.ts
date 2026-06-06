@@ -32,13 +32,30 @@ import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_aut
 import { Route as AuthenticatedFinanceVoucherRouteImport } from './routes/_authenticated.finance.voucher'
 import { Route as AuthenticatedFinancePiutangRouteImport } from './routes/_authenticated.finance.piutang'
 import { Route as AuthenticatedFinancePengeluaranRouteImport } from './routes/_authenticated.finance.pengeluaran'
+import { Route as AuthenticatedFinancePendapatanReportHighlightRouteImport } from './routes/_authenticated.finance.pendapatan-report-highlight'
+import { Route as AuthenticatedFinancePendapatanRankingDokterRouteImport } from './routes/_authenticated.finance.pendapatan-ranking-dokter'
+import { Route as AuthenticatedFinancePendapatanKasirHarianRouteImport } from './routes/_authenticated.finance.pendapatan-kasir-harian'
+import { Route as AuthenticatedFinancePendapatanKartuRouteImport } from './routes/_authenticated.finance.pendapatan-kartu'
+import { Route as AuthenticatedFinancePendapatanInputHarianRouteImport } from './routes/_authenticated.finance.pendapatan-input-harian'
 import { Route as AuthenticatedFinancePendapatanRouteImport } from './routes/_authenticated.finance.pendapatan'
 import { Route as AuthenticatedFinancePajakRouteImport } from './routes/_authenticated.finance.pajak'
 import { Route as AuthenticatedFinanceNeracaRouteImport } from './routes/_authenticated.finance.neraca'
+import { Route as AuthenticatedFinanceMasterVendorRouteImport } from './routes/_authenticated.finance.master-vendor'
+import { Route as AuthenticatedFinanceMasterTarifPajakRouteImport } from './routes/_authenticated.finance.master-tarif-pajak'
+import { Route as AuthenticatedFinanceMasterProfilKlinikRouteImport } from './routes/_authenticated.finance.master-profil-klinik'
+import { Route as AuthenticatedFinanceMasterPayerRouteImport } from './routes/_authenticated.finance.master-payer'
+import { Route as AuthenticatedFinanceMasterKategoriLayananRouteImport } from './routes/_authenticated.finance.master-kategori-layanan'
+import { Route as AuthenticatedFinanceMasterKaryawanRouteImport } from './routes/_authenticated.finance.master-karyawan'
+import { Route as AuthenticatedFinanceMasterDokterRouteImport } from './routes/_authenticated.finance.master-dokter'
+import { Route as AuthenticatedFinanceMasterCostCenterRouteImport } from './routes/_authenticated.finance.master-cost-center'
+import { Route as AuthenticatedFinanceMasterCoaRouteImport } from './routes/_authenticated.finance.master-coa'
 import { Route as AuthenticatedFinanceMasterRouteImport } from './routes/_authenticated.finance.master'
 import { Route as AuthenticatedFinanceLaporanRouteImport } from './routes/_authenticated.finance.laporan'
 import { Route as AuthenticatedFinanceLabaRugiRouteImport } from './routes/_authenticated.finance.laba-rugi'
 import { Route as AuthenticatedFinanceJurnalRouteImport } from './routes/_authenticated.finance.jurnal'
+import { Route as AuthenticatedFinanceHonorRekapRouteImport } from './routes/_authenticated.finance.honor-rekap'
+import { Route as AuthenticatedFinanceHonorPotonganRouteImport } from './routes/_authenticated.finance.honor-potongan'
+import { Route as AuthenticatedFinanceHonorInputRouteImport } from './routes/_authenticated.finance.honor-input'
 import { Route as AuthenticatedFinanceBukuBesarRouteImport } from './routes/_authenticated.finance.buku-besar'
 import { Route as AuthenticatedFinanceBankRouteImport } from './routes/_authenticated.finance.bank'
 import { Route as AuthenticatedFinanceArusKasRouteImport } from './routes/_authenticated.finance.arus-kas'
@@ -174,6 +191,36 @@ const AuthenticatedFinancePengeluaranRoute =
     path: '/pengeluaran',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinancePendapatanReportHighlightRoute =
+  AuthenticatedFinancePendapatanReportHighlightRouteImport.update({
+    id: '/pendapatan-report-highlight',
+    path: '/pendapatan-report-highlight',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanRankingDokterRoute =
+  AuthenticatedFinancePendapatanRankingDokterRouteImport.update({
+    id: '/pendapatan-ranking-dokter',
+    path: '/pendapatan-ranking-dokter',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanKasirHarianRoute =
+  AuthenticatedFinancePendapatanKasirHarianRouteImport.update({
+    id: '/pendapatan-kasir-harian',
+    path: '/pendapatan-kasir-harian',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanKartuRoute =
+  AuthenticatedFinancePendapatanKartuRouteImport.update({
+    id: '/pendapatan-kartu',
+    path: '/pendapatan-kartu',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanInputHarianRoute =
+  AuthenticatedFinancePendapatanInputHarianRouteImport.update({
+    id: '/pendapatan-input-harian',
+    path: '/pendapatan-input-harian',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinancePendapatanRoute =
   AuthenticatedFinancePendapatanRouteImport.update({
     id: '/pendapatan',
@@ -190,6 +237,60 @@ const AuthenticatedFinanceNeracaRoute =
   AuthenticatedFinanceNeracaRouteImport.update({
     id: '/neraca',
     path: '/neraca',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterVendorRoute =
+  AuthenticatedFinanceMasterVendorRouteImport.update({
+    id: '/master-vendor',
+    path: '/master-vendor',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterTarifPajakRoute =
+  AuthenticatedFinanceMasterTarifPajakRouteImport.update({
+    id: '/master-tarif-pajak',
+    path: '/master-tarif-pajak',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterProfilKlinikRoute =
+  AuthenticatedFinanceMasterProfilKlinikRouteImport.update({
+    id: '/master-profil-klinik',
+    path: '/master-profil-klinik',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterPayerRoute =
+  AuthenticatedFinanceMasterPayerRouteImport.update({
+    id: '/master-payer',
+    path: '/master-payer',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterKategoriLayananRoute =
+  AuthenticatedFinanceMasterKategoriLayananRouteImport.update({
+    id: '/master-kategori-layanan',
+    path: '/master-kategori-layanan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterKaryawanRoute =
+  AuthenticatedFinanceMasterKaryawanRouteImport.update({
+    id: '/master-karyawan',
+    path: '/master-karyawan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterDokterRoute =
+  AuthenticatedFinanceMasterDokterRouteImport.update({
+    id: '/master-dokter',
+    path: '/master-dokter',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterCostCenterRoute =
+  AuthenticatedFinanceMasterCostCenterRouteImport.update({
+    id: '/master-cost-center',
+    path: '/master-cost-center',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterCoaRoute =
+  AuthenticatedFinanceMasterCoaRouteImport.update({
+    id: '/master-coa',
+    path: '/master-coa',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
 const AuthenticatedFinanceMasterRoute =
@@ -214,6 +315,24 @@ const AuthenticatedFinanceJurnalRoute =
   AuthenticatedFinanceJurnalRouteImport.update({
     id: '/jurnal',
     path: '/jurnal',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceHonorRekapRoute =
+  AuthenticatedFinanceHonorRekapRouteImport.update({
+    id: '/honor-rekap',
+    path: '/honor-rekap',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceHonorPotonganRoute =
+  AuthenticatedFinanceHonorPotonganRouteImport.update({
+    id: '/honor-potongan',
+    path: '/honor-potongan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceHonorInputRoute =
+  AuthenticatedFinanceHonorInputRouteImport.update({
+    id: '/honor-input',
+    path: '/honor-input',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
 const AuthenticatedFinanceBukuBesarRoute =
@@ -260,13 +379,30 @@ export interface FileRoutesByFullPath {
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
   '/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
+  '/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
+  '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
+  '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
+  '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
+  '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -293,13 +429,30 @@ export interface FileRoutesByTo {
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
   '/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
+  '/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
+  '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
+  '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
+  '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
+  '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -331,13 +484,30 @@ export interface FileRoutesById {
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/_authenticated/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/_authenticated/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/_authenticated/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/_authenticated/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/_authenticated/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/_authenticated/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/_authenticated/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/_authenticated/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
   '/_authenticated/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/_authenticated/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
+  '/_authenticated/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
+  '/_authenticated/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
+  '/_authenticated/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
+  '/_authenticated/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/_authenticated/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
+  '/_authenticated/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  '/_authenticated/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/_authenticated/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/_authenticated/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/_authenticated/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/_authenticated/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/_authenticated/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/_authenticated/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/_authenticated/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/_authenticated/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/_authenticated/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/_authenticated/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/_authenticated/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/_authenticated/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -369,13 +539,30 @@ export interface FileRouteTypes {
     | '/finance/arus-kas'
     | '/finance/bank'
     | '/finance/buku-besar'
+    | '/finance/honor-input'
+    | '/finance/honor-potongan'
+    | '/finance/honor-rekap'
     | '/finance/jurnal'
     | '/finance/laba-rugi'
     | '/finance/laporan'
     | '/finance/master'
+    | '/finance/master-coa'
+    | '/finance/master-cost-center'
+    | '/finance/master-dokter'
+    | '/finance/master-karyawan'
+    | '/finance/master-kategori-layanan'
+    | '/finance/master-payer'
+    | '/finance/master-profil-klinik'
+    | '/finance/master-tarif-pajak'
+    | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pendapatan'
+    | '/finance/pendapatan-input-harian'
+    | '/finance/pendapatan-kartu'
+    | '/finance/pendapatan-kasir-harian'
+    | '/finance/pendapatan-ranking-dokter'
+    | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
     | '/finance/voucher'
@@ -402,13 +589,30 @@ export interface FileRouteTypes {
     | '/finance/arus-kas'
     | '/finance/bank'
     | '/finance/buku-besar'
+    | '/finance/honor-input'
+    | '/finance/honor-potongan'
+    | '/finance/honor-rekap'
     | '/finance/jurnal'
     | '/finance/laba-rugi'
     | '/finance/laporan'
     | '/finance/master'
+    | '/finance/master-coa'
+    | '/finance/master-cost-center'
+    | '/finance/master-dokter'
+    | '/finance/master-karyawan'
+    | '/finance/master-kategori-layanan'
+    | '/finance/master-payer'
+    | '/finance/master-profil-klinik'
+    | '/finance/master-tarif-pajak'
+    | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pendapatan'
+    | '/finance/pendapatan-input-harian'
+    | '/finance/pendapatan-kartu'
+    | '/finance/pendapatan-kasir-harian'
+    | '/finance/pendapatan-ranking-dokter'
+    | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
     | '/finance/voucher'
@@ -439,13 +643,30 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/arus-kas'
     | '/_authenticated/finance/bank'
     | '/_authenticated/finance/buku-besar'
+    | '/_authenticated/finance/honor-input'
+    | '/_authenticated/finance/honor-potongan'
+    | '/_authenticated/finance/honor-rekap'
     | '/_authenticated/finance/jurnal'
     | '/_authenticated/finance/laba-rugi'
     | '/_authenticated/finance/laporan'
     | '/_authenticated/finance/master'
+    | '/_authenticated/finance/master-coa'
+    | '/_authenticated/finance/master-cost-center'
+    | '/_authenticated/finance/master-dokter'
+    | '/_authenticated/finance/master-karyawan'
+    | '/_authenticated/finance/master-kategori-layanan'
+    | '/_authenticated/finance/master-payer'
+    | '/_authenticated/finance/master-profil-klinik'
+    | '/_authenticated/finance/master-tarif-pajak'
+    | '/_authenticated/finance/master-vendor'
     | '/_authenticated/finance/neraca'
     | '/_authenticated/finance/pajak'
     | '/_authenticated/finance/pendapatan'
+    | '/_authenticated/finance/pendapatan-input-harian'
+    | '/_authenticated/finance/pendapatan-kartu'
+    | '/_authenticated/finance/pendapatan-kasir-harian'
+    | '/_authenticated/finance/pendapatan-ranking-dokter'
+    | '/_authenticated/finance/pendapatan-report-highlight'
     | '/_authenticated/finance/pengeluaran'
     | '/_authenticated/finance/piutang'
     | '/_authenticated/finance/voucher'
@@ -632,6 +853,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinancePengeluaranRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/pendapatan-report-highlight': {
+      id: '/_authenticated/finance/pendapatan-report-highlight'
+      path: '/pendapatan-report-highlight'
+      fullPath: '/finance/pendapatan-report-highlight'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanReportHighlightRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-ranking-dokter': {
+      id: '/_authenticated/finance/pendapatan-ranking-dokter'
+      path: '/pendapatan-ranking-dokter'
+      fullPath: '/finance/pendapatan-ranking-dokter'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanRankingDokterRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-kasir-harian': {
+      id: '/_authenticated/finance/pendapatan-kasir-harian'
+      path: '/pendapatan-kasir-harian'
+      fullPath: '/finance/pendapatan-kasir-harian'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanKasirHarianRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-kartu': {
+      id: '/_authenticated/finance/pendapatan-kartu'
+      path: '/pendapatan-kartu'
+      fullPath: '/finance/pendapatan-kartu'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanKartuRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-input-harian': {
+      id: '/_authenticated/finance/pendapatan-input-harian'
+      path: '/pendapatan-input-harian'
+      fullPath: '/finance/pendapatan-input-harian'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanInputHarianRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/pendapatan': {
       id: '/_authenticated/finance/pendapatan'
       path: '/pendapatan'
@@ -651,6 +907,69 @@ declare module '@tanstack/react-router' {
       path: '/neraca'
       fullPath: '/finance/neraca'
       preLoaderRoute: typeof AuthenticatedFinanceNeracaRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-vendor': {
+      id: '/_authenticated/finance/master-vendor'
+      path: '/master-vendor'
+      fullPath: '/finance/master-vendor'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterVendorRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-tarif-pajak': {
+      id: '/_authenticated/finance/master-tarif-pajak'
+      path: '/master-tarif-pajak'
+      fullPath: '/finance/master-tarif-pajak'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterTarifPajakRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-profil-klinik': {
+      id: '/_authenticated/finance/master-profil-klinik'
+      path: '/master-profil-klinik'
+      fullPath: '/finance/master-profil-klinik'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterProfilKlinikRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-payer': {
+      id: '/_authenticated/finance/master-payer'
+      path: '/master-payer'
+      fullPath: '/finance/master-payer'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterPayerRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-kategori-layanan': {
+      id: '/_authenticated/finance/master-kategori-layanan'
+      path: '/master-kategori-layanan'
+      fullPath: '/finance/master-kategori-layanan'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterKategoriLayananRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-karyawan': {
+      id: '/_authenticated/finance/master-karyawan'
+      path: '/master-karyawan'
+      fullPath: '/finance/master-karyawan'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterKaryawanRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-dokter': {
+      id: '/_authenticated/finance/master-dokter'
+      path: '/master-dokter'
+      fullPath: '/finance/master-dokter'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterDokterRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-cost-center': {
+      id: '/_authenticated/finance/master-cost-center'
+      path: '/master-cost-center'
+      fullPath: '/finance/master-cost-center'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterCostCenterRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-coa': {
+      id: '/_authenticated/finance/master-coa'
+      path: '/master-coa'
+      fullPath: '/finance/master-coa'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterCoaRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master': {
@@ -679,6 +998,27 @@ declare module '@tanstack/react-router' {
       path: '/jurnal'
       fullPath: '/finance/jurnal'
       preLoaderRoute: typeof AuthenticatedFinanceJurnalRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/honor-rekap': {
+      id: '/_authenticated/finance/honor-rekap'
+      path: '/honor-rekap'
+      fullPath: '/finance/honor-rekap'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorRekapRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/honor-potongan': {
+      id: '/_authenticated/finance/honor-potongan'
+      path: '/honor-potongan'
+      fullPath: '/finance/honor-potongan'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorPotonganRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/honor-input': {
+      id: '/_authenticated/finance/honor-input'
+      path: '/honor-input'
+      fullPath: '/finance/honor-input'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorInputRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/buku-besar': {
@@ -737,13 +1077,30 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceArusKasRoute: typeof AuthenticatedFinanceArusKasRoute
   AuthenticatedFinanceBankRoute: typeof AuthenticatedFinanceBankRoute
   AuthenticatedFinanceBukuBesarRoute: typeof AuthenticatedFinanceBukuBesarRoute
+  AuthenticatedFinanceHonorInputRoute: typeof AuthenticatedFinanceHonorInputRoute
+  AuthenticatedFinanceHonorPotonganRoute: typeof AuthenticatedFinanceHonorPotonganRoute
+  AuthenticatedFinanceHonorRekapRoute: typeof AuthenticatedFinanceHonorRekapRoute
   AuthenticatedFinanceJurnalRoute: typeof AuthenticatedFinanceJurnalRoute
   AuthenticatedFinanceLabaRugiRoute: typeof AuthenticatedFinanceLabaRugiRoute
   AuthenticatedFinanceLaporanRoute: typeof AuthenticatedFinanceLaporanRoute
   AuthenticatedFinanceMasterRoute: typeof AuthenticatedFinanceMasterRoute
+  AuthenticatedFinanceMasterCoaRoute: typeof AuthenticatedFinanceMasterCoaRoute
+  AuthenticatedFinanceMasterCostCenterRoute: typeof AuthenticatedFinanceMasterCostCenterRoute
+  AuthenticatedFinanceMasterDokterRoute: typeof AuthenticatedFinanceMasterDokterRoute
+  AuthenticatedFinanceMasterKaryawanRoute: typeof AuthenticatedFinanceMasterKaryawanRoute
+  AuthenticatedFinanceMasterKategoriLayananRoute: typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  AuthenticatedFinanceMasterPayerRoute: typeof AuthenticatedFinanceMasterPayerRoute
+  AuthenticatedFinanceMasterProfilKlinikRoute: typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  AuthenticatedFinanceMasterTarifPajakRoute: typeof AuthenticatedFinanceMasterTarifPajakRoute
+  AuthenticatedFinanceMasterVendorRoute: typeof AuthenticatedFinanceMasterVendorRoute
   AuthenticatedFinanceNeracaRoute: typeof AuthenticatedFinanceNeracaRoute
   AuthenticatedFinancePajakRoute: typeof AuthenticatedFinancePajakRoute
   AuthenticatedFinancePendapatanRoute: typeof AuthenticatedFinancePendapatanRoute
+  AuthenticatedFinancePendapatanInputHarianRoute: typeof AuthenticatedFinancePendapatanInputHarianRoute
+  AuthenticatedFinancePendapatanKartuRoute: typeof AuthenticatedFinancePendapatanKartuRoute
+  AuthenticatedFinancePendapatanKasirHarianRoute: typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  AuthenticatedFinancePendapatanRankingDokterRoute: typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  AuthenticatedFinancePendapatanReportHighlightRoute: typeof AuthenticatedFinancePendapatanReportHighlightRoute
   AuthenticatedFinancePengeluaranRoute: typeof AuthenticatedFinancePengeluaranRoute
   AuthenticatedFinancePiutangRoute: typeof AuthenticatedFinancePiutangRoute
   AuthenticatedFinanceVoucherRoute: typeof AuthenticatedFinanceVoucherRoute
@@ -755,13 +1112,41 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceArusKasRoute: AuthenticatedFinanceArusKasRoute,
   AuthenticatedFinanceBankRoute: AuthenticatedFinanceBankRoute,
   AuthenticatedFinanceBukuBesarRoute: AuthenticatedFinanceBukuBesarRoute,
+  AuthenticatedFinanceHonorInputRoute: AuthenticatedFinanceHonorInputRoute,
+  AuthenticatedFinanceHonorPotonganRoute:
+    AuthenticatedFinanceHonorPotonganRoute,
+  AuthenticatedFinanceHonorRekapRoute: AuthenticatedFinanceHonorRekapRoute,
   AuthenticatedFinanceJurnalRoute: AuthenticatedFinanceJurnalRoute,
   AuthenticatedFinanceLabaRugiRoute: AuthenticatedFinanceLabaRugiRoute,
   AuthenticatedFinanceLaporanRoute: AuthenticatedFinanceLaporanRoute,
   AuthenticatedFinanceMasterRoute: AuthenticatedFinanceMasterRoute,
+  AuthenticatedFinanceMasterCoaRoute: AuthenticatedFinanceMasterCoaRoute,
+  AuthenticatedFinanceMasterCostCenterRoute:
+    AuthenticatedFinanceMasterCostCenterRoute,
+  AuthenticatedFinanceMasterDokterRoute: AuthenticatedFinanceMasterDokterRoute,
+  AuthenticatedFinanceMasterKaryawanRoute:
+    AuthenticatedFinanceMasterKaryawanRoute,
+  AuthenticatedFinanceMasterKategoriLayananRoute:
+    AuthenticatedFinanceMasterKategoriLayananRoute,
+  AuthenticatedFinanceMasterPayerRoute: AuthenticatedFinanceMasterPayerRoute,
+  AuthenticatedFinanceMasterProfilKlinikRoute:
+    AuthenticatedFinanceMasterProfilKlinikRoute,
+  AuthenticatedFinanceMasterTarifPajakRoute:
+    AuthenticatedFinanceMasterTarifPajakRoute,
+  AuthenticatedFinanceMasterVendorRoute: AuthenticatedFinanceMasterVendorRoute,
   AuthenticatedFinanceNeracaRoute: AuthenticatedFinanceNeracaRoute,
   AuthenticatedFinancePajakRoute: AuthenticatedFinancePajakRoute,
   AuthenticatedFinancePendapatanRoute: AuthenticatedFinancePendapatanRoute,
+  AuthenticatedFinancePendapatanInputHarianRoute:
+    AuthenticatedFinancePendapatanInputHarianRoute,
+  AuthenticatedFinancePendapatanKartuRoute:
+    AuthenticatedFinancePendapatanKartuRoute,
+  AuthenticatedFinancePendapatanKasirHarianRoute:
+    AuthenticatedFinancePendapatanKasirHarianRoute,
+  AuthenticatedFinancePendapatanRankingDokterRoute:
+    AuthenticatedFinancePendapatanRankingDokterRoute,
+  AuthenticatedFinancePendapatanReportHighlightRoute:
+    AuthenticatedFinancePendapatanReportHighlightRoute,
   AuthenticatedFinancePengeluaranRoute: AuthenticatedFinancePengeluaranRoute,
   AuthenticatedFinancePiutangRoute: AuthenticatedFinancePiutangRoute,
   AuthenticatedFinanceVoucherRoute: AuthenticatedFinanceVoucherRoute,
