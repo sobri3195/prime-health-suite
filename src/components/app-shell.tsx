@@ -79,16 +79,16 @@ export function AppShell({ system, children }: { system: System; children: React
             </button>
           )}
           {isApps && (
-            <Link to="/" className="flex items-center gap-2">
+            <Link to={`/${system}`} className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
                 <Activity className="h-4 w-4" />
               </div>
               <div className="leading-tight">
-                <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Prime Health</div>
+                <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
               </div>
             </Link>
           )}
+
 
           <nav className="hidden items-center gap-1.5 text-sm md:flex">
             {!isApps && <span className="text-muted-foreground">{SYSTEM_LABEL[system]}</span>}
