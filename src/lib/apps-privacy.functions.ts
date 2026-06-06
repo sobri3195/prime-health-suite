@@ -54,7 +54,7 @@ export const logSelfAccess = createServerFn({ method: "POST" })
       actor_label: "self",
       action: "view",
       resource: data.resource,
-      meta: data.meta ?? null,
+      meta: (data.meta ?? null) as never,
     });
     return { ok: true };
   });
