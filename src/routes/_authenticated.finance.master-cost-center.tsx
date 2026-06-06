@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
-import { financeMaster } from "@/data/financeData";
+import { master as financeMaster } from "@/data/financeData";
 
 export const Route = createFileRoute("/_authenticated/finance/master-cost-center")({
   component: () => (
