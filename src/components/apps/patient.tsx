@@ -1,14 +1,22 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen,
-  ChevronRight, Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
-  Download, AlertCircle, Camera, Trophy, Phone, Mail, MapPin, Shield, LogOut,
+  Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
+  Download, AlertCircle, Camera, Phone, MapPin, Shield, LogOut,
   Stethoscope, FileText, MessageCircle, Loader2, Activity, ShieldAlert, ListChecks,
+  Save, X, ChevronRight,
 } from "lucide-react";
 import { diagnoseEye, type DiagnoseResult } from "@/lib/diagnose.functions";
+import {
+  getMyProfile, updateMyProfile, listMyBookings, cancelBooking,
+  getMyQueueToday, listMyInvoices,
+} from "@/lib/apps-patient.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 /* ------------------------------ shared ui ------------------------------ */
 
@@ -55,6 +63,22 @@ function Pill({ children, tone = "amber" }: { children: ReactNode; tone?: "amber
 /* ------------------------------ Beranda ------------------------------ */
 
 export function PatientBeranda() {
+  const callProfile = useServerFn(getMyProfile);
+  const callQueue = useServerFn(getMyQueueToday);
+  const callBookings = useServerFn(listMyBookings);
+
+  const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
+  const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue() });
+  const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
+
+  const profile = profileQ.data?.profile;
+  const queue = queueQ.data?.queue;
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = bookingsQ.data?.bookings.find(
+    (b) => b.tanggal >= today && b.status !== "cancelled" && b.status !== "done"
+  );
+  const nama = profile?.nama || "Pasien";
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       {/* hello */}
@@ -64,47 +88,30 @@ export function PatientBeranda() {
             <div className="text-[11px] font-bold tracking-[0.2em] text-[#a08a2a]">PRIME</div>
             <div className="text-[11px] text-muted-foreground">Klinik Utama Mata</div>
           </div>
-          <button onClick={() => toast.info("3 notifikasi baru")} className="rounded-full border border-[#e9dfb8] p-2 text-[#7a6010]">
+          <Link to="/apps/profil" className="rounded-full border border-[#e9dfb8] p-2 text-[#7a6010]">
             <Bell className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight">Halo, Pasien <span aria-hidden>👋</span></h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pantau kesehatan mata Anda dengan cepat hari ini.</p>
-      </Card>
-
-      {/* ringkasan */}
-      <Card>
-        <Pill><Sparkles className="h-3 w-3" /> Ringkasan Hari Ini</Pill>
-        <h2 className="mt-3 text-xl font-bold leading-tight">Kesehatan mata Anda dalam satu tampilan.</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Lihat antrean, jadwal, dan langkah perawatan singkat.</p>
-        <button onClick={() => toast.success("Membuka ringkasan harian")} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#a08a2a]">
-          Lihat Ringkasan <ChevronRight className="h-4 w-4" />
-        </button>
-
-        <div className="mt-4 rounded-xl bg-[#fdf2c4] p-4">
-          <div className="text-sm font-semibold">Pengingat 20-20-20</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">Setiap 20 menit, lihat jauh 20 detik.</p>
-          <button
-            onClick={() => toast.success("Pengingat 20-20-20 dimulai")}
-            className="mt-3 w-full rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white"
-          >
-            Mulai Pengingat
-          </button>
-        </div>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight">
+          Halo, {nama} <span aria-hidden>👋</span>
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {profile?.patient_code ? `Kode pasien: ${profile.patient_code}` : "Pantau kesehatan mata Anda dengan cepat hari ini."}
+        </p>
       </Card>
 
       {/* aksi cepat */}
       <div>
         <h3 className="mb-2 text-base font-semibold">Aksi Cepat</h3>
         <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => toast.success("Membuka booking pemeriksaan")}
+          <Link
+            to="/apps/booking"
             className="rounded-2xl bg-[#a08a2a] p-4 text-left text-white shadow-sm transition hover:bg-[#8c7822]"
           >
             <Calendar className="mb-3 h-5 w-5" />
             <div className="text-base font-bold leading-tight">Booking<br/>Pemeriksaan</div>
-            <div className="mt-1 text-[11px] opacity-90">Pilih jadwal konsultasi.</div>
-          </button>
+            <div className="mt-1 text-[11px] opacity-90">Pilih dokter & jadwal.</div>
+          </Link>
           <Link
             to="/apps/ai"
             className="rounded-2xl border border-[#e9dfb8] bg-white p-4 text-left transition hover:bg-[#fdf8e8]"
@@ -116,29 +123,52 @@ export function PatientBeranda() {
         </div>
       </div>
 
-      {/* antrean */}
+      {/* antrean hari ini */}
       <Card>
         <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
-        <div className="mt-1 text-3xl font-bold">A-017</div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          <Clock className="h-3.5 w-3.5 text-[#a08a2a]" /> Estimasi ±15 menit
-          <Pill tone="green"><CheckCircle2 className="h-3 w-3" /> Menunggu Pemeriksaan</Pill>
-        </div>
-        <button onClick={() => toast.info("Detail antrean")} className="mt-4 rounded-full bg-[#1f1d19] px-4 py-2 text-xs font-semibold text-white">
-          Lihat Detail
-        </button>
+        {queueQ.isLoading ? (
+          <div className="mt-2 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>
+        ) : queue ? (
+          <>
+            <div className="mt-1 text-3xl font-bold">{queue.no_antrean || "—"}</div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <Clock className="h-3.5 w-3.5 text-[#a08a2a]" /> {queue.jam_slot}
+              <Pill tone={queue.status === "checked_in" ? "green" : "amber"}>
+                <CheckCircle2 className="h-3 w-3" /> {statusLabel(queue.status)}
+              </Pill>
+            </div>
+            <div className="mt-2 text-xs opacity-70">Dokter: {queue.dokter_nama}</div>
+          </>
+        ) : (
+          <div className="mt-2 text-sm opacity-70">Tidak ada antrean hari ini. Booking jadwal terbaru?</div>
+        )}
       </Card>
 
-      {/* jadwal */}
+      {/* jadwal berikutnya */}
       <Card>
         <div className="text-[11px] font-bold tracking-widest text-emerald-700">JADWAL BERIKUTNYA</div>
-        <div className="mt-1 text-lg font-bold">dr. Sp.M</div>
-        <div className="text-xs text-muted-foreground">4 Mei 2026 • 10.30 WIB</div>
-        <div className="mt-2 text-sm">Pemeriksaan Mata Lengkap</div>
-        <div className="mt-2"><Pill tone="green">Booking Terkonfirmasi</Pill></div>
-        <button onClick={() => toast.info("Detail/ubah jadwal")} className="mt-3 text-sm font-semibold text-[#a08a2a]">
-          Detail / Ubah Jadwal
-        </button>
+        {bookingsQ.isLoading ? (
+          <div className="mt-2 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>
+        ) : upcoming ? (
+          <>
+            <div className="mt-1 text-lg font-bold">{upcoming.dokter_nama}</div>
+            <div className="text-xs text-muted-foreground">
+              {new Date(upcoming.tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • {upcoming.jam_slot} WIB
+            </div>
+            <div className="mt-2 text-sm">{upcoming.keluhan || "Pemeriksaan mata"}</div>
+            <div className="mt-2"><Pill tone={upcoming.status === "confirmed" ? "green" : "amber"}>{statusLabel(upcoming.status)}</Pill></div>
+            <Link to="/apps/laporan" className="mt-3 inline-block text-sm font-semibold text-[#a08a2a]">
+              Lihat semua booking →
+            </Link>
+          </>
+        ) : (
+          <div className="mt-2">
+            <p className="text-sm opacity-70">Belum ada booking aktif.</p>
+            <Link to="/apps/booking" className="mt-2 inline-block rounded-xl bg-[#a08a2a] px-4 py-2 text-xs font-semibold text-white">
+              Buat Booking
+            </Link>
+          </div>
+        )}
       </Card>
 
       {/* menu cepat */}
@@ -146,7 +176,7 @@ export function PatientBeranda() {
         <h3 className="mb-2 text-base font-semibold">Menu Cepat</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { l: "Riwayat Pemeriksaan", i: ClipboardList, to: "/apps/laporan" as const },
+            { l: "Riwayat & Resep", i: ClipboardList, to: "/apps/laporan" as const },
             { l: "Resep Kacamata", i: Glasses, to: "/apps/laporan" as const },
             { l: "Hasil AI Mata", i: ScanEye, to: "/apps/ai" as const },
             { l: "Edukasi Mata", i: BookOpen, to: "/apps" as const },
@@ -159,36 +189,26 @@ export function PatientBeranda() {
         </div>
       </div>
 
-      {/* daily wins */}
-      <Card>
-        <div className="flex items-center justify-between">
-          <div className="text-base font-bold">Daily Wins</div>
-          <Pill><Trophy className="h-3 w-3" /> 120 poin</Pill>
-        </div>
-        <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-          <li>• Check-in harian</li>
-          <li>• Baca tips mata</li>
-          <li>• Selesaikan 20-20-20</li>
-        </ul>
-        <div className="mt-3 flex gap-2">
-          <GoldButton full={false} onClick={() => toast.success("Check-in harian +10 poin!")}>Check-in Harian +10 poin</GoldButton>
-          <OutlineButton onClick={() => toast.info("Lihat semua misi")}>Lihat Semua Misi</OutlineButton>
-        </div>
-      </Card>
-
       {/* tips */}
       <Card>
-        <div className="text-base font-bold">Tips Kesehatan Mata</div>
-        <div className="mt-2 text-sm font-semibold">Cara mencegah mata lelah akibat layar</div>
+        <Pill><Sparkles className="h-3 w-3" /> Tips Harian</Pill>
+        <div className="mt-3 text-base font-bold">Aturan 20-20-20</div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Atur pencahayaan, gunakan aturan 20-20-20, dan jaga jarak layar.
+          Setiap 20 menit, lihat sesuatu sejauh 20 kaki (~6 m) selama 20 detik untuk mengurangi mata lelah.
         </p>
-        <button onClick={() => toast.info("Membuka artikel edukasi")} className="mt-3 text-sm font-semibold text-[#a08a2a]">
-          Baca Selengkapnya
-        </button>
       </Card>
     </div>
   );
+}
+
+function statusLabel(s: string) {
+  return {
+    pending: "Menunggu konfirmasi",
+    confirmed: "Booking terkonfirmasi",
+    checked_in: "Sedang menunggu",
+    done: "Selesai",
+    cancelled: "Dibatalkan",
+  }[s] || s;
 }
 
 /* ------------------------------ AI ------------------------------ */
@@ -577,282 +597,297 @@ export function PatientBelanja() {
 
 /* ------------------------------ Profil ------------------------------ */
 
-const FAMILY = [
-  { name: "Siti Aminah", rel: "Ibu", status: "Aktif" },
-  { name: "Ahmad Maulana", rel: "Ayah", status: "Aktif" },
-  { name: "Rafi Maulana", rel: "Anak", status: "Kontrol Berkala" },
-];
 
-const VOUCHERS = [
-  { name: "Voucher diskon pemeriksaan Rp10.000", points: 100 },
-  { name: "Voucher diskon produk marketplace 8%", points: 160 },
-  { name: "Gratis konsultasi singkat online", points: 200 },
-  { name: "Prioritas antrean", points: 260 },
-];
 
 export function PatientProfil() {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const callProfile = useServerFn(getMyProfile);
+  const callUpdate = useServerFn(updateMyProfile);
+  const callBookings = useServerFn(listMyBookings);
+  const callCancel = useServerFn(cancelBooking);
+
+  const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
+  const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
+  const p = profileQ.data?.profile;
+
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState({
+    nama: "", tgl_lahir: "", jenis_kelamin: "" as "" | "L" | "P",
+    telp: "", alamat: "", no_bpjs: "", alergi: "", kontak_darurat: "",
+  });
+
+  function startEdit() {
+    if (!p) return;
+    setForm({
+      nama: p.nama || "",
+      tgl_lahir: p.tgl_lahir || "",
+      jenis_kelamin: (p.jenis_kelamin as "L" | "P" | null) || "",
+      telp: p.telp || "",
+      alamat: p.alamat || "",
+      no_bpjs: p.no_bpjs || "",
+      alergi: p.alergi || "",
+      kontak_darurat: p.kontak_darurat || "",
+    });
+    setEdit(true);
+  }
+
+  const updateM = useMutation({
+    mutationFn: () => callUpdate({
+      data: {
+        nama: form.nama,
+        tgl_lahir: form.tgl_lahir || null,
+        jenis_kelamin: form.jenis_kelamin || null,
+        telp: form.telp || null,
+        alamat: form.alamat || null,
+        no_bpjs: form.no_bpjs || null,
+        alergi: form.alergi || null,
+        kontak_darurat: form.kontak_darurat || null,
+      },
+    }),
+    onSuccess: () => {
+      toast.success("Profil disimpan");
+      qc.invalidateQueries({ queryKey: ["apps", "profile"] });
+      setEdit(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const cancelM = useMutation({
+    mutationFn: (id: string) => callCancel({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Booking dibatalkan");
+      qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
+      qc.invalidateQueries({ queryKey: ["apps", "queue"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function handleLogout() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    logout("apps");
+    navigate({ to: "/apps/login", replace: true });
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Profil Pasien</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Kelola data pribadi dan aktivitas akun Anda.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Kelola data pribadi dan booking Anda.</p>
       </div>
 
       <Card className="bg-[#a08a2a] text-white">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-2xl">👤</div>
-          <div className="flex-1">
-            <div className="font-bold">Muhammad Sobri Maulana</div>
-            <div className="text-xs opacity-90">No RM: RM-2026-00128</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold truncate">{p?.nama || "Pasien"}</div>
+            <div className="text-xs opacity-90">Kode: {p?.patient_code || "—"}</div>
           </div>
           <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[#5a4a14]">Aktif</span>
         </div>
-        <button onClick={() => toast.info("Edit Profil")} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#5a4a14]">
-          Edit Profil
-        </button>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Daily Wins Ringkas</div>
-        <p className="mt-1 text-xs text-muted-foreground">Poin 120 • Streak 3 hari • Belum check-in hari ini</p>
-        <div className="mt-3 flex gap-2">
-          <OutlineButton onClick={() => toast.info("Lihat Misi")}>Lihat Misi</OutlineButton>
-          <GoldButton full={false} onClick={() => toast.success("Check-in Harian +10 poin")}>Check-in Harian +10 poin</GoldButton>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Informasi Akun</div>
-        <ul className="mt-2 space-y-1.5 text-sm">
-          <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> +62******7890</li>
-          <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-[#a08a2a]" /> sob***@email.com</li>
-          <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-[#a08a2a]" /> Jl. Melati Indah No....</li>
-        </ul>
-        <button onClick={() => toast.info("Detail akun")} className="mt-3 rounded-xl border border-[#e9dfb8] px-3 py-1.5 text-xs font-semibold">Lihat Detail</button>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Ringkasan Rekam Medis</div>
-        <div className="mt-1 text-sm">2026-05-12 • Mata buram • dr. Sp.M • Visus 6/9</div>
-        <button onClick={() => toast.info("Rekam medis")} className="mt-3 rounded-xl bg-[#a08a2a] px-4 py-1.5 text-xs font-semibold text-white">
-          Lihat Rekam Medis
-        </button>
-      </Card>
-
-      <Card>
-        <div className="flex items-center justify-between">
-          <div className="text-base font-bold">Keluarga Terdaftar</div>
-          <button onClick={() => toast.success("Tambah anggota keluarga")} className="rounded-xl border border-[#e9dfb8] px-3 py-1 text-xs font-semibold">
-            + Tambah
+        {!edit && (
+          <button onClick={startEdit} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#5a4a14]">
+            Edit Profil
           </button>
-        </div>
-        <ul className="mt-3 space-y-2">
-          {FAMILY.map((f) => (
-            <li key={f.name} className="rounded-xl bg-[#fdf2c4] p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">{f.name} <span className="font-normal text-muted-foreground">({f.rel})</span></div>
-                <Pill>{f.status}</Pill>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button onClick={() => toast.info(`Edit ${f.name}`)} className="rounded-md bg-white px-2 py-0.5 text-[11px]">Edit</button>
-                <button onClick={() => toast.warning(`Hapus ${f.name}`)} className="rounded-md bg-white px-2 py-0.5 text-[11px]">Hapus</button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        )}
       </Card>
 
-      <Card>
-        <div className="text-base font-bold">Menu Profil</div>
-        <ul className="mt-2 grid grid-cols-2 gap-2 text-sm">
-          {["Data Pribadi","Dokumen Medis","Riwayat Pemeriksaan","Resep Kacamata","Hasil AI Mata","Alamat & Kontak","Pengaturan Notifikasi","Bantuan Klinik"].map((m) => (
-            <li key={m}>
-              <button onClick={() => toast.info(m)} className="w-full rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-left text-xs font-medium">
-                {m}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card>
-        <div className="flex items-center gap-2 text-base font-bold"><Shield className="h-4 w-4 text-[#a08a2a]" /> Keamanan Akun</div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {["Ubah Password","Verifikasi Nomor HP","Verifikasi Email","PIN / Biometrik","Logout semua perangkat"].map((s) => (
-            <button key={s} onClick={() => toast.info(s)} className="rounded-full border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-1 text-xs">{s}</button>
-          ))}
-        </div>
-      </Card>
+      {edit ? (
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="text-base font-bold">Edit Profil</div>
+            <button onClick={() => setEdit(false)} className="rounded-full p-1 hover:bg-[#fdf8e8]" aria-label="Tutup">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Input label="Nama lengkap" value={form.nama} onChange={(v) => setForm({ ...form, nama: v })} />
+            <Input label="Tanggal lahir" type="date" value={form.tgl_lahir} onChange={(v) => setForm({ ...form, tgl_lahir: v })} />
+            <Select label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
+              options={[{ v: "", l: "—" }, { v: "L", l: "Laki-laki" }, { v: "P", l: "Perempuan" }]} />
+            <Input label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
+            <Input label="No. BPJS" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v })} />
+            <Input label="Kontak darurat" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
+            <div className="sm:col-span-2">
+              <Input label="Alamat" value={form.alamat} onChange={(v) => setForm({ ...form, alamat: v })} />
+            </div>
+            <div className="sm:col-span-2">
+              <Input label="Alergi" value={form.alergi} onChange={(v) => setForm({ ...form, alergi: v })} />
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => updateM.mutate()}
+              disabled={updateM.isPending || !form.nama.trim()}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#a08a2a] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {updateM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Simpan
+            </button>
+          </div>
+        </Card>
+      ) : (
+        <Card>
+          <div className="text-base font-bold">Informasi Akun</div>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.telp || "Belum diisi"}</li>
+            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.alamat || "Belum diisi"}</li>
+            <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-[#a08a2a]" /> BPJS: {p?.no_bpjs || "—"}</li>
+            <li className="flex items-center gap-2"><AlertCircle className="h-3.5 w-3.5 text-[#a08a2a]" /> Alergi: {p?.alergi || "Tidak ada"}</li>
+          </ul>
+        </Card>
+      )}
 
       <Card>
         <div className="flex items-center justify-between">
-          <div className="text-base font-bold">Reward & Voucher</div>
-          <Pill><Trophy className="h-3 w-3" /> Total 120 poin</Pill>
+          <div className="text-base font-bold">Booking Saya</div>
+          <Link to="/apps/booking" className="text-xs font-semibold text-[#a08a2a]">+ Booking baru</Link>
         </div>
+        {bookingsQ.isLoading && <div className="mt-3 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>}
+        {bookingsQ.data?.bookings.length === 0 && (
+          <div className="mt-3 text-sm opacity-70">Belum ada booking.</div>
+        )}
         <ul className="mt-3 space-y-2">
-          {VOUCHERS.map((v) => (
-            <li key={v.name} className="flex items-center justify-between rounded-xl bg-[#fdf8e8] p-3">
-              <div>
-                <div className="text-sm font-semibold">{v.name}</div>
-                <div className="text-[11px] text-muted-foreground">{v.points} poin</div>
+          {bookingsQ.data?.bookings.map((b) => (
+            <li key={b.id} className="rounded-xl bg-[#fdf8e8] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{b.dokter_nama}</div>
+                  <div className="text-xs text-muted-foreground">{b.tanggal} • {b.jam_slot}</div>
+                </div>
+                <Pill tone={b.status === "cancelled" ? "rose" : b.status === "done" ? "navy" : b.status === "confirmed" || b.status === "checked_in" ? "green" : "amber"}>
+                  {statusLabel(b.status)}
+                </Pill>
               </div>
-              <button onClick={() => toast.success(`Tukar: ${v.name}`)} className="rounded-full bg-[#a08a2a] px-3 py-1 text-[11px] font-semibold text-white">
-                Pilih/Tukar
-              </button>
+              {(b.status === "pending" || b.status === "confirmed") && (
+                <button
+                  onClick={() => { if (confirm("Batalkan booking ini?")) cancelM.mutate(b.id); }}
+                  disabled={cancelM.isPending}
+                  className="mt-2 rounded-md bg-white px-2 py-0.5 text-[11px]"
+                >
+                  Batalkan
+                </button>
+              )}
             </li>
           ))}
         </ul>
       </Card>
 
-      <button onClick={() => toast.warning("Keluar dari akun")} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e9dfb8] bg-white py-3 text-sm font-semibold text-[#7a6010]">
+      <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e9dfb8] bg-white py-3 text-sm font-semibold text-[#7a6010]">
         <LogOut className="h-4 w-4" /> Keluar Akun
       </button>
     </div>
   );
 }
 
+function Input({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <label className="block">
+      <div className="text-xs font-medium opacity-70">{label}</div>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-[#e9dfb8] bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#a08a2a]"
+      />
+    </label>
+  );
+}
+
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
+  return (
+    <label className="block">
+      <div className="text-xs font-medium opacity-70">{label}</div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-md border border-[#e9dfb8] bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#a08a2a]"
+      >
+        {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+      </select>
+    </label>
+  );
+}
+
 /* ------------------------------ Laporan ------------------------------ */
 
-const VISUS = [
-  { m: "Mar", k: 6, ki: 6 },
-  { m: "Apr", k: 6, ki: 6.5 },
-  { m: "Mei", k: 9, ki: 6.2 },
-];
-const TIO = [{ m: "Mar", v: 21 }, { m: "Apr", v: 19 }, { m: "Mei", v: 18 }];
+
 
 export function PatientLaporan() {
-  const [periode, setPeriode] = useState("3 Bulan");
-  const [kategori, setKategori] = useState("Semua");
+  const callInvoices = useServerFn(listMyInvoices);
+  const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices() });
+  const invoices = invoicesQ.data?.invoices ?? [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <Card>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold leading-tight">Laporan Kesehatan Mata</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Pantau kondisi mata Anda secara terstruktur dan mudah dibaca.</p>
+            <h1 className="text-2xl font-bold leading-tight">Riwayat & Resep</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Daftar pemeriksaan dan resep dari kunjungan Anda.</p>
           </div>
-          <button onClick={() => toast.success("Mengunduh laporan PDF")} className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]">
+          <button onClick={() => toast.info("Unduh laporan akan tersedia segera")} className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Unduh">
             <Download className="h-5 w-5" />
           </button>
         </div>
       </Card>
 
-      <Card className="bg-[#a08a2a] text-white">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <AlertCircle className="h-4 w-4" /> Status Kesehatan Mata: Perlu Pemantauan
-        </div>
-        <p className="mt-2 text-sm opacity-95">
-          Hasil terakhir menunjukkan visus mata kiri lebih rendah dan perlu pemantauan berkala.
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <div>Kunjungan: 2026-05-12</div>
-          <div>Dokter: dr. Sp.M</div>
-          <div>RM: RM-2026-00128</div>
-          <div>Status: Aktif</div>
-        </div>
-        <button onClick={() => toast.success("Mengunduh laporan")} className="mt-3 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#5a4a14]">
-          Unduh Laporan
-        </button>
-      </Card>
+      {invoicesQ.isLoading && (
+        <Card><div className="text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat riwayat…</div></Card>
+      )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard label="Visus Mata Kanan" value="6/9" sub="Normal" tone="green" />
-        <MetricCard label="Visus Mata Kiri" value="6/12" sub="Perlu kontrol" tone="rose" />
-        <MetricCard label="Tekanan Intraokular" value="18 mmHg" sub="Dalam batas aman" tone="green" />
-        <MetricCard label="Risiko Mata Kering" value="Sedang" sub="Pantau gejala" tone="amber" />
-      </div>
+      {!invoicesQ.isLoading && invoices.length === 0 && (
+        <Card>
+          <div className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-[#a08a2a]" /> Belum ada riwayat</div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Riwayat akan muncul di sini setelah kunjungan Anda dicatat oleh klinik. Belum pernah berkunjung?
+          </p>
+          <Link to="/apps/booking" className="mt-3 inline-block rounded-xl bg-[#a08a2a] px-4 py-2 text-xs font-semibold text-white">
+            Booking Pemeriksaan
+          </Link>
+        </Card>
+      )}
 
-      <Card>
-        <div className="text-base font-bold">Filter Laporan</div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {["1 Bulan","3 Bulan","6 Bulan","1 Tahun"].map((p) => (
-            <button key={p} onClick={() => setPeriode(p)} className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${periode===p?"bg-[#a08a2a] text-white":"bg-[#fdf2c4] text-[#7a6010]"}`}>{p}</button>
-          ))}
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {["Semua","Pemeriksaan Dokter","AI Screening","Resep Kacamata"].map((k) => (
-            <button key={k} onClick={() => setKategori(k)} className={`rounded-xl px-3 py-1.5 text-xs font-semibold ${kategori===k?"bg-[#1f1d19] text-white":"bg-[#fdf2c4] text-[#7a6010]"}`}>{k}</button>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Grafik Perkembangan Visus</div>
-        <p className="mt-1 text-xs text-muted-foreground">Perbandingan hasil pemeriksaan mata kanan dan kiri.</p>
-        <div className="mt-3 flex items-end justify-between gap-2">
-          {VISUS.map((v) => (
-            <div key={v.m} className="flex-1 text-center">
-              <div className="flex items-end justify-center gap-1" style={{ height: 110 }}>
-                <div className="w-5 rounded-t bg-[#a08a2a]" style={{ height: `${v.k * 10}px` }} />
-                <div className="w-5 rounded-t bg-[#1f1d19]" style={{ height: `${v.ki * 10}px` }} />
+      {invoices.map((inv) => (
+        <Card key={inv.id}>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-[11px] text-muted-foreground">{inv.no_invoice}</div>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Stethoscope className="h-4 w-4 text-[#a08a2a]" />
+                {new Date(inv.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
               </div>
-              <div className="mt-1 text-xs font-semibold">{v.m}</div>
-              <div className="text-[10px] text-muted-foreground">K {v.k} • Ki {v.ki}</div>
             </div>
-          ))}
-        </div>
-      </Card>
+            <Pill tone={inv.status === "paid" ? "green" : "amber"}>{inv.status}</Pill>
+          </div>
+          <ul className="mt-3 space-y-1.5 text-sm">
+            {inv.fin_invoice_item?.map((it, i) => (
+              <li key={i} className="flex items-center justify-between rounded-md bg-[#fdf8e8] px-3 py-2">
+                <span className="truncate">{it.layanan_nama} × {it.qty}</span>
+                <span className="text-xs opacity-70">Rp {Number(it.subtotal).toLocaleString("id-ID")}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex items-center justify-between border-t border-[#e9dfb8] pt-3">
+            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-base font-bold">Rp {Number(inv.total).toLocaleString("id-ID")}</span>
+          </div>
+        </Card>
+      ))}
 
       <Card>
-        <div className="text-base font-bold">Tekanan Intraokular</div>
-        <div className="mt-1 text-xs text-muted-foreground">Dipantau untuk membantu deteksi risiko glaukoma.</div>
-        <div className="mt-3 flex items-end justify-between gap-2">
-          {TIO.map((t) => (
-            <div key={t.m} className="flex-1 text-center">
-              <div className="mx-auto w-8 rounded-t bg-emerald-500" style={{ height: `${t.v * 4}px` }} />
-              <div className="mt-1 text-xs font-semibold">{t.m}</div>
-              <div className="text-[10px] text-muted-foreground">{t.v}</div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Riwayat Pemeriksaan</div>
-        <div className="mt-2 rounded-xl bg-[#fdf8e8] p-3">
-          <div className="text-xs text-muted-foreground">2026-05-12</div>
-          <div className="flex items-center gap-2 text-sm font-semibold"><Stethoscope className="h-4 w-4 text-[#a08a2a]" /> Pemeriksaan Mata Lengkap</div>
-          <div className="text-xs text-muted-foreground">dr. Sp.M • Selesai</div>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Hasil AI Mata Terakhir</div>
-        <p className="mt-1 text-sm">2026-03-10 • Risiko Sedang • Keluhan Mata buram</p>
-        <button onClick={() => toast.info("Detail AI")} className="mt-3 rounded-xl border border-[#e9dfb8] px-3 py-1.5 text-xs font-semibold">
-          Lihat Detail AI
-        </button>
-      </Card>
-
-      <Card>
-        <div className="text-base font-bold">Rekomendasi</div>
+        <div className="text-base font-bold">Butuh bantuan?</div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Lakukan pemeriksaan ulang 1 bulan lagi atau lebih cepat jika keluhan bertambah.
+          Hubungi klinik jika ada pertanyaan tentang resep atau hasil pemeriksaan.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <GoldButton full={false} onClick={() => toast.success("Booking pemeriksaan")}>Booking Pemeriksaan</GoldButton>
+        <div className="mt-3">
           <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
             <MessageCircle className="h-4 w-4" /> Hubungi Klinik
           </a>
         </div>
       </Card>
     </div>
-  );
-}
-
-function MetricCard({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: "green" | "rose" | "amber" }) {
-  const dot = { green: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-500" }[tone];
-  return (
-    <Card className="p-4">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
-      <div className="mt-1 flex items-center gap-1.5 text-xs">
-        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> {sub}
-      </div>
-      <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-        <FileText className="h-3 w-3" /> Detail klinis
-      </div>
-    </Card>
   );
 }
