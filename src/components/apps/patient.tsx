@@ -31,27 +31,7 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
   );
 }
 
-function GoldButton({ children, onClick, full = true }: { children: ReactNode; onClick?: () => void; full?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`${full ? "w-full" : ""} rounded-xl bg-[#a08a2a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8c7822] active:scale-[0.98]`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function OutlineButton({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 py-2 text-sm font-medium text-[#5a4a14] transition hover:bg-[#f6ecc8]"
-    >
-      {children}
-    </button>
-  );
-}
+import { GoldButton, OutlineButton } from "@/components/apps/ui";
 
 function Pill({ children, tone = "amber" }: { children: ReactNode; tone?: "amber" | "green" | "rose" | "navy" }) {
   const t = {
