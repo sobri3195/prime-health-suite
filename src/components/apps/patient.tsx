@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
 import { generateResepPDF } from "@/lib/resep-pdf";
+import { GoldButton, OutlineButton } from "@/components/apps/ui";
 
 /* ------------------------------ shared ui ------------------------------ */
 
