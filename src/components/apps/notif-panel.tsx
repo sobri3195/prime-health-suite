@@ -3,11 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, Check, CheckCheck, Trash2, Loader2, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, Inbox } from "lucide-react";
 import {
   listMyNotifications, markNotifRead, markAllNotifRead, deleteNotif,
 } from "@/lib/apps-patient.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { EmptyState, SkeletonList } from "@/components/apps/ui";
+import { useI18n } from "@/lib/i18n";
 
 /** Realtime subscription untuk notif & queue refresh */
 export function useAppsRealtime(userId: string | undefined) {
