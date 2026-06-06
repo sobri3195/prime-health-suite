@@ -42,21 +42,19 @@ export function AppShell({ system, children }: { system: System; children: React
         }`}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to={`/${system}`} className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
               <Activity className="h-4 w-4" />
             </div>
             <div className="leading-tight">
-              <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Prime Health
-              </div>
+              <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
             </div>
           </Link>
           <button className="md:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
         </div>
+
 
         <nav className="flex-1 overflow-y-auto p-3">
           <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
