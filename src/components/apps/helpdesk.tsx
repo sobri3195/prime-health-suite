@@ -121,7 +121,7 @@ export function HelpdeskPage() {
 }
 
 
-function TicketDrawer({ ticket, onClose }: { ticket: HelpdeskTicket; onClose: () => void }) {
+function TicketDrawer({ ticket, onClose, locale, tr }: { ticket: HelpdeskTicket; onClose: () => void; locale: string; tr: (k: string) => string }) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
@@ -131,7 +131,7 @@ function TicketDrawer({ ticket, onClose }: { ticket: HelpdeskTicket; onClose: ()
             <div className="font-mono text-xs text-muted-foreground">{ticket.id}</div>
             <h2 className="mt-1 text-lg font-semibold">{ticket.subject}</h2>
           </div>
-          <button onClick={onClose} aria-label="Close"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} aria-label={tr("common.cancel")}><X className="h-5 w-5" /></button>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusBadge tone={statusTone[ticket.status]}>{ticket.status}</StatusBadge>
@@ -140,16 +140,16 @@ function TicketDrawer({ ticket, onClose }: { ticket: HelpdeskTicket; onClose: ()
         </div>
         <p className="mt-4 text-sm text-muted-foreground">{ticket.description}</p>
         <div className="mt-4 space-y-1 text-xs text-muted-foreground">
-          <div>Pelapor: <span className="text-foreground">{ticket.reporter}</span></div>
-          <div>PIC: <span className="text-foreground">{ticket.pic}</span></div>
+          <div>{tr("help.reporter")}: <span className="text-foreground">{ticket.reporter}</span></div>
+          <div>{tr("help.col.pic")}: <span className="text-foreground">{ticket.pic}</span></div>
         </div>
         <div className="mt-6">
-          <div className="mb-2 text-sm font-semibold">Timeline</div>
+          <div className="mb-2 text-sm font-semibold">{tr("help.timeline")}</div>
           <ol className="space-y-3 border-l border-border pl-4">
             {ticket.timeline.map((a, i) => (
               <li key={i}>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(a.ts).toLocaleString("id-ID")} · {a.actor}
+                  {new Date(a.ts).toLocaleString(locale)} · {a.actor}
                 </div>
                 <div className="text-sm">{a.message}</div>
               </li>
@@ -161,18 +161,18 @@ function TicketDrawer({ ticket, onClose }: { ticket: HelpdeskTicket; onClose: ()
   );
 }
 
-function NewTicketModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: () => void }) {
+function NewTicketModal({ onClose, onSubmit, tr }: { onClose: () => void; onSubmit: () => void; tr: (k: string) => string }) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
       <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
-        <h2 className="text-lg font-semibold">Tiket baru</h2>
+        <h2 className="text-lg font-semibold">{tr("help.modal.title")}</h2>
         <form
           className="mt-4 space-y-3"
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
         >
-          <input required placeholder="Subjek" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <textarea required placeholder="Deskripsi kendala" rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <input required placeholder={tr("help.modal.subject")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <textarea required placeholder={tr("help.modal.desc")} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
           <div className="grid grid-cols-2 gap-3">
             <select className="rounded-md border border-input bg-background px-2 py-2 text-sm">
               {CAT.slice(1).map((c) => <option key={c.value}>{c.label}</option>)}
@@ -182,11 +182,12 @@ function NewTicketModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="rounded-md border border-border px-3 py-1.5 text-sm">Batal</button>
-            <button type="submit" className="rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground">Buat tiket</button>
+            <button type="button" onClick={onClose} className="rounded-md border border-border px-3 py-1.5 text-sm">{tr("common.cancel")}</button>
+            <button type="submit" className="rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground">{tr("help.modal.submit")}</button>
           </div>
         </form>
       </div>
     </>
   );
 }
+
