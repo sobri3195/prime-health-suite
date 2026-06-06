@@ -56,25 +56,7 @@ export function AppShell({ system, children }: { system: System; children: React
         </div>
 
         <nav className="space-y-0.5 p-3">
-          {items.map((it) => {
-            const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
-            const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
-            return (
-              <Link
-                key={it.label}
-                to={href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? "bg-navy text-navy-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <it.icon className="h-4 w-4" />
-                <span>{it.label}</span>
-              </Link>
-            );
-          })}
+          <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
         </nav>
 
         <div className="mt-2 border-t border-border p-3">
