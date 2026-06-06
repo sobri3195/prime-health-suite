@@ -92,7 +92,7 @@ export function PatientBeranda() {
       <Card>
         <div className="flex items-start justify-between">
           <div>
-            <div className="text-[11px] font-bold tracking-[0.2em] text-[#a08a2a]">PRIME</div>
+            <div className="text-[11px] font-bold tracking-[0.2em] text-[#6b5a16]">PRIME</div>
             <div className="text-[11px] text-muted-foreground">Klinik Utama Mata</div>
           </div>
           <NotifBellBadge />
@@ -121,7 +121,7 @@ export function PatientBeranda() {
             to="/apps/ai"
             className="rounded-2xl border border-[#e9dfb8] bg-white p-4 text-left transition hover:bg-[#fdf8e8]"
           >
-            <Brain className="mb-3 h-5 w-5 text-[#a08a2a]" />
+            <Brain className="mb-3 h-5 w-5 text-[#6b5a16]" />
             <div className="text-base font-bold leading-tight">Cek AI Mata</div>
             <div className="mt-1 text-[11px] text-muted-foreground">Skrining awal cepat.</div>
           </Link>
@@ -131,7 +131,7 @@ export function PatientBeranda() {
       {/* antrean hari ini */}
       <Card>
         <div className="flex items-center justify-between">
-          <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
+          <div className="text-[11px] font-bold tracking-widest text-[#6b5a16]">ANTREAN HARI INI</div>
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> LIVE
           </span>
@@ -147,7 +147,7 @@ export function PatientBeranda() {
                 : "Memuat posisi…"}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-              <Clock className="h-3.5 w-3.5 text-[#a08a2a]" /> {queue.jam_slot}
+              <Clock className="h-3.5 w-3.5 text-[#6b5a16]" /> {queue.jam_slot}
               <Pill tone={queue.status === "checked_in" ? "green" : "amber"}>
                 <CheckCircle2 className="h-3 w-3" /> {statusLabel(queue.status)}
               </Pill>
@@ -173,7 +173,7 @@ export function PatientBeranda() {
             </div>
             <div className="mt-2 text-sm">{upcoming.keluhan || "Pemeriksaan mata"}</div>
             <div className="mt-2"><Pill tone={upcoming.status === "confirmed" ? "green" : "amber"}>{statusLabel(upcoming.status)}</Pill></div>
-            <Link to="/apps/laporan" className="mt-3 inline-block text-sm font-semibold text-[#a08a2a]">
+            <Link to="/apps/laporan" className="mt-3 inline-block text-sm font-semibold text-[#6b5a16]">
               Lihat semua booking →
             </Link>
           </>
@@ -198,7 +198,7 @@ export function PatientBeranda() {
             { l: "Edukasi Mata", i: BookOpen, to: "/apps" as const },
           ].map((m) => (
             <Link key={m.l} to={m.to} className="rounded-2xl border border-[#e9dfb8] bg-white p-4 transition hover:bg-[#fdf8e8]">
-              <m.i className="mb-2 h-5 w-5 text-[#a08a2a]" />
+              <m.i className="mb-2 h-5 w-5 text-[#6b5a16]" />
               <div className="text-sm font-semibold">{m.l}</div>
             </Link>
           ))}
@@ -446,7 +446,7 @@ export function PatientAI() {
       {loading && (
         <Card>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-[#a08a2a]" />
+            <Loader2 className="h-4 w-4 animate-spin text-[#6b5a16]" />
             Prime AI Engine sedang memproses gejala…
           </div>
         </Card>
@@ -467,7 +467,7 @@ export function PatientAI() {
 
           <Card>
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <Stethoscope className="h-4 w-4 text-[#a08a2a]" /> Kemungkinan kondisi
+              <Stethoscope className="h-4 w-4 text-[#6b5a16]" /> Kemungkinan kondisi
             </div>
             <ul className="mt-2 space-y-2">
               {hasil.possible_conditions.map((c, i) => (
@@ -497,7 +497,7 @@ export function PatientAI() {
 
           <Card>
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <ListChecks className="h-4 w-4 text-[#a08a2a]" /> Rekomendasi perawatan
+              <ListChecks className="h-4 w-4 text-[#6b5a16]" /> Rekomendasi perawatan
             </div>
             <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
               {hasil.recommendations.map((r, i) => <li key={i}>{r}</li>)}
@@ -506,7 +506,7 @@ export function PatientAI() {
 
           <Card>
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <ChevronRight className="h-4 w-4 text-[#a08a2a]" /> Langkah selanjutnya
+              <ChevronRight className="h-4 w-4 text-[#6b5a16]" /> Langkah selanjutnya
             </div>
             <ul className="mt-2 space-y-1 text-sm">
               {hasil.next_steps.map((r, i) => (
@@ -837,11 +837,11 @@ export function PatientProfil() {
         <Card>
           <div className="text-base font-bold">Informasi Akun</div>
           <ul className="mt-2 space-y-1.5 text-sm">
-            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.telp || "Belum diisi"}</li>
-            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.alamat || "Belum diisi"}</li>
-            <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-[#a08a2a]" /> NIK: {p?.nik || "—"} • BPJS: {p?.no_bpjs || "—"}</li>
-            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> Kontak darurat: {p?.kontak_darurat || "—"}</li>
-            <li className="flex items-center gap-2"><AlertCircle className="h-3.5 w-3.5 text-[#a08a2a]" /> Alergi: {p?.alergi || "Tidak ada"}</li>
+            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#6b5a16]" /> {p?.telp || "Belum diisi"}</li>
+            <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-[#6b5a16]" /> {p?.alamat || "Belum diisi"}</li>
+            <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-[#6b5a16]" /> NIK: {p?.nik || "—"} • BPJS: {p?.no_bpjs || "—"}</li>
+            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#6b5a16]" /> Kontak darurat: {p?.kontak_darurat || "—"}</li>
+            <li className="flex items-center gap-2"><AlertCircle className="h-3.5 w-3.5 text-[#6b5a16]" /> Alergi: {p?.alergi || "Tidak ada"}</li>
           </ul>
         </Card>
       )}
@@ -866,7 +866,7 @@ export function PatientProfil() {
       <Card>
         <div className="flex items-center justify-between">
           <div className="text-base font-bold">Booking Saya</div>
-          <Link to="/apps/booking" className="text-xs font-semibold text-[#a08a2a]">+ Booking baru</Link>
+          <Link to="/apps/booking" className="text-xs font-semibold text-[#6b5a16]">+ Booking baru</Link>
         </div>
         {bookingsQ.isLoading && <div className="mt-3 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>}
         {bookingsQ.data?.bookings.length === 0 && (
@@ -1056,7 +1056,7 @@ export function PatientLaporan() {
 
       {!invoicesQ.isLoading && invoices.length === 0 && (
         <Card>
-          <div className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-[#a08a2a]" /> Belum ada riwayat</div>
+          <div className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-[#6b5a16]" /> Belum ada riwayat</div>
           <p className="mt-1 text-sm text-muted-foreground">
             Riwayat akan muncul di sini setelah kunjungan Anda dicatat oleh klinik. Belum pernah berkunjung?
           </p>
@@ -1072,7 +1072,7 @@ export function PatientLaporan() {
             <div>
               <div className="text-[11px] text-muted-foreground">{inv.no_invoice}</div>
               <div className="flex items-center gap-2 text-sm font-semibold">
-                <Stethoscope className="h-4 w-4 text-[#a08a2a]" />
+                <Stethoscope className="h-4 w-4 text-[#6b5a16]" />
                 {new Date(inv.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
               </div>
             </div>

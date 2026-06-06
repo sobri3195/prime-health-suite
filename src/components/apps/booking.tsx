@@ -78,7 +78,7 @@ export function BookingFlow() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">BOOKING · STEP {step}/4</div>
+          <div className="text-[11px] font-bold tracking-widest text-[#6b5a16]">BOOKING · STEP {step}/4</div>
           <h1 className="text-xl font-bold">
             {step === 1 && "Pilih Dokter"}
             {step === 2 && "Pilih Tanggal"}
@@ -104,13 +104,13 @@ export function BookingFlow() {
               className="flex w-full items-center gap-3 rounded-2xl border border-[#e9dfb8] bg-white p-4 text-left transition hover:bg-[#fdf8e8]"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fdf2c4]">
-                <Stethoscope className="h-5 w-5 text-[#a08a2a]" />
+                <Stethoscope className="h-5 w-5 text-[#6b5a16]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold">{d.name}</div>
                 <div className="text-xs opacity-70 truncate">{d.spesialisasi || "Dokter umum"}</div>
               </div>
-              <div className="text-xs text-[#a08a2a]">Pilih →</div>
+              <div className="text-xs text-[#6b5a16]">Pilih →</div>
             </button>
           ))}
         </div>
@@ -132,7 +132,7 @@ export function BookingFlow() {
                   onClick={() => { setTanggal(iso); setStep(3); }}
                   className={`rounded-2xl border p-3 text-left ${active ? "border-[#a08a2a] bg-[#a08a2a] text-white" : "border-[#e9dfb8] bg-white"}`}
                 >
-                  <Calendar className={`mb-1 h-4 w-4 ${active ? "text-white" : "text-[#a08a2a]"}`} />
+                  <Calendar className={`mb-1 h-4 w-4 ${active ? "text-white" : "text-[#6b5a16]"}`} />
                   <div className="text-sm font-semibold">{dateLabel(d)}</div>
                   <div className={`text-[11px] ${active ? "opacity-90" : "opacity-60"}`}>{iso}</div>
                 </button>

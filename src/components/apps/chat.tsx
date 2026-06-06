@@ -43,7 +43,7 @@ export function PatientChat() {
     <div className="mx-auto flex h-[calc(100vh-160px)] max-w-2xl flex-col">
       <div className="rounded-t-2xl border border-b-0 border-[#e9dfb8] bg-white p-4">
         <div className="flex items-center gap-2">
-          <div className="rounded-full bg-[#fdf2c4] p-2"><MessageCircle className="h-4 w-4 text-[#a08a2a]" /></div>
+          <div className="rounded-full bg-[#fdf2c4] p-2"><MessageCircle className="h-4 w-4 text-[#6b5a16]" /></div>
           <div>
             <div className="text-sm font-bold">Helpdesk Prime Apps</div>
             <div className="text-[11px] text-emerald-600">● Front Office online (Sen–Sab 08:00–20:00)</div>
@@ -61,7 +61,7 @@ export function PatientChat() {
                   isSys ? "bg-[#fdf2c4] text-[#5a4a14] italic" :
                   isMe ? "bg-[#a08a2a] text-white" : "bg-white border border-[#e9dfb8]"
                 }`}>
-                  {!isMe && !isSys && <div className="mb-0.5 text-[10px] font-bold text-[#a08a2a]">Front Office</div>}
+                  {!isMe && !isSys && <div className="mb-0.5 text-[10px] font-bold text-[#6b5a16]">Front Office</div>}
                   <div className="whitespace-pre-wrap">{m.body}</div>
                   <div className={`mt-1 text-[10px] ${isMe ? "text-white/70" : "text-muted-foreground"}`}>
                     {new Date(m.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}

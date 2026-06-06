@@ -62,7 +62,7 @@ export function PatientBelanjaReal() {
           {list.map((p) => (
             <div key={p.id} className="rounded-2xl border border-[#e9dfb8] bg-white p-3 shadow-sm">
               <div className="flex h-24 items-center justify-center rounded-xl bg-[#fdf2c4]">
-                <Package className="h-10 w-10 text-[#a08a2a]" />
+                <Package className="h-10 w-10 text-[#6b5a16]" />
               </div>
               <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">{p.kategori}</div>
               <div className="text-sm font-bold leading-tight">{p.nama}</div>
@@ -113,14 +113,14 @@ export function PatientCart() {
         <div className="text-center text-sm"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-[#e9dfb8] bg-white p-8 text-center text-sm text-muted-foreground">
-          Keranjang kosong. <Link to="/apps/belanja" className="font-semibold text-[#a08a2a]">Mulai belanja</Link>
+          Keranjang kosong. <Link to="/apps/belanja" className="font-semibold text-[#6b5a16]">Mulai belanja</Link>
         </div>
       ) : (
         <>
           <div className="space-y-2">
             {items.map((it: any) => (
               <div key={it.id} className="flex items-center gap-3 rounded-2xl border border-[#e9dfb8] bg-white p-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fdf2c4]"><Package className="h-6 w-6 text-[#a08a2a]" /></div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fdf2c4]"><Package className="h-6 w-6 text-[#6b5a16]" /></div>
                 <div className="flex-1">
                   <div className="text-sm font-semibold">{it.produk?.nama}</div>
                   <div className="text-xs text-muted-foreground">{fmt(it.produk?.harga ?? 0)}</div>
