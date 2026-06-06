@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen,
   Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
-  Download, AlertCircle, Camera, Trophy, Phone, MapPin, Shield, LogOut,
+  Download, AlertCircle, Camera, Phone, MapPin, Shield, LogOut,
   Stethoscope, FileText, MessageCircle, Loader2, Activity, ShieldAlert, ListChecks,
   Save, X, ChevronRight,
 } from "lucide-react";
