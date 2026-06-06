@@ -14,7 +14,348 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fin_coa: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          parent_code: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_code?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_code?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_cost_center: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          pic: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          pic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          pic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_dokter: {
+        Row: {
+          code: string
+          created_at: string
+          default_fee_pct: number
+          id: string
+          is_active: boolean
+          is_ptkp_k0: boolean
+          name: string
+          npwp: string | null
+          spesialisasi: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          default_fee_pct?: number
+          id?: string
+          is_active?: boolean
+          is_ptkp_k0?: boolean
+          name: string
+          npwp?: string | null
+          spesialisasi?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          default_fee_pct?: number
+          id?: string
+          is_active?: boolean
+          is_ptkp_k0?: boolean
+          name?: string
+          npwp?: string | null
+          spesialisasi?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_karyawan: {
+        Row: {
+          code: string
+          created_at: string
+          gaji_pokok: number
+          id: string
+          is_active: boolean
+          jabatan: string | null
+          name: string
+          npwp: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          gaji_pokok?: number
+          id?: string
+          is_active?: boolean
+          jabatan?: string | null
+          name: string
+          npwp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          gaji_pokok?: number
+          id?: string
+          is_active?: boolean
+          jabatan?: string | null
+          name?: string
+          npwp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_kategori_layanan: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_layanan: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_kena_pajak: boolean
+          kategori_code: string | null
+          name: string
+          tarif: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_kena_pajak?: boolean
+          kategori_code?: string | null
+          name: string
+          tarif?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_kena_pajak?: boolean
+          kategori_code?: string | null
+          name?: string
+          tarif?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_payer: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          term_hari: number
+          tipe: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          term_hari?: number
+          tipe: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          term_hari?: number
+          tipe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_profil_klinik: {
+        Row: {
+          alamat: string | null
+          created_at: string
+          email: string | null
+          id: string
+          kota: string | null
+          logo_url: string | null
+          nama: string
+          npwp: string | null
+          telp: string | null
+          updated_at: string
+        }
+        Insert: {
+          alamat?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kota?: string | null
+          logo_url?: string | null
+          nama: string
+          npwp?: string | null
+          telp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alamat?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kota?: string | null
+          logo_url?: string | null
+          nama?: string
+          npwp?: string | null
+          telp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_tarif_pajak: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          jenis: string
+          name: string
+          tarif_pct: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jenis: string
+          name: string
+          tarif_pct: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jenis?: string
+          name?: string
+          tarif_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_vendor: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kategori: string | null
+          name: string
+          npwp: string | null
+          term_hari: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kategori?: string | null
+          name: string
+          npwp?: string | null
+          term_hari?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kategori?: string | null
+          name?: string
+          npwp?: string | null
+          term_hari?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
