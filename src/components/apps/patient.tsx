@@ -516,11 +516,13 @@ export function PatientAI() {
               ))}
             </ul>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => toast.success("Booking dibuka")} className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
-                Booking Dokter
+              <button onClick={() => navigate({ to: "/apps/booking" })}
+                className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
+                {hasil.risk === "Tinggi" ? "Rujuk ke Booking Dokter (segera)" : "Booking Dokter"}
               </button>
-              <button onClick={() => toast.info("Chat dokter dibuka")} className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
-                Chat Dokter
+              <button onClick={() => navigate({ to: "/apps/chat" })}
+                className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
+                Chat FO
               </button>
             </div>
           </Card>
