@@ -7,6 +7,7 @@ import { HelpdeskPage } from "@/components/apps/helpdesk";
 import { DocumentsPage } from "@/components/apps/documents";
 import { UsersPage } from "@/components/apps/users";
 import { AuditLogPage } from "@/components/apps/audit-log";
+import { IntegrationPage } from "@/components/apps/integration";
 
 export const Route = createFileRoute("/_authenticated/apps/$section")({
   component: Section,
@@ -20,6 +21,7 @@ function Section() {
     case "helpdesk": return <HelpdeskPage />;
     case "documents": return <DocumentsPage />;
     case "users": return <UsersPage />;
+    case "integration": return <IntegrationPage />;
     case "audit-log": return <AuditLogPage />;
     default: {
       const meta = findNav("apps", section);
