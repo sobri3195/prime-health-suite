@@ -14,6 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { clinicAudit } from "@/lib/clinic-audit";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
