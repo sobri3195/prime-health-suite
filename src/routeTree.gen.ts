@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -66,8 +67,14 @@ import { Route as AuthenticatedFinanceBukuBesarRouteImport } from './routes/_aut
 import { Route as AuthenticatedFinanceBankRouteImport } from './routes/_authenticated.finance.bank'
 import { Route as AuthenticatedFinanceArusKasRouteImport } from './routes/_authenticated.finance.arus-kas'
 import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
+import { Route as AuthenticatedAppsBookingRouteImport } from './routes/_authenticated.apps.booking'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -395,6 +402,12 @@ const AuthenticatedFinanceSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedAppsBookingRoute =
+  AuthenticatedAppsBookingRouteImport.update({
+    id: '/booking',
+    path: '/booking',
+    getParentRoute: () => AuthenticatedAppsRoute,
+  } as any)
 const AuthenticatedAppsSectionRoute =
   AuthenticatedAppsSectionRouteImport.update({
     id: '/$section',
@@ -405,6 +418,7 @@ const AuthenticatedAppsSectionRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/apps': typeof AuthenticatedAppsRouteWithChildren
   '/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/integration': typeof AuthenticatedIntegrationRoute
@@ -417,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/apps/booking': typeof AuthenticatedAppsBookingRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -464,6 +479,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/integration': typeof AuthenticatedIntegrationRoute
   '/qa': typeof AuthenticatedQaRoute
   '/apps/login': typeof AppsLoginRoute
@@ -473,6 +489,7 @@ export interface FileRoutesByTo {
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/apps/booking': typeof AuthenticatedAppsBookingRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -522,6 +539,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/apps': typeof AuthenticatedAppsRouteWithChildren
   '/_authenticated/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/_authenticated/integration': typeof AuthenticatedIntegrationRoute
@@ -534,6 +552,7 @@ export interface FileRoutesById {
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/_authenticated/apps/booking': typeof AuthenticatedAppsBookingRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/_authenticated/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -583,6 +602,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/apps'
     | '/finance'
     | '/integration'
@@ -595,6 +615,7 @@ export interface FileRouteTypes {
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
+    | '/apps/booking'
     | '/finance/$section'
     | '/finance/arus-kas'
     | '/finance/bank'
@@ -642,6 +663,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/integration'
     | '/qa'
     | '/apps/login'
@@ -651,6 +673,7 @@ export interface FileRouteTypes {
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
+    | '/apps/booking'
     | '/finance/$section'
     | '/finance/arus-kas'
     | '/finance/bank'
@@ -699,6 +722,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/reset-password'
     | '/_authenticated/apps'
     | '/_authenticated/finance'
     | '/_authenticated/integration'
@@ -711,6 +735,7 @@ export interface FileRouteTypes {
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/_authenticated/apps/$section'
+    | '/_authenticated/apps/booking'
     | '/_authenticated/finance/$section'
     | '/_authenticated/finance/arus-kas'
     | '/_authenticated/finance/bank'
@@ -760,6 +785,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AppsLoginRoute: typeof AppsLoginRoute
   FinanceLoginRoute: typeof FinanceLoginRoute
   ProdukAppsRoute: typeof ProdukAppsRoute
@@ -770,6 +796,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -1169,6 +1202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceSectionRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/apps/booking': {
+      id: '/_authenticated/apps/booking'
+      path: '/booking'
+      fullPath: '/apps/booking'
+      preLoaderRoute: typeof AuthenticatedAppsBookingRouteImport
+      parentRoute: typeof AuthenticatedAppsRoute
+    }
     '/_authenticated/apps/$section': {
       id: '/_authenticated/apps/$section'
       path: '/$section'
@@ -1181,11 +1221,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppsRouteChildren {
   AuthenticatedAppsSectionRoute: typeof AuthenticatedAppsSectionRoute
+  AuthenticatedAppsBookingRoute: typeof AuthenticatedAppsBookingRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
 }
 
 const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
   AuthenticatedAppsSectionRoute: AuthenticatedAppsSectionRoute,
+  AuthenticatedAppsBookingRoute: AuthenticatedAppsBookingRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
 }
 
@@ -1334,6 +1376,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AppsLoginRoute: AppsLoginRoute,
   FinanceLoginRoute: FinanceLoginRoute,
   ProdukAppsRoute: ProdukAppsRoute,
@@ -1344,13 +1387,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
