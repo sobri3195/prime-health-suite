@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Activity, Bell, ChevronDown, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
-import { NAV, SYSTEM_LABEL, findNav, type NavItem } from "@/lib/nav-config";
+import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
+
+import { BRAND } from "@/lib/brand";
 
 export function AppShell({ system, children }: { system: System; children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -13,6 +15,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const brand = BRAND[system];
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -31,9 +34,11 @@ export function AppShell({ system, children }: { system: System; children: React
 
   return (
     <div
-      className={`flex min-h-screen bg-background ${isApps ? "flex-col" : ""}`}
-      style={isApps ? { background: "#f7eccb" } : undefined}
+      className={`flex min-h-screen ${isApps ? "flex-col" : ""}`}
+      data-system={system}
+      style={{ background: brand.background, color: brand.foreground }}
     >
+
       {/* Sidebar (hidden for Prime Apps which uses bottom nav) */}
       {!isApps && (
       <aside
@@ -43,11 +48,14 @@ export function AppShell({ system, children }: { system: System; children: React
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
           <Link to={`/${system}`} className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
-              <Activity className="h-4 w-4" />
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-base text-white"
+              style={{ background: brand.accent }}
+            >
+              {brand.faviconEmoji}
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
+              <div className="text-sm font-semibold">{brand.name}</div>
             </div>
           </Link>
           <button className="md:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -56,13 +64,15 @@ export function AppShell({ system, children }: { system: System; children: React
         </div>
 
 
+
         <nav className="flex-1 overflow-y-auto p-3">
           <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
         </nav>
 
         <div className="shrink-0 border-t border-border p-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-          © {new Date().getFullYear()} {SYSTEM_LABEL[system]}
+          © {new Date().getFullYear()} {brand.name}
         </div>
+
 
       </aside>
       )}
@@ -80,21 +90,24 @@ export function AppShell({ system, children }: { system: System; children: React
           )}
           {isApps && (
             <Link to={`/${system}`} className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
-                <Activity className="h-4 w-4" />
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-base text-white"
+                style={{ background: brand.accent }}
+              >
+                {brand.faviconEmoji}
               </div>
               <div className="leading-tight">
-                <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
+                <div className="text-sm font-semibold">{brand.name}</div>
               </div>
             </Link>
           )}
 
-
           <nav className="hidden items-center gap-1.5 text-sm md:flex">
-            {!isApps && <span className="text-muted-foreground">{SYSTEM_LABEL[system]}</span>}
+            {!isApps && <span className="text-muted-foreground">{brand.name}</span>}
             {!isApps && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
             <span className="font-medium">{current?.label ?? "—"}</span>
           </nav>
+
 
           <div className="ml-auto flex flex-1 items-center justify-end gap-2">
             <div className="relative hidden max-w-sm flex-1 md:block">
@@ -125,10 +138,11 @@ export function AppShell({ system, children }: { system: System; children: React
               name={user?.name ?? "User"}
               role={user ? ROLE_LABEL[user.role] : ""}
               onLogout={() => {
-                logout();
-                navigate({ to: "/login" });
+                logout(system);
+                navigate({ to: `/${system}/login`, replace: true });
               }}
             />
+
           </div>
         </header>
 
