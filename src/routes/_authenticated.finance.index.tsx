@@ -160,36 +160,10 @@ function FinanceDashboard() {
         </Card>
       </div>
 
-      {/* Payer + Top Dokter */}
+      {/* Payer + Top Dokter (filterable) */}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
-          <ul className="space-y-3 text-sm">
-            {(Object.entries(byP) as [string, number][]).map(([k, v]) => {
-              const totalAll = Object.values(byP).reduce((a, b) => a + b, 0) || 1;
-              const pct = Math.round((v / totalAll) * 100);
-              return (
-                <li key={k}>
-                  <div className="flex justify-between text-xs">
-                    <span className="font-medium">{k}</span>
-                    <span className="text-muted-foreground">{formatIDR(v)} • {pct}%</span>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" style={{ width: `${pct}%` }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
-            <div><div className="text-muted-foreground">Total</div><div className="font-semibold">{formatIDR(Object.values(byP).reduce((a, b) => a + b, 0))}</div></div>
-            <div><div className="text-muted-foreground">Payer Terbesar</div><div className="font-semibold">{Object.entries(byP).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—"}</div></div>
-            <div><div className="text-muted-foreground">Jumlah Payer</div><div className="font-semibold">{Object.keys(byP).length}</div></div>
-          </div>
-        </Card>
-
-        <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
-          <RankList rows={topDokter} />
-        </Card>
+        <PayerCard rows={invoices} />
+        <TopDokterCard rows={invoices} />
       </div>
 
       {/* Saldo Bank + Anomalies + Insights */}
