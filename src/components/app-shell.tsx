@@ -27,6 +27,182 @@ export function AppShell({ system, children }: { system: System; children: React
   const items = NAV[system];
   const currentSlug = pathname.split("/").slice(3).join("/") || "";
   const current = findNav(system, currentSlug);
+  const isApps = system === "apps";
+
+  return (
+    <div className={`flex min-h-screen bg-background ${isApps ? "flex-col" : ""}`}>
+      {/* Sidebar (hidden for Prime Apps which uses bottom nav) */}
+      {!isApps && (
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-border bg-card transition-transform md:static md:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-border px-4">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
+              <Activity className="h-4 w-4" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Prime Health
+              </div>
+            </div>
+          </Link>
+          <button className="md:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="space-y-0.5 p-3">
+          {items.map((it) => {
+            const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
+            const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
+            return (
+              <Link
+                key={it.label}
+                to={href}
+                onClick={() => setOpen(false)}
+                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
+                  active
+                    ? "bg-navy text-navy-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <it.icon className="h-4 w-4" />
+                <span>{it.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-2 border-t border-border p-3">
+          <div className="mb-1.5 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Switch system
+          </div>
+          <div className="space-y-1">
+            {(Object.keys(SYSTEM_LABEL) as System[]).map((s) => {
+              const allowed = user ? canAccess(user.role, s) : false;
+              return (
+                <button
+                  key={s}
+                  disabled={!allowed}
+                  onClick={() => navigate({ to: `/${s}` })}
+                  className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
+                    s === system
+                      ? "bg-muted font-medium text-foreground"
+                      : allowed
+                      ? "text-muted-foreground hover:bg-muted"
+                      : "cursor-not-allowed text-muted-foreground/40"
+                  }`}
+                >
+                  {SYSTEM_LABEL[s]} {!allowed && "·  🔒"}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </aside>
+      )}
+
+      {open && !isApps && (
+        <div className="fixed inset-0 z-30 bg-foreground/30 md:hidden" onClick={() => setOpen(false)} />
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl">
+          {!isApps && (
+            <button className="md:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+          {isApps && (
+            <Link to="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
+                <Activity className="h-4 w-4" />
+              </div>
+              <div className="leading-tight">
+                <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Prime Health</div>
+              </div>
+            </Link>
+          )}
+
+          <nav className="hidden items-center gap-1.5 text-sm md:flex">
+            {!isApps && <span className="text-muted-foreground">{SYSTEM_LABEL[system]}</span>}
+            {!isApps && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className="font-medium">{current?.label ?? "—"}</span>
+          </nav>
+
+          <div className="ml-auto flex flex-1 items-center justify-end gap-2">
+            <div className="relative hidden max-w-sm flex-1 md:block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                placeholder="Cari pasien, transaksi, dokumen…"
+                className="w-full rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <button
+              onClick={() => setDark((d) => !d)}
+              className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Toggle theme"
+            >
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
+            <button
+              className="relative rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-cyan-accent" />
+            </button>
+
+            <ProfileMenu
+              name={user?.name ?? "User"}
+              role={user ? ROLE_LABEL[user.role] : ""}
+              onLogout={() => {
+                logout();
+                navigate({ to: "/login" });
+              }}
+            />
+          </div>
+        </header>
+
+        <main className={`min-w-0 flex-1 p-6 md:p-8 ${isApps ? "pb-24" : ""}`}>{children}</main>
+
+        {/* Bottom navigation for Prime Apps */}
+        {isApps && (
+          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl">
+            <div className="mx-auto flex max-w-3xl items-stretch justify-around px-2 py-1.5">
+              {items.map((it) => {
+                const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
+                const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
+                return (
+                  <Link
+                    key={it.label}
+                    to={href}
+                    className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-[10px] transition-colors ${
+                      active
+                        ? "text-navy dark:text-cyan-accent"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <it.icon className={`h-5 w-5 ${active ? "scale-110" : ""}`} />
+                    <span className="truncate">{it.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 
 function ProfileMenu({ name, role, onLogout }: { name: string; role: string; onLogout: () => void }) {
