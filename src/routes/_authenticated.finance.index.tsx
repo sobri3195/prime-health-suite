@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { invoices, monthlyTrend, expenseMTD, bankBalance, anomalies } from "@/data/financeData";
 import {
-  applyFilter, sumOutstanding, byPayer, topBy, netProfit,
+  applyFilter, sumOutstanding, byPayer, topBy, netProfit, aging,
   formatIDR, formatCompactIDR, generateInsights,
 } from "@/lib/finance";
 
