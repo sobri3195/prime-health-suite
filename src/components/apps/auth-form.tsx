@@ -5,6 +5,7 @@ import { ArrowRight, Loader2, Mail, Lock, User as UserIcon } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { BRAND } from "@/lib/brand";
+import { useAuth } from "@/lib/auth";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -16,6 +17,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const [nama, setNama] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login: bridgeLogin } = useAuth();
 
   const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
 
@@ -36,8 +38,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
         toast.success("Akun dibuat. Cek email Anda untuk verifikasi.");
         setMode("login");
       } else if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) bridgeLogin("apps", data.user.email || email, "front_office");
         toast.success("Selamat datang!");
         navigate({ to: safeRedirect, replace: true });
       } else {
