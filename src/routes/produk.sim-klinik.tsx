@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Stethoscope, ClipboardList, Pill, Receipt, Eye, UserCheck } from "lucide-react";
+import { Stethoscope, Receipt, Eye } from "lucide-react";
 import { ProductLanding } from "@/components/product-landing";
 import { faviconDataUrl } from "@/lib/brand";
 

@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SimKlinikLoginRouteImport } from './routes/sim-klinik.login'
+import { Route as ProdukSimKlinikRouteImport } from './routes/produk.sim-klinik'
 import { Route as ProdukAppsRouteImport } from './routes/produk.apps'
 import { Route as FinanceLoginRouteImport } from './routes/finance.login'
 import { Route as AppsLoginRouteImport } from './routes/apps.login'
@@ -83,6 +84,11 @@ const IndexRoute = IndexRouteImport.update({
 const SimKlinikLoginRoute = SimKlinikLoginRouteImport.update({
   id: '/sim-klinik/login',
   path: '/sim-klinik/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProdukSimKlinikRoute = ProdukSimKlinikRouteImport.update({
+  id: '/produk/sim-klinik',
+  path: '/produk/sim-klinik',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProdukAppsRoute = ProdukAppsRouteImport.update({
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
@@ -514,6 +522,7 @@ export interface FileRoutesById {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
@@ -573,6 +582,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
     | '/finance/$section'
@@ -627,6 +637,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
     | '/finance/$section'
@@ -685,6 +696,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/_authenticated/apps/$section'
     | '/_authenticated/finance/$section'
@@ -739,6 +751,7 @@ export interface RootRouteChildren {
   AppsLoginRoute: typeof AppsLoginRoute
   FinanceLoginRoute: typeof FinanceLoginRoute
   ProdukAppsRoute: typeof ProdukAppsRoute
+  ProdukSimKlinikRoute: typeof ProdukSimKlinikRoute
   SimKlinikLoginRoute: typeof SimKlinikLoginRoute
 }
 
@@ -770,6 +783,13 @@ declare module '@tanstack/react-router' {
       path: '/sim-klinik/login'
       fullPath: '/sim-klinik/login'
       preLoaderRoute: typeof SimKlinikLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produk/sim-klinik': {
+      id: '/produk/sim-klinik'
+      path: '/produk/sim-klinik'
+      fullPath: '/produk/sim-klinik'
+      preLoaderRoute: typeof ProdukSimKlinikRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/produk/apps': {
@@ -1297,6 +1317,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppsLoginRoute: AppsLoginRoute,
   FinanceLoginRoute: FinanceLoginRoute,
   ProdukAppsRoute: ProdukAppsRoute,
+  ProdukSimKlinikRoute: ProdukSimKlinikRoute,
   SimKlinikLoginRoute: SimKlinikLoginRoute,
 }
 export const routeTree = rootRouteImport
