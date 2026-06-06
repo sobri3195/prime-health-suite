@@ -11,12 +11,12 @@ function Layout() {
   const user = userFor("finance");
 
   useEffect(() => {
-    if (user && !canAccess(user.role, "finance")) {
+    if (!user || !canAccess(user.role, "finance")) {
       navigate({ to: "/finance/login", search: { redirect: pathname }, replace: true });
     }
   }, [user, navigate, pathname]);
 
-  if (user && !canAccess(user.role, "finance")) return null;
+  if (!user || !canAccess(user.role, "finance")) return null;
   return (
     <AppShell system="finance">
       <Outlet />
