@@ -34,7 +34,10 @@ function AuditPage() {
   const [q, setQ] = useState("");
   const [action, setAction] = useState<"all" | AuditEntry["action"]>("all");
 
-  useEffect(() => subscribeAudit(() => setLog([...getAudit()])), []);
+  useEffect(() => {
+    const unsub = subscribeAudit(() => setLog([...getAudit()]));
+    return () => { unsub(); };
+  }, []);
 
   const filtered = useMemo(() => log.filter((e) =>
     (action === "all" || e.action === action) &&

@@ -197,7 +197,7 @@ function LaporanPage() {
               <div key={v.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
                 <div>
                   <div className="font-medium">{v.patientName}</div>
-                  <div className="text-xs text-muted-foreground">{v.doctor} • {v.poli}</div>
+                  <div className="text-xs text-muted-foreground">{v.doctor}</div>
                 </div>
                 <Badge variant="secondary">{v.payer}</Badge>
               </div>
