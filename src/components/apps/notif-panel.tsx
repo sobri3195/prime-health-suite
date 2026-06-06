@@ -131,7 +131,7 @@ export function NotificationsPagePatient() {
                       onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
                       className="text-xs font-semibold text-[#6b5a16]"
                     >
-                      Buka →
+                      {t("notif.open")} →
                     </a>
                   )}
                 </div>
