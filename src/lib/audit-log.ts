@@ -37,6 +37,26 @@ export function addAudit(entry: Omit<AuditEntry, "id" | "ts">) {
     ...log,
   ].slice(0, 200);
   listeners.forEach((l) => l());
+
+  // Mirror to persistent backend (fire and forget; ignored when not signed in).
+  if (typeof window !== "undefined") {
+    void (async () => {
+      try {
+        const { appendAudit } = await import("./clinic.functions");
+        // Map mock action → module/action pair so audit page can filter.
+        const map: Record<AuditEntry["action"], { module: string; action: string }> = {
+          login:       { module: "Auth",     action: "login" },
+          logout:      { module: "Auth",     action: "logout" },
+          page_access: { module: "Auth",     action: "page_access" },
+          role_change: { module: "Settings", action: "role_change" },
+          export:      { module: "Export",   action: "export" },
+          sync:        { module: "Sync",     action: "sync" },
+        };
+        const m = map[entry.action];
+        await appendAudit({ data: { module: m.module, action: m.action, target: entry.target, meta: entry.meta } });
+      } catch {/* not signed in or offline */}
+    })();
+  }
 }
 
 export function subscribeAudit(fn: () => void) {
