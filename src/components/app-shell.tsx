@@ -248,3 +248,68 @@ export function PlaceholderPage({ title }: { title: string }) {
     </div>
   );
 }
+
+function SidebarNav({
+  system, items, pathname, onNavigate,
+}: { system: System; items: NavItem[]; pathname: string; onNavigate: () => void }) {
+  const groups = useMemo(() => {
+    const map = new Map<string, NavItem[]>();
+    items.forEach((it) => {
+      const g = it.group ?? "";
+      if (!map.has(g)) map.set(g, []);
+      map.get(g)!.push(it);
+    });
+    return Array.from(map.entries());
+  }, [items]);
+
+  const linkOf = (it: NavItem) => (it.slug ? `/${system}/${it.slug}` : `/${system}`);
+  const isActive = (it: NavItem) => {
+    const href = linkOf(it);
+    return pathname === href || (it.slug === "" && pathname === `/${system}`);
+  };
+  const activeGroup = items.find((it) => isActive(it))?.group ?? "";
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const isOpen = (g: string) => openGroups[g] ?? (g === "" || g === activeGroup || g === "Dashboard");
+
+  const Item = (it: NavItem) => {
+    const active = isActive(it);
+    return (
+      <Link
+        key={it.label}
+        to={linkOf(it)}
+        onClick={onNavigate}
+        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
+          active
+            ? "bg-navy text-navy-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <it.icon className="h-4 w-4" />
+        <span className="truncate">{it.label}</span>
+      </Link>
+    );
+  };
+
+  return (
+    <div className="space-y-1">
+      {groups.map(([group, list]) => {
+        if (!group) return <div key="_root" className="space-y-0.5">{list.map(Item)}</div>;
+        const open = isOpen(group);
+        return (
+          <div key={group} className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setOpenGroups((s) => ({ ...s, [group]: !open }))}
+              className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/60"
+            >
+              <span>{group}</span>
+              {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            </button>
+            {open && <div className="space-y-0.5">{list.map(Item)}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
