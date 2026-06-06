@@ -38,6 +38,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const { data: roles } = useRoles();
   const items = useMemo(() => {
     if (system !== "sim-klinik") return allItems;
+    if (!Array.isArray(roles)) return allItems; // RBAC not loaded → show all (legacy mock auth)
     return allItems.filter((it) => !it.roles || hasAnyRole(roles, it.roles));
   }, [allItems, roles, system]);
   const currentSlug = pathname.split("/").slice(3).join("/") || "";
