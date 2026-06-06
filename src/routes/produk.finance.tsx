@@ -62,5 +62,3 @@ export const Route = createFileRoute("/produk/finance")({
   ),
 });
 
-// Reserved icons for future sections
-void BarChart3; void Wallet; void Receipt;
