@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ProfileUpdate = z.object({
   nama: z.string().min(1).max(120),
+  nik: z.string().max(32).nullable().optional(),
   tgl_lahir: z.string().nullable().optional(),
   jenis_kelamin: z.enum(["L", "P"]).nullable().optional(),
   telp: z.string().max(40).nullable().optional(),
@@ -11,6 +12,7 @@ const ProfileUpdate = z.object({
   no_bpjs: z.string().max(40).nullable().optional(),
   alergi: z.string().max(500).nullable().optional(),
   kontak_darurat: z.string().max(120).nullable().optional(),
+  foto_url: z.string().url().max(500).nullable().optional(),
 });
 
 export const getMyProfile = createServerFn({ method: "GET" })
@@ -35,6 +37,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       .from("apps_pasien")
       .update({
         nama: data.nama,
+        nik: data.nik || null,
         tgl_lahir: data.tgl_lahir || null,
         jenis_kelamin: data.jenis_kelamin || null,
         telp: data.telp || null,
@@ -42,6 +45,7 @@ export const updateMyProfile = createServerFn({ method: "POST" })
         no_bpjs: data.no_bpjs || null,
         alergi: data.alergi || null,
         kontak_darurat: data.kontak_darurat || null,
+        foto_url: data.foto_url || null,
       })
       .eq("user_id", userId)
       .select()
@@ -100,6 +104,34 @@ export const createBooking = createServerFn({ method: "POST" })
     return { booking: row };
   });
 
+const RescheduleInput = z.object({
+  id: z.string().uuid(),
+  tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  jam_slot: z.string().regex(/^\d{2}:\d{2}$/),
+});
+export const rescheduleBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RescheduleInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.tanggal < today) throw new Error("Tanggal baru tidak boleh di masa lalu");
+    const { data: row, error } = await supabase
+      .from("apps_booking")
+      .update({ tanggal: data.tanggal, jam_slot: data.jam_slot, status: "pending" })
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .in("status", ["pending", "confirmed"])
+      .select()
+      .maybeSingle();
+    if (error) {
+      if (error.code === "23505") throw new Error("Slot baru sudah diambil. Pilih slot lain.");
+      throw new Error(error.message);
+    }
+    if (!row) throw new Error("Booking tidak ditemukan atau sudah selesai");
+    return { booking: row };
+  });
+
 export const cancelBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -129,7 +161,17 @@ export const getMyQueueToday = createServerFn({ method: "GET" })
       .limit(1)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return { queue: data };
+
+    let posisi: number | null = null;
+    let total: number | null = null;
+    if (data) {
+      const { data: pos } = await supabase.rpc("apps_queue_position", { _booking_id: data.id });
+      if (pos && pos.length) {
+        posisi = (pos[0] as { posisi: number }).posisi;
+        total = (pos[0] as { total: number }).total;
+      }
+    }
+    return { queue: data, posisi, total };
   });
 
 export const listMyInvoices = createServerFn({ method: "GET" })
@@ -138,7 +180,7 @@ export const listMyInvoices = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("fin_invoice")
-      .select("id, no_invoice, tanggal, total, status, fin_invoice_item(layanan_nama, qty, tarif, subtotal)")
+      .select("id, no_invoice, tanggal, total, status, catatan, fin_invoice_item(layanan_nama, qty, tarif, subtotal)")
       .eq("apps_user_id", userId)
       .order("tanggal", { ascending: false })
       .limit(50);
@@ -176,7 +218,6 @@ export const listAvailableSlots = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const takenSet = new Set((taken ?? []).map((r: { jam_slot: string }) => r.jam_slot));
 
-    // 09:00–17:00 every 30 minutes, exclude 12:00 & 12:30 (istirahat)
     const slots: string[] = [];
     for (let h = 9; h < 17; h++) {
       for (const m of [0, 30]) {
@@ -187,4 +228,62 @@ export const listAvailableSlots = createServerFn({ method: "POST" })
     return {
       slots: slots.map((s) => ({ jam: s, available: !takenSet.has(s) })),
     };
+  });
+
+/* ------------ Notifikasi ------------ */
+
+export const listMyNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("apps_notif")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    const unread = (data ?? []).filter((n) => !n.read_at).length;
+    return { notifs: data ?? [], unread };
+  });
+
+export const markNotifRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("apps_notif")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const markAllNotifRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("apps_notif")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteNotif = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("apps_notif")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
