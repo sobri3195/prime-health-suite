@@ -1,384 +1,346 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight, ShieldCheck, Layers, Stethoscope, Wallet, Bell, FileText,
-  Activity, Users, Calendar, TrendingUp, Lock, CheckCircle2, Sparkles,
-  BarChart3, Eye, ServerCog
-} from "lucide-react";
-import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { ArrowRight, ShieldCheck, Lock, Check } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Prime Health Platform — Ekosistem Digital Klinik Utama Mata" },
-      { name: "description", content: "Platform terintegrasi untuk workspace internal, operasional klinik mata, dan dashboard keuangan dalam satu ekosistem enterprise." },
+      {
+        name: "description",
+        content:
+          "Platform editorial premium menyatukan Prime Apps, SIM Klinik Mata, dan Prime Simon Finance dalam satu ekosistem terintegrasi.",
+      },
       { property: "og:title", content: "Prime Health Platform" },
-      { property: "og:description", content: "Workspace, SIM Klinik Mata, dan Finance Dashboard dalam satu platform terpadu." },
+      {
+        property: "og:description",
+        content: "Workspace, SIM Klinik Mata, dan Finance Dashboard dalam satu platform terpadu.",
+      },
     ],
   }),
   component: Landing,
 });
 
+const serif = { fontFamily: "'Instrument Serif', serif" };
+const sans = { fontFamily: "'Work Sans', sans-serif" };
+
 function Landing() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <Hero />
-      <Problem />
-      <Solution />
-      <Products />
-      <Features />
-      <Workflow />
-      <Security />
-      <DashboardPreview />
-      <CTA />
-      <SiteFooter />
-    </div>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-[var(--gradient-soft)]" />
-      <div className="absolute -top-32 left-1/2 -z-10 h-[480px] w-[900px] -translate-x-1/2 rounded-full bg-cyan-accent/20 blur-3xl" />
-      <div className="mx-auto max-w-7xl px-6 pt-20 pb-24 md:pt-28 md:pb-32">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-accent" />
-            Enterprise Healthcare Platform · Klinik Utama Mata
-          </span>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-            Satu ekosistem untuk{" "}
-            <span className="bg-[var(--gradient-accent)] bg-clip-text text-transparent">
-              workspace, klinis, dan keuangan
+    <div
+      className="w-full min-h-screen text-[#064e3b] selection:bg-[#c9a84c]/30"
+      style={{ background: "#f5f0e0", ...sans }}
+    >
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <header className="flex justify-between items-center mb-24">
+          <Link to="/" className="text-xl font-bold tracking-tight text-[#064e3b]">
+            Prime Health
+            <span className="block text-[10px] tracking-widest uppercase font-medium opacity-70">
+              Platform
             </span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            Prime Health Platform menyatukan Prime Apps, SIM Klinik Mata, dan Prime Simon Finance
-            ke dalam satu pengalaman digital — modern, aman, dan dirancang untuk skala enterprise.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-md bg-navy px-5 py-3 text-sm font-medium text-navy-foreground shadow-[var(--shadow-elegant)] hover:opacity-95">
-              Mulai sekarang <ArrowRight className="h-4 w-4" />
+          </Link>
+          <nav className="hidden md:flex gap-8 text-sm font-medium uppercase tracking-wider opacity-80">
+            <Link to="/apps" className="hover:text-[#c9a84c] transition-colors">
+              Prime Apps
             </Link>
-            <Link to="/apps" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-foreground hover:bg-muted">
+            <Link to="/sim-klinik" className="hover:text-[#c9a84c] transition-colors">
+              SIM Klinik
+            </Link>
+            <Link to="/finance" className="hover:text-[#c9a84c] transition-colors">
+              Finance
+            </Link>
+          </nav>
+          <Link
+            to="/login"
+            className="px-6 py-2 border border-[#064e3b] rounded-full text-sm font-medium hover:bg-[#064e3b] hover:text-[#f5f0e0] transition-all uppercase tracking-tight"
+          >
+            Request Demo
+          </Link>
+        </header>
+
+        {/* Hero */}
+        <section className="text-center mb-32">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#064e3b]/10 rounded-full mb-8 bg-white/50">
+            <span className="w-2 h-2 rounded-full bg-[#c9a84c] animate-pulse" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">
+              Enterprise Healthcare Platform
+            </span>
+          </div>
+          <h1
+            className="text-6xl md:text-8xl leading-[0.9] mb-8"
+            style={serif}
+          >
+            Satu ekosistem untuk
+            <br />
+            <span className="italic text-[#c9a84c]">Klinik Utama Mata</span>
+          </h1>
+          <p className="max-w-xl mx-auto text-lg leading-relaxed opacity-80 mb-10">
+            Menyatukan Prime Apps, SIM Klinik Mata, dan Prime Simon Finance ke dalam satu pengalaman
+            digital yang modern, aman, dan berskala enterprise.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              to="/login"
+              className="px-8 py-4 bg-[#064e3b] text-[#f5f0e0] rounded-full font-medium inline-flex items-center gap-2 hover:bg-[#0d7a5f] transition-all group"
+            >
+              Mulai sekarang
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              to="/apps"
+              className="px-8 py-4 border border-[#064e3b]/20 rounded-full font-medium hover:bg-white transition-all"
+            >
               Jelajahi platform
             </Link>
           </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-muted-foreground">
-            {["ISO 27001 Ready", "HL7 / FHIR", "Audit Trail", "Role-based Access"].map((b) => (
-              <span key={b} className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-accent" /> {b}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+        </section>
 
-function Problem() {
-  const items = [
-    { icon: Layers, title: "Sistem terpecah", desc: "Data klinis, finance, dan operasional tersebar di banyak tools yang tidak terhubung." },
-    { icon: ServerCog, title: "Integrasi rumit", desc: "Setiap modul punya database & login berbeda — sulit dipelihara dan rawan error." },
-    { icon: TrendingUp, title: "Visibilitas terbatas", desc: "Manajemen sulit melihat performa klinik dan keuangan secara real-time." },
-  ];
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Tantangan</p>
-        <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Klinik modern butuh fondasi digital yang utuh</h2>
-      </div>
-      <div className="mt-12 grid gap-5 md:grid-cols-3">
-        {items.map((it) => (
-          <div key={it.title} className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-navy">
-              <it.icon className="h-5 w-5" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">{it.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{it.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function Solution() {
-  return (
-    <section className="bg-surface-muted/40 py-20">
-      <div className="mx-auto max-w-7xl px-6 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Solusi</p>
-        <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Tiga sistem, satu platform</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-          Setiap modul berdiri sendiri secara teknis, namun terhubung melalui single sign-on,
-          identity, dan data layer yang konsisten.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-const products = [
-  {
-    href: "/apps" as const,
-    icon: Layers,
-    badge: "Workspace",
-    title: "Prime Apps",
-    tagline: "Portal & launcher internal",
-    desc: "Akses terpusat ke semua aplikasi, notifikasi, helpdesk, SOP, dan dokumen klinik.",
-    points: ["App launcher", "Notifikasi & inbox", "Help center & SOP", "Monitoring umum"],
-    accent: "from-cyan-accent/20 to-transparent",
-  },
-  {
-    href: "/sim-klinik" as const,
-    icon: Stethoscope,
-    badge: "Klinis",
-    title: "SIM Klinik Mata",
-    tagline: "Operasional klinik mata",
-    desc: "Manajemen pasien, kunjungan, dokter, tindakan, jadwal, rekam medis, dan billing klinis.",
-    points: ["Registrasi pasien", "Rekam medis mata", "Tindakan & resep", "Billing klinis"],
-    accent: "from-emerald-accent/20 to-transparent",
-  },
-  {
-    href: "/finance" as const,
-    icon: Wallet,
-    badge: "Finance",
-    title: "Prime Simon Finance",
-    tagline: "Dashboard keuangan",
-    desc: "Pendapatan, piutang, pengeluaran, pajak, jurnal, buku besar, dan laporan manajemen.",
-    points: ["Pendapatan & piutang", "Bank & kas", "Jurnal & buku besar", "Laba rugi"],
-    accent: "from-navy/20 to-transparent",
-  },
-];
-
-function Products() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="grid gap-6 lg:grid-cols-3">
-        {products.map((p) => (
+        {/* Bento Products */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-32">
+          {/* SIM Klinik */}
           <Link
-            key={p.title}
-            to={p.href}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-[var(--shadow-card)] transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
+            to="/sim-klinik"
+            className="md:col-span-8 bg-[#064e3b] rounded-[2.5rem] p-10 text-[#f5f0e0] relative overflow-hidden group block"
           >
-            <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${p.accent}`} />
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-navy-foreground">
-                  <p.icon className="h-5 w-5" />
-                </div>
-                <span className="rounded-full border border-border bg-background/80 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {p.badge}
-                </span>
-              </div>
-              <h3 className="mt-5 text-xl font-semibold">{p.title}</h3>
-              <p className="text-sm text-cyan-accent">{p.tagline}</p>
-              <p className="mt-3 text-sm text-muted-foreground">{p.desc}</p>
-              <ul className="mt-5 space-y-2">
-                {p.points.map((pt) => (
-                  <li key={pt} className="flex items-center gap-2 text-sm text-foreground/80">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-accent" /> {pt}
-                  </li>
-                ))}
+            <div className="relative z-10">
+              <span className="text-[10px] uppercase tracking-widest opacity-60 mb-2 block">
+                Operational System
+              </span>
+              <h3 className="text-4xl mb-4 italic" style={serif}>
+                SIM Klinik Mata
+              </h3>
+              <p className="max-w-sm opacity-70 mb-8">
+                Manajemen pasien, kunjungan, dokter, tindakan, jadwal, rekam medis, dan billing
+                klinik secara terpadu.
+              </p>
+              <ul className="space-y-2 mb-10 text-sm opacity-80">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#c9a84c]" /> Registrasi Pasien & Antrean
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#c9a84c]" /> Rekam Medis Mata (EMR)
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#c9a84c]" /> Tindakan, Resep & Billing
+                </li>
               </ul>
-              <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-navy group-hover:gap-2.5 transition-all">
-                Pelajari modul <ArrowRight className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#c9a84c] border-b border-[#c9a84c]/30 pb-1">
+                Pelajari modul
+              </span>
+            </div>
+            <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-[#0d7a5f] rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
+          </Link>
+
+          {/* Prime Apps */}
+          <Link
+            to="/apps"
+            className="md:col-span-4 bg-white border border-[#064e3b]/5 rounded-[2.5rem] p-8 flex flex-col justify-between block"
+          >
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-[#c9a84c] font-bold mb-2 block">
+                Workspace
+              </span>
+              <h3 className="text-3xl mb-3" style={serif}>
+                Prime Apps
+              </h3>
+              <p className="text-sm opacity-70">
+                Portal akses terpusat untuk seluruh aplikasi pasien dan komunikasi internal.
+              </p>
+            </div>
+            <div className="mt-8">
+              <div className="flex -space-x-2">
+                <div className="w-10 h-10 rounded-full bg-[#0d7a5f] border-2 border-white" />
+                <div className="w-10 h-10 rounded-full bg-[#c9a84c] border-2 border-white" />
+                <div className="w-10 h-10 rounded-full bg-[#064e3b] border-2 border-white" />
               </div>
+              <span className="block mt-6 text-sm font-semibold opacity-60 hover:opacity-100 transition-opacity">
+                Lihat dashboard →
+              </span>
             </div>
           </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
 
-function Features() {
-  const feats = [
-    { icon: Eye, title: "Spesialisasi mata", desc: "Form pemeriksaan, refraksi, dan tindakan yang dirancang khusus untuk klinik mata." },
-    { icon: Bell, title: "Notifikasi real-time", desc: "Peristiwa klinis dan finansial diteruskan ke kanal yang tepat secara instan." },
-    { icon: FileText, title: "Dokumen & SOP", desc: "Pustaka dokumen internal terpusat dengan versioning dan akses berbasis peran." },
-    { icon: BarChart3, title: "Analitik manajerial", desc: "Dashboard performa klinik dan keuangan untuk pengambilan keputusan." },
-    { icon: Users, title: "Identity & SSO", desc: "Single sign-on lintas modul dengan kontrol akses granular." },
-    { icon: Calendar, title: "Jadwal terintegrasi", desc: "Jadwal dokter, tindakan, dan ruang yang sinkron antar modul." },
-  ];
-  return (
-    <section className="bg-surface-muted/40 py-20">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Fitur Unggulan</p>
-          <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Dirancang untuk operasional enterprise</h2>
-        </div>
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {feats.map((f) => (
-            <div key={f.title} className="rounded-xl border border-border bg-card p-6">
-              <f.icon className="h-5 w-5 text-cyan-accent" />
-              <h3 className="mt-4 font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
+          {/* Finance */}
+          <Link
+            to="/finance"
+            className="md:col-span-4 bg-[#f5f0e0] border border-[#c9a84c]/30 rounded-[2.5rem] p-8 flex flex-col justify-between block"
+          >
+            <div>
+              <span className="text-[10px] uppercase tracking-widest opacity-60 mb-2 block">
+                Finance
+              </span>
+              <h3 className="text-3xl mb-3" style={serif}>
+                Simon Finance
+              </h3>
+              <p className="text-sm opacity-70">
+                Manajemen piutang, hutang, buku besar, dan laporan laba rugi real-time.
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+            <div className="mt-8 p-4 bg-white/40 rounded-2xl">
+              <div className="h-2 w-full bg-[#064e3b]/10 rounded-full overflow-hidden">
+                <div className="h-full bg-[#c9a84c] w-3/4" />
+              </div>
+              <span className="text-[10px] font-bold uppercase mt-2 block opacity-50">
+                Monthly Revenue Target
+              </span>
+            </div>
+          </Link>
 
-function Workflow() {
-  const steps = [
-    { n: "01", t: "Login via Prime Apps", d: "User masuk satu pintu ke seluruh ekosistem." },
-    { n: "02", t: "Operasional di SIM Klinik", d: "Pasien dilayani, tindakan dicatat, billing dibuat." },
-    { n: "03", t: "Tercatat di Finance", d: "Transaksi mengalir otomatis ke jurnal dan laporan." },
-    { n: "04", t: "Insight manajemen", d: "Dashboard memberi visibilitas penuh ke pimpinan." },
-  ];
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Ekosistem</p>
-        <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Alur kerja end-to-end</h2>
-      </div>
-      <div className="mt-12 grid gap-5 md:grid-cols-4">
-        {steps.map((s, i) => (
-          <div key={s.n} className="relative rounded-2xl border border-border bg-card p-6">
-            <div className="text-xs font-mono text-cyan-accent">{s.n}</div>
-            <h3 className="mt-2 font-semibold">{s.t}</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">{s.d}</p>
-            {i < steps.length - 1 && (
-              <ArrowRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-border md:block" />
-            )}
+          {/* Workflow */}
+          <div className="md:col-span-8 bg-white border border-[#064e3b]/5 rounded-[2.5rem] p-10">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="flex-1">
+                <h3 className="text-4xl leading-tight mb-4" style={serif}>
+                  Alur kerja
+                  <br />
+                  <span className="italic">yang sinkron.</span>
+                </h3>
+                <p className="text-sm opacity-70 mb-6 text-balance">
+                  Data mengalir otomatis dari pendaftaran hingga laporan keuangan tanpa input ganda.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-[#f5f0e0] rounded-xl text-xs font-medium border border-[#c9a84c]/20 text-center uppercase tracking-tight italic">
+                    No Data Silos
+                  </div>
+                  <div className="p-3 bg-[#f5f0e0] rounded-xl text-xs font-medium border border-[#c9a84c]/20 text-center uppercase tracking-tight italic">
+                    Real-time Sync
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 w-full">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 p-3 bg-white border-l-2 border-[#c9a84c] shadow-sm">
+                    <span className="text-[10px] font-bold opacity-30 italic">01</span>
+                    <span className="text-sm font-medium">Login SSO Prime Apps</span>
+                  </div>
+                  <div className="flex items-center gap-4 p-3 bg-white border-l-2 border-[#0d7a5f] shadow-sm ml-4">
+                    <span className="text-[10px] font-bold opacity-30 italic">02</span>
+                    <span className="text-sm font-medium">Pelayanan SIM Klinik</span>
+                  </div>
+                  <div className="flex items-center gap-4 p-3 bg-white border-l-2 border-[#064e3b] shadow-sm ml-8">
+                    <span className="text-[10px] font-bold opacity-30 italic">03</span>
+                    <span className="text-sm font-medium">Otomasi Finance</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+        </section>
 
-function Security() {
-  const items = [
-    { icon: ShieldCheck, t: "Standar keamanan", d: "Praktik ISO 27001 & enkripsi data at-rest dan in-transit." },
-    { icon: Lock, t: "Role-based access", d: "Hak akses granular per modul, peran, dan unit." },
-    { icon: FileText, t: "Audit trail lengkap", d: "Setiap aksi tercatat untuk kebutuhan kepatuhan." },
-  ];
-  return (
-    <section className="bg-navy py-20 text-navy-foreground">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Keamanan & Kepatuhan</p>
-          <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Dibangun di atas fondasi keamanan healthcare</h2>
-          <p className="mt-4 max-w-lg text-navy-foreground/70">
-            Data pasien dan transaksi keuangan dilindungi oleh kontrol akses ketat, enkripsi modern,
-            dan jejak audit menyeluruh — selaras dengan kebutuhan regulasi.
-          </p>
-        </div>
-        <div className="grid gap-4">
-          {items.map((i) => (
-            <div key={i.t} className="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-accent/20 text-cyan-accent">
-                  <i.icon className="h-5 w-5" />
+        {/* Security */}
+        <section className="bg-[#064e3b] rounded-[3rem] p-12 md:p-20 text-[#f5f0e0] mb-32 relative overflow-hidden">
+          <div className="grid md:grid-cols-2 gap-16 relative z-10">
+            <div>
+              <span className="text-[#c9a84c] text-[10px] uppercase tracking-[0.3em] font-bold mb-6 block">
+                Keamanan & Kepatuhan
+              </span>
+              <h2 className="text-5xl leading-tight mb-6" style={serif}>
+                Dibangun di atas fondasi keamanan{" "}
+                <span className="italic">healthcare.</span>
+              </h2>
+              <p className="opacity-70 text-lg leading-relaxed">
+                Data pasien dan transaksi keuangan dilindungi oleh kontrol akses ketat, enkripsi
+                modern, dan jejak audit menyeluruh sesuai regulasi.
+              </p>
+            </div>
+            <div className="space-y-6">
+              <div className="flex gap-6 p-6 rounded-2xl bg-[#0d7a5f]/30 border border-white/5">
+                <div className="w-12 h-12 shrink-0 rounded-full bg-[#c9a84c]/20 flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-[#c9a84c]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">{i.t}</h3>
-                  <p className="text-sm text-navy-foreground/70">{i.d}</p>
+                  <h4 className="font-medium mb-1 uppercase tracking-tight text-sm">
+                    Standar ISO 27001
+                  </h4>
+                  <p className="text-xs opacity-60">
+                    Praktik standar keamanan global untuk manajemen informasi.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-6 p-6 rounded-2xl bg-[#0d7a5f]/30 border border-white/5">
+                <div className="w-12 h-12 shrink-0 rounded-full bg-[#c9a84c]/20 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-[#c9a84c]" />
+                </div>
+                <div>
+                  <h4 className="font-medium mb-1 uppercase tracking-tight text-sm">
+                    RBAC & Audit Trail
+                  </h4>
+                  <p className="text-xs opacity-60">
+                    Kontrol akses granular per modul dan pelacakan aktivitas real-time.
+                  </p>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+          </div>
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#0d7a5f]/20 to-transparent pointer-events-none" />
+        </section>
 
-function DashboardPreview() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-cyan-accent">Preview</p>
-        <h2 className="mt-3 text-3xl font-semibold md:text-4xl">Dashboard yang ringkas & informatif</h2>
-      </div>
-      <div className="mt-12 overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-elegant)]">
-        <div className="flex items-center gap-2 border-b border-border bg-surface-muted/60 px-4 py-3">
-          <div className="flex gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-cyan-accent/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-accent/60" />
+        {/* Final CTA */}
+        <section className="text-center pb-24">
+          <h2 className="text-5xl mb-12 italic text-[#064e3b]" style={serif}>
+            Siap memodernisasi klinik Anda?
+          </h2>
+          <div className="flex flex-wrap justify-center gap-6 items-center">
+            <Link
+              to="/login"
+              className="text-lg italic border-b border-[#064e3b] pb-1 hover:text-[#c9a84c] transition-colors"
+              style={serif}
+            >
+              Hubungi tim sales kami
+            </Link>
+            <span className="opacity-30 uppercase tracking-widest text-[10px]">atau</span>
+            <Link
+              to="/login"
+              className="px-10 py-5 bg-[#c9a84c] text-white rounded-full font-medium shadow-xl shadow-[#c9a84c]/20 hover:scale-105 transition-transform"
+            >
+              Mulai Coba Gratis
+            </Link>
           </div>
-          <span className="ml-3 text-xs text-muted-foreground">prime-health / dashboard</span>
-        </div>
-        <div className="grid gap-4 p-6 md:grid-cols-4">
-          {[
-            { l: "Pasien hari ini", v: "128", c: "+12%", icon: Users },
-            { l: "Pendapatan", v: "Rp 86,4 jt", c: "+8.4%", icon: Wallet },
-            { l: "Tindakan", v: "47", c: "+5", icon: Activity },
-            { l: "Piutang", v: "Rp 22,1 jt", c: "-3.1%", icon: TrendingUp },
-          ].map((k) => (
-            <div key={k.l} className="rounded-xl border border-border bg-background p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{k.l}</span>
-                <k.icon className="h-4 w-4 text-cyan-accent" />
-              </div>
-              <div className="mt-2 text-2xl font-semibold">{k.v}</div>
-              <div className="mt-1 text-xs text-emerald-accent">{k.c}</div>
-            </div>
-          ))}
-        </div>
-        <div className="grid gap-4 px-6 pb-6 md:grid-cols-3">
-          <div className="rounded-xl border border-border bg-background p-5 md:col-span-2">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium">Tren kunjungan 7 hari</span>
-              <span className="text-xs text-muted-foreground">Mingguan</span>
-            </div>
-            <div className="flex h-40 items-end gap-2">
-              {[40, 65, 55, 80, 70, 95, 88].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t-md bg-[var(--gradient-accent)]" style={{ height: `${h}%` }} />
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl border border-border bg-background p-5">
-            <div className="mb-3 text-sm font-medium">Antrian aktif</div>
-            <ul className="space-y-3 text-sm">
-              {[
-                { n: "Andi Saputra", s: "Refraksi" },
-                { n: "Nadya Putri", s: "Konsultasi" },
-                { n: "Bayu Pratama", s: "Pre-op" },
-                { n: "Sari Wulandari", s: "Kontrol" },
-              ].map((q) => (
-                <li key={q.n} className="flex items-center justify-between">
-                  <span>{q.n}</span>
-                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">{q.s}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+        </section>
 
-function CTA() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 pb-20">
-      <div className="overflow-hidden rounded-3xl bg-[var(--gradient-hero)] p-10 text-navy-foreground md:p-16">
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+        {/* Footer */}
+        <footer className="pt-12 border-t border-[#064e3b]/10 flex flex-col md:flex-row justify-between gap-12 text-sm">
           <div>
-            <h2 className="text-3xl font-semibold md:text-4xl">Siap mendigitalkan klinik mata Anda?</h2>
-            <p className="mt-3 max-w-lg text-navy-foreground/70">
-              Jadwalkan demo bersama tim kami dan lihat bagaimana Prime Health Platform
-              dapat disesuaikan dengan kebutuhan klinik Anda.
+            <div className="text-lg font-bold tracking-tight text-[#064e3b] mb-4 uppercase">
+              Prime Health
+            </div>
+            <p className="max-w-xs opacity-50 italic">
+              Transformasi digital menyeluruh untuk ekosistem kesehatan mata di Indonesia.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-            <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-medium text-navy hover:bg-white/90">
-              Request demo <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/apps" className="inline-flex items-center justify-center rounded-md border border-white/20 bg-white/5 px-5 py-3 text-sm font-medium text-navy-foreground hover:bg-white/10">
-              Hubungi sales
-            </Link>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
+            <div className="flex flex-col gap-4">
+              <h5 className="uppercase font-bold tracking-widest text-[10px] text-[#c9a84c]">
+                Solusi
+              </h5>
+              <Link to="/sim-klinik" className="opacity-70 hover:opacity-100">
+                SIM Klinik
+              </Link>
+              <Link to="/apps" className="opacity-70 hover:opacity-100">
+                Prime Apps
+              </Link>
+              <Link to="/finance" className="opacity-70 hover:opacity-100">
+                Simon Finance
+              </Link>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h5 className="uppercase font-bold tracking-widest text-[10px] text-[#c9a84c]">
+                Perusahaan
+              </h5>
+              <span className="opacity-70">Tentang Kami</span>
+              <span className="opacity-70">Karir</span>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h5 className="uppercase font-bold tracking-widest text-[10px] text-[#c9a84c]">
+                Bantuan
+              </h5>
+              <span className="opacity-70">Support</span>
+              <span className="opacity-70">Dokumentasi</span>
+            </div>
           </div>
+        </footer>
+        <div className="mt-12 pt-6 text-[10px] uppercase tracking-widest opacity-40 text-center">
+          © {new Date().getFullYear()} Prime Health Platform · Klinik Utama Mata
         </div>
       </div>
-    </section>
+    </div>
   );
 }
