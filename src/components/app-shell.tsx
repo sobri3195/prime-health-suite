@@ -17,12 +17,16 @@ export function AppShell({ system, children }: { system: System; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const { lang, setLang } = useI18n();
   const brand = BRAND[system];
 
+  // Initialize from persisted theme once mounted (avoids SSR/CSR mismatch).
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", dark);
-    }
+    setDark(getStoredTheme() === "dark");
+  }, []);
+
+  useEffect(() => {
+    persistTheme(dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
