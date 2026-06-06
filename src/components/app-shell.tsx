@@ -4,7 +4,7 @@ import {
   Activity, Bell, ChevronDown, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
 import { NAV, SYSTEM_LABEL, findNav, type NavItem } from "@/lib/nav-config";
-import { ROLE_LABEL, useAuth, canAccess, type System } from "@/lib/auth";
+import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 
 export function AppShell({ system, children }: { system: System; children: ReactNode }) {
@@ -42,15 +42,12 @@ export function AppShell({ system, children }: { system: System; children: React
         }`}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to={`/${system}`} className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
               <Activity className="h-4 w-4" />
             </div>
             <div className="leading-tight">
-              <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Prime Health
-              </div>
+              <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
             </div>
           </Link>
           <button className="md:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -58,36 +55,15 @@ export function AppShell({ system, children }: { system: System; children: React
           </button>
         </div>
 
+
         <nav className="flex-1 overflow-y-auto p-3">
           <SidebarNav system={system} items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
         </nav>
 
-        <div className="shrink-0 border-t border-border p-3">
-          <div className="mb-1.5 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Switch system
-          </div>
-          <div className="space-y-1">
-            {(Object.keys(SYSTEM_LABEL) as System[]).map((s) => {
-              const allowed = user ? canAccess(user.role, s) : false;
-              return (
-                <button
-                  key={s}
-                  disabled={!allowed}
-                  onClick={() => navigate({ to: `/${s}` })}
-                  className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
-                    s === system
-                      ? "bg-muted font-medium text-foreground"
-                      : allowed
-                      ? "text-muted-foreground hover:bg-muted"
-                      : "cursor-not-allowed text-muted-foreground/40"
-                  }`}
-                >
-                  {SYSTEM_LABEL[s]} {!allowed && "·  🔒"}
-                </button>
-              );
-            })}
-          </div>
+        <div className="shrink-0 border-t border-border p-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+          © {new Date().getFullYear()} {SYSTEM_LABEL[system]}
         </div>
+
       </aside>
       )}
 
@@ -103,16 +79,16 @@ export function AppShell({ system, children }: { system: System; children: React
             </button>
           )}
           {isApps && (
-            <Link to="/" className="flex items-center gap-2">
+            <Link to={`/${system}`} className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
                 <Activity className="h-4 w-4" />
               </div>
               <div className="leading-tight">
-                <div className="text-xs font-semibold">{SYSTEM_LABEL[system]}</div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Prime Health</div>
+                <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
               </div>
             </Link>
           )}
+
 
           <nav className="hidden items-center gap-1.5 text-sm md:flex">
             {!isApps && <span className="text-muted-foreground">{SYSTEM_LABEL[system]}</span>}
