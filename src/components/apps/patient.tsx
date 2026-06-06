@@ -203,45 +203,80 @@ export function PatientAI() {
   const [picked, setPicked] = useState<string[]>([]);
   const [durasi, setDurasi] = useState("");
   const [nyeri, setNyeri] = useState(0);
-  const [hasil, setHasil] = useState<null | { risk: string; tip: string }>(null);
+  const [usia, setUsia] = useState<string>("");
+  const [riwayat, setRiwayat] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [hasil, setHasil] = useState<DiagnoseResult | null>(null);
+  const callDiagnose = useServerFn(diagnoseEye);
 
   const toggle = (g: string) =>
     setPicked((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
 
-  const analisa = () => {
+  const analisa = async () => {
     if (!keluhan.trim() || !durasi) {
       toast.error("Lengkapi keluhan dan durasi.");
       return;
     }
-    const red = picked.some((p) =>
-      ["Penglihatan mendadak menurun", "Melihat kilatan cahaya", "Riwayat trauma mata"].includes(p),
-    );
-    const risk = red || nyeri >= 7 ? "Tinggi" : picked.length >= 3 || nyeri >= 4 ? "Sedang" : "Rendah";
-    const tip =
-      risk === "Tinggi"
-        ? "Segera kunjungi IGD atau dokter mata."
-        : risk === "Sedang"
-        ? "Booking pemeriksaan dalam 1-3 hari."
-        : "Pantau gejala dan terapkan istirahat mata.";
-    setHasil({ risk, tip });
-    toast.success("Analisis selesai");
+    setLoading(true);
+    setHasil(null);
+    try {
+      const res = await callDiagnose({
+        data: {
+          keluhan,
+          gejala: picked,
+          durasi,
+          nyeri,
+          usia: usia ? Number(usia) : null,
+          riwayat,
+        },
+      });
+      setHasil(res);
+      toast.success("AI engine selesai menganalisis");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal menganalisis");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const reset = () => {
+    setKeluhan(""); setPicked([]); setDurasi(""); setNyeri(0);
+    setUsia(""); setRiwayat(""); setHasil(null);
+  };
+
+  const riskTone = (r: string) => r === "Tinggi" ? "rose" : r === "Sedang" ? "amber" : "green";
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Card className="bg-[#1f1d19] text-white">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <AlertCircle className="h-4 w-4" /> Catatan keamanan medis
+      {/* Hero AI Engine */}
+      <Card className="bg-gradient-to-br from-[#1f1d19] via-[#2a2620] to-[#1f1d19] text-white">
+        <div className="flex items-center gap-2">
+          <div className="rounded-xl bg-[#a08a2a]/20 p-2"><Brain className="h-5 w-5 text-[#e9c860]" /></div>
+          <div>
+            <div className="text-[11px] font-bold tracking-[0.2em] text-[#e9c860]">PRIME AI ENGINE</div>
+            <div className="text-base font-bold">Skrining & Diagnosis Awal Mata</div>
+          </div>
         </div>
-        <p className="mt-2 text-xs opacity-90">
-          AI Mata PRIME hanya membantu screening awal dan edukasi. Hasil bukan diagnosis dokter.
+        <p className="mt-3 text-xs opacity-90">
+          Didukung model AI medis untuk membantu menilai keluhan mata Anda. Hasil bersifat
+          edukatif, bukan pengganti diagnosis dokter.
         </p>
-        <p className="mt-2 text-xs opacity-90">
-          Segera ke IGD bila penurunan penglihatan mendadak, nyeri hebat, trauma, atau kilatan cahaya.
-        </p>
-        <button onClick={() => toast.success("Disetujui")} className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#1f1d19]">
-          Saya Mengerti
-        </button>
+        <div className="mt-3 flex items-center gap-3 text-[11px] opacity-90">
+          <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" /> Aman & Privasi</span>
+          <span className="inline-flex items-center gap-1"><Activity className="h-3 w-3" /> Realtime</span>
+          <span className="inline-flex items-center gap-1"><Stethoscope className="h-3 w-3" /> Klinis</span>
+        </div>
+      </Card>
+
+      {/* Red flag banner */}
+      <Card className="border-rose-200 bg-rose-50">
+        <div className="flex items-start gap-2 text-rose-700">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="text-xs">
+            <b>Segera ke IGD</b> bila penglihatan turun mendadak, nyeri hebat, trauma, kilatan cahaya,
+            atau banyak bintik mengambang baru.
+          </div>
+        </div>
       </Card>
 
       <Card>
@@ -251,17 +286,41 @@ export function PatientAI() {
         </button>
       </Card>
 
+      {/* Form */}
       <Card>
-        <label className="text-sm font-semibold">Keluhan utama</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold">Keluhan utama</label>
+          <span className="text-[11px] text-muted-foreground">{keluhan.length}/300</span>
+        </div>
         <textarea
           value={keluhan}
           maxLength={300}
           onChange={(e) => setKeluhan(e.target.value)}
           rows={3}
-          placeholder="Ceritakan keluhan Anda..."
+          placeholder="Contoh: mata kanan merah dan terasa pedih sejak pagi..."
           className="mt-2 w-full rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] p-3 text-sm outline-none focus:ring-2 focus:ring-[#a08a2a]"
         />
-        <div className="mt-1 text-right text-[11px] text-muted-foreground">{keluhan.length}/300</div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-[#5a4a14]">Usia (opsional)</label>
+            <input
+              type="number" min={0} max={120} value={usia}
+              onChange={(e) => setUsia(e.target.value)}
+              placeholder="mis. 35"
+              className="mt-1 w-full rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#a08a2a]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[#5a4a14]">Riwayat (opsional)</label>
+            <input
+              type="text" value={riwayat}
+              onChange={(e) => setRiwayat(e.target.value)}
+              placeholder="mis. pakai lensa kontak, diabetes"
+              className="mt-1 w-full rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#a08a2a]"
+            />
+          </div>
+        </div>
 
         <div className="mt-4 text-sm font-semibold">Pilihan gejala</div>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -299,10 +358,7 @@ export function PatientAI() {
         <div className="mt-4 text-sm font-semibold">Tingkat nyeri</div>
         <div className="mt-1 text-xs text-muted-foreground">Nyeri: {nyeri}/10</div>
         <input
-          type="range"
-          min={0}
-          max={10}
-          value={nyeri}
+          type="range" min={0} max={10} value={nyeri}
           onChange={(e) => setNyeri(Number(e.target.value))}
           className="mt-2 w-full accent-[#a08a2a]"
         />
@@ -310,25 +366,106 @@ export function PatientAI() {
           <span>Tidak nyeri</span><span>Nyeri berat</span>
         </div>
 
-        <button
-          onClick={analisa}
-          className="mt-4 w-full rounded-xl bg-[#a08a2a] py-3 text-sm font-semibold text-white"
-        >
-          Analisa Sekarang
-        </button>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={analisa}
+            disabled={loading}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#a08a2a] py-3 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> AI sedang menganalisis…</> : <><Brain className="h-4 w-4" /> Diagnosis dengan AI</>}
+          </button>
+          <button onClick={reset} className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
+            Reset
+          </button>
+        </div>
       </Card>
 
-      <Card>
-        <div className="text-sm font-semibold">Hasil Analisis</div>
-        {hasil ? (
-          <div className="mt-2 space-y-1">
-            <div>Risiko: <Pill tone={hasil.risk === "Tinggi" ? "rose" : hasil.risk === "Sedang" ? "amber" : "green"}>{hasil.risk}</Pill></div>
-            <p className="text-sm text-muted-foreground">{hasil.tip}</p>
+      {/* Hasil */}
+      {loading && (
+        <Card>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-[#a08a2a]" />
+            Prime AI Engine sedang memproses gejala…
           </div>
-        ) : (
-          <p className="mt-2 text-xs text-muted-foreground">Belum ada hasil analisis. Isi form lalu klik Analisa Sekarang.</p>
-        )}
-      </Card>
+        </Card>
+      )}
+
+      {hasil && !loading && (
+        <>
+          <Card>
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">Hasil Diagnosis AI</div>
+              <Pill tone={riskTone(hasil.risk) as "rose" | "amber" | "green"}>Risiko {hasil.risk}</Pill>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{hasil.summary}</p>
+            <div className="mt-3 rounded-xl bg-[#fdf2c4] p-3 text-xs">
+              <b>Urgensi:</b> {hasil.urgency}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Stethoscope className="h-4 w-4 text-[#a08a2a]" /> Kemungkinan kondisi
+            </div>
+            <ul className="mt-2 space-y-2">
+              {hasil.possible_conditions.map((c, i) => (
+                <li key={i} className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-[#3a300a]">{c.name}</div>
+                    <Pill tone={c.likelihood === "tinggi" ? "rose" : c.likelihood === "sedang" ? "amber" : "green"}>
+                      {c.likelihood}
+                    </Pill>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          {hasil.red_flags.length > 0 && (
+            <Card className="border-rose-200 bg-rose-50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+                <ShieldAlert className="h-4 w-4" /> Tanda bahaya
+              </div>
+              <ul className="mt-2 list-disc pl-5 text-xs text-rose-700">
+                {hasil.red_flags.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </Card>
+          )}
+
+          <Card>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <ListChecks className="h-4 w-4 text-[#a08a2a]" /> Rekomendasi perawatan
+            </div>
+            <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
+              {hasil.recommendations.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <ChevronRight className="h-4 w-4 text-[#a08a2a]" /> Langkah selanjutnya
+            </div>
+            <ul className="mt-2 space-y-1 text-sm">
+              {hasil.next_steps.map((r, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" /> {r}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex gap-2">
+              <button onClick={() => toast.success("Booking dibuka")} className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
+                Booking Dokter
+              </button>
+              <button onClick={() => toast.info("Chat dokter dibuka")} className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
+                Chat Dokter
+              </button>
+            </div>
+          </Card>
+
+          <p className="px-2 text-center text-[11px] text-muted-foreground">{hasil.disclaimer}</p>
+        </>
+      )}
     </div>
   );
 }
