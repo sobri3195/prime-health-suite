@@ -25,7 +25,7 @@ function FinanceDashboard() {
   const navigate = useNavigate();
   const [period] = useState("Mei 2026");
 
-  const filter = useMemo(() => ({ period: "mtd" as const, doctor: "all", service: "all", payer: "all", status: "all" as const, from: "", to: "" }), []);
+  const filter = useMemo(() => ({ period: "mtd", doctor: "all", service: "all", payer: "all", status: "all", from: "", to: "" } as const), []);
   const filtered = useMemo(() => applyFilter(invoices, filter), [filter]);
 
   const mtdRev = filtered.reduce((a, r) => a + r.total, 0);
