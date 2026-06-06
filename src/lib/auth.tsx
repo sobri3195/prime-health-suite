@@ -130,7 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { sessionStorage.removeItem(SESSION_KEY(target)); } catch {}
   }, [sessions, currentSystem]);
 
-  const user = currentSystem ? (sessions[currentSystem] ?? null) : null;
+  // For non-system paths (e.g. /qa), fall back to any existing session.
+  const user = currentSystem
+    ? (sessions[currentSystem] ?? null)
+    : (sessions.apps ?? sessions["sim-klinik"] ?? sessions.finance ?? null);
 
   const value = useMemo<AuthState>(() => ({
     user,
