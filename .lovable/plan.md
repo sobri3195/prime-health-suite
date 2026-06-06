@@ -1,64 +1,64 @@
-## Goal
-Bring `/finance` (Prime Simon) to feature-parity with prime-simon.vercel.app. The reference site is a single-page SPA — all sections render on `/`; deep URLs return 404 — so the structure is one mega-dashboard with a grouped collapsible sidebar.
+# Penyempurnaan /finance (Prime SIMON)
 
-## Scope to add
+Cakupan besar — dikerjakan bertahap dalam 4 fase. Setiap fase bisa di-review sebelum lanjut.
 
-### 1. Sidebar restructure (grouped, collapsible)
-Replace the flat finance nav with grouped sections matching prime-simon:
-- **Dashboard** — Overview Finance
-- **Master Data** — Profil Klinik, Dokter, Karyawan, Vendor, Payer/Asuransi, COA, Cost Center, Tarif Pajak, Kategori Layanan
-- **Pendapatan** — Input Pendapatan Harian, Detail Pendapatan, Ranking Dokter, Report Highlight, Pendapatan Kasir Harian, Kartu Debit/Kredit
-- **Dokter & Honor** — Input Jasa Medis, Rekap Jasa Medis Dokter, Potongan Jasa Dokter
-- **Pengeluaran, Pajak, Bank, Voucher, Jurnal, Buku Besar, Laporan** (already exist — regroup)
+## Fase 0 — Aktifkan Lovable Cloud
+- Enable Cloud (Postgres + Auth + Storage).
+- Setup RLS pattern: `user_roles` (admin / kasir / dokter / akunting) + `has_role()` security definer.
+- Semua tabel finance pakai `tenant_id` (= `auth.uid()` pemilik klinik) supaya multi-klinik aman.
 
-Implement via `NAV` config change + `AppShell` rendering collapsible groups for `system === "finance"`.
+## Fase 1 — Master Data (fondasi)
+Buat tabel + RLS + halaman CRUD (list, create, edit, delete, search):
+- `coa` (kode akun, nama, tipe, parent)
+- `cost_center`
+- `dokter` (nama, spesialisasi, default_fee_pct, npwp)
+- `karyawan` (nama, jabatan, gaji_pokok)
+- `payer` (nama, tipe: tunai / asuransi / BPJS / korporat, term hari)
+- `vendor`
+- `kategori_layanan` + `layanan` (tarif default)
+- `tarif_pajak` (PPN, PPh21, PPh23)
+- `profil_klinik` (1 row, logo, NPWP, alamat)
 
-### 2. Dashboard polish (already done in last turn — keep)
-Already mirrors prime-simon hero, KPI cards, Quick Actions, Pendapatan by Payer, Top Dokter, Saldo Bank, Alert, AI Insight.
+Semua diseed dengan data realistis di migration awal.
 
-Add the missing dashboard widgets from the reference:
-- **AR Aging** bar chart (current / 30 / 60 / 90+)
-- **AP Aging** bar chart
-- **Recent Activities** list (RC-xxx receipts + KEU vouchers)
-- **Finance Alerts** trio (piutang jatuh tempo, hutang jatuh tempo, belum rekonsiliasi)
-- **Bandingkan Periode** chip selector on Pendapatan by Payer
+## Fase 2 — Pendapatan
+Tabel: `invoice` (header) + `invoice_item` (detail layanan) + `pembayaran` (cash/kartu/transfer/asuransi).
+Halaman:
+- **Input harian**: form invoice dengan picker dokter + layanan + payer + metode bayar; auto-hitung subtotal, diskon, pajak, total.
+- **Kasir harian**: rekap per kasir per hari, tutup kas.
+- **Kartu**: rekap EDC per bank, MDR, settlement.
+- **Ranking dokter**: leaderboard pendapatan + jumlah pasien per periode.
+- **Report highlight**: top layanan, top payer, growth vs bulan lalu.
+Filter periode + payer + dokter di semua halaman.
 
-### 3. New Master Data pages (mock CRUD, CSV export)
-- `/finance/master/profil-klinik` — single profile form
-- `/finance/master/dokter`, `/karyawan`, `/vendor`, `/payer`, `/coa`, `/cost-center`, `/tarif-pajak`, `/kategori-layanan` — list + add/edit modal + delete + CSV export
+## Fase 3 — Honor Dokter
+Tabel: `honor_run` (periode) + `honor_detail` (per dokter, gross/potongan/net) + `honor_potongan` (jenis: PPh21, bahan, lab, dll).
+Halaman:
+- **Input**: tarik otomatis dari invoice periode terpilih × persentase fee dokter.
+- **Potongan**: tambah/edit potongan per dokter (PPh21 progresif otomatis dari `tarif_pajak`).
+- **Rekap**: slip honor printable + total per dokter + export.
 
-### 4. Pendapatan module expansion
-- `/finance/pendapatan/input-harian` — daily revenue entry form (date, kasir, payer, items, total) → push to invoices state
-- `/finance/pendapatan/detail` — invoice line detail with filters/export (rename existing list)
-- `/finance/pendapatan/ranking-dokter` — dokter ranking with payer filter + bar chart
-- `/finance/pendapatan/report-highlight` — period highlights (top day, top dokter, top payer)
-- `/finance/pendapatan/kasir-harian` — kasir daily recap
-- `/finance/pendapatan/kartu` — debit/credit card transactions log
+## Fase 4 — Akuntansi Inti
+Tabel: `jurnal` (header) + `jurnal_line` (debit/kredit per akun + cost_center).
+Auto-posting:
+- Invoice lunas → Dr Kas/Bank/Piutang | Cr Pendapatan + Cr Hutang Pajak.
+- Pengeluaran → Dr Beban | Cr Kas/Bank/Hutang.
+- Honor run posted → Dr Beban Honor | Cr Hutang Honor + Cr Hutang PPh21.
 
-### 5. Dokter & Honor module (new)
-- `/finance/honor/input` — input jasa medis per kunjungan
-- `/finance/honor/rekap` — rekap per dokter (period filter, export)
-- `/finance/honor/potongan` — potongan/pajak jasa dokter
+Halaman (semua dari jurnal asli, bukan hardcode):
+- **Jurnal**: list + filter + manual entry.
+- **Buku besar**: per akun, saldo berjalan.
+- **Neraca Saldo**: trial balance per periode.
+- **Laba Rugi**: revenue – COGS – opex – pajak.
+- **Arus Kas**: indirect method dari akun kas/bank.
 
-### 6. Shared infrastructure
-- Add `src/data/financeExtra.ts` for kasir, kartu, jasa-medis mock data
-- Add `src/lib/aging.ts` for AR/AP aging buckets
-- Reuse existing `applyFilter`, `formatIDR`, `exportCsv`
-- All actions remain mock (toast + in-memory)
+## Catatan teknis
+- Server functions (`createServerFn` + `requireSupabaseAuth`) untuk semua mutasi & report agregat.
+- TanStack Query untuk caching, invalidate setelah mutate.
+- `recharts` untuk grafik (sudah ada).
+- Branding header /finance tetap (sudah dipisah).
 
-## Technical notes
-- All new routes under `src/routes/_authenticated.finance.<group>.<page>.tsx`
-- Sidebar groups implemented in `AppShell` via a `group` field added to `NavItem`, rendered with chevron-toggle sections, persisted in `useState`
-- No backend; CSV export uses existing helper
-- All buttons have toast handlers
-- Build-safe for Vercel
+## Permintaan persetujuan
+Karena cakupan sangat besar (≈9 tabel baru, 20+ halaman dirombak), saya usul **mulai dari Fase 0 + Fase 1 dulu** di iterasi ini. Setelah master data jalan & disetujui, lanjut Fase 2, lalu 3, lalu 4.
 
-## Estimated additions
-~20 new route files + 1 sidebar refactor + 2 data files + AR/AP/Activities/Alerts widgets on dashboard.
-
-## Out of scope
-- Real persistence (still mock state, resets on refresh — same as prime-simon)
-- Authentication/RBAC changes
-- Touching `/sim-klinik` or `/apps`
-
-Confirm to proceed and I'll implement in one pass.
+**Setuju mulai dari Fase 0 + 1?** Atau ingin urutan berbeda (mis. Pendapatan duluan dengan tabel master minimal)?
