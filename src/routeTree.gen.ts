@@ -15,6 +15,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSimKlinikRouteImport } from './routes/_authenticated.sim-klinik'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated.finance'
 import { Route as AuthenticatedAppsRouteImport } from './routes/_authenticated.apps'
+import { Route as AuthenticatedSimKlinikIndexRouteImport } from './routes/_authenticated.sim-klinik.index'
+import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated.finance.index'
+import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated.apps.index'
+import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_authenticated.sim-klinik.$section'
+import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
+import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -45,35 +51,104 @@ const AuthenticatedAppsRoute = AuthenticatedAppsRouteImport.update({
   path: '/apps',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSimKlinikIndexRoute =
+  AuthenticatedSimKlinikIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedFinanceIndexRoute =
+  AuthenticatedFinanceIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppsRoute,
+} as any)
+const AuthenticatedSimKlinikSectionRoute =
+  AuthenticatedSimKlinikSectionRouteImport.update({
+    id: '/$section',
+    path: '/$section',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedFinanceSectionRoute =
+  AuthenticatedFinanceSectionRouteImport.update({
+    id: '/$section',
+    path: '/$section',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedAppsSectionRoute =
+  AuthenticatedAppsSectionRouteImport.update({
+    id: '/$section',
+    path: '/$section',
+    getParentRoute: () => AuthenticatedAppsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/apps': typeof AuthenticatedAppsRoute
-  '/finance': typeof AuthenticatedFinanceRoute
-  '/sim-klinik': typeof AuthenticatedSimKlinikRoute
+  '/apps': typeof AuthenticatedAppsRouteWithChildren
+  '/finance': typeof AuthenticatedFinanceRouteWithChildren
+  '/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
+  '/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/apps/': typeof AuthenticatedAppsIndexRoute
+  '/finance/': typeof AuthenticatedFinanceIndexRoute
+  '/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/apps': typeof AuthenticatedAppsRoute
-  '/finance': typeof AuthenticatedFinanceRoute
-  '/sim-klinik': typeof AuthenticatedSimKlinikRoute
+  '/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/apps': typeof AuthenticatedAppsIndexRoute
+  '/finance': typeof AuthenticatedFinanceIndexRoute
+  '/sim-klinik': typeof AuthenticatedSimKlinikIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/apps': typeof AuthenticatedAppsRoute
-  '/_authenticated/finance': typeof AuthenticatedFinanceRoute
-  '/_authenticated/sim-klinik': typeof AuthenticatedSimKlinikRoute
+  '/_authenticated/apps': typeof AuthenticatedAppsRouteWithChildren
+  '/_authenticated/finance': typeof AuthenticatedFinanceRouteWithChildren
+  '/_authenticated/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
+  '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
+  '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/_authenticated/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
+  '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
+  '/_authenticated/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/apps' | '/finance' | '/sim-klinik'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/apps'
+    | '/finance'
+    | '/sim-klinik'
+    | '/apps/$section'
+    | '/finance/$section'
+    | '/sim-klinik/$section'
+    | '/apps/'
+    | '/finance/'
+    | '/sim-klinik/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/apps' | '/finance' | '/sim-klinik'
+  to:
+    | '/'
+    | '/login'
+    | '/apps/$section'
+    | '/finance/$section'
+    | '/sim-klinik/$section'
+    | '/apps'
+    | '/finance'
+    | '/sim-klinik'
   id:
     | '__root__'
     | '/'
@@ -82,6 +157,12 @@ export interface FileRouteTypes {
     | '/_authenticated/apps'
     | '/_authenticated/finance'
     | '/_authenticated/sim-klinik'
+    | '/_authenticated/apps/$section'
+    | '/_authenticated/finance/$section'
+    | '/_authenticated/sim-klinik/$section'
+    | '/_authenticated/apps/'
+    | '/_authenticated/finance/'
+    | '/_authenticated/sim-klinik/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,19 +215,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/sim-klinik/': {
+      id: '/_authenticated/sim-klinik/'
+      path: '/'
+      fullPath: '/sim-klinik/'
+      preLoaderRoute: typeof AuthenticatedSimKlinikIndexRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/finance/': {
+      id: '/_authenticated/finance/'
+      path: '/'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/apps/': {
+      id: '/_authenticated/apps/'
+      path: '/'
+      fullPath: '/apps/'
+      preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppsRoute
+    }
+    '/_authenticated/sim-klinik/$section': {
+      id: '/_authenticated/sim-klinik/$section'
+      path: '/$section'
+      fullPath: '/sim-klinik/$section'
+      preLoaderRoute: typeof AuthenticatedSimKlinikSectionRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/finance/$section': {
+      id: '/_authenticated/finance/$section'
+      path: '/$section'
+      fullPath: '/finance/$section'
+      preLoaderRoute: typeof AuthenticatedFinanceSectionRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/apps/$section': {
+      id: '/_authenticated/apps/$section'
+      path: '/$section'
+      fullPath: '/apps/$section'
+      preLoaderRoute: typeof AuthenticatedAppsSectionRouteImport
+      parentRoute: typeof AuthenticatedAppsRoute
+    }
   }
 }
 
+interface AuthenticatedAppsRouteChildren {
+  AuthenticatedAppsSectionRoute: typeof AuthenticatedAppsSectionRoute
+  AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
+}
+
+const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
+  AuthenticatedAppsSectionRoute: AuthenticatedAppsSectionRoute,
+  AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
+}
+
+const AuthenticatedAppsRouteWithChildren =
+  AuthenticatedAppsRoute._addFileChildren(AuthenticatedAppsRouteChildren)
+
+interface AuthenticatedFinanceRouteChildren {
+  AuthenticatedFinanceSectionRoute: typeof AuthenticatedFinanceSectionRoute
+  AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
+}
+
+const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
+  AuthenticatedFinanceSectionRoute: AuthenticatedFinanceSectionRoute,
+  AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
+}
+
+const AuthenticatedFinanceRouteWithChildren =
+  AuthenticatedFinanceRoute._addFileChildren(AuthenticatedFinanceRouteChildren)
+
+interface AuthenticatedSimKlinikRouteChildren {
+  AuthenticatedSimKlinikSectionRoute: typeof AuthenticatedSimKlinikSectionRoute
+  AuthenticatedSimKlinikIndexRoute: typeof AuthenticatedSimKlinikIndexRoute
+}
+
+const AuthenticatedSimKlinikRouteChildren: AuthenticatedSimKlinikRouteChildren =
+  {
+    AuthenticatedSimKlinikSectionRoute: AuthenticatedSimKlinikSectionRoute,
+    AuthenticatedSimKlinikIndexRoute: AuthenticatedSimKlinikIndexRoute,
+  }
+
+const AuthenticatedSimKlinikRouteWithChildren =
+  AuthenticatedSimKlinikRoute._addFileChildren(
+    AuthenticatedSimKlinikRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAppsRoute: typeof AuthenticatedAppsRoute
-  AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
-  AuthenticatedSimKlinikRoute: typeof AuthenticatedSimKlinikRoute
+  AuthenticatedAppsRoute: typeof AuthenticatedAppsRouteWithChildren
+  AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRouteWithChildren
+  AuthenticatedSimKlinikRoute: typeof AuthenticatedSimKlinikRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAppsRoute: AuthenticatedAppsRoute,
-  AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
-  AuthenticatedSimKlinikRoute: AuthenticatedSimKlinikRoute,
+  AuthenticatedAppsRoute: AuthenticatedAppsRouteWithChildren,
+  AuthenticatedFinanceRoute: AuthenticatedFinanceRouteWithChildren,
+  AuthenticatedSimKlinikRoute: AuthenticatedSimKlinikRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
