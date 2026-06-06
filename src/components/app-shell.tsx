@@ -7,12 +7,15 @@ import { NAV, SYSTEM_LABEL, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 
+import { BRAND } from "@/lib/brand";
+
 export function AppShell({ system, children }: { system: System; children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const brand = BRAND[system];
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -31,9 +34,11 @@ export function AppShell({ system, children }: { system: System; children: React
 
   return (
     <div
-      className={`flex min-h-screen bg-background ${isApps ? "flex-col" : ""}`}
-      style={isApps ? { background: "#f7eccb" } : undefined}
+      className={`flex min-h-screen ${isApps ? "flex-col" : ""}`}
+      data-system={system}
+      style={{ background: brand.background, color: brand.foreground }}
     >
+
       {/* Sidebar (hidden for Prime Apps which uses bottom nav) */}
       {!isApps && (
       <aside
