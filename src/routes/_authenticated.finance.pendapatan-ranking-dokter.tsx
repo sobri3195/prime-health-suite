@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/finance/pendapatan-ranking
   component: Page,
 });
 
-type Inv = { total: number; fin_dokter: { nama: string } | null };
+type Inv = { total: number; fin_dokter: { name: string } | null };
 
 function Page() {
   const today = new Date().toISOString().slice(0, 10);
@@ -31,7 +31,7 @@ function Page() {
   const ranking = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of rows) {
-      const name = r.fin_dokter?.nama ?? "(Tanpa dokter)";
+      const name = r.fin_dokter?.name ?? "(Tanpa dokter)";
       map.set(name, (map.get(name) ?? 0) + Number(r.total));
     }
     return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 20);
