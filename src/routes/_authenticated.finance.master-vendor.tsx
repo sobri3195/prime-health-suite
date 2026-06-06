@@ -1,22 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
-import { master as financeMaster } from "@/data/financeData";
 
 export const Route = createFileRoute("/_authenticated/finance/master-vendor")({
   component: () => (
     <MasterCrudPage
       title="Vendor"
-      desc="Daftar supplier alkes, obat, dan jasa pendukung."
+      desc="Daftar supplier obat, alat medis, utilitas, dll."
       module="master-vendor"
+      table="fin_vendor"
       fields={[
-        { key: "id", label: "Kode" },
-        { key: "name", label: "Nama Vendor" },
-        { key: "type", label: "Tipe", type: "select", options: ["Supplier", "Service", "Sewa"] },
-        { key: "termin", label: "Termin (hari)", type: "number" },
-        { key: "status", label: "Status", type: "select", options: ["Aktif", "Non-Aktif"] },
+        { key: "code", label: "Kode" },
+        { key: "name", label: "Nama" },
+        { key: "kategori", label: "Kategori" },
+        { key: "npwp", label: "NPWP" },
+        { key: "term_hari", label: "Term (hari)", type: "number" },
+        { key: "is_active", label: "Aktif", type: "boolean" },
       ]}
-      initial={financeMaster.vendors.map((v: any) => ({ ...v, termin: 30 }))}
-      newRow={() => ({ id: "", name: "", type: "Supplier", termin: 30, status: "Aktif" })}
+      newRow={() => ({ code: "", name: "", kategori: "", npwp: "", term_hari: 30, is_active: true })}
     />
   ),
 });
