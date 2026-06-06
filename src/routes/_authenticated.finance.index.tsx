@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Wallet, TrendingUp, TrendingDown, Receipt, Landmark, AlertTriangle, Sparkles,
   PiggyBank, ShieldCheck, FileWarning, ArrowDownCircle, ArrowUpCircle, Activity,
-  Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar,
+  Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar, Search,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -16,6 +17,7 @@ import {
   applyFilter, sumOutstanding, byPayer, topBy, netProfit, aging,
   formatIDR, formatCompactIDR, generateInsights,
 } from "@/lib/finance";
+import type { Invoice, Payer } from "@/types/finance";
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,
