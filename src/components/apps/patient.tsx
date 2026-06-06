@@ -70,11 +70,15 @@ export function PatientBeranda() {
   const callBookings = useServerFn(listMyBookings);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
-  const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue() });
+  const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue(), refetchInterval: 60_000 });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
+
+  useAppsRealtime(profileQ.data?.profile?.user_id);
 
   const profile = profileQ.data?.profile;
   const queue = queueQ.data?.queue;
+  const posisi = queueQ.data?.posisi;
+  const total = queueQ.data?.total;
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = bookingsQ.data?.bookings.find(
     (b) => b.tanggal >= today && b.status !== "cancelled" && b.status !== "done"
@@ -90,9 +94,7 @@ export function PatientBeranda() {
             <div className="text-[11px] font-bold tracking-[0.2em] text-[#a08a2a]">PRIME</div>
             <div className="text-[11px] text-muted-foreground">Klinik Utama Mata</div>
           </div>
-          <Link to="/apps/profil" className="rounded-full border border-[#e9dfb8] p-2 text-[#7a6010]">
-            <Bell className="h-4 w-4" />
-          </Link>
+          <NotifBellBadge />
         </div>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">
           Halo, {nama} <span aria-hidden>👋</span>
@@ -127,12 +129,22 @@ export function PatientBeranda() {
 
       {/* antrean hari ini */}
       <Card>
-        <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> LIVE
+          </span>
+        </div>
         {queueQ.isLoading ? (
           <div className="mt-2 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>
         ) : queue ? (
           <>
-            <div className="mt-1 text-3xl font-bold">{queue.no_antrean || "—"}</div>
+            <div className="mt-1 text-3xl font-bold">{queue.no_antrean || `#${(posisi ?? 0) + 1}`}</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              {posisi !== null && posisi !== undefined && total !== null && total !== undefined
+                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * 15} menit`
+                : "Memuat posisi…"}
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <Clock className="h-3.5 w-3.5 text-[#a08a2a]" /> {queue.jam_slot}
               <Pill tone={queue.status === "checked_in" ? "green" : "amber"}>
@@ -145,6 +157,7 @@ export function PatientBeranda() {
           <div className="mt-2 text-sm opacity-70">Tidak ada antrean hari ini. Booking jadwal terbaru?</div>
         )}
       </Card>
+
 
       {/* jadwal berikutnya */}
       <Card>
