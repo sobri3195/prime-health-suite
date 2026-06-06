@@ -15,6 +15,7 @@ import {
   getMyProfile, updateMyProfile, listMyBookings, cancelBooking, rescheduleBooking,
   getMyQueueToday, listMyInvoices, listDoctorsForBooking, listAvailableSlots,
 } from "@/lib/apps-patient.functions";
+import { saveAiHistory, signEyePhotoUpload } from "@/lib/apps-ai.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
