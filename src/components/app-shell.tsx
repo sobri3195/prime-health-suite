@@ -170,31 +170,37 @@ export function AppShell({ system, children }: { system: System; children: React
 
         <main className={`min-w-0 flex-1 p-6 md:p-8 ${isApps ? "pb-24" : ""}`}>{children}</main>
 
-        {/* Bottom navigation for Prime Apps */}
-        {isApps && (
-          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-3xl items-stretch justify-around px-2 py-1.5">
-              {items.map((it) => {
-                const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
-                const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
-                return (
-                  <Link
-                    key={it.label}
-                    to={href}
-                    className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-[10px] transition-colors ${
-                      active
-                        ? "text-navy dark:text-cyan-accent"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <it.icon className={`h-5 w-5 ${active ? "scale-110" : ""}`} />
-                    <span className="truncate">{it.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-        )}
+        {/* Bottom navigation for Prime Apps — limited to 5 primary items */}
+        {isApps && (() => {
+          const PRIMARY_SLUGS = ["", "ai", "belanja", "chat", "profil"];
+          const primary = PRIMARY_SLUGS
+            .map((s) => items.find((it) => it.slug === s))
+            .filter((it): it is NavItem => Boolean(it));
+          return (
+            <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl">
+              <div className="mx-auto flex max-w-3xl items-stretch justify-around px-2 py-1.5">
+                {primary.map((it) => {
+                  const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
+                  const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
+                  return (
+                    <Link
+                      key={it.label}
+                      to={href}
+                      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-[10px] transition-colors ${
+                        active
+                          ? "text-navy dark:text-cyan-accent"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <it.icon className={`h-5 w-5 ${active ? "scale-110" : ""}`} />
+                      <span className="truncate">{it.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          );
+        })()}
       </div>
     </div>
   );
