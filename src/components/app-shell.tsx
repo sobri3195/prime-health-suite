@@ -1,13 +1,14 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Activity, Bell, ChevronDown, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
+  Activity, Bell, ChevronDown, ChevronRight, Lock, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
 import { useI18n, type Lang } from "@/lib/i18n";
+import { useRoles, hasAnyRole } from "@/lib/rbac";
 
 import { BRAND } from "@/lib/brand";
 
@@ -33,7 +34,12 @@ export function AppShell({ system, children }: { system: System; children: React
     if (user) addAudit({ actor: user.email, action: "page_access", target: pathname });
   }, [pathname, user]);
 
-  const items = NAV[system];
+  const allItems = NAV[system];
+  const { data: roles } = useRoles();
+  const items = useMemo(() => {
+    if (system !== "sim-klinik") return allItems;
+    return allItems.filter((it) => !it.roles || hasAnyRole(roles, it.roles));
+  }, [allItems, roles, system]);
   const currentSlug = pathname.split("/").slice(3).join("/") || "";
   const current = findNav(system, currentSlug);
   const isApps = system === "apps";
@@ -282,6 +288,20 @@ function SidebarNav({
 
   const Item = (it: NavItem) => {
     const active = isActive(it);
+    const locked = it.status === "coming_soon";
+    if (locked) {
+      return (
+        <div
+          key={it.label}
+          className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground/60"
+          title="Modul akan segera tersedia"
+        >
+          <it.icon className="h-4 w-4" />
+          <span className="truncate">{it.label}</span>
+          <Lock className="ml-auto h-3 w-3" />
+        </div>
+      );
+    }
     return (
       <Link
         key={it.label}
