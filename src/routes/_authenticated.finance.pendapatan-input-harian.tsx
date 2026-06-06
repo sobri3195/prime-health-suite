@@ -38,9 +38,9 @@ function Page() {
   const payer = useQuery({ queryKey: ["fin", "fin_payer"], queryFn: () => list({ data: { table: "fin_payer" } }) });
   const layanan = useQuery({ queryKey: ["fin", "fin_layanan"], queryFn: () => list({ data: { table: "fin_layanan" } }) });
 
-  const layananRows = (layanan.data?.rows ?? []) as Array<{ id: string; nama: string; tarif: number }>;
-  const dokterRows = (dokter.data?.rows ?? []) as Array<{ id: string; nama: string }>;
-  const payerRows = (payer.data?.rows ?? []) as Array<{ id: string; nama: string }>;
+  const layananRows = (layanan.data?.rows ?? []) as unknown as Array<{ id: string; name: string; tarif: number }>;
+  const dokterRows = (dokter.data?.rows ?? []) as unknown as Array<{ id: string; name: string }>;
+  const payerRows = (payer.data?.rows ?? []) as unknown as Array<{ id: string; name: string }>;
 
   const [items, setItems] = useState<Item[]>([]);
   useEffect(() => {
