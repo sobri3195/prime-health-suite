@@ -97,7 +97,7 @@ export const listInvoices = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let q = supabaseAdmin
       .from("fin_invoice")
-      .select("*, fin_dokter(nama), fin_payer(nama), fin_pembayaran(*), fin_invoice_item(*)")
+      .select("*, fin_dokter(name), fin_payer(name), fin_pembayaran(*), fin_invoice_item(*)")
       .order("tanggal", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(500);
