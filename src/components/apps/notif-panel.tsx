@@ -127,13 +127,13 @@ export function NotificationsPagePatient() {
                     {new Date(n.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
                   </span>
                   {n.deep_link && (
-                    <Link
-                      to={n.deep_link as "/apps"}
+                    <a
+                      href={n.deep_link}
                       onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
                       className="text-xs font-semibold text-[#a08a2a]"
                     >
                       Buka →
-                    </Link>
+                    </a>
                   )}
                 </div>
               </div>
