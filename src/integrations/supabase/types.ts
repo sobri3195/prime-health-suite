@@ -116,6 +116,123 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_invoice: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          dokter_id: string | null
+          id: string
+          kasir: string | null
+          no_invoice: string
+          pajak: number
+          patient_code: string
+          patient_name: string | null
+          payer_id: string | null
+          status: string
+          subtotal: number
+          tanggal: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          dokter_id?: string | null
+          id?: string
+          kasir?: string | null
+          no_invoice: string
+          pajak?: number
+          patient_code: string
+          patient_name?: string | null
+          payer_id?: string | null
+          status?: string
+          subtotal?: number
+          tanggal?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          dokter_id?: string | null
+          id?: string
+          kasir?: string | null
+          no_invoice?: string
+          pajak?: number
+          patient_code?: string
+          patient_name?: string | null
+          payer_id?: string | null
+          status?: string
+          subtotal?: number
+          tanggal?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_invoice_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_invoice_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "fin_payer"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_invoice_item: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          layanan_id: string | null
+          layanan_nama: string
+          qty: number
+          subtotal: number
+          tarif: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          layanan_id?: string | null
+          layanan_nama: string
+          qty?: number
+          subtotal?: number
+          tarif?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          layanan_id?: string | null
+          layanan_nama?: string
+          qty?: number
+          subtotal?: number
+          tarif?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_invoice_item_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fin_invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_invoice_item_layanan_id_fkey"
+            columns: ["layanan_id"]
+            isOneToOne: false
+            referencedRelation: "fin_layanan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fin_karyawan: {
         Row: {
           code: string
@@ -247,6 +364,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fin_pembayaran: {
+        Row: {
+          bank: string | null
+          created_at: string
+          id: string
+          invoice_id: string
+          jumlah: number
+          mdr: number
+          metode: string
+          netto: number
+          no_kartu_last4: string | null
+          tanggal: string
+        }
+        Insert: {
+          bank?: string | null
+          created_at?: string
+          id?: string
+          invoice_id: string
+          jumlah?: number
+          mdr?: number
+          metode?: string
+          netto?: number
+          no_kartu_last4?: string | null
+          tanggal?: string
+        }
+        Update: {
+          bank?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          jumlah?: number
+          mdr?: number
+          metode?: string
+          netto?: number
+          no_kartu_last4?: string | null
+          tanggal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_pembayaran_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fin_invoice"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fin_profil_klinik: {
         Row: {
