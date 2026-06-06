@@ -24,7 +24,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "documents", label: "SOP & Documents", icon: FileText },
     { slug: "users", label: "User Overview", icon: Users },
     { slug: "integration", label: "System Integration", icon: Plug },
-    { slug: "audit", label: "Audit Log", icon: ScrollText },
+    { slug: "audit-log", label: "Audit Log", icon: ScrollText },
     { slug: "settings", label: "Settings", icon: Settings },
   ],
   "sim-klinik": [
