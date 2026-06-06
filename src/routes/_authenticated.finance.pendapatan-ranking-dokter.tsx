@@ -24,12 +24,15 @@ function Page() {
   const total = ranking.reduce((a, r) => a + r.value, 0);
 
   const exportCSV = () => {
-    const csv = toCSV(ranking, [
-      { key: "rank", label: "Rank", get: (_r, i = 0) => i + 1 } as any,
-      { key: "name", label: "Dokter", get: (r) => r.name },
-      { key: "value", label: "Pendapatan", get: (r) => r.value },
-      { key: "share", label: "Share (%)", get: (r) => ((r.value / total) * 100).toFixed(2) },
-    ]);
+    const csv = toCSV(
+      ranking.map((r, i) => ({ rank: i + 1, name: r.name, value: r.value, share: ((r.value / total) * 100).toFixed(2) })),
+      [
+        { key: "rank", label: "Rank", get: (r) => r.rank },
+        { key: "name", label: "Dokter", get: (r) => r.name },
+        { key: "value", label: "Pendapatan", get: (r) => r.value },
+        { key: "share", label: "Share (%)", get: (r) => r.share },
+      ],
+    );
     downloadCSV(exportFileName("ranking-dokter", filter.period), csv);
     toast.success(`Export ${ranking.length} dokter`);
   };

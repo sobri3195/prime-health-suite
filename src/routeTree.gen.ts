@@ -32,6 +32,11 @@ import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_aut
 import { Route as AuthenticatedFinanceVoucherRouteImport } from './routes/_authenticated.finance.voucher'
 import { Route as AuthenticatedFinancePiutangRouteImport } from './routes/_authenticated.finance.piutang'
 import { Route as AuthenticatedFinancePengeluaranRouteImport } from './routes/_authenticated.finance.pengeluaran'
+import { Route as AuthenticatedFinancePendapatanReportHighlightRouteImport } from './routes/_authenticated.finance.pendapatan-report-highlight'
+import { Route as AuthenticatedFinancePendapatanRankingDokterRouteImport } from './routes/_authenticated.finance.pendapatan-ranking-dokter'
+import { Route as AuthenticatedFinancePendapatanKasirHarianRouteImport } from './routes/_authenticated.finance.pendapatan-kasir-harian'
+import { Route as AuthenticatedFinancePendapatanKartuRouteImport } from './routes/_authenticated.finance.pendapatan-kartu'
+import { Route as AuthenticatedFinancePendapatanInputHarianRouteImport } from './routes/_authenticated.finance.pendapatan-input-harian'
 import { Route as AuthenticatedFinancePendapatanRouteImport } from './routes/_authenticated.finance.pendapatan'
 import { Route as AuthenticatedFinancePajakRouteImport } from './routes/_authenticated.finance.pajak'
 import { Route as AuthenticatedFinanceNeracaRouteImport } from './routes/_authenticated.finance.neraca'
@@ -181,6 +186,36 @@ const AuthenticatedFinancePengeluaranRoute =
   AuthenticatedFinancePengeluaranRouteImport.update({
     id: '/pengeluaran',
     path: '/pengeluaran',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanReportHighlightRoute =
+  AuthenticatedFinancePendapatanReportHighlightRouteImport.update({
+    id: '/pendapatan-report-highlight',
+    path: '/pendapatan-report-highlight',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanRankingDokterRoute =
+  AuthenticatedFinancePendapatanRankingDokterRouteImport.update({
+    id: '/pendapatan-ranking-dokter',
+    path: '/pendapatan-ranking-dokter',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanKasirHarianRoute =
+  AuthenticatedFinancePendapatanKasirHarianRouteImport.update({
+    id: '/pendapatan-kasir-harian',
+    path: '/pendapatan-kasir-harian',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanKartuRoute =
+  AuthenticatedFinancePendapatanKartuRouteImport.update({
+    id: '/pendapatan-kartu',
+    path: '/pendapatan-kartu',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePendapatanInputHarianRoute =
+  AuthenticatedFinancePendapatanInputHarianRouteImport.update({
+    id: '/pendapatan-input-harian',
+    path: '/pendapatan-input-harian',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
 const AuthenticatedFinancePendapatanRoute =
@@ -339,6 +374,11 @@ export interface FileRoutesByFullPath {
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -381,6 +421,11 @@ export interface FileRoutesByTo {
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -428,6 +473,11 @@ export interface FileRoutesById {
   '/_authenticated/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/_authenticated/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/_authenticated/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
+  '/_authenticated/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
+  '/_authenticated/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
+  '/_authenticated/finance/pendapatan-kasir-harian': typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  '/_authenticated/finance/pendapatan-ranking-dokter': typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  '/_authenticated/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/_authenticated/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/_authenticated/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/_authenticated/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
@@ -475,6 +525,11 @@ export interface FileRouteTypes {
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pendapatan'
+    | '/finance/pendapatan-input-harian'
+    | '/finance/pendapatan-kartu'
+    | '/finance/pendapatan-kasir-harian'
+    | '/finance/pendapatan-ranking-dokter'
+    | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
     | '/finance/voucher'
@@ -517,6 +572,11 @@ export interface FileRouteTypes {
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pendapatan'
+    | '/finance/pendapatan-input-harian'
+    | '/finance/pendapatan-kartu'
+    | '/finance/pendapatan-kasir-harian'
+    | '/finance/pendapatan-ranking-dokter'
+    | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
     | '/finance/voucher'
@@ -563,6 +623,11 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/neraca'
     | '/_authenticated/finance/pajak'
     | '/_authenticated/finance/pendapatan'
+    | '/_authenticated/finance/pendapatan-input-harian'
+    | '/_authenticated/finance/pendapatan-kartu'
+    | '/_authenticated/finance/pendapatan-kasir-harian'
+    | '/_authenticated/finance/pendapatan-ranking-dokter'
+    | '/_authenticated/finance/pendapatan-report-highlight'
     | '/_authenticated/finance/pengeluaran'
     | '/_authenticated/finance/piutang'
     | '/_authenticated/finance/voucher'
@@ -749,6 +814,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinancePengeluaranRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/pendapatan-report-highlight': {
+      id: '/_authenticated/finance/pendapatan-report-highlight'
+      path: '/pendapatan-report-highlight'
+      fullPath: '/finance/pendapatan-report-highlight'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanReportHighlightRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-ranking-dokter': {
+      id: '/_authenticated/finance/pendapatan-ranking-dokter'
+      path: '/pendapatan-ranking-dokter'
+      fullPath: '/finance/pendapatan-ranking-dokter'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanRankingDokterRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-kasir-harian': {
+      id: '/_authenticated/finance/pendapatan-kasir-harian'
+      path: '/pendapatan-kasir-harian'
+      fullPath: '/finance/pendapatan-kasir-harian'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanKasirHarianRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-kartu': {
+      id: '/_authenticated/finance/pendapatan-kartu'
+      path: '/pendapatan-kartu'
+      fullPath: '/finance/pendapatan-kartu'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanKartuRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/pendapatan-input-harian': {
+      id: '/_authenticated/finance/pendapatan-input-harian'
+      path: '/pendapatan-input-harian'
+      fullPath: '/finance/pendapatan-input-harian'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanInputHarianRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/pendapatan': {
       id: '/_authenticated/finance/pendapatan'
       path: '/pendapatan'
@@ -933,6 +1033,11 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceNeracaRoute: typeof AuthenticatedFinanceNeracaRoute
   AuthenticatedFinancePajakRoute: typeof AuthenticatedFinancePajakRoute
   AuthenticatedFinancePendapatanRoute: typeof AuthenticatedFinancePendapatanRoute
+  AuthenticatedFinancePendapatanInputHarianRoute: typeof AuthenticatedFinancePendapatanInputHarianRoute
+  AuthenticatedFinancePendapatanKartuRoute: typeof AuthenticatedFinancePendapatanKartuRoute
+  AuthenticatedFinancePendapatanKasirHarianRoute: typeof AuthenticatedFinancePendapatanKasirHarianRoute
+  AuthenticatedFinancePendapatanRankingDokterRoute: typeof AuthenticatedFinancePendapatanRankingDokterRoute
+  AuthenticatedFinancePendapatanReportHighlightRoute: typeof AuthenticatedFinancePendapatanReportHighlightRoute
   AuthenticatedFinancePengeluaranRoute: typeof AuthenticatedFinancePengeluaranRoute
   AuthenticatedFinancePiutangRoute: typeof AuthenticatedFinancePiutangRoute
   AuthenticatedFinanceVoucherRoute: typeof AuthenticatedFinanceVoucherRoute
@@ -965,6 +1070,16 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceNeracaRoute: AuthenticatedFinanceNeracaRoute,
   AuthenticatedFinancePajakRoute: AuthenticatedFinancePajakRoute,
   AuthenticatedFinancePendapatanRoute: AuthenticatedFinancePendapatanRoute,
+  AuthenticatedFinancePendapatanInputHarianRoute:
+    AuthenticatedFinancePendapatanInputHarianRoute,
+  AuthenticatedFinancePendapatanKartuRoute:
+    AuthenticatedFinancePendapatanKartuRoute,
+  AuthenticatedFinancePendapatanKasirHarianRoute:
+    AuthenticatedFinancePendapatanKasirHarianRoute,
+  AuthenticatedFinancePendapatanRankingDokterRoute:
+    AuthenticatedFinancePendapatanRankingDokterRoute,
+  AuthenticatedFinancePendapatanReportHighlightRoute:
+    AuthenticatedFinancePendapatanReportHighlightRoute,
   AuthenticatedFinancePengeluaranRoute: AuthenticatedFinancePengeluaranRoute,
   AuthenticatedFinancePiutangRoute: AuthenticatedFinancePiutangRoute,
   AuthenticatedFinanceVoucherRoute: AuthenticatedFinanceVoucherRoute,
