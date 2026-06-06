@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/finance/")({
 function FinanceDashboard() {
   const navigate = useNavigate();
   const [period] = useState("Mei 2026");
+  const [globalQ, setGlobalQ] = useState("");
 
   const filter = useMemo(() => ({ period: "mtd", doctor: "all", service: "all", payer: "all", status: "all", from: "", to: "" } as const), []);
   const filtered = useMemo(() => applyFilter(invoices, filter), [filter]);
