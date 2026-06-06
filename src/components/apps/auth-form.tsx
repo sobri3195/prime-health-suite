@@ -160,6 +160,38 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
               </Field>
             )}
 
+            {mode === "signup" && (
+              <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Saya menyetujui{" "}
+                    <a href="/privacy" target="_blank" rel="noreferrer" className="font-semibold underline">
+                      Kebijakan Privasi
+                    </a>{" "}
+                    dan pengelolaan data kesehatan saya sesuai UU PDP No. 27/2022.
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 opacity-80">
+                  <input
+                    type="checkbox"
+                    checked={marketing}
+                    onChange={(e) => setMarketing(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>Saya bersedia menerima informasi promosi & edukasi mata (opsional).</span>
+                </label>
+              </div>
+            )}
+
+
+
             <button
               type="submit"
               disabled={loading}
