@@ -60,7 +60,17 @@ function FinanceDashboard() {
             <BadgeCheck className="mr-1.5 h-3 w-3" /> Tersimpan
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={globalQ}
+              onChange={(e) => setGlobalQ(e.target.value)}
+              placeholder="Cari global..."
+              className="h-9 pl-8"
+              onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
+            />
+          </div>
           <Button variant="outline" size="sm" onClick={() => toast.success("Export disiapkan")}>
             <Download className="mr-1.5 h-3.5 w-3.5" /> Quick Export
           </Button>
