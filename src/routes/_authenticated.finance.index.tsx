@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Wallet, TrendingUp, TrendingDown, Receipt, Landmark, AlertTriangle, Sparkles,
   PiggyBank, ShieldCheck, FileWarning, ArrowDownCircle, ArrowUpCircle, Activity,
-  Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar,
+  Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar, Search,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -16,6 +17,7 @@ import {
   applyFilter, sumOutstanding, byPayer, topBy, netProfit, aging,
   formatIDR, formatCompactIDR, generateInsights,
 } from "@/lib/finance";
+import type { Invoice, Payer } from "@/types/finance";
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/finance/")({
 function FinanceDashboard() {
   const navigate = useNavigate();
   const [period] = useState("Mei 2026");
+  const [globalQ, setGlobalQ] = useState("");
 
   const filter = useMemo(() => ({ period: "mtd", doctor: "all", service: "all", payer: "all", status: "all", from: "", to: "" } as const), []);
   const filtered = useMemo(() => applyFilter(invoices, filter), [filter]);
@@ -57,7 +60,17 @@ function FinanceDashboard() {
             <BadgeCheck className="mr-1.5 h-3 w-3" /> Tersimpan
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={globalQ}
+              onChange={(e) => setGlobalQ(e.target.value)}
+              placeholder="Cari global..."
+              className="h-9 pl-8"
+              onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
+            />
+          </div>
           <Button variant="outline" size="sm" onClick={() => toast.success("Export disiapkan")}>
             <Download className="mr-1.5 h-3.5 w-3.5" /> Quick Export
           </Button>
@@ -147,36 +160,10 @@ function FinanceDashboard() {
         </Card>
       </div>
 
-      {/* Payer + Top Dokter */}
+      {/* Payer + Top Dokter (filterable) */}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
-          <ul className="space-y-3 text-sm">
-            {(Object.entries(byP) as [string, number][]).map(([k, v]) => {
-              const totalAll = Object.values(byP).reduce((a, b) => a + b, 0) || 1;
-              const pct = Math.round((v / totalAll) * 100);
-              return (
-                <li key={k}>
-                  <div className="flex justify-between text-xs">
-                    <span className="font-medium">{k}</span>
-                    <span className="text-muted-foreground">{formatIDR(v)} • {pct}%</span>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" style={{ width: `${pct}%` }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
-            <div><div className="text-muted-foreground">Total</div><div className="font-semibold">{formatIDR(Object.values(byP).reduce((a, b) => a + b, 0))}</div></div>
-            <div><div className="text-muted-foreground">Payer Terbesar</div><div className="font-semibold">{Object.entries(byP).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—"}</div></div>
-            <div><div className="text-muted-foreground">Jumlah Payer</div><div className="font-semibold">{Object.keys(byP).length}</div></div>
-          </div>
-        </Card>
-
-        <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
-          <RankList rows={topDokter} />
-        </Card>
+        <PayerCard rows={invoices} />
+        <TopDokterCard rows={invoices} />
       </div>
 
       {/* Saldo Bank + Anomalies + Insights */}
@@ -364,5 +351,129 @@ function AgingBars({ data, tone }: { data: { bucket: string; amount: number; cou
         </li>
       ))}
     </ul>
+  );
+}
+
+/* ------------------ filterable cards (parity with prime-simon) ------------------ */
+
+function dateRange<T extends Invoice>(rows: T[], from: string, to: string): T[] {
+  return rows.filter((r) => {
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    return true;
+  });
+}
+
+const PAYER_OPTIONS: (Payer | "all")[] = ["all", "Umum", "BPJS", "Asuransi", "Perusahaan"];
+
+function FilterRow({
+  from, to, onFrom, onTo, onReset, extra,
+}: {
+  from: string; to: string;
+  onFrom: (v: string) => void; onTo: (v: string) => void;
+  onReset: () => void; extra?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-2 text-xs">
+      <div className="flex flex-col">
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Dari</label>
+        <input type="date" value={from} onChange={(e) => onFrom(e.target.value)}
+          className="h-8 rounded-md border border-border bg-background px-2 text-xs" />
+      </div>
+      <div className="flex flex-col">
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Ke</label>
+        <input type="date" value={to} onChange={(e) => onTo(e.target.value)}
+          className="h-8 rounded-md border border-border bg-background px-2 text-xs" />
+      </div>
+      {extra}
+      <Button size="sm" variant="outline" className="ml-auto h-8" onClick={onReset}>
+        <RotateCcw className="mr-1 h-3 w-3" /> Reset Filter
+      </Button>
+    </div>
+  );
+}
+
+function PayerCard({ rows }: { rows: Invoice[] }) {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const filtered = useMemo(() => dateRange(rows, from, to), [rows, from, to]);
+  const byP = byPayer(filtered);
+  const totalAll = Object.values(byP).reduce((a, b) => a + b, 0);
+  const top = Object.entries(byP).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+  const activePayers = Object.entries(byP).filter(([, v]) => v > 0).length;
+
+  return (
+    <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
+      <FilterRow
+        from={from} to={to} onFrom={setFrom} onTo={setTo}
+        onReset={() => { setFrom(""); setTo(""); }}
+      />
+      <div className="mb-2 text-[11px] text-muted-foreground">
+        Menampilkan data {from || "awal"} – {to || "sekarang"}
+      </div>
+      {totalAll === 0 ? (
+        <Empty text="Tidak ada data pada rentang ini." />
+      ) : (
+        <ul className="space-y-3 text-sm">
+          {(Object.entries(byP) as [string, number][]).map(([k, v]) => {
+            const pct = totalAll ? Math.round((v / totalAll) * 100) : 0;
+            return (
+              <li key={k}>
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium">{k}</span>
+                  <span className="text-muted-foreground">{formatIDR(v)} • {pct}%</span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" style={{ width: `${pct}%` }} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
+        <div><div className="text-muted-foreground">Total</div><div className="font-semibold">{formatIDR(totalAll)}</div></div>
+        <div><div className="text-muted-foreground">Payer Terbesar</div><div className="font-semibold">{top}</div></div>
+        <div><div className="text-muted-foreground">Jumlah Payer</div><div className="font-semibold">{activePayers}</div></div>
+      </div>
+    </Card>
+  );
+}
+
+function TopDokterCard({ rows }: { rows: Invoice[] }) {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [payer, setPayer] = useState<Payer | "all">("all");
+  const filtered = useMemo(() => {
+    return dateRange(rows, from, to).filter((r) => payer === "all" || r.payer === payer);
+  }, [rows, from, to, payer]);
+  const top = topBy(filtered, "doctor", 10);
+  const totalRev = filtered.reduce((a, r) => a + r.total, 0);
+
+  return (
+    <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
+      <FilterRow
+        from={from} to={to} onFrom={setFrom} onTo={setTo}
+        onReset={() => { setFrom(""); setTo(""); setPayer("all"); }}
+        extra={
+          <div className="flex flex-col">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payer</label>
+            <select value={payer} onChange={(e) => setPayer(e.target.value as Payer | "all")}
+              className="h-8 rounded-md border border-border bg-background px-2 text-xs capitalize">
+              {PAYER_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        }
+      />
+      <div className="mb-2 text-[11px] text-muted-foreground">
+        Menampilkan data {from || "awal"} – {to || "sekarang"} • Payer: <span className="capitalize">{payer}</span>
+      </div>
+      <RankList rows={top} />
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
+        <div><div className="text-muted-foreground">Total Revenue</div><div className="font-semibold">{formatIDR(totalRev)}</div></div>
+        <div><div className="text-muted-foreground">Jumlah Dokter</div><div className="font-semibold">{top.length}</div></div>
+        <div><div className="text-muted-foreground">Dokter Tertinggi</div><div className="truncate font-semibold">{top[0]?.name ?? "—"}</div></div>
+      </div>
+    </Card>
   );
 }
