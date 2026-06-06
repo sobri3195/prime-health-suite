@@ -6,6 +6,8 @@ import {
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
+import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
+import { useI18n, type Lang } from "@/lib/i18n";
 
 import { BRAND } from "@/lib/brand";
 
@@ -15,12 +17,16 @@ export function AppShell({ system, children }: { system: System; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const { lang, setLang } = useI18n();
   const brand = BRAND[system];
 
+  // Initialize from persisted theme once mounted (avoids SSR/CSR mismatch).
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", dark);
-    }
+    setDark(getStoredTheme() === "dark");
+  }, []);
+
+  useEffect(() => {
+    persistTheme(dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
@@ -117,6 +123,15 @@ export function AppShell({ system, children }: { system: System; children: React
                 className="w-full rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
+
+            <button
+              onClick={() => setLang(lang === "id" ? "en" : "id")}
+              className="rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Switch language"
+              title="Switch language"
+            >
+              {lang.toUpperCase()}
+            </button>
 
             <button
               onClick={() => setDark((d) => !d)}
