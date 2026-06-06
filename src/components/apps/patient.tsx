@@ -32,7 +32,6 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
   );
 }
 
-import { GoldButton, OutlineButton } from "@/components/apps/ui";
 
 function Pill({ children, tone = "amber" }: { children: ReactNode; tone?: "amber" | "green" | "rose" | "navy" }) {
   const t = {
