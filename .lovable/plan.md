@@ -1,84 +1,55 @@
-# P0 Prime Apps — Patient Portal Real Backend
+# SIM Klinik Mata — Backend, RBAC, Exports, Audit
 
-Mengubah Prime Apps dari mock → portal pasien nyata dengan auth Supabase, database pasien, flow booking, dan data riwayat dari `fin_invoice` (sumber kebenaran transaksi yang sudah ada).
+Scope is large; splitting into 4 milestones so each can ship and be reviewed independently. After your "go" I execute M1→M4 in order.
 
-## Strategi auth (penting)
+## M1 — Backend wiring + Skeleton/EmptyState (Laporan, Dokumen, Audit, Settings)
 
-Sistem saat ini punya `useAuth` mock berbasis `sessionStorage` yang dipakai oleh **tiga** sistem (Apps, SIM Klinik, Finance). Mengganti seluruhnya akan merusak SIM Klinik & Finance. Solusi:
+New tables (migration, with RLS + grants):
+- `clinic_document` — id, patient_code, patient_name, doc_type, title, mime, size_bytes, storage_path, uploaded_by, uploaded_at
+- `clinic_audit_log` — id, ts, actor_email, actor_role, module, action, target, meta jsonb, ip
+- `clinic_setting` — singleton row (key/value jsonb) for klinik profile, notif, security, integrations
 
-- **`/apps/*`** → pakai **Supabase Auth nyata** (email+password + Google). Pasien.
-- **`/sim-klinik/*`** dan **`/finance/*`** → tetap pakai mock role-picker yang ada (staf internal — out of scope P0 ini).
-- Login `/apps/login` di-rewrite jadi form Supabase. Gate `_authenticated/apps/*` cek session Supabase, bukan mock `useAuth`.
+Server functions (`src/lib/clinic-*.functions.ts`) using `requireSupabaseAuth`:
+- `listDocuments({ q, type, from, to })`, `uploadDocument`, `deleteDocument`
+- `listAudit({ q, action, module, actor, from, to, limit })`, `appendAudit(entry)`
+- `getSettings`, `saveSettings`
+- `getLaporan({ kind: "kunjungan"|"tindakan"|"payer"|"pendapatan", from, to })` — aggregates over `fin_invoice` + `apps_booking`
 
-## Database baru
+Route updates:
+- `laporan/dokumen/audit/settings.tsx` use `useSuspenseQuery` + `queryOptions` (per `tanstack-query-integration`)
+- Loaders prime cache via `ensureQueryData`
+- `<Skeleton />` rows + `<EmptyState />` reused from `apps/ui.tsx`
 
-Tiga tabel pasien dengan RLS `auth.uid() = user_id`:
+## M2 — RBAC for SIM Klinik
 
-- **`apps_pasien`** — profil pasien (linked ke `auth.users`): nama, tgl_lahir, jenis_kelamin, telp, alamat, no_bpjs, alergi, kontak_darurat. Auto-created via trigger saat signup.
-- **`apps_booking`** — booking pemeriksaan: tanggal, jam_slot, dokter_id (FK `fin_dokter`), keluhan, status (pending/confirmed/checked_in/done/cancelled), no_antrean (di-generate saat checked_in).
-- **`apps_ai_history`** — riwayat hasil Cek AI Mata per pasien (opsional, ringan).
+- Add `app_role` enum + `user_roles` table + `has_role()` security-definer (per platform `<user-roles>` rules). Roles: `super_admin`, `dokter`, `perawat`, `kasir`, `pasien`.
+- `src/lib/rbac.ts` — `useRole()`, `requireRole(['super_admin'])`
+- `src/lib/nav-config.ts` — each NavItem gains `roles?: AppRole[]` and `status?: "ready"|"coming_soon"`
+- `AppShell` sidebar filters items by role; "coming soon" items render as disabled with a lock badge
+- `_authenticated/sim-klinik/route.tsx` — `beforeLoad` redirects non-super-admin to `/sim-klinik/forbidden`
+- Server fns also enforce role (defense in depth)
 
-**Riwayat & resep** tidak butuh tabel baru — dibaca dari `fin_invoice` + `fin_invoice_item` yang sudah ada, di-filter `patient_code = profil.patient_code`. `fin_invoice` ditambah kolom `apps_user_id uuid` (nullable) untuk match cepat ke pasien.
+## M3 — Unified CSV/PDF export with date range
 
-## Server functions baru (`src/lib/apps-patient.functions.ts`)
+- `src/lib/exporter.ts` — `exportCsv(filename, columns, rows, range)` and `exportPdf(...)` using `jspdf` + `jspdf-autotable` (already in deps if present, else `bun add`)
+- Shared `<ExportBar>` component (range picker + CSV/PDF buttons) used in Laporan, Audit, Billing
+- Column schema per report so headers are stable and human-readable; date range filter actually applied to query
 
-Semua pakai `requireSupabaseAuth` middleware:
+## M4 — Automatic audit logging on key actions
 
-- `getMyProfile()` — profil pasien current user.
-- `updateMyProfile(data)` — update profil.
-- `listMyBookings()` — list booking saya (urut DESC tanggal).
-- `createBooking({dokter_id, tanggal, jam_slot, keluhan})` — buat booking baru, status=pending.
-- `cancelBooking({id})` — pasien batalkan booking miliknya.
-- `getMyQueueToday()` — antrean aktif hari ini (status checked_in).
-- `listMyInvoices()` — invoice/resep dari `fin_invoice` (filter `apps_user_id = auth.uid()` atau via `patient_code`).
-- `listDoctorsForBooking()` — list `fin_dokter` aktif (read-only, untuk pilih dokter).
-- `listAvailableSlots({dokter_id, tanggal})` — slot 09:00–17:00 per 30 menit, kurangi yang sudah dibooking.
+`appendAudit()` server fn called from:
+- Pasien: create/update/delete
+- Registrasi & Kunjungan: create/check-in/complete
+- Tindakan: create/edit
+- Billing: create/issue/sendToFinance/paid
+- Dokumen: upload/delete
+- Settings: save
 
-## UI changes
+Each entry stores `{ module, action, target, meta }`. Audit page filters: `user`, `module`, `action`, date range (uses M3 range picker).
 
-1. **`/apps/login`** — rewrite jadi form Supabase: tab Login/Signup, email+password, tombol Google OAuth, link "Lupa password". Hapus role picker.
-2. **`/reset-password`** — page baru (public) untuk update password recovery flow.
-3. **`_authenticated/apps.tsx`** — ganti gate dari `useAuth` mock ke check `supabase.auth.getUser()`. Tetap pakai `AppShell`.
-4. **`PatientBeranda`** — ganti data mock:
-   - "Halo, {profil.nama}"
-   - Antrean hari ini dari `getMyQueueToday()` (atau "Belum check-in" jika kosong)
-   - Jadwal berikutnya dari `listMyBookings()` (upcoming terdekat)
-   - Tombol "Booking Pemeriksaan" → Link ke `/apps/booking`
-5. **`/apps/booking`** — page baru: step 1 pilih dokter (grid), step 2 pilih tanggal (7 hari kedepan), step 3 pilih slot, step 4 isi keluhan + konfirmasi. Submit → `createBooking()` → redirect ke Beranda + toast.
-6. **`/apps/laporan`** (PatientLaporan) — refactor ke real data:
-   - Tab "Riwayat Pemeriksaan" → `listMyInvoices()` (tanggal, dokter, layanan, total)
-   - Tab "Resep" → invoice item yang mengandung kategori resep/kacamata
-   - Empty state jika kosong
-7. **`/apps/profil`** (PatientProfil) — form edit profil pasien dengan `updateMyProfile()`.
-8. **Logout** — tombol sign out via `supabase.auth.signOut()` + clear router cache.
+---
 
-## File baru / diubah
-
-**Baru:**
-- `supabase/migrations/<ts>_apps_patient.sql` (tabel + RLS + trigger profil + grant)
-- `src/lib/apps-patient.functions.ts`
-- `src/routes/_authenticated.apps.booking.tsx`
-- `src/routes/reset-password.tsx`
-- `src/components/apps/booking.tsx`
-- `src/components/apps/auth-form.tsx` (form Supabase reusable)
-
-**Diubah:**
-- `src/routes/apps.login.tsx` — rewrite ke Supabase form
-- `src/routes/_authenticated.apps.tsx` — gate via Supabase
-- `src/components/apps/patient.tsx` — Beranda + Laporan + Profil real data
-- `src/routes/__root.tsx` — tambah `onAuthStateChange` filtered listener untuk Apps
-- Auth: enable Google provider via `configure_social_auth`
-
-## Out of scope (akan dibahas di fase berikut)
-
-- Realtime antrean (postgres_changes) — masuk fase B
-- Push notification, WA reminder — fase B
-- Tabel `sim_*` untuk integrasi penuh dengan SIM Klinik — saat ini SIM Klinik juga masih mock, jadi sumber data klinis untuk pasien dibatasi ke `fin_invoice` dulu
-- Belanja, Daily Wins gamifikasi — fase C
-- PWA, accessibility audit — fase polish
-
-## Konfirmasi yang dibutuhkan
-
-1. Setuju **`/apps/*` pindah ke Supabase Auth**, sementara SIM Klinik & Finance tetap mock?
-2. Email signup pasien: **auto-confirm** (langsung bisa login) atau **wajib verifikasi email** (default Supabase)? — Default rekomendasi: wajib verifikasi.
-3. Enable **Google sign-in** untuk pasien? (rekomendasi: ya)
+**Confirm to proceed with M1**, or tell me to reorder / drop a milestone.
+Notes:
+- Existing mock helpers (`addAudit`, `addSync`) get thin shims that also call the server `appendAudit` so old call sites keep working.
+- `fin_dokter` and `fin_invoice` are reused for Laporan aggregates — no duplication.

@@ -19,7 +19,9 @@ import { toast } from "sonner";
 import { visits } from "@/data/clinicData";
 import { addSync, formatIDR } from "@/lib/sync-log";
 import { addAudit } from "@/lib/audit-log";
+import { clinicAudit } from "@/lib/clinic-audit";
 import { useAuth } from "@/lib/auth";
+import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({
   component: BillingPage,
@@ -78,6 +80,7 @@ function BillingPage() {
 
   const updateStatus = (id: string, s: BillStatus) => {
     setList((arr) => arr.map((b) => b.id === id ? { ...b, status: s } : b));
+    clinicAudit("Billing", "update", id, { status: s });
     toast.success(`${id} → ${STATUS_LABEL[s]}`);
   };
 
@@ -104,6 +107,7 @@ function BillingPage() {
       target: `sim-klinik/billing/${b.id} → finance`,
       meta: { invoice: b.invoice, amount: sum(b) },
     });
+    clinicAudit("Billing", "sync_to_finance", b.id, { invoice: b.invoice, amount: sum(b) });
     setList((arr) => arr.map((x) => x.id === b.id ? { ...x, sentToFinance: true } : x));
     toast.success(`Invoice ${b.invoice} terkirim ke Finance`);
   };
@@ -111,8 +115,22 @@ function BillingPage() {
   const printBill = (b: Billing) => toast.message(`Cetak ${b.invoice} (mock)`);
   const remove = (id: string) => {
     setList((arr) => arr.filter((b) => b.id !== id));
+    clinicAudit("Billing", "delete", id);
     toast.message(`${id} dihapus`);
   };
+
+  const billingCols: Column<Billing>[] = [
+    { key: "id", header: "Billing ID" },
+    { key: "invoice", header: "Invoice" },
+    { key: "patientCode", header: "Kode Pasien" },
+    { key: "payer", header: "Penjamin" },
+    { key: "doctor", header: "Dokter" },
+    { key: "status", header: "Status", format: (b) => STATUS_LABEL[b.status] },
+    { key: "createdAt", header: "Dibuat", format: (b) => new Date(b.createdAt).toLocaleString("id-ID") },
+    { key: "items", header: "Total (Rp)", format: (b) => sum(b).toLocaleString("id-ID") },
+  ];
+  const onCsv = () => { exportCsv(`billing-${new Date().toISOString().slice(0,10)}.csv`, billingCols, list); clinicAudit("Billing", "export", "csv"); };
+  const onPdf = () => { exportPdf(`billing-${new Date().toISOString().slice(0,10)}.pdf`, "Billing Klinik", billingCols, list); clinicAudit("Billing", "export", "pdf"); };
 
   return (
     <div>
@@ -121,12 +139,22 @@ function BillingPage() {
         desc="Billing operasional klinik. Detail finance (jurnal, laba rugi) dikelola di Prime Simon Finance."
       />
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {list.length} billing • Kirim ke Finance untuk pencatatan jurnal & piutang.
         </p>
-        <Button onClick={() => setNewOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> Billing Baru</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onCsv}>Export CSV</Button>
+          <Button variant="outline" size="sm" onClick={onPdf}>Export PDF</Button>
+          <Button onClick={() => setNewOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> Billing Baru</Button>
+        </div>
       </div>
+
+      {list.length === 0 && (
+        <div className="mb-4 rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center text-sm text-muted-foreground">
+          Belum ada billing. Klik <b>Billing Baru</b> untuk membuat tagihan pertama.
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>

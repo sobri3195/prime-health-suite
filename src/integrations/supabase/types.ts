@@ -603,6 +603,111 @@ export type Database = {
           },
         ]
       }
+      clinic_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          id: string
+          ip: string | null
+          meta: Json | null
+          module: string
+          target: string | null
+          ts: string
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          module: string
+          target?: string | null
+          ts?: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          module?: string
+          target?: string | null
+          ts?: string
+        }
+        Relationships: []
+      }
+      clinic_document: {
+        Row: {
+          doc_type: string
+          id: string
+          mime: string
+          patient_code: string
+          patient_name: string
+          size_bytes: number
+          storage_path: string | null
+          title: string
+          uploaded_at: string
+          uploaded_by: string | null
+          uploaded_by_email: string | null
+        }
+        Insert: {
+          doc_type: string
+          id?: string
+          mime?: string
+          patient_code: string
+          patient_name: string
+          size_bytes?: number
+          storage_path?: string | null
+          title: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_email?: string | null
+        }
+        Update: {
+          doc_type?: string
+          id?: string
+          mime?: string
+          patient_code?: string
+          patient_name?: string
+          size_bytes?: number
+          storage_path?: string | null
+          title?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_email?: string | null
+        }
+        Relationships: []
+      }
+      clinic_setting: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       fin_coa: {
         Row: {
           code: string
@@ -1112,6 +1217,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       apps_slot_terisi: {
@@ -1179,9 +1305,20 @@ export type Database = {
           jam_slot: string
         }[]
       }
+      current_user_roles: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "dokter" | "perawat" | "kasir" | "pasien"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1308,6 +1445,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "dokter", "perawat", "kasir", "pasien"],
+    },
   },
 } as const

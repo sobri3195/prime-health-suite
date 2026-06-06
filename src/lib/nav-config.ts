@@ -9,7 +9,16 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
 
-export type NavItem = { slug: string; label: string; icon: LucideIcon; group?: string };
+import type { AppRole } from "./rbac";
+
+export type NavItem = {
+  slug: string;
+  label: string;
+  icon: LucideIcon;
+  group?: string;
+  roles?: AppRole[];
+  status?: "ready" | "coming_soon";
+};
 
 export const SYSTEM_LABEL: Record<System, string> = {
   apps: "Prime Apps",
@@ -31,19 +40,19 @@ export const NAV: Record<System, NavItem[]> = {
 
   ],
   "sim-klinik": [
-    { slug: "", label: "Dashboard Klinik", icon: LayoutDashboard },
-    { slug: "pasien", label: "Pasien", icon: Stethoscope },
-    { slug: "registrasi", label: "Registrasi & Kunjungan", icon: UserPlus },
-    { slug: "jadwal", label: "Jadwal Dokter", icon: Calendar },
-    { slug: "pemeriksaan", label: "Pemeriksaan", icon: ClipboardList },
-    { slug: "tindakan", label: "Tindakan Klinik Mata", icon: Activity },
-    { slug: "resep", label: "Resep & Obat", icon: Pill },
-    { slug: "billing", label: "Billing Klinik", icon: Receipt },
-    { slug: "dokumen", label: "Dokumen Pasien", icon: Files },
-    { slug: "laporan", label: "Laporan Klinik", icon: BarChart3 },
-    { slug: "master", label: "Master Data Klinik", icon: Database },
-    { slug: "audit", label: "Audit Log Klinik", icon: ScrollText },
-    { slug: "settings", label: "Settings", icon: Settings },
+    { slug: "", label: "Dashboard Klinik", icon: LayoutDashboard, roles: ["super_admin"] },
+    { slug: "pasien", label: "Pasien", icon: Stethoscope, roles: ["super_admin"] },
+    { slug: "registrasi", label: "Registrasi & Kunjungan", icon: UserPlus, roles: ["super_admin"] },
+    { slug: "jadwal", label: "Jadwal Dokter", icon: Calendar, roles: ["super_admin"] },
+    { slug: "pemeriksaan", label: "Pemeriksaan", icon: ClipboardList, roles: ["super_admin"], status: "coming_soon" },
+    { slug: "tindakan", label: "Tindakan Klinik Mata", icon: Activity, roles: ["super_admin"] },
+    { slug: "resep", label: "Resep & Obat", icon: Pill, roles: ["super_admin"] },
+    { slug: "billing", label: "Billing Klinik", icon: Receipt, roles: ["super_admin"] },
+    { slug: "dokumen", label: "Dokumen Pasien", icon: Files, roles: ["super_admin"] },
+    { slug: "laporan", label: "Laporan Klinik", icon: BarChart3, roles: ["super_admin"] },
+    { slug: "master", label: "Master Data Klinik", icon: Database, roles: ["super_admin"] },
+    { slug: "audit", label: "Audit Log Klinik", icon: ScrollText, roles: ["super_admin"] },
+    { slug: "settings", label: "Settings", icon: Settings, roles: ["super_admin"] },
   ],
   finance: [
     { slug: "", label: "Dashboard", icon: LayoutDashboard, group: "Dashboard" },
