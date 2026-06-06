@@ -62,9 +62,9 @@ export function HelpdeskPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Helpdesk" desc="Kelola tiket dukungan internal." />
+      <PageHeader title={tr("help.title")} desc={tr("help.desc")} />
       <div className="flex flex-wrap items-center gap-3">
-        <SearchInput value={q} onChange={setQ} placeholder="Cari tiket…" />
+        <SearchInput value={q} onChange={setQ} placeholder={tr("help.search")} />
         <Select value={st} onChange={setSt} options={ST} />
         <Select value={pr} onChange={setPr} options={PR} />
         <Select value={cat} onChange={setCat} options={CAT} />
@@ -72,21 +72,21 @@ export function HelpdeskPage() {
           onClick={() => setShowNew(true)}
           className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground hover:opacity-95"
         >
-          <Plus className="h-4 w-4" /> Tiket baru
+          <Plus className="h-4 w-4" /> {tr("help.new")}
         </button>
       </div>
 
       {items.length === 0 ? (
-        <EmptyState title="Tidak ada tiket" hint="Coba ubah filter atau buat tiket baru." />
+        <EmptyState title={tr("help.none.title")} hint={tr("help.none.hint")} />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-surface-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">ID</th><th className="px-4 py-3">Subjek</th>
-                <th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Prioritas</th>
-                <th className="px-4 py-3">Status</th><th className="px-4 py-3">PIC</th>
-                <th className="px-4 py-3">Diperbarui</th>
+                <th className="px-4 py-3">{tr("help.col.id")}</th><th className="px-4 py-3">{tr("help.col.subject")}</th>
+                <th className="px-4 py-3">{tr("help.col.category")}</th><th className="px-4 py-3">{tr("help.col.priority")}</th>
+                <th className="px-4 py-3">{tr("help.col.status")}</th><th className="px-4 py-3">{tr("help.col.pic")}</th>
+                <th className="px-4 py-3">{tr("help.col.updated")}</th>
               </tr>
             </thead>
             <tbody>
@@ -99,7 +99,7 @@ export function HelpdeskPage() {
                   <td className="px-4 py-2"><StatusBadge tone={statusTone[t.status]}>{t.status}</StatusBadge></td>
                   <td className="px-4 py-2">{t.pic}</td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">
-                    {new Date(t.updatedAt).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" })}
+                    {new Date(t.updatedAt).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}
                   </td>
                 </tr>
               ))}
@@ -108,16 +108,18 @@ export function HelpdeskPage() {
         </div>
       )}
 
-      {selected && <TicketDrawer ticket={selected} onClose={() => setSelected(null)} />}
+      {selected && <TicketDrawer ticket={selected} onClose={() => setSelected(null)} locale={locale} tr={tr} />}
       {showNew && (
         <NewTicketModal
           onClose={() => setShowNew(false)}
-          onSubmit={() => { setShowNew(false); toast.success("Tiket berhasil dibuat (mock)"); }}
+          onSubmit={() => { setShowNew(false); toast.success(tr("help.created")); }}
+          tr={tr}
         />
       )}
     </PageContainer>
   );
 }
+
 
 function TicketDrawer({ ticket, onClose }: { ticket: HelpdeskTicket; onClose: () => void }) {
   return (
