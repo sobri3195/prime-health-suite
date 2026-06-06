@@ -338,9 +338,14 @@ export function PatientAI() {
 
       <Card>
         <div className="text-base font-bold">Kamera AI Mata</div>
-        <button onClick={() => toast.info("Kamera tidak tersedia di demo")} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#e9dfb8] bg-[#fdf8e8] py-8 text-sm font-semibold text-[#7a6010]">
-          <Camera className="h-5 w-5" /> Buka Kamera AI Mata
-        </button>
+        <label className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#e9dfb8] bg-[#fdf8e8] py-8 text-sm font-semibold text-[#7a6010] hover:bg-[#f6ecc8]">
+          {uploading ? <><Loader2 className="h-5 w-5 animate-spin" /> Mengunggah…</> :
+           fotoPath ? <><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Foto siap dianalisis</> :
+           <><Camera className="h-5 w-5" /> Unggah / Ambil Foto Mata</>}
+          <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFoto(f); }} />
+        </label>
+        {fotoPath && <button onClick={() => setFotoPath(null)} className="mt-2 text-xs text-rose-600">Hapus foto</button>}
       </Card>
 
       {/* Form */}
