@@ -1,64 +1,54 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, Legend, LineChart, Line,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line,
 } from "recharts";
-import { Download, FileSpreadsheet, Printer } from "lucide-react";
-import { dashboard, visits, patients } from "@/data/clinicData";
+import { SkeletonList, EmptyState } from "@/components/apps/ui";
+import { ExportBar, defaultRange, type DateRange } from "@/components/export-bar";
+import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
+import { getLaporan } from "@/lib/clinic.functions";
 import { formatIDR } from "@/lib/sync-log";
-import { addAudit } from "@/lib/audit-log";
-import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/laporan")({
   component: LaporanPage,
 });
 
-type Range = "today" | "7d" | "30d" | "ytd";
-
-const PIE_COLORS = ["#0ea5e9", "#22c55e", "#f59e0b", "#a855f7"];
+type Kind = "kunjungan" | "tindakan" | "payer" | "pendapatan";
 
 function LaporanPage() {
-  const { user } = useAuth();
-  const [range, setRange] = useState<Range>("30d");
-  const [report, setReport] = useState<"kunjungan" | "tindakan" | "payer" | "pendapatan">("kunjungan");
+  const [kind, setKind] = useState<Kind>("kunjungan");
+  const [range, setRange] = useState<DateRange>(defaultRange(30));
 
-  const payerData = useMemo(
-    () => Object.entries(dashboard.byPayer).map(([name, value]) => ({ name, value })),
-    [],
-  );
+  const fn = useServerFn(getLaporan);
+  const { data, isLoading } = useQuery({
+    queryKey: ["laporan", kind, range.from, range.to],
+    queryFn: () => fn({ data: { kind, from: range.from, to: range.to } }),
+  });
 
-  const revenuePerService = useMemo(
-    () => dashboard.topActions.map((a) => ({
-      name: a.name,
-      revenue: a.count * (80000 + Math.round(Math.random() * 120000)),
-      count: a.count,
-    })),
-    [],
-  );
+  const trend = data?.trend ?? [];
+  const doctors = data?.doctors ?? [];
+  const invoices = data?.invoices ?? [];
+  const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0 };
 
-  const totalRevenue = revenuePerService.reduce((a, b) => a + b.revenue, 0);
-  const totalVisits = dashboard.monthlyTrend.reduce((a, b) => a + b.visits, 0);
+  const invoiceCols: Column<{ tanggal: string; patient_code: string; patient_name: string | null; total: number }>[] = useMemo(() => [
+    { key: "tanggal", header: "Tanggal" },
+    { key: "patient_code", header: "Kode Pasien" },
+    { key: "patient_name", header: "Pasien" },
+    { key: "total", header: "Total (Rp)", format: (r) => Number(r.total).toLocaleString("id-ID") },
+  ], []);
 
-  const exportReport = (kind: "csv" | "pdf") => {
-    addAudit({
-      actor: user?.email ?? "system",
-      action: "export",
-      target: `sim-klinik/laporan/${report}`,
-      meta: { range, format: kind },
-    });
-    toast.success(`Laporan ${report.toUpperCase()} (${kind.toUpperCase()}) diunduh`);
-  };
+  const onCsv = () => exportCsv(`laporan-${kind}-${range.from}_${range.to}.csv`, invoiceCols, invoices, range);
+  const onPdf = () => exportPdf(`laporan-${kind}-${range.from}_${range.to}.pdf`, `Laporan ${kind.toUpperCase()}`, invoiceCols, invoices, range);
 
   return (
     <div>
@@ -67,179 +57,137 @@ function LaporanPage() {
         desc="Analitik operasional: kunjungan, tindakan, distribusi penjamin, dan pendapatan layanan."
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select value={report} onValueChange={(v) => setReport(v as typeof report)}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="kunjungan">Tren Kunjungan</SelectItem>
-            <SelectItem value="tindakan">Tindakan Teratas</SelectItem>
-            <SelectItem value="payer">Distribusi Penjamin</SelectItem>
-            <SelectItem value="pendapatan">Pendapatan per Layanan</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Hari ini</SelectItem>
-            <SelectItem value="7d">7 hari terakhir</SelectItem>
-            <SelectItem value="30d">30 hari terakhir</SelectItem>
-            <SelectItem value="ytd">Year to date</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => exportReport("csv")}>
-            <FileSpreadsheet className="h-4 w-4" /> CSV
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => exportReport("pdf")}>
-            <Download className="h-4 w-4" /> PDF
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" /> Cetak
-          </Button>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <div className="grid gap-1">
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Jenis Laporan</label>
+          <Select value={kind} onValueChange={(v) => setKind(v as Kind)}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="kunjungan">Tren Kunjungan</SelectItem>
+              <SelectItem value="tindakan">Beban Dokter</SelectItem>
+              <SelectItem value="payer">Distribusi Penjamin</SelectItem>
+              <SelectItem value="pendapatan">Pendapatan</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        <ExportBar range={range} onRange={setRange} onCsv={onCsv} onPdf={onPdf} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Total kunjungan" value={totalVisits.toLocaleString("id-ID")} />
-        <KpiCard label="Pasien aktif" value={patients.length.toString()} />
-        <KpiCard label="Estimasi pendapatan" value={formatIDR(totalRevenue)} />
-        <KpiCard label="Tindakan terbanyak" value={dashboard.topActions[0]?.name ?? "—"} />
+        <Kpi label="Kunjungan" value={totals.visits.toLocaleString("id-ID")} />
+        <Kpi label="Invoice terbit" value={totals.invoices.toLocaleString("id-ID")} />
+        <Kpi label="Pendapatan" value={formatIDR(totals.revenue)} />
+        <Kpi label="Periode (hari)" value={String(Math.max(1, Math.round((+new Date(range.to) - +new Date(range.from)) / 864e5) + 1))} />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">
-        {report === "kunjungan" && (
-          <ChartFrame title="Tren Kunjungan Bulanan">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dashboard.monthlyTrend}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="visits" stroke="hsl(var(--primary))" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartFrame>
-        )}
-
-        {report === "tindakan" && (
-          <ChartFrame title="Tindakan Klinis Teratas">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dashboard.topActions}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartFrame>
-        )}
-
-        {report === "payer" && (
-          <ChartFrame title="Distribusi Penjamin">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={payerData} dataKey="value" nameKey="name" outerRadius={110} label>
-                  {payerData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend />
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartFrame>
-        )}
-
-        {report === "pendapatan" && (
-          <ChartFrame title="Pendapatan per Layanan">
-            <div className="overflow-hidden rounded-lg border border-border">
+        {isLoading ? (
+          <SkeletonList rows={3} />
+        ) : kind === "kunjungan" ? (
+          trend.length === 0
+            ? <EmptyState title="Belum ada kunjungan" hint="Coba perluas rentang tanggal." />
+            : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="month" /><YAxis /><Tooltip />
+                  <Line type="monotone" dataKey="visits" stroke="hsl(var(--primary))" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "tindakan" ? (
+          doctors.length === 0
+            ? <EmptyState title="Belum ada beban dokter" />
+            : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={doctors}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="doctor" /><YAxis /><Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "pendapatan" ? (
+          invoices.length === 0
+            ? <EmptyState title="Tidak ada invoice di rentang ini" />
+            : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Layanan</TableHead>
-                    <TableHead className="text-right">Jumlah</TableHead>
-                    <TableHead className="text-right">Estimasi Pendapatan</TableHead>
-                    <TableHead>Kontribusi</TableHead>
+                    <TableHead>Tanggal</TableHead><TableHead>Kode</TableHead><TableHead>Pasien</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {revenuePerService.map((r) => {
-                    const pct = (r.revenue / totalRevenue) * 100;
-                    return (
-                      <TableRow key={r.name}>
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell className="text-right font-mono">{r.count}</TableCell>
-                        <TableCell className="text-right font-mono">{formatIDR(r.revenue)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
-                              <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {invoices.map((i) => (
+                    <TableRow key={i.id}>
+                      <TableCell className="text-xs">{i.tanggal}</TableCell>
+                      <TableCell className="font-mono text-xs">{i.patient_code}</TableCell>
+                      <TableCell className="text-sm">{i.patient_name ?? "—"}</TableCell>
+                      <TableCell className="text-right font-mono">{formatIDR(Number(i.total))}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
-            </div>
-          </ChartFrame>
+            )
+        ) : (
+          <EmptyState title="Distribusi penjamin" hint="Data agregat ditampilkan setelah ada invoice." />
         )}
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-4">
-          <h3 className="mb-3 text-sm font-semibold">Kunjungan Terbaru</h3>
-          <div className="space-y-2">
-            {visits.slice(0, 6).map((v) => (
-              <div key={v.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                <div>
-                  <div className="font-medium">{v.patientName}</div>
-                  <div className="text-xs text-muted-foreground">{v.doctor}</div>
+          <h3 className="mb-3 text-sm font-semibold">Invoice terbaru</h3>
+          {isLoading ? <SkeletonList rows={3} /> : invoices.length === 0 ? (
+            <EmptyState title="Belum ada invoice" />
+          ) : (
+            <div className="space-y-2">
+              {invoices.slice(0, 6).map((i) => (
+                <div key={i.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                  <div>
+                    <div className="font-medium">{i.patient_name ?? "—"}</div>
+                    <div className="font-mono text-xs text-muted-foreground">{i.patient_code} • {i.tanggal}</div>
+                  </div>
+                  <Badge variant="secondary">{formatIDR(Number(i.total))}</Badge>
                 </div>
-                <Badge variant="secondary">{v.payer}</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
-          <h3 className="mb-3 text-sm font-semibold">Beban Dokter Hari Ini</h3>
-          <div className="space-y-2">
-            {dashboard.todayDoctors.map((d) => (
-              <div key={d.doctor} className="rounded-md border border-border p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{d.doctor}</span>
-                  <span className="text-xs text-muted-foreground">{d.slot}</span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full bg-primary" style={{ width: `${d.load}%` }} />
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">{d.poli} • beban {d.load}%</div>
-              </div>
-            ))}
-          </div>
+          <h3 className="mb-3 text-sm font-semibold">Beban dokter</h3>
+          {isLoading ? <SkeletonList rows={3} /> : doctors.length === 0 ? (
+            <EmptyState title="Belum ada beban dokter" />
+          ) : (
+            <div className="space-y-2">
+              {doctors.map((d) => {
+                const max = Math.max(...doctors.map((x) => x.count), 1);
+                const pct = Math.round((d.count / max) * 100);
+                return (
+                  <div key={d.doctor} className="rounded-md border border-border p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{d.doctor}</span>
+                      <span className="text-xs text-muted-foreground">{d.count} booking</span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-xl font-semibold tracking-tight">{value}</div>
-    </div>
-  );
-}
-
-function ChartFrame({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
-      {children}
     </div>
   );
 }
