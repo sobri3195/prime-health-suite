@@ -125,6 +125,15 @@ export function AppShell({ system, children }: { system: System; children: React
             </div>
 
             <button
+              onClick={() => setLang(lang === "id" ? "en" : "id")}
+              className="rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Switch language"
+              title="Switch language"
+            >
+              {lang.toUpperCase()}
+            </button>
+
+            <button
               onClick={() => setDark((d) => !d)}
               className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Toggle theme"
