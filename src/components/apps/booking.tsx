@@ -7,11 +7,12 @@ import { ArrowLeft, Calendar, Check, Loader2, Stethoscope } from "lucide-react";
 import {
   listDoctorsForBooking, listAvailableSlots, createBooking,
 } from "@/lib/apps-patient.functions";
+import { useI18n } from "@/lib/i18n";
 
 type Doctor = { id: string; code: string; name: string; spesialisasi: string | null };
 
-function dateLabel(d: Date) {
-  return d.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
+function dateLabel(d: Date, lang: string) {
+  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short" });
 }
 function dateISO(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -20,6 +21,7 @@ function dateISO(d: Date) {
 export function BookingFlow() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { t, lang } = useI18n();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [dokter, setDokter] = useState<Doctor | null>(null);
   const [tanggal, setTanggal] = useState<string>("");
@@ -55,7 +57,7 @@ export function BookingFlow() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
       qc.invalidateQueries({ queryKey: ["apps", "queue"] });
-      toast.success("Booking berhasil dibuat!");
+      toast.success(t("booking.success"));
       navigate({ to: "/apps", replace: true });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -67,34 +69,30 @@ export function BookingFlow() {
     return d;
   });
 
+  const stepTitle = step === 1 ? t("booking.step1") : step === 2 ? t("booking.step2") : step === 3 ? t("booking.step3") : t("booking.step4");
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center gap-2">
         <button
           onClick={() => (step === 1 ? navigate({ to: "/apps" }) : setStep((s) => (s - 1) as 1 | 2 | 3 | 4))}
           className="rounded-full border border-[#e9dfb8] bg-white p-2 text-[#5a4a14]"
-          aria-label="Kembali"
+          aria-label={t("booking.back")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <div className="text-[11px] font-bold tracking-widest text-[#6b5a16]">BOOKING · STEP {step}/4</div>
-          <h1 className="text-xl font-bold">
-            {step === 1 && "Pilih Dokter"}
-            {step === 2 && "Pilih Tanggal"}
-            {step === 3 && "Pilih Jam"}
-            {step === 4 && "Konfirmasi"}
-          </h1>
+          <div className="text-[11px] font-bold tracking-widest text-[#6b5a16]">{t("booking.step", { n: step })}</div>
+          <h1 className="text-xl font-bold">{stepTitle}</h1>
         </div>
       </div>
 
-      {/* Step 1: Doctor */}
       {step === 1 && (
         <div className="space-y-3">
           {doctorsQ.isLoading && <div className="rounded-2xl border border-[#e9dfb8] bg-white p-6 text-center text-sm opacity-70"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>}
           {doctorsQ.data?.doctors.length === 0 && (
             <div className="rounded-2xl border border-[#e9dfb8] bg-white p-6 text-center text-sm opacity-70">
-              Belum ada dokter aktif terdaftar.
+              {t("booking.no_doctors")}
             </div>
           )}
           {doctorsQ.data?.doctors.map((d) => (
@@ -108,19 +106,18 @@ export function BookingFlow() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold">{d.name}</div>
-                <div className="text-xs opacity-70 truncate">{d.spesialisasi || "Dokter umum"}</div>
+                <div className="text-xs opacity-70 truncate">{d.spesialisasi || t("booking.doctor_default")}</div>
               </div>
-              <div className="text-xs text-[#6b5a16]">Pilih →</div>
+              <div className="text-xs text-[#6b5a16]">{t("booking.pick")}</div>
             </button>
           ))}
         </div>
       )}
 
-      {/* Step 2: Date */}
       {step === 2 && dokter && (
         <div>
           <div className="rounded-xl bg-[#fdf2c4] p-3 text-sm">
-            <span className="opacity-70">Dokter: </span><b>{dokter.name}</b>
+            <span className="opacity-70">{t("booking.doctor")}: </span><b>{dokter.name}</b>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {next7.map((d) => {
@@ -133,7 +130,7 @@ export function BookingFlow() {
                   className={`rounded-2xl border p-3 text-left ${active ? "border-[#a08a2a] bg-[#a08a2a] text-white" : "border-[#e9dfb8] bg-white"}`}
                 >
                   <Calendar className={`mb-1 h-4 w-4 ${active ? "text-white" : "text-[#6b5a16]"}`} />
-                  <div className="text-sm font-semibold">{dateLabel(d)}</div>
+                  <div className="text-sm font-semibold">{dateLabel(d, lang)}</div>
                   <div className={`text-[11px] ${active ? "opacity-90" : "opacity-60"}`}>{iso}</div>
                 </button>
               );
@@ -142,11 +139,10 @@ export function BookingFlow() {
         </div>
       )}
 
-      {/* Step 3: Time */}
       {step === 3 && dokter && tanggal && (
         <div>
           <div className="rounded-xl bg-[#fdf2c4] p-3 text-sm">
-            <span className="opacity-70">Dokter: </span><b>{dokter.name}</b> · <span className="opacity-70">Tanggal: </span><b>{tanggal}</b>
+            <span className="opacity-70">{t("booking.doctor")}: </span><b>{dokter.name}</b> · <span className="opacity-70">{t("booking.date")}: </span><b>{tanggal}</b>
           </div>
           {slotsQ.isLoading && <div className="mt-4 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin opacity-50" /></div>}
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -165,29 +161,28 @@ export function BookingFlow() {
               </button>
             ))}
           </div>
-          <p className="mt-3 text-xs opacity-60">Slot abu-abu sudah terisi pasien lain. Klinik istirahat 12:00–13:00.</p>
+          <p className="mt-3 text-xs opacity-60">{t("booking.slot_note")}</p>
         </div>
       )}
 
-      {/* Step 4: Confirm */}
       {step === 4 && dokter && tanggal && jam && (
         <div className="space-y-3">
           <div className="rounded-2xl border border-[#e9dfb8] bg-white p-4">
-            <div className="text-sm font-semibold">Ringkasan booking</div>
+            <div className="text-sm font-semibold">{t("booking.summary")}</div>
             <ul className="mt-2 space-y-1 text-sm">
-              <li><span className="opacity-60">Dokter: </span><b>{dokter.name}</b></li>
-              <li><span className="opacity-60">Tanggal: </span><b>{tanggal}</b></li>
-              <li><span className="opacity-60">Jam: </span><b>{jam}</b></li>
+              <li><span className="opacity-60">{t("booking.doctor")}: </span><b>{dokter.name}</b></li>
+              <li><span className="opacity-60">{t("booking.date")}: </span><b>{tanggal}</b></li>
+              <li><span className="opacity-60">{t("booking.time")}: </span><b>{jam}</b></li>
             </ul>
           </div>
           <div className="rounded-2xl border border-[#e9dfb8] bg-white p-4">
-            <label className="text-sm font-semibold">Keluhan (opsional)</label>
+            <label className="text-sm font-semibold">{t("booking.complaint")}</label>
             <textarea
               value={keluhan}
               maxLength={500}
               onChange={(e) => setKeluhan(e.target.value)}
               rows={3}
-              placeholder="Cth: mata kanan terasa pedih sejak 2 hari lalu"
+              placeholder={t("booking.complaint_ph")}
               className="mt-2 w-full rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] p-3 text-sm outline-none"
             />
           </div>
@@ -196,10 +191,11 @@ export function BookingFlow() {
             disabled={mutation.isPending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#a08a2a] py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Konfirmasi Booking <Check className="h-4 w-4" /></>}
+            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <>{t("booking.confirm")} <Check className="h-4 w-4" /></>}
           </button>
         </div>
       )}
     </div>
   );
 }
+

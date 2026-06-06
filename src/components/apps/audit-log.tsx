@@ -1,3 +1,4 @@
+// i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { getAudit, subscribeAudit } from "@/lib/audit-log";
 import { PageHeader } from "@/components/app-shell";

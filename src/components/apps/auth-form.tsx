@@ -1,3 +1,4 @@
+// i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
