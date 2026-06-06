@@ -1,0 +1,251 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+// ===== Roles =====
+export type AppRole = "super_admin" | "dokter" | "perawat" | "kasir" | "pasien";
+
+export const getMyRoles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AppRole[]> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (error) throw error;
+    return (data ?? []).map((r) => r.role as AppRole);
+  });
+
+// ===== Settings =====
+export const getSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("clinic_setting")
+      .select("key,value,updated_at");
+    if (error) throw error;
+    const out: Record<string, Record<string, unknown>> = {};
+    (data ?? []).forEach((r) => { out[r.key] = (r.value ?? {}) as Record<string, unknown>; });
+    return out;
+  });
+
+const SaveSettingSchema = z.object({
+  key: z.enum(["profile", "notif", "security", "integrations"]),
+  value: z.record(z.string(), z.any()),
+});
+
+export const saveSetting = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => SaveSettingSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("clinic_setting")
+      .upsert({ key: data.key, value: data.value, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) throw error;
+    await appendAuditRow(supabase, {
+      actor_id: userId,
+      actor_email: context.claims?.email as string | undefined,
+      module: "Settings",
+      action: "save",
+      target: data.key,
+      meta: data.value,
+    });
+    return { ok: true };
+  });
+
+// ===== Audit =====
+const AppendAuditSchema = z.object({
+  module: z.string().min(1).max(64),
+  action: z.string().min(1).max(64),
+  target: z.string().max(256).optional(),
+  meta: z.record(z.string(), z.any()).optional(),
+});
+
+type SupaClient = Parameters<typeof appendAuditRow>[0];
+
+export async function appendAuditRow(
+  supabase: { from: (t: string) => { insert: (v: unknown) => Promise<{ error: unknown }> } },
+  row: {
+    actor_id?: string;
+    actor_email?: string;
+    actor_role?: string;
+    module: string;
+    action: string;
+    target?: string;
+    meta?: Record<string, unknown>;
+  },
+) {
+  await supabase.from("clinic_audit_log").insert({
+    actor_id: row.actor_id ?? null,
+    actor_email: row.actor_email ?? null,
+    actor_role: row.actor_role ?? null,
+    module: row.module,
+    action: row.action,
+    target: row.target ?? null,
+    meta: row.meta ?? null,
+  });
+}
+
+export const appendAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => AppendAuditSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId, claims } = context;
+    await appendAuditRow(supabase as unknown as SupaClient, {
+      actor_id: userId,
+      actor_email: claims?.email as string | undefined,
+      module: data.module,
+      action: data.action,
+      target: data.target,
+      meta: data.meta,
+    });
+    return { ok: true };
+  });
+
+const ListAuditSchema = z.object({
+  q: z.string().optional(),
+  module: z.string().optional(),
+  action: z.string().optional(),
+  actor: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.number().min(1).max(500).optional(),
+});
+
+export const listAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ListAuditSchema.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = context.supabase.from("clinic_audit_log").select("*").order("ts", { ascending: false }).limit(data.limit ?? 200);
+    if (data.module) q = q.eq("module", data.module);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.actor) q = q.ilike("actor_email", `%${data.actor}%`);
+    if (data.from) q = q.gte("ts", data.from);
+    if (data.to) q = q.lte("ts", data.to);
+    if (data.q) q = q.or(`target.ilike.%${data.q}%,actor_email.ilike.%${data.q}%`);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+// ===== Documents =====
+const ListDocSchema = z.object({
+  q: z.string().optional(),
+  type: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+export const listDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ListDocSchema.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = context.supabase.from("clinic_document").select("*").order("uploaded_at", { ascending: false }).limit(500);
+    if (data.type) q = q.eq("doc_type", data.type);
+    if (data.from) q = q.gte("uploaded_at", data.from);
+    if (data.to) q = q.lte("uploaded_at", data.to);
+    if (data.q) q = q.or(`title.ilike.%${data.q}%,patient_code.ilike.%${data.q}%,patient_name.ilike.%${data.q}%`);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+const UploadDocSchema = z.object({
+  patient_code: z.string().min(1).max(64),
+  patient_name: z.string().min(1).max(200),
+  doc_type: z.string().min(1).max(64),
+  title: z.string().min(1).max(200),
+  mime: z.enum(["pdf", "image", "zip"]).default("pdf"),
+  size_bytes: z.number().int().min(0).default(0),
+  storage_path: z.string().max(512).optional(),
+});
+
+export const uploadDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UploadDocSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId, claims } = context;
+    const email = claims?.email as string | undefined;
+    const { data: row, error } = await supabase.from("clinic_document").insert({
+      ...data,
+      uploaded_by: userId,
+      uploaded_by_email: email,
+    }).select("*").single();
+    if (error) throw error;
+    await appendAuditRow(supabase as unknown as SupaClient, {
+      actor_id: userId, actor_email: email,
+      module: "Dokumen", action: "upload",
+      target: row.id, meta: { title: data.title, patient_code: data.patient_code },
+    });
+    return row;
+  });
+
+export const deleteDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId, claims } = context;
+    const { error } = await supabase.from("clinic_document").delete().eq("id", data.id);
+    if (error) throw error;
+    await appendAuditRow(supabase as unknown as SupaClient, {
+      actor_id: userId, actor_email: claims?.email as string | undefined,
+      module: "Dokumen", action: "delete", target: data.id,
+    });
+    return { ok: true };
+  });
+
+// ===== Laporan aggregates =====
+const LaporanSchema = z.object({
+  kind: z.enum(["kunjungan", "tindakan", "payer", "pendapatan"]),
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+export const getLaporan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => LaporanSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const from = data.from ?? new Date(Date.now() - 30 * 864e5).toISOString();
+    const to = data.to ?? new Date().toISOString();
+
+    if (data.kind === "kunjungan" || data.kind === "tindakan" || data.kind === "payer" || data.kind === "pendapatan") {
+      const { data: invoices, error } = await supabase
+        .from("fin_invoice").select("id, tanggal, total, patient_code, patient_name")
+        .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
+      if (error) throw error;
+      const { data: bookings } = await supabase
+        .from("apps_booking").select("id, tanggal, dokter_nama, status")
+        .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
+
+      // Monthly visits trend
+      const trendMap = new Map<string, number>();
+      (bookings ?? []).forEach((b) => {
+        const m = (b.tanggal as string).slice(0, 7);
+        trendMap.set(m, (trendMap.get(m) ?? 0) + 1);
+      });
+      const trend = Array.from(trendMap.entries()).sort().map(([month, visits]) => ({ month, visits }));
+
+      // Doctor load
+      const docMap = new Map<string, number>();
+      (bookings ?? []).forEach((b) => docMap.set(b.dokter_nama as string, (docMap.get(b.dokter_nama as string) ?? 0) + 1));
+      const doctors = Array.from(docMap.entries()).map(([doctor, count]) => ({ doctor, count }));
+
+      const totalRevenue = (invoices ?? []).reduce((a, b) => a + Number(b.total ?? 0), 0);
+      return {
+        kind: data.kind,
+        from, to,
+        totals: {
+          visits: (bookings ?? []).length,
+          invoices: (invoices ?? []).length,
+          revenue: totalRevenue,
+        },
+        trend,
+        doctors,
+        invoices: invoices ?? [],
+      };
+    }
+    return { kind: data.kind, from, to, totals: { visits: 0, invoices: 0, revenue: 0 }, trend: [], doctors: [], invoices: [] };
+  });
