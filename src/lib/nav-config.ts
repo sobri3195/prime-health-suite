@@ -4,7 +4,7 @@ import {
   Wallet, TrendingDown, Landmark, ReceiptText, BookOpen, Scale, LineChart, FileSpreadsheet, ShieldCheck,
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
-  Home, Brain, ShoppingBag, User,
+  Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -26,7 +26,9 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "wins", label: "Daily Wins", icon: Trophy },
     { slug: "chat", label: "Chat FO", icon: LifeBuoy },
     { slug: "profil", label: "Profil", icon: User },
+    { slug: "privasi", label: "Privasi & Keamanan", icon: ShieldCheckIcon },
     { slug: "laporan", label: "Laporan", icon: BarChart3 },
+
   ],
   "sim-klinik": [
     { slug: "", label: "Dashboard Klinik", icon: LayoutDashboard },
