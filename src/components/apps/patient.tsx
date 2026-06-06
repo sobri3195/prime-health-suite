@@ -981,8 +981,31 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 export function PatientLaporan() {
   const callInvoices = useServerFn(listMyInvoices);
+  const callProfile = useServerFn(getMyProfile);
   const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices() });
+  const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const invoices = invoicesQ.data?.invoices ?? [];
+  const profile = profileQ.data?.profile;
+
+  function downloadResep(inv: typeof invoices[number]) {
+    if (!profile) {
+      toast.error("Profil belum dimuat");
+      return;
+    }
+    generateResepPDF({
+      no_invoice: inv.no_invoice,
+      tanggal: inv.tanggal,
+      pasien_nama: profile.nama || "-",
+      patient_code: profile.patient_code || "-",
+      items: (inv.fin_invoice_item ?? []).map((it) => ({
+        layanan_nama: it.layanan_nama,
+        qty: it.qty,
+        subtotal: Number(it.subtotal),
+      })),
+      catatan: inv.catatan,
+    });
+    toast.success("Resep PDF diunduh");
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -990,11 +1013,11 @@ export function PatientLaporan() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold leading-tight">Riwayat & Resep</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Daftar pemeriksaan dan resep dari kunjungan Anda.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Daftar kronologis pemeriksaan, tindakan, dan resep dari kunjungan Anda.</p>
           </div>
-          <button onClick={() => toast.info("Unduh laporan akan tersedia segera")} className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Unduh">
-            <Download className="h-5 w-5" />
-          </button>
+          <Link to="/apps/notifikasi" className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Notifikasi">
+            <Bell className="h-5 w-5" />
+          </Link>
         </div>
       </Card>
 
@@ -1034,9 +1057,29 @@ export function PatientLaporan() {
               </li>
             ))}
           </ul>
+          {inv.catatan && (
+            <div className="mt-3 rounded-md bg-[#fdf2c4] p-3 text-xs">
+              <b>Catatan dokter:</b> {inv.catatan}
+            </div>
+          )}
           <div className="mt-3 flex items-center justify-between border-t border-[#e9dfb8] pt-3">
             <span className="text-xs text-muted-foreground">Total</span>
             <span className="text-base font-bold">Rp {Number(inv.total).toLocaleString("id-ID")}</span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => downloadResep(inv)}
+              className="inline-flex items-center gap-1 rounded-xl bg-[#a08a2a] px-3 py-2 text-xs font-semibold text-white"
+            >
+              <Download className="h-3.5 w-3.5" /> Unduh Resep PDF
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Resep dari Klinik Prime - ${inv.no_invoice}`)}`}
+              target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs font-semibold text-[#5a4a14]"
+            >
+              <MessageCircle className="h-3.5 w-3.5" /> Bagikan
+            </a>
           </div>
         </Card>
       ))}
@@ -1055,3 +1098,4 @@ export function PatientLaporan() {
     </div>
   );
 }
+
