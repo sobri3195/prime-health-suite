@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3, Wallet, FileBarChart, Calculator, Receipt, TrendingUp } from "lucide-react";
+import { FileBarChart, Calculator, TrendingUp } from "lucide-react";
 import { ProductLanding } from "@/components/product-landing";
 import { faviconDataUrl } from "@/lib/brand";
 

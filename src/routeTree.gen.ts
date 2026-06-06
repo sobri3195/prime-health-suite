@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SimKlinikLoginRouteImport } from './routes/sim-klinik.login'
 import { Route as ProdukSimKlinikRouteImport } from './routes/produk.sim-klinik'
+import { Route as ProdukFinanceRouteImport } from './routes/produk.finance'
 import { Route as ProdukAppsRouteImport } from './routes/produk.apps'
 import { Route as FinanceLoginRouteImport } from './routes/finance.login'
 import { Route as AppsLoginRouteImport } from './routes/apps.login'
@@ -89,6 +90,11 @@ const SimKlinikLoginRoute = SimKlinikLoginRouteImport.update({
 const ProdukSimKlinikRoute = ProdukSimKlinikRouteImport.update({
   id: '/produk/sim-klinik',
   path: '/produk/sim-klinik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProdukFinanceRoute = ProdukFinanceRouteImport.update({
+  id: '/produk/finance',
+  path: '/produk/finance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProdukAppsRoute = ProdukAppsRouteImport.update({
@@ -407,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/finance': typeof ProdukFinanceRoute
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
@@ -462,6 +469,7 @@ export interface FileRoutesByTo {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/finance': typeof ProdukFinanceRoute
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
@@ -522,6 +530,7 @@ export interface FileRoutesById {
   '/apps/login': typeof AppsLoginRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
+  '/produk/finance': typeof ProdukFinanceRoute
   '/produk/sim-klinik': typeof ProdukSimKlinikRoute
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
@@ -582,6 +591,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/finance'
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
@@ -637,6 +647,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/finance'
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/apps/$section'
@@ -696,6 +707,7 @@ export interface FileRouteTypes {
     | '/apps/login'
     | '/finance/login'
     | '/produk/apps'
+    | '/produk/finance'
     | '/produk/sim-klinik'
     | '/sim-klinik/login'
     | '/_authenticated/apps/$section'
@@ -751,6 +763,7 @@ export interface RootRouteChildren {
   AppsLoginRoute: typeof AppsLoginRoute
   FinanceLoginRoute: typeof FinanceLoginRoute
   ProdukAppsRoute: typeof ProdukAppsRoute
+  ProdukFinanceRoute: typeof ProdukFinanceRoute
   ProdukSimKlinikRoute: typeof ProdukSimKlinikRoute
   SimKlinikLoginRoute: typeof SimKlinikLoginRoute
 }
@@ -790,6 +803,13 @@ declare module '@tanstack/react-router' {
       path: '/produk/sim-klinik'
       fullPath: '/produk/sim-klinik'
       preLoaderRoute: typeof ProdukSimKlinikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produk/finance': {
+      id: '/produk/finance'
+      path: '/produk/finance'
+      fullPath: '/produk/finance'
+      preLoaderRoute: typeof ProdukFinanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/produk/apps': {
@@ -1317,6 +1337,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppsLoginRoute: AppsLoginRoute,
   FinanceLoginRoute: FinanceLoginRoute,
   ProdukAppsRoute: ProdukAppsRoute,
+  ProdukFinanceRoute: ProdukFinanceRoute,
   ProdukSimKlinikRoute: ProdukSimKlinikRoute,
   SimKlinikLoginRoute: SimKlinikLoginRoute,
 }
