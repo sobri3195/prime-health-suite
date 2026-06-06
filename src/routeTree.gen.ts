@@ -70,6 +70,7 @@ import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppsNotifikasiRouteImport } from './routes/_authenticated.apps.notifikasi'
 import { Route as AuthenticatedAppsBookingRouteImport } from './routes/_authenticated.apps.booking'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
+import { Route as AuthenticatedAppsEdukasiSlugRouteImport } from './routes/_authenticated.apps.edukasi.$slug'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -421,6 +422,12 @@ const AuthenticatedAppsSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedAppsRoute,
   } as any)
+const AuthenticatedAppsEdukasiSlugRoute =
+  AuthenticatedAppsEdukasiSlugRouteImport.update({
+    id: '/edukasi/$slug',
+    path: '/edukasi/$slug',
+    getParentRoute: () => AuthenticatedAppsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -483,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/apps/': typeof AuthenticatedAppsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
+  '/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -542,6 +550,7 @@ export interface FileRoutesByTo {
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik': typeof AuthenticatedSimKlinikIndexRoute
+  '/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -606,6 +615,7 @@ export interface FileRoutesById {
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
+  '/_authenticated/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/apps/'
     | '/finance/'
     | '/sim-klinik/'
+    | '/apps/edukasi/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/apps'
     | '/finance'
     | '/sim-klinik'
+    | '/apps/edukasi/$slug'
   id:
     | '__root__'
     | '/'
@@ -792,6 +804,7 @@ export interface FileRouteTypes {
     | '/_authenticated/apps/'
     | '/_authenticated/finance/'
     | '/_authenticated/sim-klinik/'
+    | '/_authenticated/apps/edukasi/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1236,6 +1249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsSectionRouteImport
       parentRoute: typeof AuthenticatedAppsRoute
     }
+    '/_authenticated/apps/edukasi/$slug': {
+      id: '/_authenticated/apps/edukasi/$slug'
+      path: '/edukasi/$slug'
+      fullPath: '/apps/edukasi/$slug'
+      preLoaderRoute: typeof AuthenticatedAppsEdukasiSlugRouteImport
+      parentRoute: typeof AuthenticatedAppsRoute
+    }
   }
 }
 
@@ -1244,6 +1264,7 @@ interface AuthenticatedAppsRouteChildren {
   AuthenticatedAppsBookingRoute: typeof AuthenticatedAppsBookingRoute
   AuthenticatedAppsNotifikasiRoute: typeof AuthenticatedAppsNotifikasiRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
+  AuthenticatedAppsEdukasiSlugRoute: typeof AuthenticatedAppsEdukasiSlugRoute
 }
 
 const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
@@ -1251,6 +1272,7 @@ const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
   AuthenticatedAppsBookingRoute: AuthenticatedAppsBookingRoute,
   AuthenticatedAppsNotifikasiRoute: AuthenticatedAppsNotifikasiRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
+  AuthenticatedAppsEdukasiSlugRoute: AuthenticatedAppsEdukasiSlugRoute,
 }
 
 const AuthenticatedAppsRouteWithChildren =

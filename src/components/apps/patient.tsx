@@ -15,6 +15,7 @@ import {
   getMyProfile, updateMyProfile, listMyBookings, cancelBooking, rescheduleBooking,
   getMyQueueToday, listMyInvoices, listDoctorsForBooking, listAvailableSlots,
 } from "@/lib/apps-patient.functions";
+import { saveAiHistory, signEyePhotoUpload } from "@/lib/apps-ai.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
@@ -234,6 +235,7 @@ const GEJALA = [
 ];
 
 export function PatientAI() {
+  const navigate = useNavigate();
   const [keluhan, setKeluhan] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [durasi, setDurasi] = useState("");
@@ -242,31 +244,51 @@ export function PatientAI() {
   const [riwayat, setRiwayat] = useState("");
   const [loading, setLoading] = useState(false);
   const [hasil, setHasil] = useState<DiagnoseResult | null>(null);
+  const [fotoPath, setFotoPath] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const callDiagnose = useServerFn(diagnoseEye);
+  const callSave = useServerFn(saveAiHistory);
+  const callSignUpload = useServerFn(signEyePhotoUpload);
 
   const toggle = (g: string) =>
     setPicked((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
 
-  const analisa = async () => {
-    if (!keluhan.trim() || !durasi) {
-      toast.error("Lengkapi keluhan dan durasi.");
-      return;
+  async function uploadFoto(file: File) {
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error("Format harus JPG/PNG/WEBP");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5 MB");
+    setUploading(true);
+    try {
+      const sig = await callSignUpload({ data: { ext } });
+      const { error } = await supabase.storage.from("apps-mata")
+        .uploadToSignedUrl(sig.path, sig.token, file, { contentType: file.type });
+      if (error) throw error;
+      setFotoPath(sig.path);
+      toast.success("Foto mata terunggah");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal unggah");
+    } finally {
+      setUploading(false);
     }
-    setLoading(true);
-    setHasil(null);
+  }
+
+  const analisa = async () => {
+    if (!keluhan.trim() || !durasi) { toast.error("Lengkapi keluhan dan durasi."); return; }
+    setLoading(true); setHasil(null);
     try {
       const res = await callDiagnose({
-        data: {
-          keluhan,
-          gejala: picked,
-          durasi,
-          nyeri,
-          usia: usia ? Number(usia) : null,
-          riwayat,
-        },
+        data: { keluhan, gejala: picked, durasi, nyeri, usia: usia ? Number(usia) : null, riwayat },
       });
       setHasil(res);
-      toast.success("AI engine selesai menganalisis");
+      try {
+        const r = await callSave({
+          data: { keluhan, gejala: picked, durasi, nyeri, hasil: res,
+            summary: res.summary, risk: res.risk, foto_url: fotoPath },
+        });
+        toast.success(`Analisis tersimpan (+${r.poin} poin)`);
+      } catch {
+        toast.success("AI engine selesai menganalisis");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal menganalisis");
     } finally {
@@ -276,7 +298,7 @@ export function PatientAI() {
 
   const reset = () => {
     setKeluhan(""); setPicked([]); setDurasi(""); setNyeri(0);
-    setUsia(""); setRiwayat(""); setHasil(null);
+    setUsia(""); setRiwayat(""); setHasil(null); setFotoPath(null);
   };
 
   const riskTone = (r: string) => r === "Tinggi" ? "rose" : r === "Sedang" ? "amber" : "green";
@@ -316,9 +338,14 @@ export function PatientAI() {
 
       <Card>
         <div className="text-base font-bold">Kamera AI Mata</div>
-        <button onClick={() => toast.info("Kamera tidak tersedia di demo")} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#e9dfb8] bg-[#fdf8e8] py-8 text-sm font-semibold text-[#7a6010]">
-          <Camera className="h-5 w-5" /> Buka Kamera AI Mata
-        </button>
+        <label className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#e9dfb8] bg-[#fdf8e8] py-8 text-sm font-semibold text-[#7a6010] hover:bg-[#f6ecc8]">
+          {uploading ? <><Loader2 className="h-5 w-5 animate-spin" /> Mengunggah…</> :
+           fotoPath ? <><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Foto siap dianalisis</> :
+           <><Camera className="h-5 w-5" /> Unggah / Ambil Foto Mata</>}
+          <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFoto(f); }} />
+        </label>
+        {fotoPath && <button onClick={() => setFotoPath(null)} className="mt-2 text-xs text-rose-600">Hapus foto</button>}
       </Card>
 
       {/* Form */}
@@ -489,11 +516,13 @@ export function PatientAI() {
               ))}
             </ul>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => toast.success("Booking dibuka")} className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
-                Booking Dokter
+              <button onClick={() => navigate({ to: "/apps/booking" })}
+                className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
+                {hasil.risk === "Tinggi" ? "Rujuk ke Booking Dokter (segera)" : "Booking Dokter"}
               </button>
-              <button onClick={() => toast.info("Chat dokter dibuka")} className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
-                Chat Dokter
+              <button onClick={() => navigate({ to: "/apps/chat" })}
+                className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
+                Chat FO
               </button>
             </div>
           </Card>
