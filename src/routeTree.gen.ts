@@ -67,6 +67,7 @@ import { Route as AuthenticatedFinanceBukuBesarRouteImport } from './routes/_aut
 import { Route as AuthenticatedFinanceBankRouteImport } from './routes/_authenticated.finance.bank'
 import { Route as AuthenticatedFinanceArusKasRouteImport } from './routes/_authenticated.finance.arus-kas'
 import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
+import { Route as AuthenticatedAppsNotifikasiRouteImport } from './routes/_authenticated.apps.notifikasi'
 import { Route as AuthenticatedAppsBookingRouteImport } from './routes/_authenticated.apps.booking'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
 
@@ -402,6 +403,12 @@ const AuthenticatedFinanceSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedAppsNotifikasiRoute =
+  AuthenticatedAppsNotifikasiRouteImport.update({
+    id: '/notifikasi',
+    path: '/notifikasi',
+    getParentRoute: () => AuthenticatedAppsRoute,
+  } as any)
 const AuthenticatedAppsBookingRoute =
   AuthenticatedAppsBookingRouteImport.update({
     id: '/booking',
@@ -432,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/apps/booking': typeof AuthenticatedAppsBookingRoute
+  '/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -490,6 +498,7 @@ export interface FileRoutesByTo {
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/apps/booking': typeof AuthenticatedAppsBookingRoute
+  '/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -553,6 +562,7 @@ export interface FileRoutesById {
   '/sim-klinik/login': typeof SimKlinikLoginRoute
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/_authenticated/apps/booking': typeof AuthenticatedAppsBookingRoute
+  '/_authenticated/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/_authenticated/finance/bank': typeof AuthenticatedFinanceBankRoute
@@ -616,6 +626,7 @@ export interface FileRouteTypes {
     | '/sim-klinik/login'
     | '/apps/$section'
     | '/apps/booking'
+    | '/apps/notifikasi'
     | '/finance/$section'
     | '/finance/arus-kas'
     | '/finance/bank'
@@ -674,6 +685,7 @@ export interface FileRouteTypes {
     | '/sim-klinik/login'
     | '/apps/$section'
     | '/apps/booking'
+    | '/apps/notifikasi'
     | '/finance/$section'
     | '/finance/arus-kas'
     | '/finance/bank'
@@ -736,6 +748,7 @@ export interface FileRouteTypes {
     | '/sim-klinik/login'
     | '/_authenticated/apps/$section'
     | '/_authenticated/apps/booking'
+    | '/_authenticated/apps/notifikasi'
     | '/_authenticated/finance/$section'
     | '/_authenticated/finance/arus-kas'
     | '/_authenticated/finance/bank'
@@ -1202,6 +1215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceSectionRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/apps/notifikasi': {
+      id: '/_authenticated/apps/notifikasi'
+      path: '/notifikasi'
+      fullPath: '/apps/notifikasi'
+      preLoaderRoute: typeof AuthenticatedAppsNotifikasiRouteImport
+      parentRoute: typeof AuthenticatedAppsRoute
+    }
     '/_authenticated/apps/booking': {
       id: '/_authenticated/apps/booking'
       path: '/booking'
@@ -1222,12 +1242,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppsRouteChildren {
   AuthenticatedAppsSectionRoute: typeof AuthenticatedAppsSectionRoute
   AuthenticatedAppsBookingRoute: typeof AuthenticatedAppsBookingRoute
+  AuthenticatedAppsNotifikasiRoute: typeof AuthenticatedAppsNotifikasiRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
 }
 
 const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
   AuthenticatedAppsSectionRoute: AuthenticatedAppsSectionRoute,
   AuthenticatedAppsBookingRoute: AuthenticatedAppsBookingRoute,
+  AuthenticatedAppsNotifikasiRoute: AuthenticatedAppsNotifikasiRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
 }
 
@@ -1387,13 +1409,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
