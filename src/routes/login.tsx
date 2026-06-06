@@ -1,8 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { Activity, ArrowRight } from "lucide-react";
+import { ROLE_LABEL, defaultSystemFor, useAuth, type Role } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: z.object({ redirect: z.string().optional() }).optional(),
   head: () => ({
     meta: [
       { title: "Login — Prime Health Platform" },
@@ -12,9 +15,24 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+const ROLES = Object.keys(ROLE_LABEL) as Role[];
+
 function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const [email, setEmail] = useState("admin@klinikmata.id");
+  const [password, setPassword] = useState("demo1234");
+  const [role, setRole] = useState<Role>("super_admin");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    login(email, role);
+    const target = search?.redirect && search.redirect.startsWith("/")
+      ? search.redirect
+      : `/${defaultSystemFor(role)}`;
+    navigate({ to: target, replace: true });
+  }
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -32,37 +50,35 @@ function LoginPage() {
 
           <h1 className="mt-10 text-2xl font-semibold">Masuk ke akun Anda</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Gunakan kredensial workspace Klinik Utama Mata.
+            Demo login — pilih peran untuk melihat akses sistem yang sesuai.
           </p>
 
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <div>
-              <label className="text-sm font-medium">Email</label>
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+            <Field label="Email">
               <input
-                type="email"
-                required
-                value={email}
+                type="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@klinikmata.id"
                 className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Password</label>
+            </Field>
+            <Field label="Password">
               <input
-                type="password"
-                required
-                value={password}
+                type="password" required value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
                 className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
-            </div>
+            </Field>
+            <Field label="Peran (demo)">
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as Role)}
+                className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                ))}
+              </select>
+            </Field>
             <button
               type="submit"
               className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-navy px-4 py-2.5 text-sm font-medium text-navy-foreground shadow-[var(--shadow-card)] hover:opacity-95"
@@ -72,7 +88,7 @@ function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Butuh akses? Hubungi admin workspace Anda.
+            Mock auth — ganti dengan Supabase Auth di tahap selanjutnya.
           </p>
         </div>
       </div>
@@ -88,6 +104,15 @@ function LoginPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-sm font-medium">{label}</label>
+      {children}
     </div>
   );
 }
