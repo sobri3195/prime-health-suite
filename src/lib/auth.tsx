@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { addAudit } from "./audit-log";
 
 export type Role =
@@ -32,93 +33,113 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export type System = "apps" | "sim-klinik" | "finance";
 
-// Role → systems the user can access (apps always allowed for internal staff)
-const ACCESS: Record<Role, System[]> = {
-  super_admin: ["apps", "sim-klinik", "finance"],
-  owner: ["apps", "sim-klinik", "finance"],
-  admin_klinik: ["apps", "sim-klinik"],
-  front_office: ["apps", "sim-klinik"],
-  dokter: ["apps", "sim-klinik"],
-  perawat: ["apps", "sim-klinik"],
-  kasir: ["apps", "sim-klinik", "finance"],
-  finance_manager: ["apps", "finance"],
-  accounting: ["apps", "finance"],
-  ar_staff: ["apps", "finance"],
-  ap_staff: ["apps", "finance"],
-  auditor: ["apps", "sim-klinik", "finance"],
-};
+export const SYSTEMS: System[] = ["apps", "sim-klinik", "finance"];
 
-// Default landing system after login
-const DEFAULT_SYSTEM: Record<Role, System> = {
-  super_admin: "apps",
-  owner: "apps",
-  admin_klinik: "sim-klinik",
-  front_office: "sim-klinik",
-  dokter: "sim-klinik",
-  perawat: "sim-klinik",
-  kasir: "sim-klinik",
-  finance_manager: "finance",
-  accounting: "finance",
-  ar_staff: "finance",
-  ap_staff: "finance",
-  auditor: "apps",
+// Roles allowed in each system (independent authorization per system)
+const SYSTEM_ROLES: Record<System, Role[]> = {
+  apps: [
+    "super_admin", "owner", "admin_klinik", "front_office", "dokter",
+    "perawat", "kasir", "finance_manager", "accounting", "ar_staff", "ap_staff", "auditor",
+  ],
+  "sim-klinik": [
+    "super_admin", "owner", "admin_klinik", "front_office", "dokter",
+    "perawat", "kasir", "auditor",
+  ],
+  finance: [
+    "super_admin", "owner", "kasir", "finance_manager", "accounting",
+    "ar_staff", "ap_staff", "auditor",
+  ],
 };
 
 export const isReadOnly = (role: Role) => role === "auditor" || role === "owner";
-export const canAccess = (role: Role, sys: System) => ACCESS[role].includes(sys);
-export const defaultSystemFor = (role: Role) => DEFAULT_SYSTEM[role];
+export const rolesFor = (sys: System) => SYSTEM_ROLES[sys];
+export const canAccess = (role: Role, sys: System) => SYSTEM_ROLES[sys].includes(role);
 
 export type AuthUser = { id: string; name: string; email: string; role: Role };
 
+type Sessions = Partial<Record<System, AuthUser>>;
+
 type AuthState = {
+  /** User of the system implied by the current URL (or null). */
   user: AuthUser | null;
+  /** Current system inferred from the URL, or null on neutral routes. */
+  currentSystem: System | null;
+  /** Is the user authenticated within the *current* system. */
   isAuthenticated: boolean;
-  login: (email: string, role: Role) => void;
-  logout: () => void;
+  /** Login into a specific system. Other systems remain untouched. */
+  login: (system: System, email: string, role: Role) => void;
+  /** Logout from a specific system (defaults to currentSystem). */
+  logout: (system?: System) => void;
+  /** Read session for a specific system (does not depend on URL). */
+  userFor: (system: System) => AuthUser | null;
 };
 
 const Ctx = createContext<AuthState | null>(null);
 
-// Non-sensitive UI hint stored in sessionStorage (cleared on tab close).
-// Replace with Supabase Auth session for production.
-const SESSION_KEY = "ph_session_v1";
+// Per-system session keys. Cleared on tab close.
+const SESSION_KEY = (s: System) => `ph_session_${s}_v1`;
+
+function systemFromPath(pathname: string): System | null {
+  const seg = pathname.split("/").filter(Boolean)[0];
+  if (seg === "apps" || seg === "finance") return seg;
+  if (seg === "sim-klinik") return "sim-klinik";
+  return null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [sessions, setSessions] = useState<Sessions>({});
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const currentSystem = systemFromPath(pathname);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      /* ignore */
+    const next: Sessions = {};
+    for (const s of SYSTEMS) {
+      try {
+        const raw = sessionStorage.getItem(SESSION_KEY(s));
+        if (raw) next[s] = JSON.parse(raw);
+      } catch { /* ignore */ }
     }
+    setSessions(next);
   }, []);
 
-  const value = useMemo<AuthState>(
-    () => ({
-      user,
-      isAuthenticated: !!user,
-      login: (email, role) => {
-        const u: AuthUser = {
-          id: "usr_" + Math.random().toString(36).slice(2, 8),
-          name: email.split("@")[0] || "User",
-          email,
-          role,
-        };
-        setUser(u);
-        try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); } catch {}
-        addAudit({ actor: u.email, action: "login", target: "auth", meta: { role } });
-      },
-      logout: () => {
-        if (user) addAudit({ actor: user.email, action: "logout", target: "auth" });
-        setUser(null);
-        try { sessionStorage.removeItem(SESSION_KEY); } catch {}
-      },
-    }),
-    [user],
-  );
+  const userFor = useCallback((s: System) => sessions[s] ?? null, [sessions]);
+
+  const login = useCallback((system: System, email: string, role: Role) => {
+    const u: AuthUser = {
+      id: "usr_" + Math.random().toString(36).slice(2, 8),
+      name: email.split("@")[0] || "User",
+      email,
+      role,
+    };
+    setSessions((prev) => ({ ...prev, [system]: u }));
+    try { sessionStorage.setItem(SESSION_KEY(system), JSON.stringify(u)); } catch {}
+    addAudit({ actor: u.email, action: "login", target: `auth:${system}`, meta: { role } });
+  }, []);
+
+  const logout = useCallback((system?: System) => {
+    const target = system ?? currentSystem;
+    if (!target) return;
+    const u = sessions[target];
+    if (u) addAudit({ actor: u.email, action: "logout", target: `auth:${target}` });
+    setSessions((prev) => {
+      const n = { ...prev };
+      delete n[target];
+      return n;
+    });
+    try { sessionStorage.removeItem(SESSION_KEY(target)); } catch {}
+  }, [sessions, currentSystem]);
+
+  const user = currentSystem ? (sessions[currentSystem] ?? null) : null;
+
+  const value = useMemo<AuthState>(() => ({
+    user,
+    currentSystem,
+    isAuthenticated: !!user,
+    login,
+    logout,
+    userFor,
+  }), [user, currentSystem, login, logout, userFor]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
