@@ -17,7 +17,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
-  const { lang, setLang } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const brand = BRAND[system];
 
   // Initialize from persisted theme once mounted (avoids SSR/CSR mismatch).
@@ -64,7 +64,7 @@ export function AppShell({ system, children }: { system: System; children: React
               <div className="text-sm font-semibold">{brand.name}</div>
             </div>
           </Link>
-          <button className="md:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
+          <button className="md:hidden" onClick={() => setOpen(false)} aria-label={t("shell.close_menu")}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -90,7 +90,7 @@ export function AppShell({ system, children }: { system: System; children: React
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl">
           {!isApps && (
-            <button className="md:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
+            <button className="md:hidden" onClick={() => setOpen(true)} aria-label={t("shell.open_menu")}>
               <Menu className="h-5 w-5" />
             </button>
           )}
@@ -119,7 +119,7 @@ export function AppShell({ system, children }: { system: System; children: React
             <div className="relative hidden max-w-sm flex-1 md:block">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
-                placeholder="Cari pasien, transaksi, dokumen…"
+                placeholder={t("shell.search_ph")}
                 className="w-full rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -127,8 +127,8 @@ export function AppShell({ system, children }: { system: System; children: React
             <button
               onClick={() => setLang(lang === "id" ? "en" : "id")}
               className="rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Switch language"
-              title="Switch language"
+              aria-label={t("shell.switch_lang")}
+              title={t("shell.switch_lang")}
             >
               {lang.toUpperCase()}
             </button>
@@ -136,7 +136,7 @@ export function AppShell({ system, children }: { system: System; children: React
             <button
               onClick={() => setDark((d) => !d)}
               className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Toggle theme"
+              aria-label={t("shell.toggle_theme")}
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
