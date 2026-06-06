@@ -597,18 +597,7 @@ export function PatientBelanja() {
 
 /* ------------------------------ Profil ------------------------------ */
 
-const FAMILY = [
-  { name: "Siti Aminah", rel: "Ibu", status: "Aktif" },
-  { name: "Ahmad Maulana", rel: "Ayah", status: "Aktif" },
-  { name: "Rafi Maulana", rel: "Anak", status: "Kontrol Berkala" },
-];
 
-const VOUCHERS = [
-  { name: "Voucher diskon pemeriksaan Rp10.000", points: 100 },
-  { name: "Voucher diskon produk marketplace 8%", points: 160 },
-  { name: "Gratis konsultasi singkat online", points: 200 },
-  { name: "Prioritas antrean", points: 260 },
-];
 
 export function PatientProfil() {
   const qc = useQueryClient();
@@ -824,12 +813,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 /* ------------------------------ Laporan ------------------------------ */
 
-const VISUS = [
-  { m: "Mar", k: 6, ki: 6 },
-  { m: "Apr", k: 6, ki: 6.5 },
-  { m: "Mei", k: 9, ki: 6.2 },
-];
-const TIO = [{ m: "Mar", v: 21 }, { m: "Apr", v: 19 }, { m: "Mei", v: 18 }];
+
 
 export function PatientLaporan() {
   const callInvoices = useServerFn(listMyInvoices);
@@ -905,21 +889,5 @@ export function PatientLaporan() {
         </div>
       </Card>
     </div>
-  );
-}
-
-function MetricCard({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: "green" | "rose" | "amber" }) {
-  const dot = { green: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-500" }[tone];
-  return (
-    <Card className="p-4">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
-      <div className="mt-1 flex items-center gap-1.5 text-xs">
-        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> {sub}
-      </div>
-      <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-        <FileText className="h-3 w-3" /> Detail klinis
-      </div>
-    </Card>
   );
 }
