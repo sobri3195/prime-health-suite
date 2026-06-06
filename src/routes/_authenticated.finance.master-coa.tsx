@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
-import { master as financeMaster } from "@/data/financeData";
 
 export const Route = createFileRoute("/_authenticated/finance/master-coa")({
   component: () => (
@@ -8,13 +7,15 @@ export const Route = createFileRoute("/_authenticated/finance/master-coa")({
       title="Chart of Account (COA)"
       desc="Master akun untuk jurnal dan laporan keuangan."
       module="master-coa"
+      table="fin_coa"
       fields={[
         { key: "code", label: "Kode" },
         { key: "name", label: "Nama Akun" },
         { key: "type", label: "Tipe", type: "select", options: ["Asset", "Liability", "Equity", "Revenue", "Expense"] },
+        { key: "parent_code", label: "Parent" },
+        { key: "is_active", label: "Aktif", type: "boolean" },
       ]}
-      initial={financeMaster.coa.map((c: any) => ({ ...c }))}
-      newRow={() => ({ code: "", name: "", type: "Asset" })}
+      newRow={() => ({ code: "", name: "", type: "Asset", parent_code: "", is_active: true })}
     />
   ),
 });
