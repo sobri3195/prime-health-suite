@@ -62,6 +62,7 @@ export type Database = {
           jam_slot: string
           keluhan: string | null
           no_antrean: string | null
+          no_urut: number | null
           status: string
           tanggal: string
           updated_at: string
@@ -75,6 +76,7 @@ export type Database = {
           jam_slot: string
           keluhan?: string | null
           no_antrean?: string | null
+          no_urut?: number | null
           status?: string
           tanggal: string
           updated_at?: string
@@ -88,6 +90,7 @@ export type Database = {
           jam_slot?: string
           keluhan?: string | null
           no_antrean?: string | null
+          no_urut?: number | null
           status?: string
           tanggal?: string
           updated_at?: string
@@ -103,15 +106,50 @@ export type Database = {
           },
         ]
       }
+      apps_notif: {
+        Row: {
+          body: string | null
+          created_at: string
+          deep_link: string | null
+          id: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          read_at?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       apps_pasien: {
         Row: {
           alamat: string | null
           alergi: string | null
           created_at: string
+          foto_url: string | null
           id: string
           jenis_kelamin: string | null
           kontak_darurat: string | null
           nama: string
+          nik: string | null
           no_bpjs: string | null
           patient_code: string
           telp: string | null
@@ -123,10 +161,12 @@ export type Database = {
           alamat?: string | null
           alergi?: string | null
           created_at?: string
+          foto_url?: string | null
           id?: string
           jenis_kelamin?: string | null
           kontak_darurat?: string | null
           nama?: string
+          nik?: string | null
           no_bpjs?: string | null
           patient_code?: string
           telp?: string | null
@@ -138,10 +178,12 @@ export type Database = {
           alamat?: string | null
           alergi?: string | null
           created_at?: string
+          foto_url?: string | null
           id?: string
           jenis_kelamin?: string | null
           kontak_darurat?: string | null
           nama?: string
+          nik?: string | null
           no_bpjs?: string | null
           patient_code?: string
           telp?: string | null
@@ -690,6 +732,14 @@ export type Database = {
       }
     }
     Functions: {
+      apps_queue_position: {
+        Args: { _booking_id: string }
+        Returns: {
+          posisi: number
+          total: number
+        }[]
+      }
+      apps_send_booking_reminders: { Args: never; Returns: number }
       apps_slot_terisi_for: {
         Args: { _dokter_id: string; _tanggal: string }
         Returns: {
