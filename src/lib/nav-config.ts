@@ -25,16 +25,6 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "profil", label: "Profil", icon: User },
     { slug: "laporan", label: "Laporan", icon: BarChart3 },
   ],
-  _appsAdmin: [
-    { slug: "launcher", label: "App Launcher", icon: LayoutDashboard },
-    { slug: "notifications", label: "Notifications", icon: Bell },
-    { slug: "helpdesk", label: "Helpdesk", icon: LifeBuoy },
-    { slug: "documents", label: "SOP & Documents", icon: FileText },
-    { slug: "users", label: "User Overview", icon: Users },
-    { slug: "integration", label: "System Integration", icon: Plug },
-    { slug: "audit-log", label: "Audit Log", icon: ScrollText },
-    { slug: "settings", label: "Settings", icon: Settings },
-  ] as NavItem[],
   "sim-klinik": [
     { slug: "", label: "Dashboard Klinik", icon: LayoutDashboard },
     { slug: "pasien", label: "Pasien", icon: Stethoscope },
