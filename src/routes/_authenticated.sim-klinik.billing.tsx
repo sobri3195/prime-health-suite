@@ -139,12 +139,22 @@ function BillingPage() {
         desc="Billing operasional klinik. Detail finance (jurnal, laba rugi) dikelola di Prime Simon Finance."
       />
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {list.length} billing • Kirim ke Finance untuk pencatatan jurnal & piutang.
         </p>
-        <Button onClick={() => setNewOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> Billing Baru</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onCsv}>Export CSV</Button>
+          <Button variant="outline" size="sm" onClick={onPdf}>Export PDF</Button>
+          <Button onClick={() => setNewOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> Billing Baru</Button>
+        </div>
       </div>
+
+      {list.length === 0 && (
+        <div className="mb-4 rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center text-sm text-muted-foreground">
+          Belum ada billing. Klik <b>Billing Baru</b> untuk membuat tagihan pertama.
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
