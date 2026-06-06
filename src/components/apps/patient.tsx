@@ -237,8 +237,8 @@ export function PatientAI() {
 
   async function uploadFoto(file: File) {
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error("Format harus JPG/PNG/WEBP");
-    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5 MB");
+    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error(t("ai.upload_invalid"));
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("ai.upload_max"));
     setUploading(true);
     try {
       const sig = await callSignUpload({ data: { ext } });
@@ -246,9 +246,9 @@ export function PatientAI() {
         .uploadToSignedUrl(sig.path, sig.token, file, { contentType: file.type });
       if (error) throw error;
       setFotoPath(sig.path);
-      toast.success("Foto mata terunggah");
+      toast.success(t("ai.upload_ok"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal unggah");
+      toast.error(e instanceof Error ? e.message : t("ai.upload_failed"));
     } finally {
       setUploading(false);
     }
