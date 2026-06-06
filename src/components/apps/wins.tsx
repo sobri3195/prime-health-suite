@@ -8,6 +8,7 @@ import { useI18n } from "@/lib/i18n";
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
 
 export function PatientWins() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const callPoin = useServerFn(getMyPoin);
   const callBoard = useServerFn(getLeaderboard);
@@ -23,7 +24,7 @@ export function PatientWins() {
     mutationFn: (id: string) => callRedeem({ data: { reward_id: id } }),
     onSuccess: (r) => {
       setVoucher(r.kode_voucher);
-      toast.success("Reward berhasil ditukar!");
+      toast.success(t("wins.redeemed"));
       qc.invalidateQueries({ queryKey: ["apps", "poin"] });
       qc.invalidateQueries({ queryKey: ["apps", "reward"] });
       qc.invalidateQueries({ queryKey: ["apps", "my-redeem"] });
@@ -37,26 +38,29 @@ export function PatientWins() {
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="rounded-2xl bg-gradient-to-br from-[#a08a2a] to-[#7a6010] p-5 text-white shadow-sm">
         <div className="flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] opacity-90">
-          <Sparkles className="h-3 w-3" /> DAILY WINS
+          <Sparkles className="h-3 w-3" /> {t("wins.header")}
         </div>
-        <div className="mt-2 text-4xl font-bold">{total} <span className="text-base font-normal">poin</span></div>
-        <p className="mt-1 text-xs opacity-90">Kumpulkan poin lewat skrining AI, belanja, dan kontrol berkala. Tukar dengan reward!</p>
+        <div className="mt-2 text-4xl font-bold">{total} <span className="text-base font-normal">{t("wins.points")}</span></div>
+        <p className="mt-1 text-xs opacity-90">{t("wins.tagline")}</p>
       </div>
 
       {voucher && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="text-xs font-semibold text-emerald-700">Kode voucher Anda:</div>
+          <div className="text-xs font-semibold text-emerald-700">{t("wins.voucher")}</div>
           <div className="mt-1 flex items-center gap-2">
             <code className="text-lg font-bold text-emerald-900">{voucher}</code>
-            <button onClick={() => { navigator.clipboard.writeText(voucher); toast.success("Disalin"); }}
+            <button onClick={() => { navigator.clipboard.writeText(voucher); toast.success(t("wins.copied")); }}
+              aria-label={t("wins.copied")}
               className="rounded-md p-1 hover:bg-emerald-100"><Copy className="h-4 w-4 text-emerald-700" /></button>
           </div>
         </div>
       )}
 
       <div>
-        <h3 className="mb-2 text-base font-semibold">Tukar Reward</h3>
-        {rewardQ.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+        <h3 className="mb-2 text-base font-semibold">{t("wins.redeem_title")}</h3>
+        {rewardQ.isLoading ? <SkeletonList rows={2} /> : (rewardQ.data?.reward ?? []).length === 0 ? (
+          <EmptyState title={t("common.empty")} />
+        ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {(rewardQ.data?.reward ?? []).map((r: any) => {
               const bisa = total >= r.harga_poin && r.stok > 0;
@@ -69,10 +73,10 @@ export function PatientWins() {
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <div className="text-sm font-bold text-[#6b5a16]">{r.harga_poin} poin</div>
+                    <div className="text-sm font-bold text-[#6b5a16]">{r.harga_poin} {t("wins.points")}</div>
                     <button disabled={!bisa || m.isPending} onClick={() => m.mutate(r.id)}
                       className="rounded-full bg-[#1f1d19] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">
-                      {!bisa ? (r.stok < 1 ? "Habis" : "Poin kurang") : "Tukar"}
+                      {!bisa ? (r.stok < 1 ? t("wins.out_of_stock") : t("wins.not_enough")) : t("wins.redeem")}
                     </button>
                   </div>
                 </div>
@@ -83,17 +87,17 @@ export function PatientWins() {
       </div>
 
       <div>
-        <h3 className="mb-2 flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#6b5a16]" /> Leaderboard Minggu Ini</h3>
-        {boardQ.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+        <h3 className="mb-2 flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#6b5a16]" /> {t("wins.leaderboard")}</h3>
+        {boardQ.isLoading ? <SkeletonList rows={3} /> : (
           <div className="rounded-2xl border border-[#e9dfb8] bg-white p-2">
             {(boardQ.data?.board ?? []).length === 0 && (
-              <div className="p-4 text-center text-sm text-muted-foreground">Belum ada poin minggu ini.</div>
+              <div className="p-4 text-center text-sm text-muted-foreground">{t("wins.lb_empty")}</div>
             )}
             {(boardQ.data?.board ?? []).map((b) => (
               <div key={b.rank} className={`flex items-center justify-between rounded-xl p-2 ${b.is_me ? "bg-[#fdf2c4]" : ""}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-6 text-center text-sm font-bold text-[#6b5a16]">{b.rank}</div>
-                  <div className="text-sm">{b.nama_mask} {b.is_me && <span className="text-[10px] text-[#6b5a16]">(Anda)</span>}</div>
+                  <div className="text-sm">{b.nama_mask} {b.is_me && <span className="text-[10px] text-[#6b5a16]">{t("wins.you")}</span>}</div>
                 </div>
                 <div className="text-sm font-bold">{b.total_poin}</div>
               </div>
@@ -103,9 +107,9 @@ export function PatientWins() {
       </div>
 
       <div>
-        <h3 className="mb-2 text-base font-semibold">Riwayat Penukaran</h3>
-        {myRedeemQ.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (myRedeemQ.data?.redeem ?? []).length === 0 ? (
-          <div className="text-xs text-muted-foreground">Belum ada penukaran.</div>
+        <h3 className="mb-2 text-base font-semibold">{t("wins.history")}</h3>
+        {myRedeemQ.isLoading ? <SkeletonList rows={2} /> : (myRedeemQ.data?.redeem ?? []).length === 0 ? (
+          <div className="text-xs text-muted-foreground">{t("wins.history_empty")}</div>
         ) : (
           <div className="space-y-1">
             {myRedeemQ.data!.redeem.map((r: any) => (
