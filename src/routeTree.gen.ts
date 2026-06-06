@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SimKlinikRouteImport } from './routes/sim-klinik'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceRouteImport } from './routes/finance'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SimKlinikRoute = SimKlinikRouteImport.update({
   id: '/sim-klinik',
   path: '/sim-klinik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceRoute = FinanceRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
   '/finance': typeof FinanceRoute
+  '/login': typeof LoginRoute
   '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
   '/finance': typeof FinanceRoute
+  '/login': typeof LoginRoute
   '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
   '/finance': typeof FinanceRoute
+  '/login': typeof LoginRoute
   '/sim-klinik': typeof SimKlinikRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/apps' | '/finance' | '/sim-klinik'
+  fullPaths: '/' | '/apps' | '/finance' | '/login' | '/sim-klinik'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apps' | '/finance' | '/sim-klinik'
-  id: '__root__' | '/' | '/apps' | '/finance' | '/sim-klinik'
+  to: '/' | '/apps' | '/finance' | '/login' | '/sim-klinik'
+  id: '__root__' | '/' | '/apps' | '/finance' | '/login' | '/sim-klinik'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppsRoute: typeof AppsRoute
   FinanceRoute: typeof FinanceRoute
+  LoginRoute: typeof LoginRoute
   SimKlinikRoute: typeof SimKlinikRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/sim-klinik'
       fullPath: '/sim-klinik'
       preLoaderRoute: typeof SimKlinikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/finance': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppsRoute: AppsRoute,
   FinanceRoute: FinanceRoute,
+  LoginRoute: LoginRoute,
   SimKlinikRoute: SimKlinikRoute,
 }
 export const routeTree = rootRouteImport
