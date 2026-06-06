@@ -62,5 +62,3 @@ export const Route = createFileRoute("/produk/sim-klinik")({
   ),
 });
 
-// Suppress unused imports warning by referencing icons used elsewhere
-void ClipboardList; void Pill; void UserCheck;
