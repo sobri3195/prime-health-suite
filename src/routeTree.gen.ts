@@ -27,6 +27,8 @@ import { Route as AuthenticatedSimKlinikMasterRouteImport } from './routes/_auth
 import { Route as AuthenticatedSimKlinikJadwalRouteImport } from './routes/_authenticated.sim-klinik.jadwal'
 import { Route as AuthenticatedSimKlinikBillingRouteImport } from './routes/_authenticated.sim-klinik.billing'
 import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_authenticated.sim-klinik.$section'
+import { Route as AuthenticatedFinancePendapatanRouteImport } from './routes/_authenticated.finance.pendapatan'
+import { Route as AuthenticatedFinanceMasterRouteImport } from './routes/_authenticated.finance.master'
 import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
 
@@ -130,6 +132,18 @@ const AuthenticatedSimKlinikSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedSimKlinikRoute,
   } as any)
+const AuthenticatedFinancePendapatanRoute =
+  AuthenticatedFinancePendapatanRouteImport.update({
+    id: '/pendapatan',
+    path: '/pendapatan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterRoute =
+  AuthenticatedFinanceMasterRouteImport.update({
+    id: '/master',
+    path: '/master',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceSectionRoute =
   AuthenticatedFinanceSectionRouteImport.update({
     id: '/$section',
@@ -151,6 +165,8 @@ export interface FileRoutesByFullPath {
   '/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
@@ -169,6 +185,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
@@ -192,6 +210,8 @@ export interface FileRoutesById {
   '/_authenticated/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
+  '/_authenticated/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/_authenticated/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/_authenticated/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/_authenticated/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/_authenticated/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
@@ -215,6 +235,8 @@ export interface FileRouteTypes {
     | '/sim-klinik'
     | '/apps/$section'
     | '/finance/$section'
+    | '/finance/master'
+    | '/finance/pendapatan'
     | '/sim-klinik/$section'
     | '/sim-klinik/billing'
     | '/sim-klinik/jadwal'
@@ -233,6 +255,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/apps/$section'
     | '/finance/$section'
+    | '/finance/master'
+    | '/finance/pendapatan'
     | '/sim-klinik/$section'
     | '/sim-klinik/billing'
     | '/sim-klinik/jadwal'
@@ -255,6 +279,8 @@ export interface FileRouteTypes {
     | '/_authenticated/sim-klinik'
     | '/_authenticated/apps/$section'
     | '/_authenticated/finance/$section'
+    | '/_authenticated/finance/master'
+    | '/_authenticated/finance/pendapatan'
     | '/_authenticated/sim-klinik/$section'
     | '/_authenticated/sim-klinik/billing'
     | '/_authenticated/sim-klinik/jadwal'
@@ -403,6 +429,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimKlinikSectionRouteImport
       parentRoute: typeof AuthenticatedSimKlinikRoute
     }
+    '/_authenticated/finance/pendapatan': {
+      id: '/_authenticated/finance/pendapatan'
+      path: '/pendapatan'
+      fullPath: '/finance/pendapatan'
+      preLoaderRoute: typeof AuthenticatedFinancePendapatanRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master': {
+      id: '/_authenticated/finance/master'
+      path: '/master'
+      fullPath: '/finance/master'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/$section': {
       id: '/_authenticated/finance/$section'
       path: '/$section'
@@ -435,11 +475,15 @@ const AuthenticatedAppsRouteWithChildren =
 
 interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceSectionRoute: typeof AuthenticatedFinanceSectionRoute
+  AuthenticatedFinanceMasterRoute: typeof AuthenticatedFinanceMasterRoute
+  AuthenticatedFinancePendapatanRoute: typeof AuthenticatedFinancePendapatanRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
 }
 
 const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceSectionRoute: AuthenticatedFinanceSectionRoute,
+  AuthenticatedFinanceMasterRoute: AuthenticatedFinanceMasterRoute,
+  AuthenticatedFinancePendapatanRoute: AuthenticatedFinancePendapatanRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
 }
 
