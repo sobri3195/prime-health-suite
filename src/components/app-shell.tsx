@@ -70,8 +70,9 @@ export function AppShell({ system, children }: { system: System; children: React
         </nav>
 
         <div className="shrink-0 border-t border-border p-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-          © {new Date().getFullYear()} {SYSTEM_LABEL[system]}
+          © {new Date().getFullYear()} {brand.name}
         </div>
+
 
       </aside>
       )}
