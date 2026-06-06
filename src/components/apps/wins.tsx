@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Trophy, Gift, Loader2, Sparkles, Copy } from "lucide-react";
+import { Trophy, Gift, Sparkles, Copy } from "lucide-react";
 import { getMyPoin, getLeaderboard, listReward, redeemReward, listMyRedeem } from "@/lib/apps-gami.functions";
+import { useI18n } from "@/lib/i18n";
+import { SkeletonList, EmptyState } from "@/components/apps/ui";
 
 export function PatientWins() {
   const qc = useQueryClient();
