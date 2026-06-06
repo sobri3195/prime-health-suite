@@ -7,7 +7,7 @@ import { brandHead } from "@/lib/brand";
 function Layout() {
   const { userFor } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState((s) => s.location.pathname);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = userFor("apps");
 
   useEffect(() => {
