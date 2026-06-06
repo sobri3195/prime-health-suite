@@ -90,21 +90,24 @@ export function AppShell({ system, children }: { system: System; children: React
           )}
           {isApps && (
             <Link to={`/${system}`} className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gradient-hero)] text-navy-foreground">
-                <Activity className="h-4 w-4" />
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-base text-white"
+                style={{ background: brand.accent }}
+              >
+                {brand.faviconEmoji}
               </div>
               <div className="leading-tight">
-                <div className="text-sm font-semibold">{SYSTEM_LABEL[system]}</div>
+                <div className="text-sm font-semibold">{brand.name}</div>
               </div>
             </Link>
           )}
 
-
           <nav className="hidden items-center gap-1.5 text-sm md:flex">
-            {!isApps && <span className="text-muted-foreground">{SYSTEM_LABEL[system]}</span>}
+            {!isApps && <span className="text-muted-foreground">{brand.name}</span>}
             {!isApps && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
             <span className="font-medium">{current?.label ?? "—"}</span>
           </nav>
+
 
           <div className="ml-auto flex flex-1 items-center justify-end gap-2">
             <div className="relative hidden max-w-sm flex-1 md:block">
