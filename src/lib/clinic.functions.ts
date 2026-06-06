@@ -26,8 +26,10 @@ export const getSettings = createServerFn({ method: "GET" })
       .select("key,value,updated_at");
     if (error) throw error;
     const out: Record<string, Record<string, unknown>> = {};
-    (data ?? []).forEach((r) => { out[r.key] = (r.value ?? {}) as Record<string, unknown>; });
-    return out;
+    (data ?? []).forEach((r: { key: string; value: unknown }) => {
+      out[r.key] = (r.value ?? {}) as Record<string, unknown>;
+    });
+    return out as Record<string, Record<string, string | number | boolean>>;
   });
 
 const SaveSettingSchema = z.object({
@@ -63,10 +65,11 @@ const AppendAuditSchema = z.object({
   meta: z.record(z.string(), z.any()).optional(),
 });
 
-type SupaClient = Parameters<typeof appendAuditRow>[0];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupaClient = any;
 
 export async function appendAuditRow(
-  supabase: { from: (t: string) => { insert: (v: unknown) => Promise<{ error: unknown }> } },
+  supabase: SupaClient,
   row: {
     actor_id?: string;
     actor_email?: string;
