@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 
 const ST: { value: TicketStatus | "all"; label: string }[] = [
   { value: "all", label: "Semua status" },
@@ -41,7 +42,8 @@ export function HelpdeskPage() {
   const [pr, setPr] = useState<TicketPriority | "all">("all");
   const [cat, setCat] = useState<TicketCategory | "all">("all");
   const [selected, setSelected] = useState<HelpdeskTicket | null>(null);
-  const [showNew, setShowNew] = useState(false);
+  const { t, lang } = useI18n();
+  const locale = lang === "id" ? "id-ID" : "en-US";
 
   const items = useMemo(() => {
     const qq = q.trim().toLowerCase();
