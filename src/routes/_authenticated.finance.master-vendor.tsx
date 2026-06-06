@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/finance/master-vendor")({
         { key: "termin", label: "Termin (hari)", type: "number" },
         { key: "status", label: "Status", type: "select", options: ["Aktif", "Non-Aktif"] },
       ]}
-      initial={financeMaster.vendors.map((v) => ({ ...v, termin: 30 }))}
+      initial={financeMaster.vendors.map((v: any) => ({ ...v, termin: 30 }))}
       newRow={() => ({ id: "", name: "", type: "Supplier", termin: 30, status: "Aktif" })}
     />
   ),

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/finance/master-tarif-pajak
         { key: "name", label: "Nama Pajak" },
         { key: "rate", label: "Tarif (%)", type: "number" },
       ]}
-      initial={financeMaster.taxes.map((t) => ({ ...t, rate: Number((t.rate * 100).toFixed(2)) }))}
+      initial={financeMaster.taxes.map((t: any) => ({ ...t, rate: Number((t.rate * 100).toFixed(2)) }))}
       newRow={() => ({ id: "", name: "", rate: 0 })}
     />
   ),

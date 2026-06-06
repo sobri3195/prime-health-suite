@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/finance/master-payer")({
         { key: "termin", label: "Termin (hari)", type: "number" },
         { key: "status", label: "Status", type: "select", options: ["Aktif", "Non-Aktif"] },
       ]}
-      initial={financeMaster.payers.map((p) => ({ ...p, termin: p.type === "Klaim" ? 45 : 7 }))}
+      initial={financeMaster.payers.map((p: any) => ({ ...p, termin: p.type === "Klaim" ? 45 : 7 }))}
       newRow={() => ({ id: "", name: "", type: "Tunai/Invoice", termin: 7, status: "Aktif" })}
     />
   ),

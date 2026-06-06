@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/finance/master-cost-center
         { key: "name", label: "Nama Cost Center" },
         { key: "account", label: "Akun Default" },
       ]}
-      initial={financeMaster.costCategories.map((c) => ({ ...c }))}
+      initial={financeMaster.costCategories.map((c: any) => ({ ...c }))}
       newRow={() => ({ id: "", name: "", account: "" })}
     />
   ),

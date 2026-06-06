@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/finance/master-coa")({
         { key: "name", label: "Nama Akun" },
         { key: "type", label: "Tipe", type: "select", options: ["Asset", "Liability", "Equity", "Revenue", "Expense"] },
       ]}
-      initial={financeMaster.coa.map((c) => ({ ...c }))}
+      initial={financeMaster.coa.map((c: any) => ({ ...c }))}
       newRow={() => ({ code: "", name: "", type: "Asset" })}
     />
   ),
