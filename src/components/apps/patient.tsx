@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { diagnoseEye, type DiagnoseResult } from "@/lib/diagnose.functions";
 import {
-  getMyProfile, updateMyProfile, listMyBookings, cancelBooking,
-  getMyQueueToday, listMyInvoices,
+  getMyProfile, updateMyProfile, listMyBookings, cancelBooking, rescheduleBooking,
+  getMyQueueToday, listMyInvoices, listDoctorsForBooking, listAvailableSlots,
 } from "@/lib/apps-patient.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
+import { generateResepPDF } from "@/lib/resep-pdf";
 
 /* ------------------------------ shared ui ------------------------------ */
 
@@ -68,11 +70,15 @@ export function PatientBeranda() {
   const callBookings = useServerFn(listMyBookings);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
-  const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue() });
+  const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue(), refetchInterval: 60_000 });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
+
+  useAppsRealtime(profileQ.data?.profile?.user_id);
 
   const profile = profileQ.data?.profile;
   const queue = queueQ.data?.queue;
+  const posisi = queueQ.data?.posisi;
+  const total = queueQ.data?.total;
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = bookingsQ.data?.bookings.find(
     (b) => b.tanggal >= today && b.status !== "cancelled" && b.status !== "done"
@@ -88,9 +94,7 @@ export function PatientBeranda() {
             <div className="text-[11px] font-bold tracking-[0.2em] text-[#a08a2a]">PRIME</div>
             <div className="text-[11px] text-muted-foreground">Klinik Utama Mata</div>
           </div>
-          <Link to="/apps/profil" className="rounded-full border border-[#e9dfb8] p-2 text-[#7a6010]">
-            <Bell className="h-4 w-4" />
-          </Link>
+          <NotifBellBadge />
         </div>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">
           Halo, {nama} <span aria-hidden>👋</span>
@@ -125,12 +129,22 @@ export function PatientBeranda() {
 
       {/* antrean hari ini */}
       <Card>
-        <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] font-bold tracking-widest text-[#a08a2a]">ANTREAN HARI INI</div>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> LIVE
+          </span>
+        </div>
         {queueQ.isLoading ? (
           <div className="mt-2 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>
         ) : queue ? (
           <>
-            <div className="mt-1 text-3xl font-bold">{queue.no_antrean || "—"}</div>
+            <div className="mt-1 text-3xl font-bold">{queue.no_antrean || `#${(posisi ?? 0) + 1}`}</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              {posisi !== null && posisi !== undefined && total !== null && total !== undefined
+                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * 15} menit`
+                : "Memuat posisi…"}
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <Clock className="h-3.5 w-3.5 text-[#a08a2a]" /> {queue.jam_slot}
               <Pill tone={queue.status === "checked_in" ? "green" : "amber"}>
@@ -143,6 +157,7 @@ export function PatientBeranda() {
           <div className="mt-2 text-sm opacity-70">Tidak ada antrean hari ini. Booking jadwal terbaru?</div>
         )}
       </Card>
+
 
       {/* jadwal berikutnya */}
       <Card>
@@ -607,21 +622,32 @@ export function PatientProfil() {
   const callUpdate = useServerFn(updateMyProfile);
   const callBookings = useServerFn(listMyBookings);
   const callCancel = useServerFn(cancelBooking);
+  const callReschedule = useServerFn(rescheduleBooking);
+  const callDoctors = useServerFn(listDoctorsForBooking);
+  const callSlots = useServerFn(listAvailableSlots);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
   const p = profileQ.data?.profile;
+  useAppsRealtime(p?.user_id);
 
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({
-    nama: "", tgl_lahir: "", jenis_kelamin: "" as "" | "L" | "P",
-    telp: "", alamat: "", no_bpjs: "", alergi: "", kontak_darurat: "",
+    nama: "", nik: "", tgl_lahir: "", jenis_kelamin: "" as "" | "L" | "P",
+    telp: "", alamat: "", no_bpjs: "", alergi: "", kontak_darurat: "", foto_url: "",
   });
+  const [pwd, setPwd] = useState({ p1: "", p2: "" });
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [reschedId, setReschedId] = useState<string | null>(null);
+  const [reschedDokter, setReschedDokter] = useState<string>("");
+  const [reschedDate, setReschedDate] = useState("");
+  const [reschedSlot, setReschedSlot] = useState("");
 
   function startEdit() {
     if (!p) return;
     setForm({
       nama: p.nama || "",
+      nik: p.nik || "",
       tgl_lahir: p.tgl_lahir || "",
       jenis_kelamin: (p.jenis_kelamin as "L" | "P" | null) || "",
       telp: p.telp || "",
@@ -629,6 +655,7 @@ export function PatientProfil() {
       no_bpjs: p.no_bpjs || "",
       alergi: p.alergi || "",
       kontak_darurat: p.kontak_darurat || "",
+      foto_url: p.foto_url || "",
     });
     setEdit(true);
   }
@@ -637,6 +664,7 @@ export function PatientProfil() {
     mutationFn: () => callUpdate({
       data: {
         nama: form.nama,
+        nik: form.nik || null,
         tgl_lahir: form.tgl_lahir || null,
         jenis_kelamin: form.jenis_kelamin || null,
         telp: form.telp || null,
@@ -644,6 +672,7 @@ export function PatientProfil() {
         no_bpjs: form.no_bpjs || null,
         alergi: form.alergi || null,
         kontak_darurat: form.kontak_darurat || null,
+        foto_url: form.foto_url || null,
       },
     }),
     onSuccess: () => {
@@ -664,6 +693,40 @@ export function PatientProfil() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const reschedM = useMutation({
+    mutationFn: () =>
+      callReschedule({ data: { id: reschedId!, tanggal: reschedDate, jam_slot: reschedSlot } }),
+    onSuccess: () => {
+      toast.success("Jadwal berhasil diubah");
+      setReschedId(null); setReschedDokter(""); setReschedDate(""); setReschedSlot("");
+      qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
+      qc.invalidateQueries({ queryKey: ["apps", "queue"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const doctorsQ = useQuery({
+    queryKey: ["apps", "doctors"],
+    queryFn: () => callDoctors(),
+    enabled: !!reschedId,
+  });
+  const slotsQ = useQuery({
+    queryKey: ["apps", "slots", reschedDokter, reschedDate],
+    queryFn: () => callSlots({ data: { dokter_id: reschedDokter, tanggal: reschedDate } }),
+    enabled: !!reschedId && !!reschedDokter && !!reschedDate,
+  });
+
+  async function changePassword() {
+    if (pwd.p1.length < 8) return toast.error("Password minimal 8 karakter");
+    if (pwd.p1 !== pwd.p2) return toast.error("Konfirmasi password tidak cocok");
+    setPwdLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: pwd.p1 });
+    setPwdLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password berhasil diubah");
+    setPwd({ p1: "", p2: "" });
+  }
+
   async function handleLogout() {
     await qc.cancelQueries();
     qc.clear();
@@ -672,16 +735,27 @@ export function PatientProfil() {
     navigate({ to: "/apps/login", replace: true });
   }
 
+  function startReschedule(b: { id: string; dokter_id: string | null; tanggal: string }) {
+    setReschedId(b.id);
+    setReschedDokter(b.dokter_id || "");
+    setReschedDate(b.tanggal);
+    setReschedSlot("");
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Profil Pasien</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Kelola data pribadi dan booking Anda.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Kelola data pribadi, keamanan, dan booking Anda.</p>
       </div>
 
       <Card className="bg-[#a08a2a] text-white">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-2xl">👤</div>
+          {p?.foto_url ? (
+            <img src={p.foto_url} alt="" className="h-12 w-12 rounded-xl object-cover" />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-2xl">👤</div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="font-bold truncate">{p?.nama || "Pasien"}</div>
             <div className="text-xs opacity-90">Kode: {p?.patient_code || "—"}</div>
@@ -705,17 +779,19 @@ export function PatientProfil() {
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Input label="Nama lengkap" value={form.nama} onChange={(v) => setForm({ ...form, nama: v })} />
+            <Input label="NIK (16 digit)" value={form.nik} onChange={(v) => setForm({ ...form, nik: v.replace(/\D/g, "").slice(0, 16) })} />
             <Input label="Tanggal lahir" type="date" value={form.tgl_lahir} onChange={(v) => setForm({ ...form, tgl_lahir: v })} />
             <Select label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
               options={[{ v: "", l: "—" }, { v: "L", l: "Laki-laki" }, { v: "P", l: "Perempuan" }]} />
             <Input label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
             <Input label="No. BPJS" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v })} />
-            <Input label="Kontak darurat" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
+            <Input label="Kontak darurat (nama & no HP)" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
+            <Input label="Foto profil (URL)" value={form.foto_url} onChange={(v) => setForm({ ...form, foto_url: v })} />
             <div className="sm:col-span-2">
               <Input label="Alamat" value={form.alamat} onChange={(v) => setForm({ ...form, alamat: v })} />
             </div>
             <div className="sm:col-span-2">
-              <Input label="Alergi" value={form.alergi} onChange={(v) => setForm({ ...form, alergi: v })} />
+              <Input label="Alergi obat / bahan" value={form.alergi} onChange={(v) => setForm({ ...form, alergi: v })} />
             </div>
           </div>
           <div className="mt-4">
@@ -734,11 +810,29 @@ export function PatientProfil() {
           <ul className="mt-2 space-y-1.5 text-sm">
             <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.telp || "Belum diisi"}</li>
             <li className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-[#a08a2a]" /> {p?.alamat || "Belum diisi"}</li>
-            <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-[#a08a2a]" /> BPJS: {p?.no_bpjs || "—"}</li>
+            <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-[#a08a2a]" /> NIK: {p?.nik || "—"} • BPJS: {p?.no_bpjs || "—"}</li>
+            <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#a08a2a]" /> Kontak darurat: {p?.kontak_darurat || "—"}</li>
             <li className="flex items-center gap-2"><AlertCircle className="h-3.5 w-3.5 text-[#a08a2a]" /> Alergi: {p?.alergi || "Tidak ada"}</li>
           </ul>
         </Card>
       )}
+
+      {/* Keamanan: ganti password */}
+      <Card>
+        <div className="text-base font-bold">Keamanan Akun</div>
+        <p className="mt-1 text-xs text-muted-foreground">Ganti password Anda secara berkala.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Input label="Password baru" type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
+          <Input label="Konfirmasi password" type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
+        </div>
+        <button
+          onClick={changePassword}
+          disabled={pwdLoading || !pwd.p1}
+          className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 py-2 text-sm font-semibold text-[#5a4a14] disabled:opacity-60"
+        >
+          {pwdLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />} Ubah Password
+        </button>
+      </Card>
 
       <Card>
         <div className="flex items-center justify-between">
@@ -762,13 +856,82 @@ export function PatientProfil() {
                 </Pill>
               </div>
               {(b.status === "pending" || b.status === "confirmed") && (
-                <button
-                  onClick={() => { if (confirm("Batalkan booking ini?")) cancelM.mutate(b.id); }}
-                  disabled={cancelM.isPending}
-                  className="mt-2 rounded-md bg-white px-2 py-0.5 text-[11px]"
-                >
-                  Batalkan
-                </button>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => startReschedule(b)}
+                    className="rounded-md border border-[#e9dfb8] bg-white px-2 py-0.5 text-[11px] font-medium text-[#5a4a14]"
+                  >
+                    Ubah Jadwal
+                  </button>
+                  <button
+                    onClick={() => { if (confirm("Batalkan booking ini?")) cancelM.mutate(b.id); }}
+                    disabled={cancelM.isPending}
+                    className="rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700"
+                  >
+                    Batalkan
+                  </button>
+                </div>
+              )}
+
+              {reschedId === b.id && (
+                <div className="mt-3 rounded-lg border border-[#e9dfb8] bg-white p-3">
+                  <div className="text-xs font-semibold">Pilih jadwal baru</div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="block">
+                      <div className="text-[11px] opacity-70">Dokter</div>
+                      <select
+                        value={reschedDokter}
+                        onChange={(e) => { setReschedDokter(e.target.value); setReschedSlot(""); }}
+                        className="mt-0.5 w-full rounded-md border border-[#e9dfb8] bg-white px-2 py-1.5 text-xs"
+                      >
+                        {doctorsQ.data?.doctors.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <div className="text-[11px] opacity-70">Tanggal</div>
+                      <input
+                        type="date"
+                        min={new Date().toISOString().slice(0, 10)}
+                        value={reschedDate}
+                        onChange={(e) => { setReschedDate(e.target.value); setReschedSlot(""); }}
+                        className="mt-0.5 w-full rounded-md border border-[#e9dfb8] bg-white px-2 py-1.5 text-xs"
+                      />
+                    </label>
+                  </div>
+                  {slotsQ.isLoading && <div className="mt-2 text-[11px] opacity-60">Memuat slot…</div>}
+                  {slotsQ.data && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {slotsQ.data.slots.map((s) => (
+                        <button
+                          key={s.jam}
+                          disabled={!s.available}
+                          onClick={() => setReschedSlot(s.jam)}
+                          className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                            reschedSlot === s.jam
+                              ? "bg-[#a08a2a] text-white"
+                              : s.available
+                                ? "bg-[#fdf8e8] text-[#5a4a14] border border-[#e9dfb8]"
+                                : "bg-gray-100 text-gray-400 line-through cursor-not-allowed"
+                          }`}
+                        >
+                          {s.jam}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => reschedM.mutate()}
+                      disabled={!reschedSlot || !reschedDokter || !reschedDate || reschedM.isPending}
+                      className="inline-flex items-center gap-1 rounded-md bg-[#a08a2a] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      {reschedM.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} Simpan
+                    </button>
+                    <button onClick={() => setReschedId(null)} className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1.5 text-xs">Batal</button>
+                  </div>
+                </div>
               )}
             </li>
           ))}
@@ -781,6 +944,7 @@ export function PatientProfil() {
     </div>
   );
 }
+
 
 function Input({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
@@ -817,8 +981,31 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 export function PatientLaporan() {
   const callInvoices = useServerFn(listMyInvoices);
+  const callProfile = useServerFn(getMyProfile);
   const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices() });
+  const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const invoices = invoicesQ.data?.invoices ?? [];
+  const profile = profileQ.data?.profile;
+
+  function downloadResep(inv: typeof invoices[number]) {
+    if (!profile) {
+      toast.error("Profil belum dimuat");
+      return;
+    }
+    generateResepPDF({
+      no_invoice: inv.no_invoice,
+      tanggal: inv.tanggal,
+      pasien_nama: profile.nama || "-",
+      patient_code: profile.patient_code || "-",
+      items: (inv.fin_invoice_item ?? []).map((it) => ({
+        layanan_nama: it.layanan_nama,
+        qty: it.qty,
+        subtotal: Number(it.subtotal),
+      })),
+      catatan: inv.catatan,
+    });
+    toast.success("Resep PDF diunduh");
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -826,11 +1013,11 @@ export function PatientLaporan() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold leading-tight">Riwayat & Resep</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Daftar pemeriksaan dan resep dari kunjungan Anda.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Daftar kronologis pemeriksaan, tindakan, dan resep dari kunjungan Anda.</p>
           </div>
-          <button onClick={() => toast.info("Unduh laporan akan tersedia segera")} className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Unduh">
-            <Download className="h-5 w-5" />
-          </button>
+          <Link to="/apps/notifikasi" className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Notifikasi">
+            <Bell className="h-5 w-5" />
+          </Link>
         </div>
       </Card>
 
@@ -870,9 +1057,29 @@ export function PatientLaporan() {
               </li>
             ))}
           </ul>
+          {inv.catatan && (
+            <div className="mt-3 rounded-md bg-[#fdf2c4] p-3 text-xs">
+              <b>Catatan dokter:</b> {inv.catatan}
+            </div>
+          )}
           <div className="mt-3 flex items-center justify-between border-t border-[#e9dfb8] pt-3">
             <span className="text-xs text-muted-foreground">Total</span>
             <span className="text-base font-bold">Rp {Number(inv.total).toLocaleString("id-ID")}</span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => downloadResep(inv)}
+              className="inline-flex items-center gap-1 rounded-xl bg-[#a08a2a] px-3 py-2 text-xs font-semibold text-white"
+            >
+              <Download className="h-3.5 w-3.5" /> Unduh Resep PDF
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Resep dari Klinik Prime - ${inv.no_invoice}`)}`}
+              target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs font-semibold text-[#5a4a14]"
+            >
+              <MessageCircle className="h-3.5 w-3.5" /> Bagikan
+            </a>
           </div>
         </Card>
       ))}
@@ -891,3 +1098,4 @@ export function PatientLaporan() {
     </div>
   );
 }
+
