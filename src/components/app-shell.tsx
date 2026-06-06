@@ -6,6 +6,8 @@ import {
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
+import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
+import { useI18n, type Lang } from "@/lib/i18n";
 
 import { BRAND } from "@/lib/brand";
 
