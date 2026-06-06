@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppsLoginRouteImport } from './routes/apps.login'
 import { Route as AuthenticatedSimKlinikRouteImport } from './routes/_authenticated.sim-klinik'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated.qa'
 import { Route as AuthenticatedIntegrationRouteImport } from './routes/_authenticated.integration'
@@ -74,6 +75,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppsLoginRoute = AppsLoginRouteImport.update({
+  id: '/apps/login',
+  path: '/apps/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSimKlinikRoute = AuthenticatedSimKlinikRouteImport.update({
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/integration': typeof AuthenticatedIntegrationRoute
   '/qa': typeof AuthenticatedQaRoute
   '/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
+  '/apps/login': typeof AppsLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/integration': typeof AuthenticatedIntegrationRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/apps/login': typeof AppsLoginRoute
   '/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/_authenticated/integration': typeof AuthenticatedIntegrationRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
+  '/apps/login': typeof AppsLoginRoute
   '/_authenticated/apps/$section': typeof AuthenticatedAppsSectionRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/integration'
     | '/qa'
     | '/sim-klinik'
+    | '/apps/login'
     | '/apps/$section'
     | '/finance/$section'
     | '/finance/arus-kas'
@@ -584,6 +594,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/integration'
     | '/qa'
+    | '/apps/login'
     | '/apps/$section'
     | '/finance/$section'
     | '/finance/arus-kas'
@@ -638,6 +649,7 @@ export interface FileRouteTypes {
     | '/_authenticated/integration'
     | '/_authenticated/qa'
     | '/_authenticated/sim-klinik'
+    | '/apps/login'
     | '/_authenticated/apps/$section'
     | '/_authenticated/finance/$section'
     | '/_authenticated/finance/arus-kas'
@@ -688,6 +700,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  AppsLoginRoute: typeof AppsLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -711,6 +724,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apps/login': {
+      id: '/apps/login'
+      path: '/apps/login'
+      fullPath: '/apps/login'
+      preLoaderRoute: typeof AppsLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/sim-klinik': {
@@ -1214,6 +1234,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  AppsLoginRoute: AppsLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
