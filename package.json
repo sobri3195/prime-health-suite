@@ -9,6 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:i18n": "node scripts/i18n-lint.mjs",
+    "lint:i18n:strict": "I18N_LINT_STRICT=1 node scripts/i18n-lint.mjs",
+    "ci": "npm run lint && npm run lint:i18n:strict && npm run build",
     "format": "prettier --write ."
   },
   "dependencies": {

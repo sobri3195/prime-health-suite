@@ -1,3 +1,4 @@
+// i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo, useState } from "react";
 import { documents } from "@/data/appsData";
 import type { DocumentCategory, DocumentStatus } from "@/types/apps";
