@@ -19,7 +19,9 @@ import { toast } from "sonner";
 import { visits } from "@/data/clinicData";
 import { addSync, formatIDR } from "@/lib/sync-log";
 import { addAudit } from "@/lib/audit-log";
+import { clinicAudit } from "@/lib/clinic-audit";
 import { useAuth } from "@/lib/auth";
+import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({
   component: BillingPage,
@@ -78,6 +80,7 @@ function BillingPage() {
 
   const updateStatus = (id: string, s: BillStatus) => {
     setList((arr) => arr.map((b) => b.id === id ? { ...b, status: s } : b));
+    clinicAudit("Billing", "update", id, { status: s });
     toast.success(`${id} → ${STATUS_LABEL[s]}`);
   };
 
@@ -104,6 +107,7 @@ function BillingPage() {
       target: `sim-klinik/billing/${b.id} → finance`,
       meta: { invoice: b.invoice, amount: sum(b) },
     });
+    clinicAudit("Billing", "sync_to_finance", b.id, { invoice: b.invoice, amount: sum(b) });
     setList((arr) => arr.map((x) => x.id === b.id ? { ...x, sentToFinance: true } : x));
     toast.success(`Invoice ${b.invoice} terkirim ke Finance`);
   };
@@ -111,8 +115,22 @@ function BillingPage() {
   const printBill = (b: Billing) => toast.message(`Cetak ${b.invoice} (mock)`);
   const remove = (id: string) => {
     setList((arr) => arr.filter((b) => b.id !== id));
+    clinicAudit("Billing", "delete", id);
     toast.message(`${id} dihapus`);
   };
+
+  const billingCols: Column<Billing>[] = [
+    { key: "id", header: "Billing ID" },
+    { key: "invoice", header: "Invoice" },
+    { key: "patientCode", header: "Kode Pasien" },
+    { key: "payer", header: "Penjamin" },
+    { key: "doctor", header: "Dokter" },
+    { key: "status", header: "Status", format: (b) => STATUS_LABEL[b.status] },
+    { key: "createdAt", header: "Dibuat", format: (b) => new Date(b.createdAt).toLocaleString("id-ID") },
+    { key: "items", header: "Total (Rp)", format: (b) => sum(b).toLocaleString("id-ID") },
+  ];
+  const onCsv = () => { exportCsv(`billing-${new Date().toISOString().slice(0,10)}.csv`, billingCols, list); clinicAudit("Billing", "export", "csv"); };
+  const onPdf = () => { exportPdf(`billing-${new Date().toISOString().slice(0,10)}.pdf`, "Billing Klinik", billingCols, list); clinicAudit("Billing", "export", "pdf"); };
 
   return (
     <div>
