@@ -30,7 +30,10 @@ export function AppShell({ system, children }: { system: System; children: React
   const isApps = system === "apps";
 
   return (
-    <div className={`flex min-h-screen bg-background ${isApps ? "flex-col" : ""}`}>
+    <div
+      className={`flex min-h-screen bg-background ${isApps ? "flex-col" : ""}`}
+      style={isApps ? { background: "#f7eccb" } : undefined}
+    >
       {/* Sidebar (hidden for Prime Apps which uses bottom nav) */}
       {!isApps && (
       <aside

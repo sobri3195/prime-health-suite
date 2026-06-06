@@ -13,9 +13,15 @@ export const Route = createFileRoute("/_authenticated/apps/$section")({
   component: Section,
 });
 
+import { PatientAI, PatientBelanja, PatientProfil, PatientLaporan } from "@/components/apps/patient";
+
 function Section() {
   const { section } = Route.useParams();
   switch (section) {
+    case "ai": return <PatientAI />;
+    case "belanja": return <PatientBelanja />;
+    case "profil": return <PatientProfil />;
+    case "laporan": return <PatientLaporan />;
     case "launcher": return <LauncherPage />;
     case "notifications": return <NotificationsPage />;
     case "helpdesk": return <HelpdeskPage />;

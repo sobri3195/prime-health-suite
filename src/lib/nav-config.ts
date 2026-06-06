@@ -1,9 +1,10 @@
 import {
-  LayoutDashboard, Grid3x3, Bell, LifeBuoy, FileText, Users, Plug, ScrollText, Settings,
+  LayoutDashboard, Bell, LifeBuoy, FileText, Users, Plug, ScrollText, Settings,
   Stethoscope, UserPlus, Calendar, ClipboardList, Activity, Pill, Receipt, Files, BarChart3, Database,
   Wallet, TrendingDown, Landmark, ReceiptText, BookOpen, Scale, LineChart, FileSpreadsheet, ShieldCheck,
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
+  Home, Brain, ShoppingBag, User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -18,15 +19,11 @@ export const SYSTEM_LABEL: Record<System, string> = {
 
 export const NAV: Record<System, NavItem[]> = {
   apps: [
-    { slug: "", label: "Workspace Dashboard", icon: LayoutDashboard },
-    { slug: "launcher", label: "App Launcher", icon: Grid3x3 },
-    { slug: "notifications", label: "Notifications", icon: Bell },
-    { slug: "helpdesk", label: "Helpdesk", icon: LifeBuoy },
-    { slug: "documents", label: "SOP & Documents", icon: FileText },
-    { slug: "users", label: "User Overview", icon: Users },
-    { slug: "integration", label: "System Integration", icon: Plug },
-    { slug: "audit-log", label: "Audit Log", icon: ScrollText },
-    { slug: "settings", label: "Settings", icon: Settings },
+    { slug: "", label: "Beranda", icon: Home },
+    { slug: "ai", label: "AI", icon: Brain },
+    { slug: "belanja", label: "Belanja", icon: ShoppingBag },
+    { slug: "profil", label: "Profil", icon: User },
+    { slug: "laporan", label: "Laporan", icon: BarChart3 },
   ],
   "sim-klinik": [
     { slug: "", label: "Dashboard Klinik", icon: LayoutDashboard },
