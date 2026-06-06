@@ -95,8 +95,14 @@ function getStored(): Lang {
   return v === "en" ? "en" : "id";
 }
 
-type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string };
+type TVars = Record<string, string | number>;
+type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string, vars?: TVars) => string };
 const I18nContext = createContext<Ctx | null>(null);
+
+function format(template: string, vars?: TVars) {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
+}
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("id");
@@ -114,7 +120,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string) => DICT[lang][key] ?? DICT.id[key] ?? key,
+    (key: string, vars?: TVars) => format(DICT[lang][key] ?? DICT.id[key] ?? key, vars),
     [lang],
   );
 
@@ -125,7 +131,7 @@ export function useI18n(): Ctx {
   const ctx = useContext(I18nContext);
   if (!ctx) {
     // Fallback for components rendered outside the provider (e.g. SSR shell)
-    return { lang: "id", setLang: () => {}, t: (k) => DICT.id[k] ?? k };
+    return { lang: "id", setLang: () => {}, t: (k, vars) => format(DICT.id[k] ?? k, vars) };
   }
   return ctx;
 }
