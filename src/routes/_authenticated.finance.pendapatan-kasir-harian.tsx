@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
-import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
-import { invoices } from "@/data/financeData";
-import { applyFilter, formatIDR } from "@/lib/finance";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { listInvoices } from "@/lib/finance-pendapatan.functions";
+import { formatIDR } from "@/lib/finance";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -14,26 +17,36 @@ export const Route = createFileRoute("/_authenticated/finance/pendapatan-kasir-h
   component: Page,
 });
 
-const KASIRS = ["Sari Wulandari", "Andi Pratama", "Dewi Lestari"];
+type Inv = {
+  id: string; tanggal: string; kasir: string | null; total: number;
+  fin_pembayaran: Array<{ metode: string; jumlah: number }>;
+};
 
 function Page() {
-  const [filter, setFilter] = useState(defaultFilter);
-  const doctors = useMemo(() => Array.from(new Set(invoices.map((r) => r.doctor))), []);
-  const services = useMemo(() => Array.from(new Set(invoices.map((r) => r.category))), []);
+  const today = new Date().toISOString().slice(0, 10);
+  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(monthAgo);
+  const [to, setTo] = useState(today);
 
-  const rows = applyFilter(invoices, filter);
-  // Group by date+kasir (deterministic mock kasir from id hash)
+  const fn = useServerFn(listInvoices);
+  const q = useQuery({
+    queryKey: ["fin-invoices", "kasir", from, to],
+    queryFn: () => fn({ data: { from, to } }),
+  });
+  const rows = (q.data?.rows ?? []) as Inv[];
+
   const recap = useMemo(() => {
-    const map = new Map<string, { date: string; kasir: string; total: number; count: number; cash: number; nonCash: number }>();
-    rows.forEach((r) => {
-      const date = new Date(r.date).toISOString().slice(0, 10);
-      const kasir = KASIRS[r.id.charCodeAt(r.id.length - 1) % KASIRS.length];
-      const key = `${date}|${kasir}`;
-      const ex = map.get(key) ?? { date, kasir, total: 0, count: 0, cash: 0, nonCash: 0 };
-      ex.total += r.total; ex.count += 1;
-      if (r.payer === "Umum") ex.cash += r.total; else ex.nonCash += r.total;
+    const map = new Map<string, { date: string; kasir: string; count: number; cash: number; nonCash: number; total: number }>();
+    for (const r of rows) {
+      const key = `${r.tanggal}|${r.kasir ?? "-"}`;
+      const ex = map.get(key) ?? { date: r.tanggal, kasir: r.kasir ?? "-", count: 0, cash: 0, nonCash: 0, total: 0 };
+      ex.count += 1; ex.total += Number(r.total);
+      for (const p of r.fin_pembayaran ?? []) {
+        if (p.metode === "cash") ex.cash += Number(p.jumlah);
+        else ex.nonCash += Number(p.jumlah);
+      }
       map.set(key, ex);
-    });
+    }
     return Array.from(map.values()).sort((a, b) => (a.date > b.date ? -1 : 1));
   }, [rows]);
 
@@ -46,16 +59,17 @@ function Page() {
       { key: "nonCash", label: "Non-Cash", get: (r) => r.nonCash },
       { key: "total", label: "Total", get: (r) => r.total },
     ]);
-    downloadCSV(exportFileName("kasir-harian", filter.period), csv);
+    downloadCSV(exportFileName("kasir-harian", `${from}_${to}`), csv);
     toast.success(`Export ${recap.length} baris kasir`);
   };
 
   return (
     <div>
-      <PageHeader title="Pendapatan Kasir Harian" desc="Rekap pendapatan per kasir per hari." />
-      <FinanceFilters value={filter} onChange={setFilter} doctors={doctors} services={services} />
-      <div className="mb-3 flex justify-end">
-        <Button variant="outline" className="gap-1" onClick={exportCSV}><Download className="h-4 w-4" /> Export CSV</Button>
+      <PageHeader title="Pendapatan Kasir Harian" desc="Rekap pendapatan per kasir per hari (data real-time)." />
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="grid gap-1.5"><Label className="text-xs">Dari</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+        <div className="grid gap-1.5"><Label className="text-xs">Sampai</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+        <div className="ml-auto"><Button variant="outline" className="gap-1" onClick={exportCSV}><Download className="h-4 w-4" /> Export CSV</Button></div>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
@@ -77,7 +91,8 @@ function Page() {
                 <TableCell className="text-right font-mono text-sm font-medium">{formatIDR(r.total)}</TableCell>
               </TableRow>
             ))}
-            {recap.length === 0 && <TableRow><TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>}
+            {!q.isLoading && recap.length === 0 && <TableRow><TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">Belum ada data invoice di periode ini.</TableCell></TableRow>}
+            {q.isLoading && <TableRow><TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">Memuat…</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
