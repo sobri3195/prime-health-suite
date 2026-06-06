@@ -39,21 +39,13 @@ export const upsertFinMaster = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // strip system fields
     const { id: _i, created_at: _c, updated_at: _u, ...payload } = data.row as Record<string, unknown>;
+    const tbl = supabaseAdmin.from(data.table) as any;
     if (data.id) {
-      const { data: row, error } = await supabaseAdmin
-        .from(data.table)
-        .update(payload)
-        .eq("id", data.id)
-        .select()
-        .single();
+      const { data: row, error } = await tbl.update(payload).eq("id", data.id).select().single();
       if (error) throw new Error(error.message);
       return { row };
     }
-    const { data: row, error } = await supabaseAdmin
-      .from(data.table)
-      .insert(payload)
-      .select()
-      .single();
+    const { data: row, error } = await tbl.insert(payload).select().single();
     if (error) throw new Error(error.message);
     return { row };
   });
