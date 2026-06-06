@@ -4,7 +4,7 @@ import {
   Activity, Bell, ChevronDown, ChevronRight, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
 import { NAV, SYSTEM_LABEL, findNav, type NavItem } from "@/lib/nav-config";
-import { ROLE_LABEL, useAuth, canAccess, type System } from "@/lib/auth";
+import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 
 export function AppShell({ system, children }: { system: System; children: ReactNode }) {
