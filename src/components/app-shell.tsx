@@ -138,10 +138,11 @@ export function AppShell({ system, children }: { system: System; children: React
               name={user?.name ?? "User"}
               role={user ? ROLE_LABEL[user.role] : ""}
               onLogout={() => {
-                logout();
-                navigate({ to: "/login" });
+                logout(system);
+                navigate({ to: `/${system}/login`, replace: true });
               }}
             />
+
           </div>
         </header>
 
