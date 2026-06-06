@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { diagnoseEye, type DiagnoseResult } from "@/lib/diagnose.functions";
 import {
-  getMyProfile, updateMyProfile, listMyBookings, cancelBooking,
-  getMyQueueToday, listMyInvoices,
+  getMyProfile, updateMyProfile, listMyBookings, cancelBooking, rescheduleBooking,
+  getMyQueueToday, listMyInvoices, listDoctorsForBooking, listAvailableSlots,
 } from "@/lib/apps-patient.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
+import { generateResepPDF } from "@/lib/resep-pdf";
 
 /* ------------------------------ shared ui ------------------------------ */
 
