@@ -42,7 +42,8 @@ export function HelpdeskPage() {
   const [pr, setPr] = useState<TicketPriority | "all">("all");
   const [cat, setCat] = useState<TicketCategory | "all">("all");
   const [selected, setSelected] = useState<HelpdeskTicket | null>(null);
-  const { t, lang } = useI18n();
+  const [showNew, setShowNew] = useState(false);
+  const { t: tr, lang } = useI18n();
   const locale = lang === "id" ? "id-ID" : "en-US";
 
   const items = useMemo(() => {
