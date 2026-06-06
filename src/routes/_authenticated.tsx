@@ -1,17 +1,13 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { z } from "zod";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated")({
   validateSearch: z.object({ redirect: z.string().optional() }).optional(),
-  // SSR-safe gate: route mounts on client; we redirect after hydration via component
-  // (a beforeLoad session check would need the actual auth provider — kept simple for mock).
   ssr: false,
   component: GateComponent,
 });
-
-import { useAuth } from "@/lib/auth";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
 
 function GateComponent() {
   const { isAuthenticated } = useAuth();
