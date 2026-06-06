@@ -989,6 +989,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 
 export function PatientLaporan() {
+  const { t } = useI18n();
   const callInvoices = useServerFn(listMyInvoices);
   const callProfile = useServerFn(getMyProfile);
   const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices() });
@@ -998,7 +999,7 @@ export function PatientLaporan() {
 
   function downloadResep(inv: typeof invoices[number]) {
     if (!profile) {
-      toast.error("Profil belum dimuat");
+      toast.error(t("common.loading"));
       return;
     }
     generateResepPDF({
@@ -1013,7 +1014,7 @@ export function PatientLaporan() {
       })),
       catatan: inv.catatan,
     });
-    toast.success("Resep PDF diunduh");
+    toast.success(t("history.download_resep"));
   }
 
   return (
@@ -1021,28 +1022,25 @@ export function PatientLaporan() {
       <Card>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold leading-tight">Riwayat & Resep</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Daftar kronologis pemeriksaan, tindakan, dan resep dari kunjungan Anda.</p>
+            <h1 className="text-2xl font-bold leading-tight">{t("history.title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("history.subtitle")}</p>
           </div>
-          <Link to="/apps/notifikasi" className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label="Notifikasi">
+          <Link to="/apps/notifikasi" className="rounded-xl bg-[#fdf2c4] p-3 text-[#7a6010]" aria-label={t("notif.title")}>
             <Bell className="h-5 w-5" />
           </Link>
         </div>
       </Card>
 
-      {invoicesQ.isLoading && (
-        <Card><div className="text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat riwayat…</div></Card>
-      )}
+      {invoicesQ.isLoading && <SkeletonList rows={3} />}
 
       {!invoicesQ.isLoading && invoices.length === 0 && (
         <Card>
-          <div className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-[#6b5a16]" /> Belum ada riwayat</div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Riwayat akan muncul di sini setelah kunjungan Anda dicatat oleh klinik. Belum pernah berkunjung?
-          </p>
-          <Link to="/apps/booking" className="mt-3 inline-block rounded-xl bg-[#a08a2a] px-4 py-2 text-xs font-semibold text-white">
-            Booking Pemeriksaan
-          </Link>
+          <EmptyState title={t("history.empty.title")} hint={t("history.empty.hint")} />
+          <div className="mt-3 flex justify-center">
+            <Link to="/apps/booking" className="inline-block rounded-xl bg-[#6b5a16] px-4 py-2 text-xs font-semibold text-white">
+              {t("history.cta_book")}
+            </Link>
+          </div>
         </Card>
       )}
 
@@ -1068,43 +1066,44 @@ export function PatientLaporan() {
           </ul>
           {inv.catatan && (
             <div className="mt-3 rounded-md bg-[#fdf2c4] p-3 text-xs">
-              <b>Catatan dokter:</b> {inv.catatan}
+              <b>{t("history.note_doctor")}:</b> {inv.catatan}
             </div>
           )}
           <div className="mt-3 flex items-center justify-between border-t border-[#e9dfb8] pt-3">
-            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-xs text-muted-foreground">{t("history.total")}</span>
             <span className="text-base font-bold">Rp {Number(inv.total).toLocaleString("id-ID")}</span>
           </div>
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => downloadResep(inv)}
-              className="inline-flex items-center gap-1 rounded-xl bg-[#a08a2a] px-3 py-2 text-xs font-semibold text-white"
+              className="inline-flex items-center gap-1 rounded-xl bg-[#6b5a16] px-3 py-2 text-xs font-semibold text-white"
             >
-              <Download className="h-3.5 w-3.5" /> Unduh Resep PDF
+              <Download className="h-3.5 w-3.5" /> {t("history.download_resep")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`Resep dari Klinik Prime - ${inv.no_invoice}`)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`${t("history.title")} - ${inv.no_invoice}`)}`}
               target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs font-semibold text-[#5a4a14]"
             >
-              <MessageCircle className="h-3.5 w-3.5" /> Bagikan
+              <MessageCircle className="h-3.5 w-3.5" /> {t("history.share")}
             </a>
           </div>
         </Card>
       ))}
 
       <Card>
-        <div className="text-base font-bold">Butuh bantuan?</div>
+        <div className="text-base font-bold">{t("history.need_help")}</div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Hubungi klinik jika ada pertanyaan tentang resep atau hasil pemeriksaan.
+          {t("history.empty.hint")}
         </p>
         <div className="mt-3">
           <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
-            <MessageCircle className="h-4 w-4" /> Hubungi Klinik
+            <MessageCircle className="h-4 w-4" /> {t("history.contact_clinic")}
           </a>
         </div>
       </Card>
     </div>
   );
 }
+
 
