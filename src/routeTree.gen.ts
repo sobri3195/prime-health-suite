@@ -53,6 +53,9 @@ import { Route as AuthenticatedFinanceMasterRouteImport } from './routes/_authen
 import { Route as AuthenticatedFinanceLaporanRouteImport } from './routes/_authenticated.finance.laporan'
 import { Route as AuthenticatedFinanceLabaRugiRouteImport } from './routes/_authenticated.finance.laba-rugi'
 import { Route as AuthenticatedFinanceJurnalRouteImport } from './routes/_authenticated.finance.jurnal'
+import { Route as AuthenticatedFinanceHonorRekapRouteImport } from './routes/_authenticated.finance.honor-rekap'
+import { Route as AuthenticatedFinanceHonorPotonganRouteImport } from './routes/_authenticated.finance.honor-potongan'
+import { Route as AuthenticatedFinanceHonorInputRouteImport } from './routes/_authenticated.finance.honor-input'
 import { Route as AuthenticatedFinanceBukuBesarRouteImport } from './routes/_authenticated.finance.buku-besar'
 import { Route as AuthenticatedFinanceBankRouteImport } from './routes/_authenticated.finance.bank'
 import { Route as AuthenticatedFinanceArusKasRouteImport } from './routes/_authenticated.finance.arus-kas'
@@ -314,6 +317,24 @@ const AuthenticatedFinanceJurnalRoute =
     path: '/jurnal',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceHonorRekapRoute =
+  AuthenticatedFinanceHonorRekapRouteImport.update({
+    id: '/honor-rekap',
+    path: '/honor-rekap',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceHonorPotonganRoute =
+  AuthenticatedFinanceHonorPotonganRouteImport.update({
+    id: '/honor-potongan',
+    path: '/honor-potongan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceHonorInputRoute =
+  AuthenticatedFinanceHonorInputRouteImport.update({
+    id: '/honor-input',
+    path: '/honor-input',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceBukuBesarRoute =
   AuthenticatedFinanceBukuBesarRouteImport.update({
     id: '/buku-besar',
@@ -358,6 +379,9 @@ export interface FileRoutesByFullPath {
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -405,6 +429,9 @@ export interface FileRoutesByTo {
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -457,6 +484,9 @@ export interface FileRoutesById {
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
   '/_authenticated/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/_authenticated/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
+  '/_authenticated/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
+  '/_authenticated/finance/honor-potongan': typeof AuthenticatedFinanceHonorPotonganRoute
+  '/_authenticated/finance/honor-rekap': typeof AuthenticatedFinanceHonorRekapRoute
   '/_authenticated/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/_authenticated/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/_authenticated/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -509,6 +539,9 @@ export interface FileRouteTypes {
     | '/finance/arus-kas'
     | '/finance/bank'
     | '/finance/buku-besar'
+    | '/finance/honor-input'
+    | '/finance/honor-potongan'
+    | '/finance/honor-rekap'
     | '/finance/jurnal'
     | '/finance/laba-rugi'
     | '/finance/laporan'
@@ -556,6 +589,9 @@ export interface FileRouteTypes {
     | '/finance/arus-kas'
     | '/finance/bank'
     | '/finance/buku-besar'
+    | '/finance/honor-input'
+    | '/finance/honor-potongan'
+    | '/finance/honor-rekap'
     | '/finance/jurnal'
     | '/finance/laba-rugi'
     | '/finance/laporan'
@@ -607,6 +643,9 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/arus-kas'
     | '/_authenticated/finance/bank'
     | '/_authenticated/finance/buku-besar'
+    | '/_authenticated/finance/honor-input'
+    | '/_authenticated/finance/honor-potongan'
+    | '/_authenticated/finance/honor-rekap'
     | '/_authenticated/finance/jurnal'
     | '/_authenticated/finance/laba-rugi'
     | '/_authenticated/finance/laporan'
@@ -961,6 +1000,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceJurnalRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/honor-rekap': {
+      id: '/_authenticated/finance/honor-rekap'
+      path: '/honor-rekap'
+      fullPath: '/finance/honor-rekap'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorRekapRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/honor-potongan': {
+      id: '/_authenticated/finance/honor-potongan'
+      path: '/honor-potongan'
+      fullPath: '/finance/honor-potongan'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorPotonganRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/honor-input': {
+      id: '/_authenticated/finance/honor-input'
+      path: '/honor-input'
+      fullPath: '/finance/honor-input'
+      preLoaderRoute: typeof AuthenticatedFinanceHonorInputRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/buku-besar': {
       id: '/_authenticated/finance/buku-besar'
       path: '/buku-besar'
@@ -1017,6 +1077,9 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceArusKasRoute: typeof AuthenticatedFinanceArusKasRoute
   AuthenticatedFinanceBankRoute: typeof AuthenticatedFinanceBankRoute
   AuthenticatedFinanceBukuBesarRoute: typeof AuthenticatedFinanceBukuBesarRoute
+  AuthenticatedFinanceHonorInputRoute: typeof AuthenticatedFinanceHonorInputRoute
+  AuthenticatedFinanceHonorPotonganRoute: typeof AuthenticatedFinanceHonorPotonganRoute
+  AuthenticatedFinanceHonorRekapRoute: typeof AuthenticatedFinanceHonorRekapRoute
   AuthenticatedFinanceJurnalRoute: typeof AuthenticatedFinanceJurnalRoute
   AuthenticatedFinanceLabaRugiRoute: typeof AuthenticatedFinanceLabaRugiRoute
   AuthenticatedFinanceLaporanRoute: typeof AuthenticatedFinanceLaporanRoute
@@ -1049,6 +1112,10 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceArusKasRoute: AuthenticatedFinanceArusKasRoute,
   AuthenticatedFinanceBankRoute: AuthenticatedFinanceBankRoute,
   AuthenticatedFinanceBukuBesarRoute: AuthenticatedFinanceBukuBesarRoute,
+  AuthenticatedFinanceHonorInputRoute: AuthenticatedFinanceHonorInputRoute,
+  AuthenticatedFinanceHonorPotonganRoute:
+    AuthenticatedFinanceHonorPotonganRoute,
+  AuthenticatedFinanceHonorRekapRoute: AuthenticatedFinanceHonorRekapRoute,
   AuthenticatedFinanceJurnalRoute: AuthenticatedFinanceJurnalRoute,
   AuthenticatedFinanceLabaRugiRoute: AuthenticatedFinanceLabaRugiRoute,
   AuthenticatedFinanceLaporanRoute: AuthenticatedFinanceLaporanRoute,
