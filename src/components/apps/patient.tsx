@@ -216,6 +216,7 @@ const GEJALA = [
 ];
 
 export function PatientAI() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [keluhan, setKeluhan] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
@@ -236,8 +237,8 @@ export function PatientAI() {
 
   async function uploadFoto(file: File) {
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error("Format harus JPG/PNG/WEBP");
-    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5 MB");
+    if (!/^(jpg|jpeg|png|webp)$/.test(ext)) return toast.error(t("ai.upload_invalid"));
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("ai.upload_max"));
     setUploading(true);
     try {
       const sig = await callSignUpload({ data: { ext } });
@@ -245,9 +246,9 @@ export function PatientAI() {
         .uploadToSignedUrl(sig.path, sig.token, file, { contentType: file.type });
       if (error) throw error;
       setFotoPath(sig.path);
-      toast.success("Foto mata terunggah");
+      toast.success(t("ai.upload_ok"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal unggah");
+      toast.error(e instanceof Error ? e.message : t("ai.upload_failed"));
     } finally {
       setUploading(false);
     }
@@ -320,13 +321,13 @@ export function PatientAI() {
       <Card>
         <div className="text-base font-bold">Kamera AI Mata</div>
         <label className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#e9dfb8] bg-[#fdf8e8] py-8 text-sm font-semibold text-[#7a6010] hover:bg-[#f6ecc8]">
-          {uploading ? <><Loader2 className="h-5 w-5 animate-spin" /> Mengunggah…</> :
-           fotoPath ? <><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Foto siap dianalisis</> :
-           <><Camera className="h-5 w-5" /> Unggah / Ambil Foto Mata</>}
+          {uploading ? <><Loader2 className="h-5 w-5 animate-spin" /> {t("ai.uploading")}</> :
+           fotoPath ? <><CheckCircle2 className="h-5 w-5 text-emerald-600" /> {t("ai.photo_ready")}</> :
+           <><Camera className="h-5 w-5" /> {t("ai.upload_btn")}</>}
           <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFoto(f); }} />
         </label>
-        {fotoPath && <button onClick={() => setFotoPath(null)} className="mt-2 text-xs text-rose-600">Hapus foto</button>}
+        {fotoPath && <button onClick={() => setFotoPath(null)} className="mt-2 text-xs text-rose-600">{t("ai.remove_photo")}</button>}
       </Card>
 
       {/* Form */}
@@ -426,12 +427,18 @@ export function PatientAI() {
       {/* Hasil */}
       {loading && (
         <Card>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-[#6b5a16]" />
-            Prime AI Engine sedang memproses gejala…
+            {t("ai.processing")}
           </div>
+          <SkeletonList rows={2} />
         </Card>
       )}
+
+      {!loading && !hasil && (
+        <EmptyState title={t("ai.empty.title")} hint={t("ai.empty.hint")} />
+      )}
+
 
       {hasil && !loading && (
         <>
