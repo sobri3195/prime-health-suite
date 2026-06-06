@@ -15,9 +15,12 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nama, setNama] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [marketing, setMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login: bridgeLogin } = useAuth();
+
 
   const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
 
@@ -26,17 +29,23 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (!consent) {
+          toast.error("Anda harus menyetujui Kebijakan Privasi");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/apps`,
-            data: { nama },
+            data: { nama, consent_marketing: marketing },
           },
         });
         if (error) throw error;
         toast.success("Akun dibuat. Cek email Anda untuk verifikasi.");
         setMode("login");
+
       } else if (mode === "login") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -150,6 +159,38 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
                 />
               </Field>
             )}
+
+            {mode === "signup" && (
+              <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Saya menyetujui{" "}
+                    <a href="/privacy" target="_blank" rel="noreferrer" className="font-semibold underline">
+                      Kebijakan Privasi
+                    </a>{" "}
+                    dan pengelolaan data kesehatan saya sesuai UU PDP No. 27/2022.
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 opacity-80">
+                  <input
+                    type="checkbox"
+                    checked={marketing}
+                    onChange={(e) => setMarketing(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>Saya bersedia menerima informasi promosi & edukasi mata (opsional).</span>
+                </label>
+              </div>
+            )}
+
+
 
             <button
               type="submit"

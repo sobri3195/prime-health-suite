@@ -101,6 +101,45 @@ export type Database = {
         }
         Relationships: []
       }
+      apps_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          meta: Json | null
+          resource: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          resource: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          meta?: Json | null
+          resource?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       apps_booking: {
         Row: {
           created_at: string
@@ -362,7 +401,10 @@ export type Database = {
         Row: {
           alamat: string | null
           alergi: string | null
+          consent_marketing_at: string | null
+          consent_privacy_at: string | null
           created_at: string
+          deletion_requested_at: string | null
           foto_url: string | null
           id: string
           jenis_kelamin: string | null
@@ -379,7 +421,10 @@ export type Database = {
         Insert: {
           alamat?: string | null
           alergi?: string | null
+          consent_marketing_at?: string | null
+          consent_privacy_at?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
           foto_url?: string | null
           id?: string
           jenis_kelamin?: string | null
@@ -396,7 +441,10 @@ export type Database = {
         Update: {
           alamat?: string | null
           alergi?: string | null
+          consent_marketing_at?: string | null
+          consent_privacy_at?: string | null
           created_at?: string
+          deletion_requested_at?: string | null
           foto_url?: string | null
           id?: string
           jenis_kelamin?: string | null
@@ -1094,6 +1142,11 @@ export type Database = {
       }
     }
     Functions: {
+      apps_accept_consent: {
+        Args: { _marketing?: boolean }
+        Returns: undefined
+      }
+      apps_export_my_data: { Args: never; Returns: Json }
       apps_leaderboard_mingguan: {
         Args: never
         Returns: {
@@ -1118,6 +1171,7 @@ export type Database = {
           redeem_id: string
         }[]
       }
+      apps_request_account_deletion: { Args: never; Returns: undefined }
       apps_send_booking_reminders: { Args: never; Returns: number }
       apps_slot_terisi_for: {
         Args: { _dokter_id: string; _tanggal: string }

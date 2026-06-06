@@ -1,0 +1,220 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Download, ShieldCheck, Trash2, History, AlertTriangle, ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  listMyAuditLog, exportMyData, requestAccountDeletion, acceptConsent,
+} from "@/lib/apps-privacy.functions";
+import { getMyProfile } from "@/lib/apps-patient.functions";
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm ${className}`}>{children}</div>;
+}
+
+const ACTION_LABEL: Record<string, string> = {
+  view: "Lihat data",
+  export: "Ekspor data",
+  update: "Ubah data",
+  delete: "Hapus data",
+  delete_request: "Permintaan hapus akun",
+  consent: "Persetujuan privasi",
+  login: "Masuk akun",
+};
+
+export function PatientPrivasi() {
+  const callAudit = useServerFn(listMyAuditLog);
+  const callExport = useServerFn(exportMyData);
+  const callDelete = useServerFn(requestAccountDeletion);
+  const callConsent = useServerFn(acceptConsent);
+  const callProfile = useServerFn(getMyProfile);
+
+  const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
+  const auditQ = useQuery({ queryKey: ["apps", "audit", "me"], queryFn: () => callAudit() });
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [marketing, setMarketing] = useState(false);
+
+  const p = profileQ.data?.profile;
+  const consentAt = p?.consent_privacy_at as string | null | undefined;
+
+  const exportM = useMutation({
+    mutationFn: () => callExport(),
+    onSuccess: ({ data }) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `data-saya-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Data Anda berhasil diunduh");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteM = useMutation({
+    mutationFn: () => callDelete(),
+    onSuccess: () => {
+      toast.success("Permintaan hapus akun diterima. Tim kami akan memproses dalam 7 hari kerja.");
+      setConfirmDelete(false);
+      profileQ.refetch();
+      auditQ.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const consentM = useMutation({
+    mutationFn: () => callConsent({ data: { marketing } }),
+    onSuccess: () => {
+      toast.success("Persetujuan tercatat");
+      profileQ.refetch();
+      auditQ.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold">Privasi & Keamanan</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Hak Anda atas data pribadi sesuai UU Pelindungan Data Pribadi (UU PDP No. 27/2022).
+        </p>
+      </div>
+
+      {/* Consent status */}
+      <Card>
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="h-5 w-5 shrink-0 text-[#6b5a16]" aria-hidden />
+          <div className="flex-1">
+            <div className="text-base font-bold text-[#3a2a05]">Persetujuan Kebijakan Privasi</div>
+            {consentAt ? (
+              <p className="mt-1 text-sm text-[#5a4a14]">
+                Anda menyetujui pada {new Date(consentAt).toLocaleString("id-ID")}.{" "}
+                <Link to="/privacy" className="underline">Baca kebijakan</Link>
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-sm text-[#5a4a14]">
+                  Anda belum mencatat persetujuan resmi.{" "}
+                  <Link to="/privacy" className="underline inline-flex items-center gap-1">
+                    Baca kebijakan <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </p>
+                <label className="mt-3 flex items-start gap-2 text-sm text-[#3a2a05]">
+                  <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5" />
+                  Saya juga setuju menerima informasi promosi & edukasi mata (opsional).
+                </label>
+                <button
+                  onClick={() => consentM.mutate()}
+                  disabled={consentM.isPending}
+                  className="mt-3 rounded-xl bg-[#a08a2a] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  Setuju kebijakan privasi
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Export */}
+      <Card>
+        <div className="flex items-start gap-3">
+          <Download className="h-5 w-5 shrink-0 text-[#6b5a16]" aria-hidden />
+          <div className="flex-1">
+            <div className="text-base font-bold text-[#3a2a05]">Unduh Data Saya</div>
+            <p className="mt-1 text-sm text-[#5a4a14]">
+              Dapatkan salinan seluruh data Anda (profil, booking, rekam, transaksi, audit log) dalam format JSON.
+            </p>
+            <button
+              onClick={() => exportM.mutate()}
+              disabled={exportM.isPending}
+              className="mt-3 rounded-xl bg-[#a08a2a] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {exportM.isPending ? "Menyiapkan…" : "Unduh sebagai JSON"}
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Audit log */}
+      <Card>
+        <div className="flex items-center gap-2">
+          <History className="h-5 w-5 text-[#6b5a16]" aria-hidden />
+          <div className="text-base font-bold text-[#3a2a05]">Siapa yang Mengakses Data Saya</div>
+        </div>
+        <p className="mt-1 text-sm text-[#5a4a14]">200 aktivitas terbaru pada akun Anda.</p>
+        <div className="mt-3 divide-y divide-[#f0e8c4]">
+          {auditQ.isLoading && <div className="py-6 text-center text-sm text-[#5a4a14]">Memuat…</div>}
+          {auditQ.data && auditQ.data.items.length === 0 && (
+            <div className="py-6 text-center text-sm text-[#5a4a14]">Belum ada aktivitas tercatat.</div>
+          )}
+          {auditQ.data?.items.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+              <div className="min-w-0">
+                <div className="font-medium text-[#3a2a05]">{ACTION_LABEL[r.action] || r.action}</div>
+                <div className="truncate text-xs text-[#6b5a16]">
+                  {r.resource} · oleh {r.actor_label || "—"}
+                </div>
+              </div>
+              <div className="shrink-0 text-xs text-[#6b5a16]">
+                {new Date(r.created_at).toLocaleString("id-ID")}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Delete */}
+      <Card className="border-rose-200">
+        <div className="flex items-start gap-3">
+          <Trash2 className="h-5 w-5 shrink-0 text-rose-600" aria-hidden />
+          <div className="flex-1">
+            <div className="text-base font-bold text-rose-700">Hapus Akun Saya</div>
+            <p className="mt-1 text-sm text-[#5a4a14]">
+              Mengajukan penghapusan akun & data pribadi. Data medis tetap disimpan sesuai kewajiban regulasi
+              (Permenkes No. 24/2022 — min. 5 tahun setelah kunjungan terakhir) lalu dihapus permanen.
+            </p>
+            {p?.deletion_requested_at ? (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <AlertTriangle className="h-4 w-4" aria-hidden />
+                Permintaan terdaftar pada {new Date(p.deletion_requested_at).toLocaleString("id-ID")}.
+              </div>
+            ) : !confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="mt-3 rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+              >
+                Ajukan penghapusan akun
+              </button>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <div className="text-sm font-medium text-rose-700">
+                  Tindakan ini tidak dapat dibatalkan secara mandiri. Lanjutkan?
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => deleteM.mutate()}
+                    disabled={deleteM.isPending}
+                    className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    Ya, ajukan penghapusan
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-medium text-[#3a2a05]"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}

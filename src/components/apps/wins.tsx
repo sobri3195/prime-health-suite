@@ -60,14 +60,14 @@ export function PatientWins() {
               const bisa = total >= r.harga_poin && r.stok > 0;
               return (
                 <div key={r.id} className="rounded-2xl border border-[#e9dfb8] bg-white p-4">
-                  <div className="flex items-start gap-2"><Gift className="h-5 w-5 text-[#a08a2a]" />
+                  <div className="flex items-start gap-2"><Gift className="h-5 w-5 text-[#6b5a16]" />
                     <div className="flex-1">
                       <div className="text-sm font-bold">{r.nama}</div>
                       <p className="mt-1 text-xs text-muted-foreground">{r.deskripsi}</p>
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <div className="text-sm font-bold text-[#a08a2a]">{r.harga_poin} poin</div>
+                    <div className="text-sm font-bold text-[#6b5a16]">{r.harga_poin} poin</div>
                     <button disabled={!bisa || m.isPending} onClick={() => m.mutate(r.id)}
                       className="rounded-full bg-[#1f1d19] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">
                       {!bisa ? (r.stok < 1 ? "Habis" : "Poin kurang") : "Tukar"}
@@ -81,7 +81,7 @@ export function PatientWins() {
       </div>
 
       <div>
-        <h3 className="mb-2 flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#a08a2a]" /> Leaderboard Minggu Ini</h3>
+        <h3 className="mb-2 flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#6b5a16]" /> Leaderboard Minggu Ini</h3>
         {boardQ.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
           <div className="rounded-2xl border border-[#e9dfb8] bg-white p-2">
             {(boardQ.data?.board ?? []).length === 0 && (
@@ -90,8 +90,8 @@ export function PatientWins() {
             {(boardQ.data?.board ?? []).map((b) => (
               <div key={b.rank} className={`flex items-center justify-between rounded-xl p-2 ${b.is_me ? "bg-[#fdf2c4]" : ""}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-6 text-center text-sm font-bold text-[#a08a2a]">{b.rank}</div>
-                  <div className="text-sm">{b.nama_mask} {b.is_me && <span className="text-[10px] text-[#a08a2a]">(Anda)</span>}</div>
+                  <div className="w-6 text-center text-sm font-bold text-[#6b5a16]">{b.rank}</div>
+                  <div className="text-sm">{b.nama_mask} {b.is_me && <span className="text-[10px] text-[#6b5a16]">(Anda)</span>}</div>
                 </div>
                 <div className="text-sm font-bold">{b.total_poin}</div>
               </div>
@@ -110,7 +110,7 @@ export function PatientWins() {
               <div key={r.id} className="flex items-center justify-between rounded-xl border border-[#e9dfb8] bg-white p-3 text-sm">
                 <div>
                   <div className="font-semibold">{r.reward?.nama}</div>
-                  <code className="text-xs text-[#a08a2a]">{r.kode_voucher}</code>
+                  <code className="text-xs text-[#6b5a16]">{r.kode_voucher}</code>
                 </div>
                 <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("id-ID")}</div>
               </div>

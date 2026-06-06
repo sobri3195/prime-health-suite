@@ -18,6 +18,8 @@ import { PatientBelanjaReal, PatientCart, PatientCheckout, PatientOrders } from 
 import { PatientEdukasi } from "@/components/apps/edukasi";
 import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
+import { PatientPrivasi } from "@/components/apps/privacy";
+
 
 function Section() {
   const { section } = Route.useParams();
@@ -31,6 +33,8 @@ function Section() {
     case "wins": return <PatientWins />;
     case "chat": return <PatientChat />;
     case "profil": return <PatientProfil />;
+    case "privasi": return <PatientPrivasi />;
+
     case "laporan": return <PatientLaporan />;
     case "launcher": return <LauncherPage />;
     case "notifications": return <NotificationsPage />;
