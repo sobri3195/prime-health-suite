@@ -11,12 +11,14 @@ function Layout() {
   const user = userFor("apps");
 
   useEffect(() => {
-    if (user && !canAccess(user.role, "apps")) {
+    if (!user) {
+      navigate({ to: "/apps/login", search: { redirect: pathname }, replace: true });
+    } else if (!canAccess(user.role, "apps")) {
       navigate({ to: "/apps/login", search: { redirect: pathname }, replace: true });
     }
   }, [user, navigate, pathname]);
 
-  if (user && !canAccess(user.role, "apps")) return null;
+  if (!user || !canAccess(user.role, "apps")) return null;
   return (
     <AppShell system="apps">
       <Outlet />
