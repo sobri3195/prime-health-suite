@@ -293,3 +293,76 @@ function RankList({ rows }: { rows: { name: string; value: number }[] }) {
 function Empty({ text }: { text: string }) {
   return <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">{text}</div>;
 }
+
+function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/types/finance").Invoice[]; outstanding: number; hutang: number }) {
+  const ar = aging(rows);
+  // mock AP aging
+  const ap = [
+    { bucket: "0-30", amount: Math.round(hutang * 0.55), count: 2 },
+    { bucket: "31-60", amount: Math.round(hutang * 0.30), count: 1 },
+    { bucket: "61-90", amount: Math.round(hutang * 0.10), count: 0 },
+    { bucket: ">90", amount: Math.round(hutang * 0.05), count: 0 },
+  ];
+  const recent = rows.slice(0, 5);
+  const alertCount = ar.find((a) => a.bucket === ">90")?.count ?? 0;
+
+  return (
+    <div className="mt-6 grid gap-4 lg:grid-cols-4">
+      <Card title="AR Aging" subtitle="Distribusi piutang berdasarkan umur">
+        <AgingBars data={ar} tone="amber" />
+      </Card>
+      <Card title="AP Aging" subtitle="Distribusi hutang berdasarkan umur">
+        <AgingBars data={ap} tone="rose" />
+      </Card>
+      <Card title="Recent Activities" subtitle="5 transaksi terakhir">
+        <ul className="space-y-2 text-sm">
+          {recent.map((r) => (
+            <li key={r.id} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/20 p-2">
+              <div className="min-w-0">
+                <div className="truncate font-mono text-xs">{r.invoice}</div>
+                <div className="truncate text-[11px] text-muted-foreground">{r.patientCode} • {r.service}</div>
+              </div>
+              <div className="text-right font-mono text-xs">{formatCompactIDR(r.total)}</div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+      <Card title="Finance Alerts" subtitle="Perlu tindakan">
+        <ul className="space-y-2 text-sm">
+          <li className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+            <div className="font-medium">Piutang jatuh tempo</div>
+            <div className="text-xs text-muted-foreground">{alertCount} invoice • {formatIDR(outstanding)}</div>
+          </li>
+          <li className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3">
+            <div className="font-medium">Hutang jatuh tempo</div>
+            <div className="text-xs text-muted-foreground">3 vendor • {formatIDR(hutang)}</div>
+          </li>
+          <li className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3">
+            <div className="font-medium">Belum rekonsiliasi</div>
+            <div className="text-xs text-muted-foreground">{rows.length} transaksi • Perlu matching bank</div>
+          </li>
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
+function AgingBars({ data, tone }: { data: { bucket: string; amount: number; count: number }[]; tone: "amber" | "rose" }) {
+  const max = Math.max(1, ...data.map((d) => d.amount));
+  const color = tone === "amber" ? "bg-amber-500" : "bg-rose-500";
+  return (
+    <ul className="space-y-2 text-sm">
+      {data.map((d) => (
+        <li key={d.bucket}>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{d.bucket} hari</span>
+            <span className="font-mono">{formatCompactIDR(d.amount)}</span>
+          </div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className={`h-full rounded-full ${color}`} style={{ width: `${(d.amount / max) * 100}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
