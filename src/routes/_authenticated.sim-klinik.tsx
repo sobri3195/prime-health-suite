@@ -24,14 +24,17 @@ function Layout() {
 
   const slug = pathname.split("/").slice(3).join("/") || "";
   const meta = findNav("sim-klinik", slug);
+  // RBAC only enforced when Supabase roles were loaded successfully.
+  // Legacy mock-auth sessions (no Supabase) bypass RBAC and rely on canAccess above.
+  const rbacEnforced = Array.isArray(roles);
   const isSuperAdmin = hasAnyRole(roles, ["super_admin"]);
   const requiredRoles = meta?.roles;
-  const allowed = !requiredRoles || hasAnyRole(roles, requiredRoles);
+  const allowed = !rbacEnforced || !requiredRoles || hasAnyRole(roles, requiredRoles);
   const lockedComingSoon = meta?.status === "coming_soon";
 
   return (
     <AppShell system="sim-klinik">
-      {rolesLoading ? null : !isSuperAdmin && !allowed ? (
+      {rolesLoading ? null : rbacEnforced && !isSuperAdmin && !allowed ? (
         <div>
           <PageHeader title="Akses Ditolak" />
           <div className="rounded-2xl border border-border bg-card p-10 text-center">
