@@ -46,7 +46,7 @@ function Page() {
   useEffect(() => {
     if (items.length === 0 && layananRows.length > 0) {
       const f = layananRows[0];
-      setItems([{ layanan_id: f.id, layanan_nama: f.nama, tarif: Number(f.tarif), qty: 1 }]);
+      setItems([{ layanan_id: f.id, layanan_nama: f.name, tarif: Number(f.tarif), qty: 1 }]);
     }
   }, [layananRows.length]);
 
@@ -68,7 +68,7 @@ function Page() {
       toast.success(`Tersimpan ${res.no_invoice} · ${formatIDR(res.total)}`);
       setPatientCode(""); setPatientName("");
       const f = layananRows[0];
-      setItems(f ? [{ layanan_id: f.id, layanan_nama: f.nama, tarif: Number(f.tarif), qty: 1 }] : []);
+      setItems(f ? [{ layanan_id: f.id, layanan_nama: f.name, tarif: Number(f.tarif), qty: 1 }] : []);
       setPays([{ metode: "cash", bank: "", jumlah: 0, mdr: 0 }]);
       qc.invalidateQueries({ queryKey: ["fin-invoices"] });
     },
@@ -102,13 +102,13 @@ function Page() {
             <div className="grid gap-1.5"><Label className="text-xs">Dokter</Label>
               <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={dokterId} onChange={(e) => setDokterId(e.target.value)}>
                 <option value="">— pilih dokter —</option>
-                {dokterRows.map((d) => <option key={d.id} value={d.id}>{d.nama}</option>)}
+                {dokterRows.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div className="grid gap-1.5"><Label className="text-xs">Payer</Label>
               <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={payerId} onChange={(e) => setPayerId(e.target.value)}>
                 <option value="">— pilih payer —</option>
-                {payerRows.map((p) => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                {payerRows.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           </div>
@@ -118,7 +118,7 @@ function Page() {
               <h3 className="text-sm font-medium">Item Layanan</h3>
               <Button size="sm" variant="outline" className="gap-1" disabled={layananRows.length === 0} onClick={() => {
                 const f = layananRows[0]; if (!f) return;
-                setItems((a) => [...a, { layanan_id: f.id, layanan_nama: f.nama, tarif: Number(f.tarif), qty: 1 }]);
+                setItems((a) => [...a, { layanan_id: f.id, layanan_nama: f.name, tarif: Number(f.tarif), qty: 1 }]);
               }}>
                 <Plus className="h-4 w-4" /> Tambah
               </Button>
@@ -140,9 +140,9 @@ function Page() {
                         <select className="h-8 w-full rounded border border-input bg-background px-2 text-sm" value={it.layanan_id ?? ""}
                           onChange={(e) => {
                             const svc = layananRows.find((s) => s.id === e.target.value);
-                            if (svc) updateItem(i, { layanan_id: svc.id, layanan_nama: svc.nama, tarif: Number(svc.tarif) });
+                            if (svc) updateItem(i, { layanan_id: svc.id, layanan_nama: svc.name, tarif: Number(svc.tarif) });
                           }}>
-                          {layananRows.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
+                          {layananRows.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       </TableCell>
                       <TableCell className="text-right"><Input type="number" className="h-8 text-right" value={it.tarif} onChange={(e) => updateItem(i, { tarif: Number(e.target.value) || 0 })} /></TableCell>
