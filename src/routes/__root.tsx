@@ -12,7 +12,10 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth";
+import { I18nProvider } from "../lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
+
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('pp:theme');if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}else{document.documentElement.style.colorScheme='light';}}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (
