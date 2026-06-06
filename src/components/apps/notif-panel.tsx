@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, Check, CheckCheck, Trash2, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import {
   listMyNotifications, markNotifRead, markAllNotifRead, deleteNotif,
 } from "@/lib/apps-patient.functions";
