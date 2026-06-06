@@ -7,11 +7,12 @@ import { ArrowLeft, Calendar, Check, Loader2, Stethoscope } from "lucide-react";
 import {
   listDoctorsForBooking, listAvailableSlots, createBooking,
 } from "@/lib/apps-patient.functions";
+import { useI18n } from "@/lib/i18n";
 
 type Doctor = { id: string; code: string; name: string; spesialisasi: string | null };
 
-function dateLabel(d: Date) {
-  return d.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" });
+function dateLabel(d: Date, lang: string) {
+  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short" });
 }
 function dateISO(d: Date) {
   return d.toISOString().slice(0, 10);
