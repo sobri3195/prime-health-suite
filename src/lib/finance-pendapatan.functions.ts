@@ -29,8 +29,9 @@ const createSchema = z.object({
   pembayaran: z.array(paySchema).min(1).max(10),
 });
 
+export type CreateInvoiceInput = z.input<typeof createSchema>;
 export const createInvoice = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => createSchema.parse(d))
+  .inputValidator((d: CreateInvoiceInput) => createSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const subtotal = data.items.reduce((a, i) => a + i.tarif * i.qty, 0);
