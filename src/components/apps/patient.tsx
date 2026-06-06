@@ -836,29 +836,29 @@ export function PatientProfil() {
 
       {/* Keamanan: ganti password */}
       <Card>
-        <div className="text-base font-bold">Keamanan Akun</div>
-        <p className="mt-1 text-xs text-muted-foreground">Ganti password Anda secara berkala.</p>
+        <div className="text-base font-bold">{t("patient.security")}</div>
+        <p className="mt-1 text-xs text-muted-foreground">{t("patient.security.desc")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Input label="Password baru" type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
-          <Input label="Konfirmasi password" type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
+          <Input label={t("patient.pw_new")} type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
+          <Input label={t("patient.pw_confirm")} type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
         </div>
         <button
           onClick={changePassword}
           disabled={pwdLoading || !pwd.p1}
           className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 py-2 text-sm font-semibold text-[#5a4a14] disabled:opacity-60"
         >
-          {pwdLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />} Ubah Password
+          {pwdLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />} {t("patient.pw_change")}
         </button>
       </Card>
 
       <Card>
         <div className="flex items-center justify-between">
-          <div className="text-base font-bold">Booking Saya</div>
-          <Link to="/apps/booking" className="text-xs font-semibold text-[#6b5a16]">+ Booking baru</Link>
+          <div className="text-base font-bold">{t("patient.my_bookings")}</div>
+          <Link to="/apps/booking" className="text-xs font-semibold text-[#6b5a16]">{t("patient.new_booking")}</Link>
         </div>
-        {bookingsQ.isLoading && <div className="mt-3 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> Memuat…</div>}
+        {bookingsQ.isLoading && <div className="mt-3 text-sm opacity-60"><Loader2 className="inline h-4 w-4 animate-spin" /> {t("common.loading")}</div>}
         {bookingsQ.data?.bookings.length === 0 && (
-          <div className="mt-3 text-sm opacity-70">Belum ada booking.</div>
+          <div className="mt-3 text-sm opacity-70">{t("patient.no_bookings")}</div>
         )}
         <ul className="mt-3 space-y-2">
           {bookingsQ.data?.bookings.map((b) => (
@@ -878,21 +878,21 @@ export function PatientProfil() {
                     onClick={() => startReschedule(b)}
                     className="rounded-md border border-[#e9dfb8] bg-white px-2 py-0.5 text-[11px] font-medium text-[#5a4a14]"
                   >
-                    Ubah Jadwal
+                    {t("patient.reschedule")}
                   </button>
                   <button
-                    onClick={() => { if (confirm("Batalkan booking ini?")) cancelM.mutate(b.id); }}
+                    onClick={() => { if (confirm(t("patient.cancel_confirm"))) cancelM.mutate(b.id); }}
                     disabled={cancelM.isPending}
                     className="rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700"
                   >
-                    Batalkan
+                    {t("patient.cancel")}
                   </button>
                 </div>
               )}
 
               {reschedId === b.id && (
                 <div className="mt-3 rounded-lg border border-[#e9dfb8] bg-white p-3">
-                  <div className="text-xs font-semibold">Pilih jadwal baru</div>
+                  <div className="text-xs font-semibold">{t("patient.pick_new")}</div>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <label className="block">
                       <div className="text-[11px] opacity-70">Dokter</div>
@@ -917,7 +917,7 @@ export function PatientProfil() {
                       />
                     </label>
                   </div>
-                  {slotsQ.isLoading && <div className="mt-2 text-[11px] opacity-60">Memuat slot…</div>}
+                  {slotsQ.isLoading && <div className="mt-2 text-[11px] opacity-60">{t("patient.loading_slots")}</div>}
                   {slotsQ.data && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {slotsQ.data.slots.map((s) => (
@@ -946,7 +946,7 @@ export function PatientProfil() {
                     >
                       {reschedM.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} Simpan
                     </button>
-                    <button onClick={() => setReschedId(null)} className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1.5 text-xs">Batal</button>
+                    <button onClick={() => setReschedId(null)} className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1.5 text-xs">{t("common.cancel")}</button>
                   </div>
                 </div>
               )}
