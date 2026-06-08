@@ -5,6 +5,7 @@ import {
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
   Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
+  Clock, Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
