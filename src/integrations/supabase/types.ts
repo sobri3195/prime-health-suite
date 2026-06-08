@@ -1217,6 +1217,349 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_attendance: {
+        Row: {
+          catatan: string | null
+          clock_in: string | null
+          clock_out: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          shift_id: string | null
+          status: Database["public"]["Enums"]["hr_attendance_status"]
+          tanggal: string
+          total_jam_kerja: number | null
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          shift_id?: string | null
+          status?: Database["public"]["Enums"]["hr_attendance_status"]
+          tanggal: string
+          total_jam_kerja?: number | null
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          shift_id?: string | null
+          status?: Database["public"]["Enums"]["hr_attendance_status"]
+          tanggal?: string
+          total_jam_kerja?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_attendance_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employee: {
+        Row: {
+          created_at: string
+          gaji_pokok: number
+          id: string
+          is_active: boolean
+          jabatan: string | null
+          karyawan_id: string | null
+          nama: string
+          saldo_jam_lembur: number
+          shift_default_id: string | null
+          tarif_lembur_per_jam: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          gaji_pokok?: number
+          id?: string
+          is_active?: boolean
+          jabatan?: string | null
+          karyawan_id?: string | null
+          nama: string
+          saldo_jam_lembur?: number
+          shift_default_id?: string | null
+          tarif_lembur_per_jam?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          gaji_pokok?: number
+          id?: string
+          is_active?: boolean
+          jabatan?: string | null
+          karyawan_id?: string | null
+          nama?: string
+          saldo_jam_lembur?: number
+          shift_default_id?: string | null
+          tarif_lembur_per_jam?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_karyawan_id_fkey"
+            columns: ["karyawan_id"]
+            isOneToOne: false
+            referencedRelation: "fin_karyawan"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_shift_default_id_fkey"
+            columns: ["shift_default_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_overtime: {
+        Row: {
+          alasan: string | null
+          approval_note: string | null
+          approved_at: string | null
+          approved_by: string | null
+          attendance_id: string | null
+          created_at: string
+          durasi_jam: number
+          employee_id: string
+          id: string
+          jam_mulai: string
+          jam_selesai: string
+          mode: Database["public"]["Enums"]["hr_overtime_mode"]
+          nominal: number | null
+          payroll_run_id: string | null
+          status: Database["public"]["Enums"]["hr_overtime_status"]
+          tanggal: string
+          tarif_per_jam: number | null
+          updated_at: string
+        }
+        Insert: {
+          alasan?: string | null
+          approval_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          attendance_id?: string | null
+          created_at?: string
+          durasi_jam: number
+          employee_id: string
+          id?: string
+          jam_mulai: string
+          jam_selesai: string
+          mode?: Database["public"]["Enums"]["hr_overtime_mode"]
+          nominal?: number | null
+          payroll_run_id?: string | null
+          status?: Database["public"]["Enums"]["hr_overtime_status"]
+          tanggal: string
+          tarif_per_jam?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alasan?: string | null
+          approval_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          attendance_id?: string | null
+          created_at?: string
+          durasi_jam?: number
+          employee_id?: string
+          id?: string
+          jam_mulai?: string
+          jam_selesai?: string
+          mode?: Database["public"]["Enums"]["hr_overtime_mode"]
+          nominal?: number | null
+          payroll_run_id?: string | null
+          status?: Database["public"]["Enums"]["hr_overtime_status"]
+          tanggal?: string
+          tarif_per_jam?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_overtime_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "hr_attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_overtime_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_overtime_payroll_run_fk"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "hr_payroll_run"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_payroll_item: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          employee_id: string
+          gaji_pokok: number
+          id: string
+          nama_snapshot: string
+          nominal_lembur: number
+          payroll_run_id: string
+          potongan: number
+          take_home: number
+          total_jam_lembur: number
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          employee_id: string
+          gaji_pokok?: number
+          id?: string
+          nama_snapshot: string
+          nominal_lembur?: number
+          payroll_run_id: string
+          potongan?: number
+          take_home?: number
+          total_jam_lembur?: number
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          employee_id?: string
+          gaji_pokok?: number
+          id?: string
+          nama_snapshot?: string
+          nominal_lembur?: number
+          payroll_run_id?: string
+          potongan?: number
+          take_home?: number
+          total_jam_lembur?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_payroll_item_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_payroll_item_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "hr_payroll_run"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_payroll_run: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          dibuat_oleh: string | null
+          difinalisasi_at: string | null
+          difinalisasi_oleh: string | null
+          id: string
+          periode_bulan: number
+          periode_tahun: number
+          status: Database["public"]["Enums"]["hr_payroll_status"]
+          total_gaji: number
+          total_lembur: number
+          total_take_home: number
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          dibuat_oleh?: string | null
+          difinalisasi_at?: string | null
+          difinalisasi_oleh?: string | null
+          id?: string
+          periode_bulan: number
+          periode_tahun: number
+          status?: Database["public"]["Enums"]["hr_payroll_status"]
+          total_gaji?: number
+          total_lembur?: number
+          total_take_home?: number
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          dibuat_oleh?: string | null
+          difinalisasi_at?: string | null
+          difinalisasi_oleh?: string | null
+          id?: string
+          periode_bulan?: number
+          periode_tahun?: number
+          status?: Database["public"]["Enums"]["hr_payroll_status"]
+          total_gaji?: number
+          total_lembur?: number
+          total_take_home?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hr_shift: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          jam_mulai: string
+          jam_selesai: string
+          nama: string
+          toleransi_menit: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jam_mulai: string
+          jam_selesai: string
+          nama: string
+          toleransi_menit?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jam_mulai?: string
+          jam_selesai?: string
+          nama?: string
+          toleransi_menit?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1319,6 +1662,16 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "dokter" | "perawat" | "kasir" | "pasien"
+      hr_attendance_status:
+        | "hadir"
+        | "telat"
+        | "alpa"
+        | "izin"
+        | "sakit"
+        | "cuti"
+      hr_overtime_mode: "uang" | "jam"
+      hr_overtime_status: "pending" | "approved" | "rejected" | "cancelled"
+      hr_payroll_status: "draft" | "final" | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1447,6 +1800,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "dokter", "perawat", "kasir", "pasien"],
+      hr_attendance_status: ["hadir", "telat", "alpa", "izin", "sakit", "cuti"],
+      hr_overtime_mode: ["uang", "jam"],
+      hr_overtime_status: ["pending", "approved", "rejected", "cancelled"],
+      hr_payroll_status: ["draft", "final", "paid"],
     },
   },
 } as const
