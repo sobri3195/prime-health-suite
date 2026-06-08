@@ -81,6 +81,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "honor-input", label: "Input Jasa Medis", icon: Coins, group: "Dokter & Honor" },
     { slug: "honor-rekap", label: "Rekap Jasa Dokter", icon: BarChart3, group: "Dokter & Honor" },
     { slug: "honor-potongan", label: "Potongan Jasa Dokter", icon: MinusSquare, group: "Dokter & Honor" },
+    { slug: "payroll", label: "Payroll Karyawan", icon: Wallet, group: "Dokter & Honor" },
 
     { slug: "piutang", label: "Piutang & Klaim", icon: ReceiptText, group: "Operasional" },
     { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Operasional" },
