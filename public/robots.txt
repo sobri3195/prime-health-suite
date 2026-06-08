@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://prime-health-suite.lovable.app/sitemap.xml

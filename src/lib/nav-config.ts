@@ -5,7 +5,7 @@ import {
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
   Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
-  Clock, Timer,
+  Clock, Timer, GraduationCap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -50,6 +50,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "resep", label: "Resep & Obat", icon: Pill, roles: ["super_admin"] },
     { slug: "billing", label: "Billing Klinik", icon: Receipt, roles: ["super_admin"] },
     { slug: "dokumen", label: "Dokumen Pasien", icon: Files, roles: ["super_admin"] },
+    { slug: "diklat", label: "Diklat & Dokumentasi", icon: GraduationCap, roles: ["super_admin"] },
     { slug: "absensi", label: "Absensi", icon: Clock },
     { slug: "lembur", label: "Lembur", icon: Timer },
     { slug: "laporan", label: "Laporan Klinik", icon: BarChart3, roles: ["super_admin"] },
