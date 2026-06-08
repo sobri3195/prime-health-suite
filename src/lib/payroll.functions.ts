@@ -80,7 +80,17 @@ export const createPayrollRun = createServerFn({ method: "POST" })
     }
 
     let totalGaji = 0, totalLembur = 0, totalTH = 0;
-    const itemRows: Array<Record<string, unknown>> = [];
+    type ItemInsert = {
+      payroll_run_id: string;
+      employee_id: string;
+      nama_snapshot: string;
+      gaji_pokok: number;
+      total_jam_lembur: number;
+      nominal_lembur: number;
+      potongan: number;
+      take_home: number;
+    };
+    const itemRows: ItemInsert[] = [];
     for (const e of emps ?? []) {
       const agg = byEmp.get(e.id) ?? { jam: 0, nominal: 0, ids: [] };
       const gaji = Number(e.gaji_pokok ?? 0);
