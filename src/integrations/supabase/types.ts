@@ -1560,6 +1560,74 @@ export type Database = {
         }
         Relationships: []
       }
+      klinik_diklat: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          deskripsi: string | null
+          dokter_id: string | null
+          galeri: Json
+          id: string
+          is_published: boolean
+          judul: string
+          pdf_url: string | null
+          ringkasan: string | null
+          slug: string
+          tags: string[]
+          tanggal: string
+          updated_at: string
+          views_count: number
+          youtube_url: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          deskripsi?: string | null
+          dokter_id?: string | null
+          galeri?: Json
+          id?: string
+          is_published?: boolean
+          judul: string
+          pdf_url?: string | null
+          ringkasan?: string | null
+          slug: string
+          tags?: string[]
+          tanggal?: string
+          updated_at?: string
+          views_count?: number
+          youtube_url?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          deskripsi?: string | null
+          dokter_id?: string | null
+          galeri?: Json
+          id?: string
+          is_published?: boolean
+          judul?: string
+          pdf_url?: string | null
+          ringkasan?: string | null
+          slug?: string
+          tags?: string[]
+          tanggal?: string
+          updated_at?: string
+          views_count?: number
+          youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_diklat_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
