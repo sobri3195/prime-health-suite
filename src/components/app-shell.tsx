@@ -176,24 +176,44 @@ export function AppShell({ system, children }: { system: System; children: React
           const primary = PRIMARY_SLUGS
             .map((s) => items.find((it) => it.slug === s))
             .filter((it): it is NavItem => Boolean(it));
+          const isItemActive = (slug: string) => {
+            if (slug === "") return pathname === `/${system}` || pathname === `/${system}/`;
+            return pathname === `/${system}/${slug}` || pathname.startsWith(`/${system}/${slug}/`);
+          };
           return (
-            <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl">
+            <nav
+              className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              aria-label="Bottom navigation"
+            >
               <div className="mx-auto flex max-w-3xl items-stretch justify-around px-2 py-1.5">
                 {primary.map((it) => {
                   const href = it.slug ? `/${system}/${it.slug}` : `/${system}`;
-                  const active = pathname === href || (it.slug === "" && pathname === `/${system}`);
+                  const active = isItemActive(it.slug);
                   return (
                     <Link
                       key={it.label}
                       to={href}
-                      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-[10px] transition-colors ${
+                      aria-current={active ? "page" : undefined}
+                      className={`group relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md px-2 pt-2 pb-1.5 text-[10px] transition-colors duration-200 ease-out ${
                         active
                           ? "text-navy dark:text-cyan-accent"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <it.icon className={`h-5 w-5 ${active ? "scale-110" : ""}`} />
-                      <span className="truncate">{it.label}</span>
+                      <span
+                        className={`pointer-events-none absolute left-1/2 top-0 h-0.5 -translate-x-1/2 rounded-full bg-current transition-all duration-300 ease-out ${
+                          active ? "w-8 opacity-100" : "w-0 opacity-0"
+                        }`}
+                      />
+                      <it.icon
+                        className={`h-5 w-5 transition-transform duration-200 ease-out ${
+                          active ? "scale-110" : "group-hover:scale-105"
+                        }`}
+                      />
+                      <span className={`truncate transition-all duration-200 ${active ? "font-semibold" : "font-normal"}`}>
+                        {it.label}
+                      </span>
                     </Link>
                   );
                 })}
