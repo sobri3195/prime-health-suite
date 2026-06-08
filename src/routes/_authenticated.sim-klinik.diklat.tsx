@@ -53,8 +53,22 @@ function DiklatAdminPage() {
   const [edit, setEdit] = useState<Partial<Row & { ringkasan: string; deskripsi: string; pdf_url: string; galeri: string[] }>>({});
 
   const upsert = useServerFn(upsertDiklat);
+  type UpsertPayload = {
+    id?: string;
+    judul: string;
+    ringkasan?: string | null;
+    deskripsi?: string | null;
+    tanggal: string;
+    dokter_id?: string | null;
+    youtube_url?: string | null;
+    cover_image_url?: string | null;
+    pdf_url?: string | null;
+    galeri: string[];
+    tags: string[];
+    is_published: boolean;
+  };
   const upsertMut = useMutation({
-    mutationFn: (payload: Parameters<typeof upsertDiklat>[0]["data"]) => upsert({ data: payload }),
+    mutationFn: (payload: UpsertPayload) => upsert({ data: payload }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["diklat-admin"] });
       qc.invalidateQueries({ queryKey: ["diklat", "public"] });
@@ -111,11 +125,12 @@ function DiklatAdminPage() {
       <PageHeader
         title="Diklat & Dokumentasi"
         desc="Kelola dokumentasi pelatihan internal. Yang dipublish tampil di halaman publik /diklat untuk SEO & promosi dokter."
-      >
+      />
+      <div className="mb-4 flex justify-end">
         <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" /> Tambah Diklat
         </Button>
-      </PageHeader>
+      </div>
 
       <div className="rounded-lg border">
         <Table>
