@@ -35,11 +35,13 @@ import { Route as AuthenticatedSimKlinikRegistrasiRouteImport } from './routes/_
 import { Route as AuthenticatedSimKlinikPemeriksaanRouteImport } from './routes/_authenticated.sim-klinik.pemeriksaan'
 import { Route as AuthenticatedSimKlinikPasienRouteImport } from './routes/_authenticated.sim-klinik.pasien'
 import { Route as AuthenticatedSimKlinikMasterRouteImport } from './routes/_authenticated.sim-klinik.master'
+import { Route as AuthenticatedSimKlinikLemburRouteImport } from './routes/_authenticated.sim-klinik.lembur'
 import { Route as AuthenticatedSimKlinikLaporanRouteImport } from './routes/_authenticated.sim-klinik.laporan'
 import { Route as AuthenticatedSimKlinikJadwalRouteImport } from './routes/_authenticated.sim-klinik.jadwal'
 import { Route as AuthenticatedSimKlinikDokumenRouteImport } from './routes/_authenticated.sim-klinik.dokumen'
 import { Route as AuthenticatedSimKlinikBillingRouteImport } from './routes/_authenticated.sim-klinik.billing'
 import { Route as AuthenticatedSimKlinikAuditRouteImport } from './routes/_authenticated.sim-klinik.audit'
+import { Route as AuthenticatedSimKlinikAbsensiRouteImport } from './routes/_authenticated.sim-klinik.absensi'
 import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_authenticated.sim-klinik.$section'
 import { Route as AuthenticatedFinanceVoucherRouteImport } from './routes/_authenticated.finance.voucher'
 import { Route as AuthenticatedFinancePiutangRouteImport } from './routes/_authenticated.finance.piutang'
@@ -50,6 +52,7 @@ import { Route as AuthenticatedFinancePendapatanKasirHarianRouteImport } from '.
 import { Route as AuthenticatedFinancePendapatanKartuRouteImport } from './routes/_authenticated.finance.pendapatan-kartu'
 import { Route as AuthenticatedFinancePendapatanInputHarianRouteImport } from './routes/_authenticated.finance.pendapatan-input-harian'
 import { Route as AuthenticatedFinancePendapatanRouteImport } from './routes/_authenticated.finance.pendapatan'
+import { Route as AuthenticatedFinancePayrollRouteImport } from './routes/_authenticated.finance.payroll'
 import { Route as AuthenticatedFinancePajakRouteImport } from './routes/_authenticated.finance.pajak'
 import { Route as AuthenticatedFinanceNeracaRouteImport } from './routes/_authenticated.finance.neraca'
 import { Route as AuthenticatedFinanceMasterVendorRouteImport } from './routes/_authenticated.finance.master-vendor'
@@ -216,6 +219,12 @@ const AuthenticatedSimKlinikMasterRoute =
     path: '/master',
     getParentRoute: () => AuthenticatedSimKlinikRoute,
   } as any)
+const AuthenticatedSimKlinikLemburRoute =
+  AuthenticatedSimKlinikLemburRouteImport.update({
+    id: '/lembur',
+    path: '/lembur',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
 const AuthenticatedSimKlinikLaporanRoute =
   AuthenticatedSimKlinikLaporanRouteImport.update({
     id: '/laporan',
@@ -244,6 +253,12 @@ const AuthenticatedSimKlinikAuditRoute =
   AuthenticatedSimKlinikAuditRouteImport.update({
     id: '/audit',
     path: '/audit',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedSimKlinikAbsensiRoute =
+  AuthenticatedSimKlinikAbsensiRouteImport.update({
+    id: '/absensi',
+    path: '/absensi',
     getParentRoute: () => AuthenticatedSimKlinikRoute,
   } as any)
 const AuthenticatedSimKlinikSectionRoute =
@@ -304,6 +319,12 @@ const AuthenticatedFinancePendapatanRoute =
   AuthenticatedFinancePendapatanRouteImport.update({
     id: '/pendapatan',
     path: '/pendapatan',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinancePayrollRoute =
+  AuthenticatedFinancePayrollRouteImport.update({
+    id: '/payroll',
+    path: '/payroll',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
 const AuthenticatedFinancePajakRoute =
@@ -504,6 +525,7 @@ export interface FileRoutesByFullPath {
   '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
+  '/finance/payroll': typeof AuthenticatedFinancePayrollRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
   '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
@@ -514,11 +536,13 @@ export interface FileRoutesByFullPath {
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
+  '/sim-klinik/lembur': typeof AuthenticatedSimKlinikLemburRoute
   '/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
   '/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
   '/sim-klinik/pemeriksaan': typeof AuthenticatedSimKlinikPemeriksaanRoute
@@ -569,6 +593,7 @@ export interface FileRoutesByTo {
   '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
+  '/finance/payroll': typeof AuthenticatedFinancePayrollRoute
   '/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
   '/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
@@ -579,11 +604,13 @@ export interface FileRoutesByTo {
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
+  '/sim-klinik/lembur': typeof AuthenticatedSimKlinikLemburRoute
   '/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
   '/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
   '/sim-klinik/pemeriksaan': typeof AuthenticatedSimKlinikPemeriksaanRoute
@@ -639,6 +666,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/_authenticated/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/_authenticated/finance/pajak': typeof AuthenticatedFinancePajakRoute
+  '/_authenticated/finance/payroll': typeof AuthenticatedFinancePayrollRoute
   '/_authenticated/finance/pendapatan': typeof AuthenticatedFinancePendapatanRoute
   '/_authenticated/finance/pendapatan-input-harian': typeof AuthenticatedFinancePendapatanInputHarianRoute
   '/_authenticated/finance/pendapatan-kartu': typeof AuthenticatedFinancePendapatanKartuRoute
@@ -649,11 +677,13 @@ export interface FileRoutesById {
   '/_authenticated/finance/piutang': typeof AuthenticatedFinancePiutangRoute
   '/_authenticated/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/_authenticated/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
+  '/_authenticated/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/_authenticated/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/_authenticated/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
   '/_authenticated/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/_authenticated/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/_authenticated/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
+  '/_authenticated/sim-klinik/lembur': typeof AuthenticatedSimKlinikLemburRoute
   '/_authenticated/sim-klinik/master': typeof AuthenticatedSimKlinikMasterRoute
   '/_authenticated/sim-klinik/pasien': typeof AuthenticatedSimKlinikPasienRoute
   '/_authenticated/sim-klinik/pemeriksaan': typeof AuthenticatedSimKlinikPemeriksaanRoute
@@ -709,6 +739,7 @@ export interface FileRouteTypes {
     | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
+    | '/finance/payroll'
     | '/finance/pendapatan'
     | '/finance/pendapatan-input-harian'
     | '/finance/pendapatan-kartu'
@@ -719,11 +750,13 @@ export interface FileRouteTypes {
     | '/finance/piutang'
     | '/finance/voucher'
     | '/sim-klinik/$section'
+    | '/sim-klinik/absensi'
     | '/sim-klinik/audit'
     | '/sim-klinik/billing'
     | '/sim-klinik/dokumen'
     | '/sim-klinik/jadwal'
     | '/sim-klinik/laporan'
+    | '/sim-klinik/lembur'
     | '/sim-klinik/master'
     | '/sim-klinik/pasien'
     | '/sim-klinik/pemeriksaan'
@@ -774,6 +807,7 @@ export interface FileRouteTypes {
     | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
+    | '/finance/payroll'
     | '/finance/pendapatan'
     | '/finance/pendapatan-input-harian'
     | '/finance/pendapatan-kartu'
@@ -784,11 +818,13 @@ export interface FileRouteTypes {
     | '/finance/piutang'
     | '/finance/voucher'
     | '/sim-klinik/$section'
+    | '/sim-klinik/absensi'
     | '/sim-klinik/audit'
     | '/sim-klinik/billing'
     | '/sim-klinik/dokumen'
     | '/sim-klinik/jadwal'
     | '/sim-klinik/laporan'
+    | '/sim-klinik/lembur'
     | '/sim-klinik/master'
     | '/sim-klinik/pasien'
     | '/sim-klinik/pemeriksaan'
@@ -843,6 +879,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/master-vendor'
     | '/_authenticated/finance/neraca'
     | '/_authenticated/finance/pajak'
+    | '/_authenticated/finance/payroll'
     | '/_authenticated/finance/pendapatan'
     | '/_authenticated/finance/pendapatan-input-harian'
     | '/_authenticated/finance/pendapatan-kartu'
@@ -853,11 +890,13 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/piutang'
     | '/_authenticated/finance/voucher'
     | '/_authenticated/sim-klinik/$section'
+    | '/_authenticated/sim-klinik/absensi'
     | '/_authenticated/sim-klinik/audit'
     | '/_authenticated/sim-klinik/billing'
     | '/_authenticated/sim-klinik/dokumen'
     | '/_authenticated/sim-klinik/jadwal'
     | '/_authenticated/sim-klinik/laporan'
+    | '/_authenticated/sim-klinik/lembur'
     | '/_authenticated/sim-klinik/master'
     | '/_authenticated/sim-klinik/pasien'
     | '/_authenticated/sim-klinik/pemeriksaan'
@@ -1069,6 +1108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimKlinikMasterRouteImport
       parentRoute: typeof AuthenticatedSimKlinikRoute
     }
+    '/_authenticated/sim-klinik/lembur': {
+      id: '/_authenticated/sim-klinik/lembur'
+      path: '/lembur'
+      fullPath: '/sim-klinik/lembur'
+      preLoaderRoute: typeof AuthenticatedSimKlinikLemburRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
     '/_authenticated/sim-klinik/laporan': {
       id: '/_authenticated/sim-klinik/laporan'
       path: '/laporan'
@@ -1102,6 +1148,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/sim-klinik/audit'
       preLoaderRoute: typeof AuthenticatedSimKlinikAuditRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/sim-klinik/absensi': {
+      id: '/_authenticated/sim-klinik/absensi'
+      path: '/absensi'
+      fullPath: '/sim-klinik/absensi'
+      preLoaderRoute: typeof AuthenticatedSimKlinikAbsensiRouteImport
       parentRoute: typeof AuthenticatedSimKlinikRoute
     }
     '/_authenticated/sim-klinik/$section': {
@@ -1172,6 +1225,13 @@ declare module '@tanstack/react-router' {
       path: '/pendapatan'
       fullPath: '/finance/pendapatan'
       preLoaderRoute: typeof AuthenticatedFinancePendapatanRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/payroll': {
+      id: '/_authenticated/finance/payroll'
+      path: '/payroll'
+      fullPath: '/finance/payroll'
+      preLoaderRoute: typeof AuthenticatedFinancePayrollRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/pajak': {
@@ -1401,6 +1461,7 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceMasterVendorRoute: typeof AuthenticatedFinanceMasterVendorRoute
   AuthenticatedFinanceNeracaRoute: typeof AuthenticatedFinanceNeracaRoute
   AuthenticatedFinancePajakRoute: typeof AuthenticatedFinancePajakRoute
+  AuthenticatedFinancePayrollRoute: typeof AuthenticatedFinancePayrollRoute
   AuthenticatedFinancePendapatanRoute: typeof AuthenticatedFinancePendapatanRoute
   AuthenticatedFinancePendapatanInputHarianRoute: typeof AuthenticatedFinancePendapatanInputHarianRoute
   AuthenticatedFinancePendapatanKartuRoute: typeof AuthenticatedFinancePendapatanKartuRoute
@@ -1442,6 +1503,7 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceMasterVendorRoute: AuthenticatedFinanceMasterVendorRoute,
   AuthenticatedFinanceNeracaRoute: AuthenticatedFinanceNeracaRoute,
   AuthenticatedFinancePajakRoute: AuthenticatedFinancePajakRoute,
+  AuthenticatedFinancePayrollRoute: AuthenticatedFinancePayrollRoute,
   AuthenticatedFinancePendapatanRoute: AuthenticatedFinancePendapatanRoute,
   AuthenticatedFinancePendapatanInputHarianRoute:
     AuthenticatedFinancePendapatanInputHarianRoute,
@@ -1464,11 +1526,13 @@ const AuthenticatedFinanceRouteWithChildren =
 
 interface AuthenticatedSimKlinikRouteChildren {
   AuthenticatedSimKlinikSectionRoute: typeof AuthenticatedSimKlinikSectionRoute
+  AuthenticatedSimKlinikAbsensiRoute: typeof AuthenticatedSimKlinikAbsensiRoute
   AuthenticatedSimKlinikAuditRoute: typeof AuthenticatedSimKlinikAuditRoute
   AuthenticatedSimKlinikBillingRoute: typeof AuthenticatedSimKlinikBillingRoute
   AuthenticatedSimKlinikDokumenRoute: typeof AuthenticatedSimKlinikDokumenRoute
   AuthenticatedSimKlinikJadwalRoute: typeof AuthenticatedSimKlinikJadwalRoute
   AuthenticatedSimKlinikLaporanRoute: typeof AuthenticatedSimKlinikLaporanRoute
+  AuthenticatedSimKlinikLemburRoute: typeof AuthenticatedSimKlinikLemburRoute
   AuthenticatedSimKlinikMasterRoute: typeof AuthenticatedSimKlinikMasterRoute
   AuthenticatedSimKlinikPasienRoute: typeof AuthenticatedSimKlinikPasienRoute
   AuthenticatedSimKlinikPemeriksaanRoute: typeof AuthenticatedSimKlinikPemeriksaanRoute
@@ -1482,11 +1546,13 @@ interface AuthenticatedSimKlinikRouteChildren {
 const AuthenticatedSimKlinikRouteChildren: AuthenticatedSimKlinikRouteChildren =
   {
     AuthenticatedSimKlinikSectionRoute: AuthenticatedSimKlinikSectionRoute,
+    AuthenticatedSimKlinikAbsensiRoute: AuthenticatedSimKlinikAbsensiRoute,
     AuthenticatedSimKlinikAuditRoute: AuthenticatedSimKlinikAuditRoute,
     AuthenticatedSimKlinikBillingRoute: AuthenticatedSimKlinikBillingRoute,
     AuthenticatedSimKlinikDokumenRoute: AuthenticatedSimKlinikDokumenRoute,
     AuthenticatedSimKlinikJadwalRoute: AuthenticatedSimKlinikJadwalRoute,
     AuthenticatedSimKlinikLaporanRoute: AuthenticatedSimKlinikLaporanRoute,
+    AuthenticatedSimKlinikLemburRoute: AuthenticatedSimKlinikLemburRoute,
     AuthenticatedSimKlinikMasterRoute: AuthenticatedSimKlinikMasterRoute,
     AuthenticatedSimKlinikPasienRoute: AuthenticatedSimKlinikPasienRoute,
     AuthenticatedSimKlinikPemeriksaanRoute:

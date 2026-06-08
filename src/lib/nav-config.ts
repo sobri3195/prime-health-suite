@@ -5,6 +5,7 @@ import {
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
   Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
+  Clock, Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -49,8 +50,11 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "resep", label: "Resep & Obat", icon: Pill, roles: ["super_admin"] },
     { slug: "billing", label: "Billing Klinik", icon: Receipt, roles: ["super_admin"] },
     { slug: "dokumen", label: "Dokumen Pasien", icon: Files, roles: ["super_admin"] },
+    { slug: "absensi", label: "Absensi", icon: Clock },
+    { slug: "lembur", label: "Lembur", icon: Timer },
     { slug: "laporan", label: "Laporan Klinik", icon: BarChart3, roles: ["super_admin"] },
     { slug: "master", label: "Master Data Klinik", icon: Database, roles: ["super_admin"] },
+    { slug: "audit", label: "Audit Log Klinik", icon: ScrollText, roles: ["super_admin"] },
     { slug: "audit", label: "Audit Log Klinik", icon: ScrollText, roles: ["super_admin"] },
     { slug: "settings", label: "Settings", icon: Settings, roles: ["super_admin"] },
   ],
@@ -77,6 +81,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "honor-input", label: "Input Jasa Medis", icon: Coins, group: "Dokter & Honor" },
     { slug: "honor-rekap", label: "Rekap Jasa Dokter", icon: BarChart3, group: "Dokter & Honor" },
     { slug: "honor-potongan", label: "Potongan Jasa Dokter", icon: MinusSquare, group: "Dokter & Honor" },
+    { slug: "payroll", label: "Payroll Karyawan", icon: Wallet, group: "Dokter & Honor" },
 
     { slug: "piutang", label: "Piutang & Klaim", icon: ReceiptText, group: "Operasional" },
     { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Operasional" },
