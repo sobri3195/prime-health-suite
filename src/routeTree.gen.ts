@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DiklatRouteImport } from './routes/diklat'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SimKlinikLoginRouteImport } from './routes/sim-klinik.login'
@@ -19,6 +21,7 @@ import { Route as ProdukSimKlinikRouteImport } from './routes/produk.sim-klinik'
 import { Route as ProdukFinanceRouteImport } from './routes/produk.finance'
 import { Route as ProdukAppsRouteImport } from './routes/produk.apps'
 import { Route as FinanceLoginRouteImport } from './routes/finance.login'
+import { Route as DiklatSlugRouteImport } from './routes/diklat.$slug'
 import { Route as AppsLoginRouteImport } from './routes/apps.login'
 import { Route as AuthenticatedSimKlinikRouteImport } from './routes/_authenticated.sim-klinik'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated.qa'
@@ -39,6 +42,7 @@ import { Route as AuthenticatedSimKlinikLemburRouteImport } from './routes/_auth
 import { Route as AuthenticatedSimKlinikLaporanRouteImport } from './routes/_authenticated.sim-klinik.laporan'
 import { Route as AuthenticatedSimKlinikJadwalRouteImport } from './routes/_authenticated.sim-klinik.jadwal'
 import { Route as AuthenticatedSimKlinikDokumenRouteImport } from './routes/_authenticated.sim-klinik.dokumen'
+import { Route as AuthenticatedSimKlinikDiklatRouteImport } from './routes/_authenticated.sim-klinik.diklat'
 import { Route as AuthenticatedSimKlinikBillingRouteImport } from './routes/_authenticated.sim-klinik.billing'
 import { Route as AuthenticatedSimKlinikAuditRouteImport } from './routes/_authenticated.sim-klinik.audit'
 import { Route as AuthenticatedSimKlinikAbsensiRouteImport } from './routes/_authenticated.sim-klinik.absensi'
@@ -80,6 +84,11 @@ import { Route as AuthenticatedAppsBookingRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
 import { Route as AuthenticatedAppsEdukasiSlugRouteImport } from './routes/_authenticated.apps.edukasi.$slug'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -93,6 +102,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiklatRoute = DiklatRouteImport.update({
+  id: '/diklat',
+  path: '/diklat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -128,6 +142,11 @@ const FinanceLoginRoute = FinanceLoginRouteImport.update({
   id: '/finance/login',
   path: '/finance/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DiklatSlugRoute = DiklatSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => DiklatRoute,
 } as any)
 const AppsLoginRoute = AppsLoginRouteImport.update({
   id: '/apps/login',
@@ -241,6 +260,12 @@ const AuthenticatedSimKlinikDokumenRoute =
   AuthenticatedSimKlinikDokumenRouteImport.update({
     id: '/dokumen',
     path: '/dokumen',
+    getParentRoute: () => AuthenticatedSimKlinikRoute,
+  } as any)
+const AuthenticatedSimKlinikDiklatRoute =
+  AuthenticatedSimKlinikDiklatRouteImport.update({
+    id: '/diklat',
+    path: '/diklat',
     getParentRoute: () => AuthenticatedSimKlinikRoute,
   } as any)
 const AuthenticatedSimKlinikBillingRoute =
@@ -486,15 +511,18 @@ const AuthenticatedAppsEdukasiSlugRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/diklat': typeof DiklatRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/apps': typeof AuthenticatedAppsRouteWithChildren
   '/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/integration': typeof AuthenticatedIntegrationRoute
   '/qa': typeof AuthenticatedQaRoute
   '/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
   '/apps/login': typeof AppsLoginRoute
+  '/diklat/$slug': typeof DiklatSlugRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
   '/produk/finance': typeof ProdukFinanceRoute
@@ -539,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
+  '/sim-klinik/diklat': typeof AuthenticatedSimKlinikDiklatRoute
   '/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
@@ -557,12 +586,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/diklat': typeof DiklatRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/integration': typeof AuthenticatedIntegrationRoute
   '/qa': typeof AuthenticatedQaRoute
   '/apps/login': typeof AppsLoginRoute
+  '/diklat/$slug': typeof DiklatSlugRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
   '/produk/finance': typeof ProdukFinanceRoute
@@ -607,6 +639,7 @@ export interface FileRoutesByTo {
   '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
+  '/sim-klinik/diklat': typeof AuthenticatedSimKlinikDiklatRoute
   '/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
@@ -627,15 +660,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/diklat': typeof DiklatRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/apps': typeof AuthenticatedAppsRouteWithChildren
   '/_authenticated/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/_authenticated/integration': typeof AuthenticatedIntegrationRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/sim-klinik': typeof AuthenticatedSimKlinikRouteWithChildren
   '/apps/login': typeof AppsLoginRoute
+  '/diklat/$slug': typeof DiklatSlugRoute
   '/finance/login': typeof FinanceLoginRoute
   '/produk/apps': typeof ProdukAppsRoute
   '/produk/finance': typeof ProdukFinanceRoute
@@ -680,6 +716,7 @@ export interface FileRoutesById {
   '/_authenticated/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
   '/_authenticated/sim-klinik/audit': typeof AuthenticatedSimKlinikAuditRoute
   '/_authenticated/sim-klinik/billing': typeof AuthenticatedSimKlinikBillingRoute
+  '/_authenticated/sim-klinik/diklat': typeof AuthenticatedSimKlinikDiklatRoute
   '/_authenticated/sim-klinik/dokumen': typeof AuthenticatedSimKlinikDokumenRoute
   '/_authenticated/sim-klinik/jadwal': typeof AuthenticatedSimKlinikJadwalRoute
   '/_authenticated/sim-klinik/laporan': typeof AuthenticatedSimKlinikLaporanRoute
@@ -700,15 +737,18 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/diklat'
     | '/login'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/apps'
     | '/finance'
     | '/integration'
     | '/qa'
     | '/sim-klinik'
     | '/apps/login'
+    | '/diklat/$slug'
     | '/finance/login'
     | '/produk/apps'
     | '/produk/finance'
@@ -753,6 +793,7 @@ export interface FileRouteTypes {
     | '/sim-klinik/absensi'
     | '/sim-klinik/audit'
     | '/sim-klinik/billing'
+    | '/sim-klinik/diklat'
     | '/sim-klinik/dokumen'
     | '/sim-klinik/jadwal'
     | '/sim-klinik/laporan'
@@ -771,12 +812,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/diklat'
     | '/login'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/integration'
     | '/qa'
     | '/apps/login'
+    | '/diklat/$slug'
     | '/finance/login'
     | '/produk/apps'
     | '/produk/finance'
@@ -821,6 +865,7 @@ export interface FileRouteTypes {
     | '/sim-klinik/absensi'
     | '/sim-klinik/audit'
     | '/sim-klinik/billing'
+    | '/sim-klinik/diklat'
     | '/sim-klinik/dokumen'
     | '/sim-klinik/jadwal'
     | '/sim-klinik/laporan'
@@ -840,15 +885,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/diklat'
     | '/login'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/_authenticated/apps'
     | '/_authenticated/finance'
     | '/_authenticated/integration'
     | '/_authenticated/qa'
     | '/_authenticated/sim-klinik'
     | '/apps/login'
+    | '/diklat/$slug'
     | '/finance/login'
     | '/produk/apps'
     | '/produk/finance'
@@ -893,6 +941,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sim-klinik/absensi'
     | '/_authenticated/sim-klinik/audit'
     | '/_authenticated/sim-klinik/billing'
+    | '/_authenticated/sim-klinik/diklat'
     | '/_authenticated/sim-klinik/dokumen'
     | '/_authenticated/sim-klinik/jadwal'
     | '/_authenticated/sim-klinik/laporan'
@@ -913,9 +962,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  DiklatRoute: typeof DiklatRouteWithChildren
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AppsLoginRoute: typeof AppsLoginRoute
   FinanceLoginRoute: typeof FinanceLoginRoute
   ProdukAppsRoute: typeof ProdukAppsRoute
@@ -926,6 +977,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -945,6 +1003,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diklat': {
+      id: '/diklat'
+      path: '/diklat'
+      fullPath: '/diklat'
+      preLoaderRoute: typeof DiklatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -995,6 +1060,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finance/login'
       preLoaderRoute: typeof FinanceLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/diklat/$slug': {
+      id: '/diklat/$slug'
+      path: '/$slug'
+      fullPath: '/diklat/$slug'
+      preLoaderRoute: typeof DiklatSlugRouteImport
+      parentRoute: typeof DiklatRoute
     }
     '/apps/login': {
       id: '/apps/login'
@@ -1134,6 +1206,13 @@ declare module '@tanstack/react-router' {
       path: '/dokumen'
       fullPath: '/sim-klinik/dokumen'
       preLoaderRoute: typeof AuthenticatedSimKlinikDokumenRouteImport
+      parentRoute: typeof AuthenticatedSimKlinikRoute
+    }
+    '/_authenticated/sim-klinik/diklat': {
+      id: '/_authenticated/sim-klinik/diklat'
+      path: '/diklat'
+      fullPath: '/sim-klinik/diklat'
+      preLoaderRoute: typeof AuthenticatedSimKlinikDiklatRouteImport
       parentRoute: typeof AuthenticatedSimKlinikRoute
     }
     '/_authenticated/sim-klinik/billing': {
@@ -1529,6 +1608,7 @@ interface AuthenticatedSimKlinikRouteChildren {
   AuthenticatedSimKlinikAbsensiRoute: typeof AuthenticatedSimKlinikAbsensiRoute
   AuthenticatedSimKlinikAuditRoute: typeof AuthenticatedSimKlinikAuditRoute
   AuthenticatedSimKlinikBillingRoute: typeof AuthenticatedSimKlinikBillingRoute
+  AuthenticatedSimKlinikDiklatRoute: typeof AuthenticatedSimKlinikDiklatRoute
   AuthenticatedSimKlinikDokumenRoute: typeof AuthenticatedSimKlinikDokumenRoute
   AuthenticatedSimKlinikJadwalRoute: typeof AuthenticatedSimKlinikJadwalRoute
   AuthenticatedSimKlinikLaporanRoute: typeof AuthenticatedSimKlinikLaporanRoute
@@ -1549,6 +1629,7 @@ const AuthenticatedSimKlinikRouteChildren: AuthenticatedSimKlinikRouteChildren =
     AuthenticatedSimKlinikAbsensiRoute: AuthenticatedSimKlinikAbsensiRoute,
     AuthenticatedSimKlinikAuditRoute: AuthenticatedSimKlinikAuditRoute,
     AuthenticatedSimKlinikBillingRoute: AuthenticatedSimKlinikBillingRoute,
+    AuthenticatedSimKlinikDiklatRoute: AuthenticatedSimKlinikDiklatRoute,
     AuthenticatedSimKlinikDokumenRoute: AuthenticatedSimKlinikDokumenRoute,
     AuthenticatedSimKlinikJadwalRoute: AuthenticatedSimKlinikJadwalRoute,
     AuthenticatedSimKlinikLaporanRoute: AuthenticatedSimKlinikLaporanRoute,
@@ -1590,12 +1671,25 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface DiklatRouteChildren {
+  DiklatSlugRoute: typeof DiklatSlugRoute
+}
+
+const DiklatRouteChildren: DiklatRouteChildren = {
+  DiklatSlugRoute: DiklatSlugRoute,
+}
+
+const DiklatRouteWithChildren =
+  DiklatRoute._addFileChildren(DiklatRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  DiklatRoute: DiklatRouteWithChildren,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AppsLoginRoute: AppsLoginRoute,
   FinanceLoginRoute: FinanceLoginRoute,
   ProdukAppsRoute: ProdukAppsRoute,
