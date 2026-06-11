@@ -844,11 +844,125 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_expense: {
+        Row: {
+          bank: string | null
+          coa_code: string | null
+          cost_center_code: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          keterangan: string | null
+          metode: string
+          no_voucher: string
+          pajak: number
+          status: string
+          subtotal: number
+          tanggal: string
+          total: number
+          updated_at: string
+          vendor_id: string | null
+          vendor_nama: string | null
+          void_reason: string | null
+        }
+        Insert: {
+          bank?: string | null
+          coa_code?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keterangan?: string | null
+          metode?: string
+          no_voucher: string
+          pajak?: number
+          status?: string
+          subtotal?: number
+          tanggal?: string
+          total?: number
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_nama?: string | null
+          void_reason?: string | null
+        }
+        Update: {
+          bank?: string | null
+          coa_code?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keterangan?: string | null
+          metode?: string
+          no_voucher?: string
+          pajak?: number
+          status?: string
+          subtotal?: number
+          tanggal?: string
+          total?: number
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_nama?: string | null
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_expense_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "fin_vendor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_expense_item: {
+        Row: {
+          coa_code: string | null
+          created_at: string
+          deskripsi: string
+          expense_id: string
+          harga: number
+          id: string
+          qty: number
+          subtotal: number
+        }
+        Insert: {
+          coa_code?: string | null
+          created_at?: string
+          deskripsi: string
+          expense_id: string
+          harga?: number
+          id?: string
+          qty?: number
+          subtotal?: number
+        }
+        Update: {
+          coa_code?: string | null
+          created_at?: string
+          deskripsi?: string
+          expense_id?: string
+          harga?: number
+          id?: string
+          qty?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_expense_item_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "fin_expense"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fin_invoice: {
         Row: {
           apps_user_id: string | null
           catatan: string | null
           created_at: string
+          dibayar: number
+          diskon: number
           dokter_id: string | null
           id: string
           kasir: string | null
@@ -862,11 +976,14 @@ export type Database = {
           tanggal: string
           total: number
           updated_at: string
+          void_reason: string | null
         }
         Insert: {
           apps_user_id?: string | null
           catatan?: string | null
           created_at?: string
+          dibayar?: number
+          diskon?: number
           dokter_id?: string | null
           id?: string
           kasir?: string | null
@@ -880,11 +997,14 @@ export type Database = {
           tanggal?: string
           total?: number
           updated_at?: string
+          void_reason?: string | null
         }
         Update: {
           apps_user_id?: string | null
           catatan?: string | null
           created_at?: string
+          dibayar?: number
+          diskon?: number
           dokter_id?: string | null
           id?: string
           kasir?: string | null
@@ -898,6 +1018,7 @@ export type Database = {
           tanggal?: string
           total?: number
           updated_at?: string
+          void_reason?: string | null
         }
         Relationships: [
           {
@@ -960,6 +1081,95 @@ export type Database = {
             columns: ["layanan_id"]
             isOneToOne: false
             referencedRelation: "fin_layanan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_journal_entry: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          keterangan: string | null
+          no_jurnal: string
+          ref_id: string | null
+          ref_no: string | null
+          status: string
+          sumber: string
+          tanggal: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keterangan?: string | null
+          no_jurnal: string
+          ref_id?: string | null
+          ref_no?: string | null
+          status?: string
+          sumber?: string
+          tanggal?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keterangan?: string | null
+          no_jurnal?: string
+          ref_id?: string | null
+          ref_no?: string | null
+          status?: string
+          sumber?: string
+          tanggal?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_journal_line: {
+        Row: {
+          coa_code: string
+          coa_nama: string | null
+          cost_center_code: string | null
+          created_at: string
+          debit: number
+          entry_id: string
+          id: string
+          keterangan: string | null
+          kredit: number
+        }
+        Insert: {
+          coa_code: string
+          coa_nama?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          debit?: number
+          entry_id: string
+          id?: string
+          keterangan?: string | null
+          kredit?: number
+        }
+        Update: {
+          coa_code?: string
+          coa_nama?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          debit?: number
+          entry_id?: string
+          id?: string
+          keterangan?: string | null
+          kredit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_journal_line_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entry"
             referencedColumns: ["id"]
           },
         ]
