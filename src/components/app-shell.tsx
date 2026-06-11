@@ -8,7 +8,6 @@ import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { addAudit } from "@/lib/audit-log";
 import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
 import { useI18n, type Lang } from "@/lib/i18n";
-import { useRoles, hasAnyRole } from "@/lib/rbac";
 
 import { BRAND } from "@/lib/brand";
 
@@ -35,12 +34,7 @@ export function AppShell({ system, children }: { system: System; children: React
   }, [pathname, user]);
 
   const allItems = NAV[system];
-  const { data: roles } = useRoles({ enabled: system === "sim-klinik" });
-  const items = useMemo(() => {
-    if (system !== "sim-klinik") return allItems;
-    if (!Array.isArray(roles)) return allItems; // RBAC not loaded → show all (legacy mock auth)
-    return allItems.filter((it) => !it.roles || hasAnyRole(roles, it.roles));
-  }, [allItems, roles, system]);
+  const items = allItems;
   const currentSlug = pathname.split("/").slice(3).join("/") || "";
   const current = findNav(system, currentSlug);
   const isApps = system === "apps";
