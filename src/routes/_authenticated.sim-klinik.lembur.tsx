@@ -55,7 +55,7 @@ function fmtIDR(n: number) {
 function LemburPage() {
   const qc = useQueryClient();
   const search = useSearch({ from: "/_authenticated/sim-klinik/lembur" });
-  const { data: roles } = useRoles();
+  const { data: roles } = useRoles({ enabled: true });
   const isApprover = hasAnyRole(roles, ["super_admin"]);
 
   const emp = useQuery({ queryKey: ["hr.me"], queryFn: () => getMyEmployee() });
