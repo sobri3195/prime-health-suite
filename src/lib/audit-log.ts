@@ -42,8 +42,10 @@ export function addAudit(entry: Omit<AuditEntry, "id" | "ts">) {
   if (typeof window !== "undefined") {
     void (async () => {
       try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) return;
         const { appendAudit } = await import("./clinic.functions");
-        // Map mock action → module/action pair so audit page can filter.
         const map: Record<AuditEntry["action"], { module: string; action: string }> = {
           login:       { module: "Auth",     action: "login" },
           logout:      { module: "Auth",     action: "logout" },
