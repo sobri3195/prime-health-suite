@@ -1,91 +1,64 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { invoices, expenseMTD, bankBalance } from "@/data/financeData";
-import { formatIDR, sumOutstanding } from "@/lib/finance";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { PageHeader } from "@/components/app-shell";
+import { useFinanceDate } from "@/context/finance-date";
+import { getTrialBalance } from "@/lib/finance-report.functions";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { exportCsv } from "@/lib/exporter";
 
-export const Route = createFileRoute("/_authenticated/finance/neraca")({
-  component: Neraca,
-});
+export const Route = createFileRoute("/_authenticated/finance/neraca")({ component: NeracaSaldo });
 
-function Neraca() {
-  const d = useMemo(() => {
-    const piutang = sumOutstanding(invoices);
-    const kas = bankBalance;
-    const inventaris = 350_000_000;
-    const peralatan = 1_250_000_000;
-    const akumDepresiasi = -380_000_000;
-    const aktivaLancar = kas + piutang + inventaris;
-    const aktivaTetap = peralatan + akumDepresiasi;
-    const totalAktiva = aktivaLancar + aktivaTetap;
+const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
 
-    const hutangUsaha = 37_800_000;
-    const hutangPajak = Math.round(expenseMTD * 0.05);
-    const hutangBank = 250_000_000;
-    const totalHutang = hutangUsaha + hutangPajak + hutangBank;
+function NeracaSaldo() {
+  const { from, to, label } = useFinanceDate();
+  const fn = useServerFn(getTrialBalance);
+  const { data, isLoading } = useQuery({ queryKey: ["tb", from, to], queryFn: () => fn({ data: { from, to } }) });
+  const rows = data?.rows ?? [];
 
-    const modal = 1_500_000_000;
-    const labaDitahan = totalAktiva - totalHutang - modal;
-    const totalEkuitas = modal + labaDitahan;
-
-    return { kas, piutang, inventaris, peralatan, akumDepresiasi, aktivaLancar, aktivaTetap, totalAktiva,
-      hutangUsaha, hutangPajak, hutangBank, totalHutang, modal, labaDitahan, totalEkuitas };
-  }, []);
-
-  const Row = ({ label, value, bold, indent }: { label: string; value: number; bold?: boolean; indent?: boolean }) => (
-    <tr className={bold ? "border-t font-semibold" : ""}>
-      <td className={`py-1.5 ${indent ? "pl-6" : ""}`}>{label}</td>
-      <td className={`py-1.5 text-right font-mono ${value < 0 ? "text-rose-600" : ""}`}>{formatIDR(value)}</td>
-    </tr>
-  );
+  const csv = () => exportCsv(`neraca-saldo-${from}_${to}.csv`, [
+    { key: "code", header: "Kode" }, { key: "name", header: "Akun" }, { key: "type", header: "Tipe" },
+    { key: "debit_bal", header: "Debit" }, { key: "kredit_bal", header: "Kredit" },
+  ], rows);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Laporan Keuangan</div>
-        <h1 className="text-2xl font-semibold">Neraca Saldo</h1>
-        <p className="text-sm text-muted-foreground">Posisi aktiva, kewajiban, dan ekuitas per akhir periode.</p>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="mb-3 text-base font-semibold">Aktiva</h3>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr><td className="py-1.5 font-semibold">Aktiva Lancar</td><td/></tr>
-              <Row label="Kas & Setara Kas" value={d.kas} indent />
-              <Row label="Piutang Usaha" value={d.piutang} indent />
-              <Row label="Persediaan" value={d.inventaris} indent />
-              <Row label="Total Aktiva Lancar" value={d.aktivaLancar} bold />
-              <tr><td className="pt-4 font-semibold">Aktiva Tetap</td><td/></tr>
-              <Row label="Peralatan Medis" value={d.peralatan} indent />
-              <Row label="Akumulasi Depresiasi" value={d.akumDepresiasi} indent />
-              <Row label="Total Aktiva Tetap" value={d.aktivaTetap} bold />
-              <tr className="border-t-2 border-foreground/20"><td className="py-2 font-bold">TOTAL AKTIVA</td><td className="py-2 text-right font-mono font-bold">{formatIDR(d.totalAktiva)}</td></tr>
-            </tbody>
-          </table>
+    <div>
+      <PageHeader title="Neraca Saldo" desc={`Trial balance per ${label}. Total debit harus sama dengan total kredit.`} />
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {data?.balanced
+            ? <Badge className="gap-1 bg-emerald-500/15 text-emerald-700"><CheckCircle2 className="h-3 w-3" /> Balanced</Badge>
+            : <Badge className="gap-1 bg-amber-500/15 text-amber-700"><AlertTriangle className="h-3 w-3" /> Tidak balanced</Badge>}
+          <span className="text-xs text-muted-foreground">Total D {fmt(data?.totalDebit ?? 0)} vs K {fmt(data?.totalKredit ?? 0)}</span>
         </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="mb-3 text-base font-semibold">Kewajiban & Ekuitas</h3>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr><td className="py-1.5 font-semibold">Kewajiban</td><td/></tr>
-              <Row label="Hutang Usaha" value={d.hutangUsaha} indent />
-              <Row label="Hutang Pajak" value={d.hutangPajak} indent />
-              <Row label="Hutang Bank" value={d.hutangBank} indent />
-              <Row label="Total Kewajiban" value={d.totalHutang} bold />
-              <tr><td className="pt-4 font-semibold">Ekuitas</td><td/></tr>
-              <Row label="Modal Disetor" value={d.modal} indent />
-              <Row label="Laba Ditahan" value={d.labaDitahan} indent />
-              <Row label="Total Ekuitas" value={d.totalEkuitas} bold />
-              <tr className="border-t-2 border-foreground/20"><td className="py-2 font-bold">TOTAL PASIVA</td><td className="py-2 text-right font-mono font-bold">{formatIDR(d.totalHutang + d.totalEkuitas)}</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <Button variant="outline" size="sm" onClick={csv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
       </div>
-
-      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-700">
-        ✓ Neraca seimbang: Aktiva = Kewajiban + Ekuitas
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader><TableRow><TableHead>Kode</TableHead><TableHead>Akun</TableHead><TableHead>Tipe</TableHead><TableHead className="text-right">Debit</TableHead><TableHead className="text-right">Kredit</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {isLoading ? <TableRow><TableCell colSpan={5} className="py-6 text-center">Loading…</TableCell></TableRow>
+              : rows.length === 0 ? <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Belum ada transaksi.</TableCell></TableRow>
+              : rows.map((r: any) => (
+                <TableRow key={r.code}>
+                  <TableCell className="font-mono text-xs">{r.code}</TableCell>
+                  <TableCell>{r.name}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{r.type}</TableCell>
+                  <TableCell className="text-right font-mono">{r.debit_bal ? fmt(r.debit_bal) : ""}</TableCell>
+                  <TableCell className="text-right font-mono">{r.kredit_bal ? fmt(r.kredit_bal) : ""}</TableCell>
+                </TableRow>
+              ))}
+            <TableRow className="border-t-2 font-semibold">
+              <TableCell colSpan={3}>Total</TableCell>
+              <TableCell className="text-right font-mono">{fmt(data?.totalDebit ?? 0)}</TableCell>
+              <TableCell className="text-right font-mono">{fmt(data?.totalKredit ?? 0)}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
