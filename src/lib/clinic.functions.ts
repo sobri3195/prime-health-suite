@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ===== Roles =====
-export type AppRole = "super_admin" | "dokter" | "perawat" | "kasir" | "pasien";
+export type AppRole = "super_admin" | "admin_klinik" | "dokter" | "perawat" | "perawat_optometri" | "pendaftaran" | "kasir" | "farmasi" | "manajemen" | "pasien";
 
 export const getMyRoles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
