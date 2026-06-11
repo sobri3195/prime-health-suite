@@ -31,7 +31,7 @@ export function useRoles(options: { enabled?: boolean } = {}) {
   }, [options.enabled]);
 
   return useQuery({
-    queryKey: ["my-roles", hasSession],
+    queryKey: ["my-roles", options.enabled !== false, hasSession],
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.access_token) return undefined;
@@ -39,6 +39,8 @@ export function useRoles(options: { enabled?: boolean } = {}) {
     },
     enabled: options.enabled !== false && authReady && hasSession,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     staleTime: 60_000,
   });
 }
