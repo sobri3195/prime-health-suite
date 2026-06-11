@@ -55,7 +55,7 @@ export function PatientBeranda() {
   const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue(), refetchInterval: 60_000 });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
 
-  useAppsRealtime(profileQ.data?.profile?.user_id);
+  useAppsRealtime(profileQ.data?.profile?.user_id ?? undefined);
 
   const profile = profileQ.data?.profile;
   const queue = queueQ.data?.queue;
@@ -647,7 +647,7 @@ export function PatientProfil() {
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
   const p = profileQ.data?.profile;
-  useAppsRealtime(p?.user_id);
+  useAppsRealtime(p?.user_id ?? undefined);
 
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({
