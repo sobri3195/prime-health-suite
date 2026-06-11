@@ -115,6 +115,39 @@ export const getBalanceSheet = createServerFn({ method: "POST" })
     return { asset, liability, equity, totalAsset, totalLiab, totalEquity };
   });
 
+// ============ DRILL-DOWN: journal lines per COA / per entry ============
+export const drillCoa = createServerFn({ method: "POST" })
+  .inputValidator((d: { coa_code?: string; entry_id?: string; from?: string; to?: string } = {}) => d)
+  .handler(async ({ data }) => {
+    const s = await sb();
+    let q = s
+      .from("fin_journal_line")
+      .select("id, coa_code, coa_nama, debit, kredit, keterangan, entry_id, fin_journal_entry!inner(id, no_jurnal, tanggal, sumber, ref_no, keterangan, status)")
+      .eq("fin_journal_entry.status", "posted")
+      .order("entry_id", { ascending: false })
+      .limit(1000);
+    if (data.coa_code) q = q.eq("coa_code", data.coa_code);
+    if (data.entry_id) q = q.eq("entry_id", data.entry_id);
+    if (data.from) q = q.gte("fin_journal_entry.tanggal", data.from);
+    if (data.to) q = q.lte("fin_journal_entry.tanggal", data.to);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    const lines = (rows ?? []).map((r: any) => ({
+      id: r.id, coa_code: r.coa_code, coa_nama: r.coa_nama,
+      debit: Number(r.debit) || 0, kredit: Number(r.kredit) || 0,
+      keterangan: r.keterangan,
+      entry_id: r.entry_id,
+      no_jurnal: r.fin_journal_entry?.no_jurnal,
+      tanggal: r.fin_journal_entry?.tanggal,
+      sumber: r.fin_journal_entry?.sumber,
+      ref_no: r.fin_journal_entry?.ref_no,
+      entry_keterangan: r.fin_journal_entry?.keterangan,
+    }));
+    const totalDebit = lines.reduce((a, l) => a + l.debit, 0);
+    const totalKredit = lines.reduce((a, l) => a + l.kredit, 0);
+    return { lines, totalDebit, totalKredit };
+  });
+
 // ============ AUDIT LOG QUERY ============
 export const listFinAudit = createServerFn({ method: "POST" })
   .inputValidator((d: { from?: string; to?: string; entity?: string; action?: string; q?: string } = {}) => d)
