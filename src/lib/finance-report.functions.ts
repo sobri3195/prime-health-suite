@@ -92,6 +92,7 @@ export const getCashFlow = createServerFn({ method: "POST" })
       (sections as any)[section] += cashDelta;
       closing += cashDelta;
       details.push({
+        entry_id: e.id,
         tanggal: e.tanggal, no_jurnal: e.no_jurnal, sumber: e.sumber,
         keterangan: e.keterangan, section, amount: cashDelta,
       });
