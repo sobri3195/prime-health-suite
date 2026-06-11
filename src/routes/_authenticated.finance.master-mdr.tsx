@@ -29,7 +29,7 @@ function MasterMdrPage() {
   const list = useServerFn(listMdrRule);
   const save = useServerFn(upsertMdrRule);
   const del = useServerFn(deleteMdrRule);
-  const { data, isLoading } = useQuery({ queryKey: ["mdr"], queryFn: () => list({ data: {} }) });
+  const { data, isLoading } = useQuery({ queryKey: ["mdr"], queryFn: () => list() });
   const rows: Row[] = (data?.rows ?? []) as Row[];
 
   const [open, setOpen] = useState(false);

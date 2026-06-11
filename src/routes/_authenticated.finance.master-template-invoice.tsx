@@ -28,7 +28,7 @@ function TplInvoicePage() {
   const list = useServerFn(listTplInvoice);
   const save = useServerFn(upsertTplInvoice);
   const del = useServerFn(deleteTplInvoice);
-  const { data } = useQuery({ queryKey: ["tpl-invoice"], queryFn: () => list({ data: {} }) });
+  const { data } = useQuery({ queryKey: ["tpl-invoice"], queryFn: () => list() });
   const rows: Tpl[] = (data?.rows ?? []) as Tpl[];
   const allItems: Item[] = (data?.items ?? []) as Item[];
   const itemsByTpl = useMemo(() => {

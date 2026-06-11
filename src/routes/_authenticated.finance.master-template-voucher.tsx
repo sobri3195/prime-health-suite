@@ -29,7 +29,7 @@ function TplVoucherPage() {
   const list = useServerFn(listTplVoucher);
   const save = useServerFn(upsertTplVoucher);
   const del = useServerFn(deleteTplVoucher);
-  const { data } = useQuery({ queryKey: ["tpl-voucher"], queryFn: () => list({ data: {} }) });
+  const { data } = useQuery({ queryKey: ["tpl-voucher"], queryFn: () => list() });
   const rows: Tpl[] = (data?.rows ?? []) as Tpl[];
   const allItems: Item[] = (data?.items ?? []) as Item[];
   const itemsByTpl = useMemo(() => {
