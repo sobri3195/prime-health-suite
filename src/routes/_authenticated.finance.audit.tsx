@@ -30,7 +30,10 @@ function FinanceAuditPage() {
   const [q, setQ] = useState("");
   const [actionFilter, setActionFilter] = useState<"all" | AuditEntry["action"]>("all");
 
-  useEffect(() => subscribeAudit(() => setTick((t) => t + 1)), []);
+  useEffect(() => {
+    const off = subscribeAudit(() => setTick((t) => t + 1));
+    return () => { off; };
+  }, []);
 
   const rows = useMemo(() => {
     const fromT = new Date(from + "T00:00:00").getTime();
