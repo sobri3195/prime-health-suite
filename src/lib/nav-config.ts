@@ -72,6 +72,9 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "master-cost-center", label: "Cost Center", icon: Layers, group: "Master Data" },
     { slug: "master-tarif-pajak", label: "Tarif Pajak", icon: BadgePercent, group: "Master Data" },
     { slug: "master-kategori-layanan", label: "Kategori Layanan", icon: ListChecks, group: "Master Data" },
+    { slug: "master-mdr", label: "Aturan MDR", icon: CreditCard, group: "Master Data" },
+    { slug: "master-template-invoice", label: "Template Invoice", icon: FileText, group: "Master Data" },
+    { slug: "master-template-voucher", label: "Template Voucher", icon: FileText, group: "Master Data" },
 
     { slug: "pendapatan-input-harian", label: "Input Pendapatan Harian", icon: Wallet, group: "Pendapatan" },
     { slug: "pendapatan", label: "Detail Pendapatan", icon: ReceiptText, group: "Pendapatan" },
@@ -89,6 +92,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Operasional" },
     { slug: "pajak", label: "Pajak", icon: ShieldCheck, group: "Operasional" },
     { slug: "bank", label: "Bank & Rekonsiliasi", icon: Landmark, group: "Operasional" },
+    { slug: "rekonsiliasi", label: "Rekonsiliasi Kas/Bank", icon: ArrowDownUp, group: "Operasional" },
     { slug: "voucher", label: "Voucher", icon: PiggyBank, group: "Operasional" },
 
     { slug: "jurnal", label: "Jurnal", icon: BookOpen, group: "Akuntansi" },

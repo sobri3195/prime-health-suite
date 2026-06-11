@@ -1,59 +1,63 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { invoices, monthlyTrend, expenseMTD } from "@/data/financeData";
-import { formatIDR, netProfit, estimatedTax } from "@/lib/finance";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { PageHeader } from "@/components/app-shell";
+import { useFinanceDate } from "@/context/finance-date";
+import { getProfitLoss } from "@/lib/finance-report.functions";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { exportCsv } from "@/lib/exporter";
 
-export const Route = createFileRoute("/_authenticated/finance/laba-rugi")({
-  component: LabaRugi,
-});
+export const Route = createFileRoute("/_authenticated/finance/laba-rugi")({ component: LabaRugi });
+
+const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
 
 function LabaRugi() {
-  const data = useMemo(() => {
-    const rev = invoices.reduce((a, r) => a + r.total, 0);
-    const cogs = Math.round(rev * 0.42);
-    const opex = expenseMTD;
-    const grossProfit = rev - cogs;
-    const operatingProfit = grossProfit - opex;
-    const tax = estimatedTax(rev, cogs + opex);
-    const net = netProfit(rev, cogs + opex);
-    return { rev, cogs, opex, grossProfit, operatingProfit, tax, net };
-  }, []);
+  const { from, to, label } = useFinanceDate();
+  const fn = useServerFn(getProfitLoss);
+  const { data, isLoading } = useQuery({ queryKey: ["pl", from, to], queryFn: () => fn({ data: { from, to } }) });
 
-  const Row = ({ label, value, bold, indent }: { label: string; value: number; bold?: boolean; indent?: boolean }) => (
-    <tr className={bold ? "font-semibold" : ""}>
-      <td className={`py-2 ${indent ? "pl-6" : ""}`}>{label}</td>
-      <td className={`py-2 text-right font-mono ${value < 0 ? "text-rose-600" : ""}`}>{formatIDR(value)}</td>
-    </tr>
-  );
+  const csv = () => {
+    const rows = [
+      ...((data?.revenue ?? []).map((r: any) => ({ section: "Pendapatan", code: r.code, name: r.name, amount: r.amount }))),
+      { section: "", code: "", name: "Total Pendapatan", amount: data?.totalRev ?? 0 },
+      ...((data?.expense ?? []).map((r: any) => ({ section: "Beban", code: r.code, name: r.name, amount: r.amount }))),
+      { section: "", code: "", name: "Total Beban", amount: data?.totalExp ?? 0 },
+      { section: "", code: "", name: "Laba (Rugi) Bersih", amount: data?.profit ?? 0 },
+    ];
+    exportCsv(`laba-rugi-${from}_${to}.csv`, [
+      { key: "section", header: "Section" }, { key: "code", header: "Kode" }, { key: "name", header: "Akun" }, { key: "amount", header: "Jumlah" },
+    ], rows);
+  };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Laporan Keuangan</div>
-        <h1 className="text-2xl font-semibold">Laba Rugi</h1>
-        <p className="text-sm text-muted-foreground">Ringkasan pendapatan, biaya, dan laba bersih periode berjalan.</p>
-      </div>
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <table className="w-full text-sm">
-          <tbody>
-            <Row label="Pendapatan Usaha" value={data.rev} bold />
-            <Row label="Harga Pokok Layanan (HPP)" value={-data.cogs} indent />
-            <tr className="border-t"><td className="py-2 font-semibold">Laba Kotor</td><td className="py-2 text-right font-mono font-semibold">{formatIDR(data.grossProfit)}</td></tr>
-            <Row label="Beban Operasional" value={-data.opex} indent />
-            <tr className="border-t"><td className="py-2 font-semibold">Laba Operasi</td><td className="py-2 text-right font-mono font-semibold">{formatIDR(data.operatingProfit)}</td></tr>
-            <Row label="Pajak (11%)" value={-data.tax} indent />
-            <tr className="border-t-2 border-foreground/20"><td className="py-2 text-base font-bold">Laba Bersih</td><td className={`py-2 text-right font-mono text-base font-bold ${data.net < 0 ? "text-rose-600" : "text-emerald-600"}`}>{formatIDR(data.net)}</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-3">
-        {monthlyTrend.slice(-3).map((m) => (
-          <div key={m.month} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="text-xs text-muted-foreground">{m.month}</div>
-            <div className="mt-1 text-base font-semibold">{formatIDR(m.revenue - m.expense)}</div>
-            <div className="text-[11px] text-muted-foreground">Margin {Math.round(((m.revenue - m.expense) / m.revenue) * 100)}%</div>
-          </div>
-        ))}
+    <div>
+      <PageHeader title="Laba Rugi" desc={`Periode ${label}. Disusun langsung dari jurnal yang sudah ter-post.`} />
+      <div className="mb-3 flex justify-end"><Button variant="outline" size="sm" onClick={csv}><Download className="mr-1 h-4 w-4" /> CSV</Button></div>
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader><TableRow><TableHead>Kode</TableHead><TableHead>Akun</TableHead><TableHead className="text-right">Jumlah</TableHead></TableRow></TableHeader>
+          <TableBody>
+            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="font-semibold">Pendapatan</TableCell></TableRow>
+            {isLoading ? <TableRow><TableCell colSpan={3} className="py-6 text-center">Loading…</TableCell></TableRow>
+              : (data?.revenue ?? []).map((r: any) => (
+                <TableRow key={r.code}><TableCell className="font-mono text-xs">{r.code}</TableCell><TableCell>{r.name}</TableCell><TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell></TableRow>
+              ))}
+            <TableRow className="border-t-2 font-semibold"><TableCell colSpan={2}>Total Pendapatan</TableCell><TableCell className="text-right font-mono">{fmt(data?.totalRev ?? 0)}</TableCell></TableRow>
+
+            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="font-semibold">Beban</TableCell></TableRow>
+            {(data?.expense ?? []).map((r: any) => (
+              <TableRow key={r.code}><TableCell className="font-mono text-xs">{r.code}</TableCell><TableCell>{r.name}</TableCell><TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell></TableRow>
+            ))}
+            <TableRow className="border-t-2 font-semibold"><TableCell colSpan={2}>Total Beban</TableCell><TableCell className="text-right font-mono">{fmt(data?.totalExp ?? 0)}</TableCell></TableRow>
+
+            <TableRow className="border-t-4 border-foreground/20 text-base font-bold">
+              <TableCell colSpan={2}>Laba (Rugi) Bersih</TableCell>
+              <TableCell className={`text-right font-mono ${(data?.profit ?? 0) < 0 ? "text-rose-600" : "text-emerald-600"}`}>{fmt(data?.profit ?? 0)}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

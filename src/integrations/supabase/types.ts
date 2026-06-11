@@ -733,8 +733,102 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          changed_fields: string[] | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          entity_no: string | null
+          id: string
+          ip: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          changed_fields?: string[] | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          entity_no?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          changed_fields?: string[] | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          entity_no?: string | null
+          id?: string
+          ip?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      fin_bank_statement: {
+        Row: {
+          bank: string
+          created_at: string
+          debit: number
+          deskripsi: string
+          id: string
+          imported_batch: string | null
+          imported_by: string | null
+          kredit: number
+          matched: boolean
+          ref: string | null
+          saldo: number | null
+          tanggal: string
+        }
+        Insert: {
+          bank: string
+          created_at?: string
+          debit?: number
+          deskripsi: string
+          id?: string
+          imported_batch?: string | null
+          imported_by?: string | null
+          kredit?: number
+          matched?: boolean
+          ref?: string | null
+          saldo?: number | null
+          tanggal: string
+        }
+        Update: {
+          bank?: string
+          created_at?: string
+          debit?: number
+          deskripsi?: string
+          id?: string
+          imported_batch?: string | null
+          imported_by?: string | null
+          kredit?: number
+          matched?: boolean
+          ref?: string | null
+          saldo?: number | null
+          tanggal?: string
+        }
+        Relationships: []
+      }
       fin_coa: {
         Row: {
+          cash_flow_section: string | null
           code: string
           created_at: string
           id: string
@@ -745,6 +839,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cash_flow_section?: string | null
           code: string
           created_at?: string
           id?: string
@@ -755,6 +850,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cash_flow_section?: string | null
           code?: string
           created_at?: string
           id?: string
@@ -1273,6 +1369,42 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_mdr_rule: {
+        Row: {
+          bank: string | null
+          coa_code: string
+          created_at: string
+          fixed_fee: number
+          id: string
+          is_active: boolean
+          metode: string
+          rate_pct: number
+          updated_at: string
+        }
+        Insert: {
+          bank?: string | null
+          coa_code?: string
+          created_at?: string
+          fixed_fee?: number
+          id?: string
+          is_active?: boolean
+          metode: string
+          rate_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          bank?: string | null
+          coa_code?: string
+          created_at?: string
+          fixed_fee?: number
+          id?: string
+          is_active?: boolean
+          metode?: string
+          rate_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fin_payer: {
         Row: {
           code: string
@@ -1317,7 +1449,9 @@ export type Database = {
           metode: string
           netto: number
           no_kartu_last4: string | null
+          status: string | null
           tanggal: string
+          void_reason: string | null
         }
         Insert: {
           bank?: string | null
@@ -1329,7 +1463,9 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          status?: string | null
           tanggal?: string
+          void_reason?: string | null
         }
         Update: {
           bank?: string | null
@@ -1341,7 +1477,9 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          status?: string | null
           tanggal?: string
+          void_reason?: string | null
         }
         Relationships: [
           {
@@ -1392,6 +1530,53 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_reconciliation: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          expense_id: string | null
+          id: string
+          journal_line_id: string | null
+          matched_by: string | null
+          pembayaran_id: string | null
+          selisih: number
+          statement_id: string
+          status: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          journal_line_id?: string | null
+          matched_by?: string | null
+          pembayaran_id?: string | null
+          selisih?: number
+          statement_id: string
+          status?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          journal_line_id?: string | null
+          matched_by?: string | null
+          pembayaran_id?: string | null
+          selisih?: number
+          statement_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_reconciliation_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_statement"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fin_tarif_pajak: {
         Row: {
           code: string
@@ -1424,6 +1609,163 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fin_template_invoice: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          diskon: number | null
+          id: string
+          is_active: boolean
+          kategori: string | null
+          nama: string
+          pajak_pct: number | null
+          payer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          diskon?: number | null
+          id?: string
+          is_active?: boolean
+          kategori?: string | null
+          nama: string
+          pajak_pct?: number | null
+          payer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          diskon?: number | null
+          id?: string
+          is_active?: boolean
+          kategori?: string | null
+          nama?: string
+          pajak_pct?: number | null
+          payer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_template_invoice_item: {
+        Row: {
+          created_at: string
+          id: string
+          layanan_id: string | null
+          layanan_nama: string
+          qty: number
+          tarif: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          layanan_id?: string | null
+          layanan_nama: string
+          qty?: number
+          tarif?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layanan_id?: string | null
+          layanan_nama?: string
+          qty?: number
+          tarif?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_template_invoice_item_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "fin_template_invoice"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_template_voucher: {
+        Row: {
+          coa_code: string | null
+          cost_center_code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          keterangan: string | null
+          metode: string | null
+          nama: string
+          pajak_pct: number | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          coa_code?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keterangan?: string | null
+          metode?: string | null
+          nama: string
+          pajak_pct?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          coa_code?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keterangan?: string | null
+          metode?: string | null
+          nama?: string
+          pajak_pct?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
+      fin_template_voucher_item: {
+        Row: {
+          coa_code: string | null
+          created_at: string
+          deskripsi: string
+          harga: number
+          id: string
+          qty: number
+          template_id: string
+        }
+        Insert: {
+          coa_code?: string | null
+          created_at?: string
+          deskripsi: string
+          harga?: number
+          id?: string
+          qty?: number
+          template_id: string
+        }
+        Update: {
+          coa_code?: string | null
+          created_at?: string
+          deskripsi?: string
+          harga?: number
+          id?: string
+          qty?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_template_voucher_item_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "fin_template_voucher"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fin_vendor: {
         Row: {
@@ -2411,6 +2753,8 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]
       }
+      fin_can_edit: { Args: { _uid: string }; Returns: boolean }
+      fin_can_view: { Args: { _uid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

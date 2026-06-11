@@ -51,6 +51,7 @@ import { Route as AuthenticatedSimKlinikAntrianRouteImport } from './routes/_aut
 import { Route as AuthenticatedSimKlinikAbsensiRouteImport } from './routes/_authenticated.sim-klinik.absensi'
 import { Route as AuthenticatedSimKlinikSectionRouteImport } from './routes/_authenticated.sim-klinik.$section'
 import { Route as AuthenticatedFinanceVoucherRouteImport } from './routes/_authenticated.finance.voucher'
+import { Route as AuthenticatedFinanceRekonsiliasiRouteImport } from './routes/_authenticated.finance.rekonsiliasi'
 import { Route as AuthenticatedFinancePiutangRouteImport } from './routes/_authenticated.finance.piutang'
 import { Route as AuthenticatedFinancePengeluaranRouteImport } from './routes/_authenticated.finance.pengeluaran'
 import { Route as AuthenticatedFinancePendapatanReportHighlightRouteImport } from './routes/_authenticated.finance.pendapatan-report-highlight'
@@ -63,9 +64,12 @@ import { Route as AuthenticatedFinancePayrollRouteImport } from './routes/_authe
 import { Route as AuthenticatedFinancePajakRouteImport } from './routes/_authenticated.finance.pajak'
 import { Route as AuthenticatedFinanceNeracaRouteImport } from './routes/_authenticated.finance.neraca'
 import { Route as AuthenticatedFinanceMasterVendorRouteImport } from './routes/_authenticated.finance.master-vendor'
+import { Route as AuthenticatedFinanceMasterTemplateVoucherRouteImport } from './routes/_authenticated.finance.master-template-voucher'
+import { Route as AuthenticatedFinanceMasterTemplateInvoiceRouteImport } from './routes/_authenticated.finance.master-template-invoice'
 import { Route as AuthenticatedFinanceMasterTarifPajakRouteImport } from './routes/_authenticated.finance.master-tarif-pajak'
 import { Route as AuthenticatedFinanceMasterProfilKlinikRouteImport } from './routes/_authenticated.finance.master-profil-klinik'
 import { Route as AuthenticatedFinanceMasterPayerRouteImport } from './routes/_authenticated.finance.master-payer'
+import { Route as AuthenticatedFinanceMasterMdrRouteImport } from './routes/_authenticated.finance.master-mdr'
 import { Route as AuthenticatedFinanceMasterKategoriLayananRouteImport } from './routes/_authenticated.finance.master-kategori-layanan'
 import { Route as AuthenticatedFinanceMasterKaryawanRouteImport } from './routes/_authenticated.finance.master-karyawan'
 import { Route as AuthenticatedFinanceMasterDokterRouteImport } from './routes/_authenticated.finance.master-dokter'
@@ -320,6 +324,12 @@ const AuthenticatedFinanceVoucherRoute =
     path: '/voucher',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceRekonsiliasiRoute =
+  AuthenticatedFinanceRekonsiliasiRouteImport.update({
+    id: '/rekonsiliasi',
+    path: '/rekonsiliasi',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinancePiutangRoute =
   AuthenticatedFinancePiutangRouteImport.update({
     id: '/piutang',
@@ -392,6 +402,18 @@ const AuthenticatedFinanceMasterVendorRoute =
     path: '/master-vendor',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceMasterTemplateVoucherRoute =
+  AuthenticatedFinanceMasterTemplateVoucherRouteImport.update({
+    id: '/master-template-voucher',
+    path: '/master-template-voucher',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterTemplateInvoiceRoute =
+  AuthenticatedFinanceMasterTemplateInvoiceRouteImport.update({
+    id: '/master-template-invoice',
+    path: '/master-template-invoice',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceMasterTarifPajakRoute =
   AuthenticatedFinanceMasterTarifPajakRouteImport.update({
     id: '/master-tarif-pajak',
@@ -408,6 +430,12 @@ const AuthenticatedFinanceMasterPayerRoute =
   AuthenticatedFinanceMasterPayerRouteImport.update({
     id: '/master-payer',
     path: '/master-payer',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
+const AuthenticatedFinanceMasterMdrRoute =
+  AuthenticatedFinanceMasterMdrRouteImport.update({
+    id: '/master-mdr',
+    path: '/master-mdr',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
 const AuthenticatedFinanceMasterKategoriLayananRoute =
@@ -576,9 +604,12 @@ export interface FileRoutesByFullPath {
   '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
   '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
   '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master-mdr': typeof AuthenticatedFinanceMasterMdrRoute
   '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
   '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
   '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master-template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  '/finance/master-template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
   '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
@@ -591,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
+  '/finance/rekonsiliasi': typeof AuthenticatedFinanceRekonsiliasiRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
@@ -652,9 +684,12 @@ export interface FileRoutesByTo {
   '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
   '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
   '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master-mdr': typeof AuthenticatedFinanceMasterMdrRoute
   '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
   '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
   '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master-template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  '/finance/master-template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
   '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
@@ -667,6 +702,7 @@ export interface FileRoutesByTo {
   '/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/finance/piutang': typeof AuthenticatedFinancePiutangRoute
+  '/finance/rekonsiliasi': typeof AuthenticatedFinanceRekonsiliasiRoute
   '/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
@@ -733,9 +769,12 @@ export interface FileRoutesById {
   '/_authenticated/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
   '/_authenticated/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
   '/_authenticated/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/_authenticated/finance/master-mdr': typeof AuthenticatedFinanceMasterMdrRoute
   '/_authenticated/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
   '/_authenticated/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
   '/_authenticated/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/_authenticated/finance/master-template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  '/_authenticated/finance/master-template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
   '/_authenticated/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/_authenticated/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/_authenticated/finance/pajak': typeof AuthenticatedFinancePajakRoute
@@ -748,6 +787,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/pendapatan-report-highlight': typeof AuthenticatedFinancePendapatanReportHighlightRoute
   '/_authenticated/finance/pengeluaran': typeof AuthenticatedFinancePengeluaranRoute
   '/_authenticated/finance/piutang': typeof AuthenticatedFinancePiutangRoute
+  '/_authenticated/finance/rekonsiliasi': typeof AuthenticatedFinanceRekonsiliasiRoute
   '/_authenticated/finance/voucher': typeof AuthenticatedFinanceVoucherRoute
   '/_authenticated/sim-klinik/$section': typeof AuthenticatedSimKlinikSectionRoute
   '/_authenticated/sim-klinik/absensi': typeof AuthenticatedSimKlinikAbsensiRoute
@@ -814,9 +854,12 @@ export interface FileRouteTypes {
     | '/finance/master-dokter'
     | '/finance/master-karyawan'
     | '/finance/master-kategori-layanan'
+    | '/finance/master-mdr'
     | '/finance/master-payer'
     | '/finance/master-profil-klinik'
     | '/finance/master-tarif-pajak'
+    | '/finance/master-template-invoice'
+    | '/finance/master-template-voucher'
     | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
@@ -829,6 +872,7 @@ export interface FileRouteTypes {
     | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
+    | '/finance/rekonsiliasi'
     | '/finance/voucher'
     | '/sim-klinik/$section'
     | '/sim-klinik/absensi'
@@ -890,9 +934,12 @@ export interface FileRouteTypes {
     | '/finance/master-dokter'
     | '/finance/master-karyawan'
     | '/finance/master-kategori-layanan'
+    | '/finance/master-mdr'
     | '/finance/master-payer'
     | '/finance/master-profil-klinik'
     | '/finance/master-tarif-pajak'
+    | '/finance/master-template-invoice'
+    | '/finance/master-template-voucher'
     | '/finance/master-vendor'
     | '/finance/neraca'
     | '/finance/pajak'
@@ -905,6 +952,7 @@ export interface FileRouteTypes {
     | '/finance/pendapatan-report-highlight'
     | '/finance/pengeluaran'
     | '/finance/piutang'
+    | '/finance/rekonsiliasi'
     | '/finance/voucher'
     | '/sim-klinik/$section'
     | '/sim-klinik/absensi'
@@ -970,9 +1018,12 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/master-dokter'
     | '/_authenticated/finance/master-karyawan'
     | '/_authenticated/finance/master-kategori-layanan'
+    | '/_authenticated/finance/master-mdr'
     | '/_authenticated/finance/master-payer'
     | '/_authenticated/finance/master-profil-klinik'
     | '/_authenticated/finance/master-tarif-pajak'
+    | '/_authenticated/finance/master-template-invoice'
+    | '/_authenticated/finance/master-template-voucher'
     | '/_authenticated/finance/master-vendor'
     | '/_authenticated/finance/neraca'
     | '/_authenticated/finance/pajak'
@@ -985,6 +1036,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/pendapatan-report-highlight'
     | '/_authenticated/finance/pengeluaran'
     | '/_authenticated/finance/piutang'
+    | '/_authenticated/finance/rekonsiliasi'
     | '/_authenticated/finance/voucher'
     | '/_authenticated/sim-klinik/$section'
     | '/_authenticated/sim-klinik/absensi'
@@ -1323,6 +1375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceVoucherRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/rekonsiliasi': {
+      id: '/_authenticated/finance/rekonsiliasi'
+      path: '/rekonsiliasi'
+      fullPath: '/finance/rekonsiliasi'
+      preLoaderRoute: typeof AuthenticatedFinanceRekonsiliasiRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/piutang': {
       id: '/_authenticated/finance/piutang'
       path: '/piutang'
@@ -1407,6 +1466,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceMasterVendorRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/master-template-voucher': {
+      id: '/_authenticated/finance/master-template-voucher'
+      path: '/master-template-voucher'
+      fullPath: '/finance/master-template-voucher'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterTemplateVoucherRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-template-invoice': {
+      id: '/_authenticated/finance/master-template-invoice'
+      path: '/master-template-invoice'
+      fullPath: '/finance/master-template-invoice'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterTemplateInvoiceRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/master-tarif-pajak': {
       id: '/_authenticated/finance/master-tarif-pajak'
       path: '/master-tarif-pajak'
@@ -1426,6 +1499,13 @@ declare module '@tanstack/react-router' {
       path: '/master-payer'
       fullPath: '/finance/master-payer'
       preLoaderRoute: typeof AuthenticatedFinanceMasterPayerRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
+    '/_authenticated/finance/master-mdr': {
+      id: '/_authenticated/finance/master-mdr'
+      path: '/master-mdr'
+      fullPath: '/finance/master-mdr'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterMdrRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-kategori-layanan': {
@@ -1615,9 +1695,12 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceMasterDokterRoute: typeof AuthenticatedFinanceMasterDokterRoute
   AuthenticatedFinanceMasterKaryawanRoute: typeof AuthenticatedFinanceMasterKaryawanRoute
   AuthenticatedFinanceMasterKategoriLayananRoute: typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  AuthenticatedFinanceMasterMdrRoute: typeof AuthenticatedFinanceMasterMdrRoute
   AuthenticatedFinanceMasterPayerRoute: typeof AuthenticatedFinanceMasterPayerRoute
   AuthenticatedFinanceMasterProfilKlinikRoute: typeof AuthenticatedFinanceMasterProfilKlinikRoute
   AuthenticatedFinanceMasterTarifPajakRoute: typeof AuthenticatedFinanceMasterTarifPajakRoute
+  AuthenticatedFinanceMasterTemplateInvoiceRoute: typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  AuthenticatedFinanceMasterTemplateVoucherRoute: typeof AuthenticatedFinanceMasterTemplateVoucherRoute
   AuthenticatedFinanceMasterVendorRoute: typeof AuthenticatedFinanceMasterVendorRoute
   AuthenticatedFinanceNeracaRoute: typeof AuthenticatedFinanceNeracaRoute
   AuthenticatedFinancePajakRoute: typeof AuthenticatedFinancePajakRoute
@@ -1630,6 +1713,7 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinancePendapatanReportHighlightRoute: typeof AuthenticatedFinancePendapatanReportHighlightRoute
   AuthenticatedFinancePengeluaranRoute: typeof AuthenticatedFinancePengeluaranRoute
   AuthenticatedFinancePiutangRoute: typeof AuthenticatedFinancePiutangRoute
+  AuthenticatedFinanceRekonsiliasiRoute: typeof AuthenticatedFinanceRekonsiliasiRoute
   AuthenticatedFinanceVoucherRoute: typeof AuthenticatedFinanceVoucherRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
 }
@@ -1656,11 +1740,16 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
     AuthenticatedFinanceMasterKaryawanRoute,
   AuthenticatedFinanceMasterKategoriLayananRoute:
     AuthenticatedFinanceMasterKategoriLayananRoute,
+  AuthenticatedFinanceMasterMdrRoute: AuthenticatedFinanceMasterMdrRoute,
   AuthenticatedFinanceMasterPayerRoute: AuthenticatedFinanceMasterPayerRoute,
   AuthenticatedFinanceMasterProfilKlinikRoute:
     AuthenticatedFinanceMasterProfilKlinikRoute,
   AuthenticatedFinanceMasterTarifPajakRoute:
     AuthenticatedFinanceMasterTarifPajakRoute,
+  AuthenticatedFinanceMasterTemplateInvoiceRoute:
+    AuthenticatedFinanceMasterTemplateInvoiceRoute,
+  AuthenticatedFinanceMasterTemplateVoucherRoute:
+    AuthenticatedFinanceMasterTemplateVoucherRoute,
   AuthenticatedFinanceMasterVendorRoute: AuthenticatedFinanceMasterVendorRoute,
   AuthenticatedFinanceNeracaRoute: AuthenticatedFinanceNeracaRoute,
   AuthenticatedFinancePajakRoute: AuthenticatedFinancePajakRoute,
@@ -1678,6 +1767,7 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
     AuthenticatedFinancePendapatanReportHighlightRoute,
   AuthenticatedFinancePengeluaranRoute: AuthenticatedFinancePengeluaranRoute,
   AuthenticatedFinancePiutangRoute: AuthenticatedFinancePiutangRoute,
+  AuthenticatedFinanceRekonsiliasiRoute: AuthenticatedFinanceRekonsiliasiRoute,
   AuthenticatedFinanceVoucherRoute: AuthenticatedFinanceVoucherRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
 }
