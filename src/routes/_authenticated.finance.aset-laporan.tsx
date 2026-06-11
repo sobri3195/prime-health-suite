@@ -19,7 +19,8 @@ function Page() {
 
   const byCC = useMemo(() => {
     const m = new Map<string, { harga: number; akm: number; buku: number; count: number }>();
-    for (const r of rows) {
+    for (const row of rows) {
+      const r = row as any;
       const cc = r.cost_center_code || "(tanpa CC)";
       const ex = m.get(cc) ?? { harga: 0, akm: 0, buku: 0, count: 0 };
       ex.harga += Number(r.harga_perolehan) || 0;
