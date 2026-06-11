@@ -270,7 +270,18 @@ export const createPayment = createServerFn({ method: "POST" })
     const sb = await adminClient();
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.invoice_id).single();
     if (!inv) throw new Error("Invoice tidak ditemukan");
-    const mdr = Number(data.mdr ?? 0);
+
+    // Auto-apply MDR rule when not explicitly provided
+    let mdr = Number(data.mdr ?? 0);
+    let mdrCoa = "5900";
+    if (!data.mdr && data.metode !== "cash") {
+      const { data: rules } = await sb.from("fin_mdr_rule").select("*").eq("is_active", true).eq("metode", data.metode);
+      const rule = (rules ?? []).find((r: any) => !r.bank || r.bank === data.bank) ?? (rules ?? [])[0];
+      if (rule) {
+        mdr = Math.round((Number(data.jumlah) * Number(rule.rate_pct) / 100) + Number(rule.fixed_fee));
+        mdrCoa = rule.coa_code || "5900";
+      }
+    }
     const netto = Number(data.jumlah) - mdr;
     const { data: pay, error } = await sb.from("fin_pembayaran").insert({
       invoice_id: data.invoice_id,
@@ -298,20 +309,22 @@ export const createPayment = createServerFn({ method: "POST" })
       created_by: data.actor,
       lines: [
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", debit: netto },
-        ...(mdr > 0 ? [{ coa_code: "5900", coa_nama: "Beban MDR", debit: mdr }] : []),
+        ...(mdr > 0 ? [{ coa_code: mdrCoa, coa_nama: "Beban MDR", debit: mdr }] : []),
         { coa_code: "1200", coa_nama: "Piutang Usaha", kredit: data.jumlah },
       ],
     });
-    return { payment: pay };
+    await writeFinAudit({ actor_email: data.actor, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
+    return { payment: pay, mdr_applied: mdr };
   });
 
 export const deletePayment = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
+  .inputValidator((d: { id: string; reason?: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), reason: d.reason, actor: d.actor }))
   .handler(async ({ data }) => {
     const sb = await adminClient();
     const { data: pay } = await sb.from("fin_pembayaran").select("*").eq("id", data.id).single();
     if (!pay) throw new Error("Pembayaran tidak ditemukan");
-    await reverseJournal("payment", data.id, new Date().toISOString().slice(0, 10), "Hapus pembayaran");
+    await reverseJournal("payment", data.id, new Date().toISOString().slice(0, 10), data.reason ?? "Hapus pembayaran");
+    await sb.from("fin_pembayaran").update({ status: "void", void_reason: data.reason ?? "deleted" }).eq("id", data.id);
     await sb.from("fin_pembayaran").delete().eq("id", data.id);
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", pay.invoice_id).single();
     if (inv) {
@@ -319,6 +332,7 @@ export const deletePayment = createServerFn({ method: "POST" })
       const newStatus = newPaid <= 0 ? "issued" : newPaid >= Number(inv.total) ? "paid" : "partial";
       await sb.from("fin_invoice").update({ dibayar: newPaid, status: newStatus }).eq("id", pay.invoice_id);
     }
+    await writeFinAudit({ actor_email: data.actor, action: "void", entity: "payment", entity_id: data.id, reason: data.reason, before: pay });
     return { ok: true };
   });
 
