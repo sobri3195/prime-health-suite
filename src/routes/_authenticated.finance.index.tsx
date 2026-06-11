@@ -393,21 +393,91 @@ function FilterRow({
   );
 }
 
+const MONTH_LABEL = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function monthKey(d: string) { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`; }
+function monthLabel(key: string) { const [y, m] = key.split("-"); return `${MONTH_LABEL[Number(m)-1]} ${y}`; }
+function monthRange(key: string) {
+  const [y, m] = key.split("-").map(Number);
+  const from = `${y}-${String(m).padStart(2,"0")}-01`;
+  const last = new Date(y, m, 0).getDate();
+  const to = `${y}-${String(m).padStart(2,"0")}-${String(last).padStart(2,"0")}`;
+  return { from, to };
+}
+
 function PayerCard({ rows }: { rows: Invoice[] }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [compare, setCompare] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const availableMonths = useMemo(() => {
+    const set = new Set(rows.map((r) => monthKey(r.date)));
+    return Array.from(set).sort().reverse();
+  }, [rows]);
+
   const filtered = useMemo(() => dateRange(rows, from, to), [rows, from, to]);
   const byP = byPayer(filtered);
   const totalAll = Object.values(byP).reduce((a, b) => a + b, 0);
   const top = Object.entries(byP).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
   const activePayers = Object.entries(byP).filter(([, v]) => v > 0).length;
 
+  // comparison data
+  const compareData = useMemo(() => {
+    return compare.map((mk) => {
+      const { from: f, to: t } = monthRange(mk);
+      const sub = dateRange(rows, f, t);
+      return { key: mk, label: monthLabel(mk), byPayer: byPayer(sub), total: sub.reduce((a, r) => a + r.total, 0) };
+    });
+  }, [rows, compare]);
+
+  const allPayersInCompare = useMemo(() => {
+    const s = new Set<string>();
+    compareData.forEach((c) => Object.entries(c.byPayer).forEach(([k, v]) => { if (v > 0) s.add(k); }));
+    return Array.from(s);
+  }, [compareData]);
+
+  const toggleCompare = (mk: string) => {
+    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    setPickerOpen(false);
+  };
+
   return (
     <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); }}
+        onReset={() => { setFrom(""); setTo(""); setCompare([]); }}
+        extra={
+          <div className="relative flex flex-col">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Bandingkan Periode</label>
+            <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setPickerOpen((v) => !v)}>
+              <Plus className="mr-1 h-3 w-3" /> Tambah Periode
+            </Button>
+            {pickerOpen && (
+              <div className="absolute left-0 top-full z-20 mt-1 max-h-56 w-44 overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
+                {availableMonths.map((mk) => (
+                  <button key={mk} type="button" onClick={() => toggleCompare(mk)}
+                    className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${compare.includes(mk) ? "bg-accent" : ""}`}>
+                    <span>{monthLabel(mk)}</span>
+                    {compare.includes(mk) && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        }
       />
+
+      {compare.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-1">
+          {compare.map((mk) => (
+            <Badge key={mk} variant="secondary" className="cursor-pointer gap-1" onClick={() => toggleCompare(mk)}>
+              {monthLabel(mk)} <span className="text-muted-foreground">✕</span>
+            </Badge>
+          ))}
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setCompare([])}>Clear Comparison</Button>
+        </div>
+      )}
+
       <div className="mb-2 text-[11px] text-muted-foreground">
         Menampilkan data {from || "awal"} – {to || "sekarang"}
       </div>
@@ -436,6 +506,56 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
         <div><div className="text-muted-foreground">Payer Terbesar</div><div className="font-semibold">{top}</div></div>
         <div><div className="text-muted-foreground">Jumlah Payer</div><div className="font-semibold">{activePayers}</div></div>
       </div>
+
+      {compareData.length > 0 && (
+        <div className="mt-4 space-y-3 border-t border-border pt-3">
+          <div className="text-xs font-semibold">Summary Perbandingan</div>
+          <div className="grid gap-1 text-xs">
+            {compareData.map((c) => (
+              <div key={c.key} className="flex justify-between">
+                <span className="text-muted-foreground">{c.label}</span>
+                <span className="font-mono font-semibold">{formatIDR(c.total)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs font-semibold">Perbandingan Payer Antar Periode</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-border text-left text-muted-foreground">
+                  <th className="py-1 pr-2 font-medium">Payer</th>
+                  {compareData.map((c) => <th key={c.key} className="py-1 px-2 text-right font-medium">{c.label}</th>)}
+                  {compareData.slice(1).map((c, i) => (
+                    <th key={`g-${c.key}`} className="py-1 px-2 text-right font-medium">
+                      Growth {compareData[i].label.split(" ")[0].slice(0,3)}-{c.label.split(" ")[0].slice(0,3)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {allPayersInCompare.map((p) => (
+                  <tr key={p} className="border-b border-border/40">
+                    <td className="py-1 pr-2 font-medium">{p}</td>
+                    {compareData.map((c) => (
+                      <td key={c.key} className="py-1 px-2 text-right font-mono">{formatCompactIDR((c.byPayer as Record<string, number>)[p] ?? 0)}</td>
+                    ))}
+                    {compareData.slice(1).map((c, i) => {
+                      const cur = (c.byPayer as Record<string, number>)[p] ?? 0;
+                      const prev = (compareData[i].byPayer as Record<string, number>)[p] ?? 0;
+                      const diff = cur - prev;
+                      return (
+                        <td key={`d-${c.key}`} className={`py-1 px-2 text-right font-mono ${diff >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                          {diff >= 0 ? "+" : ""}{formatCompactIDR(diff)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
