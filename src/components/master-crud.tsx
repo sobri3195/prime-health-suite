@@ -223,10 +223,12 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditing(null); setIsNew(false); }}>Batal</Button>
-            <Button disabled={upsertMut.isPending} onClick={() => editing && upsertMut.mutate(editing)}>
-              {upsertMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Simpan
-            </Button>
+            <Button variant="outline" onClick={() => { setEditing(null); setIsNew(false); }}>{canEdit ? "Batal" : "Tutup"}</Button>
+            {canEdit && (
+              <Button disabled={upsertMut.isPending} onClick={() => editing && upsertMut.mutate(editing)}>
+                {upsertMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Simpan
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
