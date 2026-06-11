@@ -31,8 +31,12 @@ export function useRoles(options: { enabled?: boolean } = {}) {
   }, [options.enabled]);
 
   return useQuery({
-    queryKey: ["my-roles"],
-    queryFn: () => fn(),
+    queryKey: ["my-roles", hasSession],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) return undefined;
+      return fn();
+    },
     enabled: options.enabled !== false && authReady && hasSession,
     retry: false,
     staleTime: 60_000,

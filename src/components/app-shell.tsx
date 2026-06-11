@@ -35,7 +35,7 @@ export function AppShell({ system, children }: { system: System; children: React
   }, [pathname, user]);
 
   const allItems = NAV[system];
-  const { data: roles } = useRoles();
+  const { data: roles } = useRoles({ enabled: system === "sim-klinik" });
   const items = useMemo(() => {
     if (system !== "sim-klinik") return allItems;
     if (!Array.isArray(roles)) return allItems; // RBAC not loaded → show all (legacy mock auth)
