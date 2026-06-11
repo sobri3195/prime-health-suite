@@ -49,7 +49,7 @@ function Page() {
       { key: "pph", label: "PPh (2.5%)", get: (r) => r.pph },
       { key: "net", label: "Diterima Net", get: (r) => r.net },
     ]);
-    downloadCSV(`pph-honor-${filter.period.from}-${filter.period.to}.csv`, csv);
+    downloadCSV(`pph-honor-${filter.period}.csv`, csv);
   };
 
   return (

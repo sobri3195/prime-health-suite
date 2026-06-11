@@ -35,7 +35,10 @@ function Page() {
       cur[bk] += sisa;
       byPayer.set(payer, cur);
     }
-    return { b, byPayer: Array.from(byPayer.entries()).map(([nama, v]) => ({ nama, ...v, total: v["0-30"] + v["31-60"] + v["61-90"] + v[">90"] })).sort((a, z) => z.total - a.total) };
+    type Row = { nama: string; "0-30": number; "31-60": number; "61-90": number; ">90": number; total: number };
+    const list: Row[] = Array.from(byPayer.entries()).map(([nama, v]) => ({ nama, "0-30": v["0-30"], "31-60": v["31-60"], "61-90": v["61-90"], ">90": v[">90"], total: v["0-30"] + v["31-60"] + v["61-90"] + v[">90"] }));
+    list.sort((a, z) => z.total - a.total);
+    return { b, byPayer: list };
   }, [rows]);
   const total = Object.values(summary.b).reduce((a, b) => a + b, 0);
 
