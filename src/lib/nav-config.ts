@@ -92,6 +92,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Operasional" },
     { slug: "pajak", label: "Pajak", icon: ShieldCheck, group: "Operasional" },
     { slug: "bank", label: "Bank & Rekonsiliasi", icon: Landmark, group: "Operasional" },
+    { slug: "rekonsiliasi", label: "Rekonsiliasi Kas/Bank", icon: ArrowDownUp, group: "Operasional" },
     { slug: "voucher", label: "Voucher", icon: PiggyBank, group: "Operasional" },
 
     { slug: "jurnal", label: "Jurnal", icon: BookOpen, group: "Akuntansi" },
