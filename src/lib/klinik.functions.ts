@@ -1,0 +1,645 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { appendAuditRow } from "@/lib/clinic.functions";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Supa = any;
+
+/* =============================================================
+ * PASIEN
+ * ============================================================*/
+const PasienSchema = z.object({
+  id: z.string().uuid().optional(),
+  no_rm: z.string().optional(),
+  nama: z.string().min(1, "Nama wajib"),
+  nik: z.string().regex(/^\d{16}$/, "NIK harus 16 digit").optional().or(z.literal("")).transform((v) => (v ? v : null)),
+  tgl_lahir: z.string().optional().nullable(),
+  jenis_kelamin: z.enum(["L", "P"]),
+  telp: z.string().min(8, "Nomor HP minimal 8 digit"),
+  alamat: z.string().optional().nullable(),
+  patient_type: z.enum(["Umum", "BPJS", "Asuransi", "Corporate"]).default("Umum"),
+  insurance_name: z.string().optional().nullable(),
+  no_bpjs: z.string().optional().nullable(),
+  alergi: z.string().optional().nullable(),
+  kontak_darurat: z.string().optional().nullable(),
+  is_active: z.boolean().optional(),
+});
+
+export const listPasien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    q: z.string().optional(),
+    patient_type: z.string().optional(),
+    is_active: z.boolean().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("apps_pasien").select("*").not("no_rm", "is", null).order("created_at", { ascending: false }).limit(data.limit ?? 200);
+    if (data.patient_type && data.patient_type !== "all") q = q.eq("patient_type", data.patient_type);
+    if (typeof data.is_active === "boolean") q = q.eq("is_active", data.is_active);
+    if (data.q) q = q.or(`nama.ilike.%${data.q}%,no_rm.ilike.%${data.q}%,nik.ilike.%${data.q}%,telp.ilike.%${data.q}%`);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const getPasien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await (context.supabase as Supa).from("apps_pasien").select("*").eq("id", data.id).maybeSingle();
+    if (error) throw error;
+    return row;
+  });
+
+export const upsertPasien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => PasienSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const payload: Record<string, unknown> = { ...data };
+    if (!data.id) {
+      // generate no_rm via RPC
+      const { data: rm, error: rmErr } = await sb.rpc("klinik_next_no_rm");
+      if (rmErr) throw rmErr;
+      payload.no_rm = rm;
+      delete payload.id;
+      const { data: row, error } = await sb.from("apps_pasien").insert(payload).select("*").single();
+      if (error) throw error;
+      await appendAuditRow(sb, { actor_id: context.userId, actor_email: context.claims?.email as string | undefined, module: "Pasien", action: "create", target: row.id, meta: { no_rm: row.no_rm } });
+      return row;
+    } else {
+      const id = data.id;
+      delete payload.id;
+      delete payload.no_rm;
+      const { data: row, error } = await sb.from("apps_pasien").update(payload).eq("id", id).select("*").single();
+      if (error) throw error;
+      await appendAuditRow(sb, { actor_id: context.userId, actor_email: context.claims?.email as string | undefined, module: "Pasien", action: "update", target: id });
+      return row;
+    }
+  });
+
+export const deactivatePasien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), is_active: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { error } = await sb.from("apps_pasien").update({ is_active: data.is_active }).eq("id", data.id);
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, actor_email: context.claims?.email as string | undefined, module: "Pasien", action: data.is_active ? "activate" : "deactivate", target: data.id });
+    return { ok: true };
+  });
+
+/* =============================================================
+ * DOKTER
+ * ============================================================*/
+export const listDokter = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await (context.supabase as Supa).from("fin_dokter").select("*").order("name");
+    if (error) throw error;
+    return data ?? [];
+  });
+
+/* =============================================================
+ * LAYANAN
+ * ============================================================*/
+export const listLayanan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await (context.supabase as Supa).from("fin_layanan").select("*").eq("is_active", true).order("name");
+    if (error) throw error;
+    return data ?? [];
+  });
+
+/* =============================================================
+ * OBAT
+ * ============================================================*/
+const ObatSchema = z.object({
+  id: z.string().uuid().optional(),
+  code: z.string().min(1),
+  name: z.string().min(1),
+  category: z.string().optional().nullable(),
+  unit: z.string().min(1),
+  stock: z.coerce.number().min(0).default(0),
+  min_stock: z.coerce.number().min(0).default(0),
+  price: z.coerce.number().min(0).default(0),
+  expired_date: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  is_active: z.boolean().optional(),
+});
+
+export const listObat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ q: z.string().optional(), low_stock_only: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("klinik_obat").select("*").order("name").limit(500);
+    if (data.q) q = q.or(`name.ilike.%${data.q}%,code.ilike.%${data.q}%,category.ilike.%${data.q}%`);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    let out = rows ?? [];
+    if (data.low_stock_only) out = out.filter((r: { stock: number; min_stock: number }) => Number(r.stock) <= Number(r.min_stock));
+    return out;
+  });
+
+export const upsertObat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ObatSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const payload: Record<string, unknown> = { ...data };
+    if (!data.id) {
+      delete payload.id;
+      const { data: row, error } = await sb.from("klinik_obat").insert(payload).select("*").single();
+      if (error) throw error;
+      await appendAuditRow(sb, { actor_id: context.userId, module: "Obat", action: "create", target: row.id, meta: { code: row.code } });
+      return row;
+    }
+    const id = data.id; delete payload.id;
+    const { data: row, error } = await sb.from("klinik_obat").update(payload).eq("id", id).select("*").single();
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Obat", action: "update", target: id });
+    return row;
+  });
+
+export const stockMovement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    obat_id: z.string().uuid(),
+    movement_type: z.enum(["in", "out", "adjustment"]),
+    quantity: z.coerce.number().min(0),
+    note: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { error } = await sb.from("klinik_stock_movement").insert({ ...data, created_by: context.userId });
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Stok", action: data.movement_type, target: data.obat_id, meta: { qty: data.quantity, note: data.note } });
+    return { ok: true };
+  });
+
+export const listStockMovement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ obat_id: z.string().uuid().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = (context.supabase as Supa).from("klinik_stock_movement").select("*, klinik_obat(name,code,unit)").order("created_at", { ascending: false }).limit(data.limit ?? 100);
+    if (data.obat_id) q = q.eq("obat_id", data.obat_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+/* =============================================================
+ * REGISTRASI / BOOKING / VISIT / QUEUE
+ * ============================================================*/
+const BookingSchema = z.object({
+  pasien_id: z.string().uuid(),
+  dokter_id: z.string().uuid(),
+  tanggal: z.string(),
+  jam_slot: z.string(),
+  keluhan: z.string().optional(),
+  source: z.enum(["walk_in", "phone", "whatsapp", "online"]).default("walk_in"),
+});
+
+export const createBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => BookingSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: dok } = await sb.from("fin_dokter").select("name").eq("id", data.dokter_id).maybeSingle();
+    const { data: row, error } = await sb.from("apps_booking").insert({
+      pasien_id: data.pasien_id, dokter_id: data.dokter_id, dokter_nama: dok?.name ?? "Dokter",
+      tanggal: data.tanggal, jam_slot: data.jam_slot, keluhan: data.keluhan,
+      source: data.source, status: "confirmed",
+    }).select("*").single();
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: "create", target: row.id });
+    return row;
+  });
+
+export const checkinBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ booking_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: bk, error: be } = await sb.from("apps_booking").select("*").eq("id", data.booking_id).maybeSingle();
+    if (be || !bk) throw be ?? new Error("Booking tidak ditemukan");
+    // create visit
+    const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
+      pasien_id: bk.pasien_id, dokter_id: bk.dokter_id, booking_id: bk.id,
+      chief_complaint: bk.keluhan, status: "registered", patient_type: "Umum",
+      created_by: context.userId,
+    }).select("*").single();
+    if (ve) throw ve;
+    // generate queue
+    const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: "A" });
+    if (qne) throw qne;
+    const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
+      visit_id: visit.id, pasien_id: bk.pasien_id, dokter_id: bk.dokter_id,
+      queue_no: qn, queue_date: bk.tanggal, counter: "A", status: "waiting",
+    }).select("*").single();
+    if (qe) throw qe;
+    await sb.from("apps_booking").update({ status: "checked_in" }).eq("id", bk.id);
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Antrian", action: "checkin", target: visit.id, meta: { queue_no: qn } });
+    return { visit, queue };
+  });
+
+export const listBookingByDate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ date: z.string().optional(), status: z.string().optional(), dokter_id: z.string().uuid().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const d = data.date ?? new Date().toISOString().slice(0, 10);
+    let q = (context.supabase as Supa).from("apps_booking")
+      .select("*, apps_pasien(no_rm,nama,telp,patient_type), fin_dokter(name,spesialisasi)")
+      .eq("tanggal", d).order("jam_slot");
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const updateBookingStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending","confirmed","checked_in","done","cancelled"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { error } = await sb.from("apps_booking").update({ status: data.status }).eq("id", data.id);
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: data.status, target: data.id });
+    return { ok: true };
+  });
+
+export const listQueueToday = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ date: z.string().optional(), status: z.string().optional(), dokter_id: z.string().uuid().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const d = data.date ?? new Date().toISOString().slice(0, 10);
+    let q = (context.supabase as Supa).from("klinik_queue")
+      .select("*, apps_pasien(no_rm,nama), fin_dokter(name), klinik_visit(chief_complaint,status)")
+      .eq("queue_date", d).order("queue_no");
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const updateQueueStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["waiting","called","in_service","done","cancelled"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const updates: Record<string, unknown> = { status: data.status };
+    if (data.status === "called") updates.called_at = new Date().toISOString();
+    if (data.status === "in_service") updates.served_at = new Date().toISOString();
+    if (data.status === "done") updates.done_at = new Date().toISOString();
+    const { data: q, error } = await sb.from("klinik_queue").update(updates).eq("id", data.id).select("visit_id").maybeSingle();
+    if (error) throw error;
+    // mirror visit status
+    if (q?.visit_id) {
+      const visitStatus = data.status === "called" ? "in_exam" : data.status === "in_service" ? "in_doctor" : data.status === "done" ? "billing" : data.status === "cancelled" ? "cancelled" : "registered";
+      await sb.from("klinik_visit").update({ status: visitStatus }).eq("id", q.visit_id);
+    }
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Antrian", action: data.status, target: data.id });
+    return { ok: true };
+  });
+
+/* =============================================================
+ * REKAM MEDIS
+ * ============================================================*/
+const MedRecSchema = z.object({
+  id: z.string().uuid().optional(),
+  visit_id: z.string().uuid(),
+  pasien_id: z.string().uuid(),
+  dokter_id: z.string().uuid().optional().nullable(),
+  anamnesis: z.string().optional().nullable(),
+  riwayat_penyakit: z.string().optional().nullable(),
+  alergi: z.string().optional().nullable(),
+  visus_od: z.string().optional().nullable(),
+  visus_os: z.string().optional().nullable(),
+  tio_od: z.string().optional().nullable(),
+  tio_os: z.string().optional().nullable(),
+  slit_lamp: z.string().optional().nullable(),
+  fundus: z.string().optional().nullable(),
+  diagnosis: z.string().optional().nullable(),
+  icd10_code: z.string().optional().nullable(),
+  treatment_plan: z.string().optional().nullable(),
+  tindakan: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  follow_up_date: z.string().optional().nullable(),
+  is_final: z.boolean().optional(),
+});
+
+export const upsertMedicalRecord = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => MedRecSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const payload: Record<string, unknown> = { ...data };
+    delete payload.id;
+    if (data.id) {
+      const { data: row, error } = await sb.from("klinik_medical_record").update(payload).eq("id", data.id).select("*").single();
+      if (error) throw error;
+      await appendAuditRow(sb, { actor_id: context.userId, module: "RekamMedis", action: "update", target: data.id });
+      return row;
+    }
+    const { data: row, error } = await sb.from("klinik_medical_record").upsert(payload, { onConflict: "visit_id" }).select("*").single();
+    if (error) throw error;
+    if (data.is_final) {
+      await sb.from("klinik_visit").update({ status: "billing" }).eq("id", data.visit_id);
+    }
+    await appendAuditRow(sb, { actor_id: context.userId, module: "RekamMedis", action: data.is_final ? "finalize" : "save", target: row.id });
+    return row;
+  });
+
+export const getMedicalRecord = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ visit_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await (context.supabase as Supa).from("klinik_medical_record").select("*").eq("visit_id", data.visit_id).maybeSingle();
+    if (error) throw error;
+    return row;
+  });
+
+export const listVisits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    date: z.string().optional(),
+    pasien_id: z.string().uuid().optional(),
+    dokter_id: z.string().uuid().optional(),
+    status: z.string().optional(),
+    limit: z.number().optional(),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = (context.supabase as Supa).from("klinik_visit")
+      .select("*, apps_pasien(no_rm,nama,patient_type), fin_dokter(name)")
+      .order("visit_date", { ascending: false }).limit(data.limit ?? 100);
+    if (data.date) q = q.gte("visit_date", data.date + "T00:00:00").lte("visit_date", data.date + "T23:59:59");
+    if (data.pasien_id) q = q.eq("pasien_id", data.pasien_id);
+    if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const getVisitDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(*), fin_dokter(*)").eq("id", data.id).maybeSingle();
+    if (error) throw error;
+    const { data: medrec } = await sb.from("klinik_medical_record").select("*").eq("visit_id", data.id).maybeSingle();
+    const { data: prescriptions } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("visit_id", data.id);
+    return { visit, medrec, prescriptions: prescriptions ?? [] };
+  });
+
+/* =============================================================
+ * RESEP
+ * ============================================================*/
+const PresItemSchema = z.object({
+  obat_id: z.string().uuid().optional().nullable(),
+  obat_name: z.string().min(1),
+  dosage: z.string().optional().nullable(),
+  frequency: z.string().optional().nullable(),
+  duration: z.string().optional().nullable(),
+  instruction: z.string().optional().nullable(),
+  quantity: z.coerce.number().min(0.1),
+  unit_price: z.coerce.number().min(0).default(0),
+});
+
+export const createPrescription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    visit_id: z.string().uuid(),
+    pasien_id: z.string().uuid(),
+    dokter_id: z.string().uuid().optional().nullable(),
+    notes: z.string().optional(),
+    items: z.array(PresItemSchema).min(1, "Minimal 1 obat"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: pres, error } = await sb.from("klinik_prescription").insert({
+      visit_id: data.visit_id, pasien_id: data.pasien_id, dokter_id: data.dokter_id, notes: data.notes, status: "sent_to_pharmacy",
+    }).select("*").single();
+    if (error) throw error;
+    const items = data.items.map((it) => ({ ...it, prescription_id: pres.id }));
+    const { error: ie } = await sb.from("klinik_prescription_item").insert(items);
+    if (ie) throw ie;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Resep", action: "create", target: pres.id, meta: { items: items.length } });
+    return pres;
+  });
+
+export const listPrescription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = (context.supabase as Supa).from("klinik_prescription")
+      .select("*, apps_pasien(no_rm,nama), fin_dokter(name), klinik_prescription_item(*)")
+      .order("created_at", { ascending: false }).limit(data.limit ?? 100);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const dispensePrescription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: pres, error } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("id", data.id).maybeSingle();
+    if (error || !pres) throw error ?? new Error("Resep tidak ditemukan");
+    if (pres.status === "dispensed") throw new Error("Resep sudah dibagikan");
+    // validate stock
+    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; obat_name: string; quantity: number }>) {
+      if (!it.obat_id) continue;
+      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
+      if (!ob) continue;
+      if (Number(ob.stock) < Number(it.quantity)) {
+        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+      }
+    }
+    // movements
+    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; quantity: number }>) {
+      if (!it.obat_id) continue;
+      const { error: me } = await sb.from("klinik_stock_movement").insert({
+        obat_id: it.obat_id, movement_type: "out", quantity: it.quantity,
+        ref_type: "prescription", ref_id: data.id, note: "Dispense resep", created_by: context.userId,
+      });
+      if (me) throw me;
+    }
+    const { error: ue } = await sb.from("klinik_prescription").update({ status: "dispensed", dispensed_at: new Date().toISOString(), dispensed_by: context.userId }).eq("id", data.id);
+    if (ue) throw ue;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Farmasi", action: "dispense", target: data.id });
+    return { ok: true };
+  });
+
+/* =============================================================
+ * KASIR / INVOICE
+ * ============================================================*/
+export const listInvoiceForBilling = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), date: z.string().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = (context.supabase as Supa).from("fin_invoice").select("*").order("tanggal", { ascending: false }).limit(200);
+    if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    if (data.date) q = q.eq("tanggal", data.date);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    visit_id: z.string().uuid(),
+    items: z.array(z.object({
+      description: z.string(), quantity: z.coerce.number().min(0.1), unit_price: z.coerce.number().min(0),
+      layanan_id: z.string().uuid().optional().nullable(),
+    })).min(1),
+    payment_method: z.enum(["cash","transfer","qris","debit","credit","insurance"]).default("cash"),
+    paid_amount: z.coerce.number().min(0),
+    discount: z.coerce.number().min(0).default(0),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(no_rm,nama,patient_code), fin_dokter(id,name)").eq("id", data.visit_id).maybeSingle();
+    if (error || !visit) throw error ?? new Error("Visit tidak ditemukan");
+    const subtotal = data.items.reduce((a, b) => a + Number(b.quantity) * Number(b.unit_price), 0);
+    const total = Math.max(0, subtotal - Number(data.discount));
+    const status = data.paid_amount >= total ? "paid" : data.paid_amount > 0 ? "partial" : "unpaid";
+    const now = new Date();
+    const noInv = `INV-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*9000+1000)}`;
+    const { data: inv, error: ie } = await sb.from("fin_invoice").insert({
+      no_invoice: noInv, tanggal: now.toISOString().slice(0,10),
+      patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
+      patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
+      subtotal, pajak: 0, total, status,
+      catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
+    }).select("*").single();
+    if (ie) throw ie;
+    // items
+    if (data.items.length) {
+      await sb.from("fin_invoice_item").insert(data.items.map((it) => ({
+        invoice_id: inv.id, layanan_id: it.layanan_id ?? null,
+        deskripsi: it.description, qty: it.quantity, harga_satuan: it.unit_price, subtotal: it.quantity * it.unit_price,
+      })));
+    }
+    // update visit
+    const payStatus = status === "paid" ? "paid" : status === "partial" ? "partial" : "unpaid";
+    const visitStatus = status === "paid" ? "done" : "billing";
+    await sb.from("klinik_visit").update({ payment_status: payStatus, status: visitStatus }).eq("id", data.visit_id);
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "invoice", target: inv.id, meta: { total, status, payment_method: data.payment_method } });
+    return inv;
+  });
+
+/* =============================================================
+ * DASHBOARD STATS
+ * ============================================================*/
+export const getDashboardStats = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ from: z.string().optional(), to: z.string().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const today = new Date().toISOString().slice(0, 10);
+    const from = data.from ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const to = data.to ?? today;
+    const monthStart = today.slice(0, 7) + "-01";
+
+    const [pasienAll, pasienNew, visitToday, bookingToday, queueActive, invToday, invMonth, invUnpaid, presPending, obat] = await Promise.all([
+      sb.from("apps_pasien").select("*", { count: "exact", head: true }).not("no_rm","is",null),
+      sb.from("apps_pasien").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
+      sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lte("visit_date", today + "T23:59:59"),
+      sb.from("apps_booking").select("*", { count: "exact", head: true }).eq("tanggal", today),
+      sb.from("klinik_queue").select("*", { count: "exact", head: true }).eq("queue_date", today).in("status", ["waiting","called","in_service"]),
+      sb.from("fin_invoice").select("total.sum()").eq("tanggal", today),
+      sb.from("fin_invoice").select("total.sum()").gte("tanggal", monthStart),
+      sb.from("fin_invoice").select("*", { count: "exact", head: true }).in("status", ["unpaid","partial"]),
+      sb.from("klinik_prescription").select("*", { count: "exact", head: true }).eq("status", "sent_to_pharmacy"),
+      sb.from("klinik_obat").select("stock,min_stock,expired_date"),
+    ]);
+
+    const lowStock = (obat.data ?? []).filter((o: { stock: number; min_stock: number }) => Number(o.stock) <= Number(o.min_stock)).length;
+    const nearExp = (obat.data ?? []).filter((o: { expired_date: string | null }) => o.expired_date && new Date(o.expired_date).getTime() < Date.now() + 60 * 86400000).length;
+
+    // trend visits 30 days
+    const { data: visitRows } = await sb.from("klinik_visit").select("visit_date").gte("visit_date", from + "T00:00:00").lte("visit_date", to + "T23:59:59");
+    const trendMap = new Map<string, number>();
+    (visitRows ?? []).forEach((r: { visit_date: string }) => {
+      const d = String(r.visit_date).slice(0, 10);
+      trendMap.set(d, (trendMap.get(d) ?? 0) + 1);
+    });
+    const trend = Array.from(trendMap.entries()).sort().map(([date, visits]) => ({ date, visits }));
+
+    // revenue monthly 12
+    const yearStart = new Date(); yearStart.setMonth(yearStart.getMonth() - 11); yearStart.setDate(1);
+    const { data: invRows } = await sb.from("fin_invoice").select("tanggal,total").gte("tanggal", yearStart.toISOString().slice(0,10));
+    const revMap = new Map<string, number>();
+    (invRows ?? []).forEach((r: { tanggal: string; total: number }) => {
+      const m = String(r.tanggal).slice(0, 7);
+      revMap.set(m, (revMap.get(m) ?? 0) + Number(r.total ?? 0));
+    });
+    const revenue = Array.from(revMap.entries()).sort().map(([month, total]) => ({ month, total }));
+
+    // payer mix
+    const { data: payerRows } = await sb.from("apps_pasien").select("patient_type").not("no_rm","is",null);
+    const payerMap = new Map<string, number>();
+    (payerRows ?? []).forEach((r: { patient_type: string }) => payerMap.set(r.patient_type ?? "Umum", (payerMap.get(r.patient_type ?? "Umum") ?? 0) + 1));
+    const payerMix = Array.from(payerMap.entries()).map(([name, value]) => ({ name, value }));
+
+    return {
+      kpi: {
+        pasienAll: pasienAll.count ?? 0,
+        pasienNew: pasienNew.count ?? 0,
+        visitToday: visitToday.count ?? 0,
+        bookingToday: bookingToday.count ?? 0,
+        queueActive: queueActive.count ?? 0,
+        revenueToday: Number((invToday.data?.[0] as { sum?: number } | undefined)?.sum ?? 0),
+        revenueMonth: Number((invMonth.data?.[0] as { sum?: number } | undefined)?.sum ?? 0),
+        invoiceUnpaid: invUnpaid.count ?? 0,
+        prescriptionPending: presPending.count ?? 0,
+        lowStock, nearExp,
+      },
+      trend, revenue, payerMix,
+      from, to,
+    };
+  });
+
+/* =============================================================
+ * USER MANAGEMENT (super_admin only)
+ * ============================================================*/
+export const listUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase as Supa;
+    const { data: roles, error } = await sb.from("user_roles").select("user_id, role");
+    if (error) throw error;
+    return roles ?? [];
+  });
+
+export const setUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    user_id: z.string().uuid(),
+    role: z.enum(["super_admin","admin_klinik","dokter","perawat","perawat_optometri","pendaftaran","kasir","farmasi","manajemen","pasien"]),
+    grant: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    // verify caller is super_admin or admin_klinik
+    const { data: ok } = await sb.rpc("klinik_is_admin", { _uid: context.userId });
+    if (!ok) throw new Error("Hanya admin yang dapat mengubah role");
+    if (data.grant) {
+      await sb.from("user_roles").upsert({ user_id: data.user_id, role: data.role }, { onConflict: "user_id,role" });
+    } else {
+      await sb.from("user_roles").delete().eq("user_id", data.user_id).eq("role", data.role);
+    }
+    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: data.grant ? "grant_role" : "revoke_role", target: data.user_id, meta: { role: data.role } });
+    return { ok: true };
+  });

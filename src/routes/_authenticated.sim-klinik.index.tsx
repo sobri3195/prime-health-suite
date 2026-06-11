@@ -1,136 +1,106 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Users, UserPlus, Repeat, CheckCircle2, Clock, Timer, AlertTriangle, Activity,
+  Users, UserPlus, Activity, Calendar, ListChecks, Wallet, ReceiptText, Pill, Boxes, AlertTriangle, TrendingUp,
 } from "lucide-react";
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-} from "recharts";
-import { dashboard } from "@/data/clinicData";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
+import { getDashboardStats } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/")({
-  component: SimDashboard,
-});
+export const Route = createFileRoute("/_authenticated/sim-klinik/")({ component: DashboardKlinikPage });
 
-function SimDashboard() {
-  const d = dashboard;
-  const totalPayer = Object.values(d.byPayer).reduce((a, b) => a + b, 0);
-  const stats = [
-    { l: "Pasien hari ini", v: d.today, i: Users },
-    { l: "Pasien baru", v: d.newPatients, i: UserPlus },
-    { l: "Pasien kontrol", v: d.control, i: Repeat },
-    { l: "Kunjungan selesai", v: d.completed, i: CheckCircle2 },
-    { l: "Menunggu", v: d.waiting, i: Clock },
-    { l: "Waktu tunggu rata-rata", v: `${d.avgWaitMin} mnt`, i: Timer },
+const COLORS = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#ef4444", "#6366f1"];
+
+function rupiah(n: number) { return "Rp " + Number(n ?? 0).toLocaleString("id-ID"); }
+
+function DashboardKlinikPage() {
+  const call = useServerFn(getDashboardStats);
+  const q = useQuery({ queryKey: ["klinik","dashboard"], queryFn: () => call({ data: {} }) });
+  const k = q.data?.kpi;
+
+  const kpis: Array<{ label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; href?: string; tone?: string }> = [
+    { label: "Total Pasien", value: k?.pasienAll ?? "-", icon: Users, href: "/sim-klinik/pasien" },
+    { label: "Pasien Baru (Bulan ini)", value: k?.pasienNew ?? "-", icon: UserPlus, href: "/sim-klinik/pasien" },
+    { label: "Kunjungan Hari Ini", value: k?.visitToday ?? "-", icon: Activity, href: "/sim-klinik/pemeriksaan" },
+    { label: "Booking Hari Ini", value: k?.bookingToday ?? "-", icon: Calendar, href: "/sim-klinik/registrasi" },
+    { label: "Antrian Aktif", value: k?.queueActive ?? "-", icon: ListChecks, href: "/sim-klinik/antrian" },
+    { label: "Pendapatan Hari Ini", value: rupiah(k?.revenueToday ?? 0), icon: Wallet, href: "/sim-klinik/billing", tone: "primary" },
+    { label: "Pendapatan Bulan Ini", value: rupiah(k?.revenueMonth ?? 0), icon: TrendingUp, href: "/sim-klinik/laporan", tone: "primary" },
+    { label: "Invoice Belum Lunas", value: k?.invoiceUnpaid ?? "-", icon: ReceiptText, href: "/sim-klinik/billing", tone: "warning" },
+    { label: "Resep Menunggu", value: k?.prescriptionPending ?? "-", icon: Pill, href: "/sim-klinik/resep", tone: "warning" },
+    { label: "Stok Rendah", value: k?.lowStock ?? "-", icon: Boxes, href: "/sim-klinik/obat", tone: "danger" },
+    { label: "Hampir Expired", value: k?.nearExp ?? "-", icon: AlertTriangle, href: "/sim-klinik/obat", tone: "danger" },
   ];
+
   return (
     <div>
-      <PageHeader title="Dashboard Klinik" desc="Ringkasan operasional klinik mata hari ini." />
+      <PageHeader title="Dashboard Klinik" desc="Ringkasan operasional Klinik Utama Prime Mata — data real-time." />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {stats.map((s) => (
-          <div key={s.l} className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{s.l}</span>
-              <s.i className="h-4 w-4 text-cyan-accent" />
-            </div>
-            <div className="mt-2 text-2xl font-semibold">{s.v}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+        {kpis.map((kp) => {
+          const Icon = kp.icon;
+          const Body = (
+            <Card className="p-3 transition-shadow hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <Icon className={`h-4 w-4 ${kp.tone === "danger" ? "text-red-500" : kp.tone === "warning" ? "text-amber-500" : kp.tone === "primary" ? "text-primary" : "text-muted-foreground"}`} />
+                {kp.tone === "danger" && Number(kp.value) > 0 && <Badge variant="destructive" className="text-[10px]">!</Badge>}
+              </div>
+              <div className="mt-2 text-xl font-bold">{q.isLoading ? "…" : kp.value}</div>
+              <div className="text-[11px] text-muted-foreground">{kp.label}</div>
+            </Card>
+          );
+          return kp.href ? <Link key={kp.label} to={kp.href}>{Body}</Link> : <div key={kp.label}>{Body}</div>;
+        })}
       </div>
 
-      {d.incompletePatients > 0 && (
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-          <AlertTriangle className="h-5 w-5 text-amber-500" />
-          <span><strong>{d.incompletePatients} pasien</strong> memiliki data belum lengkap (NIK/kontak). Lengkapi di modul Pasien.</span>
-        </div>
-      )}
-
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-medium">Tren Kunjungan Bulanan</h3>
-            <Badge variant="secondary">6 bulan</Badge>
-          </div>
+        <Card className="p-4 lg:col-span-2">
+          <div className="mb-2 text-sm font-semibold">Tren Kunjungan 30 Hari Terakhir</div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={d.monthlyTrend}>
-                <defs>
-                  <linearGradient id="cv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-                <Area type="monotone" dataKey="visits" stroke="hsl(var(--primary))" fill="url(#cv)" strokeWidth={2} />
+              <AreaChart data={q.data?.trend ?? []}>
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5}/><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/></linearGradient></defs>
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="visits" stroke="hsl(var(--primary))" fill="url(#g1)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="mb-3 font-medium">Pasien per Payer</h3>
-          <div className="space-y-3">
-            {Object.entries(d.byPayer).map(([k, v]) => {
-              const pct = Math.round((v / totalPayer) * 100);
-              return (
-                <div key={k}>
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span>{k}</span>
-                    <span className="text-muted-foreground">{v} ({pct}%)</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full bg-[var(--gradient-accent)]" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
+        <Card className="p-4">
+          <div className="mb-2 text-sm font-semibold">Distribusi Tipe Pasien</div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={q.data?.payerMix ?? []} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>
+                  {(q.data?.payerMix ?? []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Legend />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+        </Card>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-medium">Tindakan Terbanyak</h3>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <ul className="space-y-2 text-sm">
-            {d.topActions.map((a) => (
-              <li key={a.name} className="flex items-center justify-between border-b border-border/60 pb-2 last:border-0">
-                <span>{a.name}</span>
-                <span className="font-medium">{a.count}</span>
-              </li>
-            ))}
-          </ul>
+      <Card className="mt-4 p-4">
+        <div className="mb-2 text-sm font-semibold">Pendapatan 12 Bulan Terakhir</div>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={q.data?.revenue ?? []}>
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}jt`} />
+              <Tooltip formatter={(v: number) => rupiah(v)} />
+              <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="mb-3 font-medium">Jadwal Dokter Hari Ini</h3>
-          <ul className="space-y-3 text-sm">
-            {d.todayDoctors.map((doc) => (
-              <li key={doc.doctor}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{doc.doctor}</div>
-                    <div className="text-xs text-muted-foreground">{doc.poli} • {doc.slot}</div>
-                  </div>
-                  <Badge variant={doc.load > 90 ? "destructive" : doc.load > 70 ? "default" : "secondary"}>
-                    {doc.load}%
-                  </Badge>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full bg-primary" style={{ width: `${doc.load}%` }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 }

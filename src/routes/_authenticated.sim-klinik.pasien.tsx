@@ -1,160 +1,145 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import { Search, Eye, Pencil, Archive } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, Plus, Pencil, Eye, Download, Power } from "lucide-react";
 import { toast } from "sonner";
-import { patients } from "@/data/clinicData";
-import { maskNIK, maskPhone, calcAge, formatDateID } from "@/lib/privacy";
-import type { Patient } from "@/types/clinic";
+import { listPasien, upsertPasien, deactivatePasien, getPasien } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({
-  component: PasienPage,
-});
+export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({ component: PasienPage });
 
-const PAGE_SIZE = 8;
+type Pasien = {
+  id: string; no_rm: string | null; nama: string; nik: string | null; tgl_lahir: string | null;
+  jenis_kelamin: string | null; telp: string | null; alamat: string | null; patient_type: string;
+  alergi: string | null; kontak_darurat: string | null; is_active: boolean;
+};
+
+function calcAge(dob: string | null) { if (!dob) return "-"; const d = new Date(dob); return String(Math.floor((Date.now() - d.getTime()) / (365.25*864e5))); }
 
 function PasienPage() {
+  const qc = useQueryClient();
+  const callList = useServerFn(listPasien);
+  const callUpsert = useServerFn(upsertPasien);
+  const callDeact = useServerFn(deactivatePasien);
+
   const [q, setQ] = useState("");
-  const [payer, setPayer] = useState<string>("all");
-  const [status, setStatus] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [open, setOpen] = useState<Patient | null>(null);
+  const [pt, setPt] = useState<string>("all");
+  const [edit, setEdit] = useState<Partial<Pasien> | null>(null);
+  const [detail, setDetail] = useState<Pasien | null>(null);
 
-  const filtered = useMemo(() => {
-    return patients.filter((p) => {
-      if (payer !== "all" && p.payer !== payer) return false;
-      if (status === "complete" && !p.complete) return false;
-      if (status === "incomplete" && p.complete) return false;
-      if (q && !`${p.name} ${p.id}`.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
-    });
-  }, [q, payer, status]);
+  const listQ = useQuery({
+    queryKey: ["klinik", "pasien", { q, pt }],
+    queryFn: () => callList({ data: { q: q || undefined, patient_type: pt === "all" ? undefined : pt } }),
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const slice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const upsertM = useMutation({
+    mutationFn: (d: Partial<Pasien>) => callUpsert({ data: d as never }),
+    onSuccess: () => { toast.success("Data pasien tersimpan"); qc.invalidateQueries({ queryKey: ["klinik","pasien"] }); setEdit(null); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deactM = useMutation({
+    mutationFn: (p: Pasien) => callDeact({ data: { id: p.id, is_active: !p.is_active } }),
+    onSuccess: () => { toast.success("Status pasien diperbarui"); qc.invalidateQueries({ queryKey: ["klinik","pasien"] }); },
+  });
+
+  const data = useMemo(() => (listQ.data ?? []) as Pasien[], [listQ.data]);
+
+  function exportCSV() {
+    const headers = ["No RM","Nama","NIK","JK","HP","Tipe","Alamat","Aktif"];
+    const rows = data.map((p) => [p.no_rm, p.nama, p.nik, p.jenis_kelamin, p.telp, p.patient_type, p.alamat, p.is_active ? "Ya" : "Tidak"]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${(c ?? "").toString().replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = url; a.download = `pasien-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+  }
 
   return (
     <div>
-      <PageHeader title="Pasien" desc="Master pasien klinik mata. Data ditampilkan dengan masking privasi." />
-
+      <PageHeader title="Master Pasien" desc="Manajemen data pasien klinik mata dengan nomor rekam medis." />
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }}
-            placeholder="Cari nama atau No RM…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama / No RM / NIK / HP…" className="pl-9" />
         </div>
-        <Select value={payer} onValueChange={(v) => { setPayer(v); setPage(1); }}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Payer" /></SelectTrigger>
+        <Select value={pt} onValueChange={setPt}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua Payer</SelectItem>
+            <SelectItem value="all">Semua Tipe</SelectItem>
             <SelectItem value="Umum">Umum</SelectItem>
             <SelectItem value="BPJS">BPJS</SelectItem>
             <SelectItem value="Asuransi">Asuransi</SelectItem>
-            <SelectItem value="Perusahaan">Perusahaan</SelectItem>
+            <SelectItem value="Corporate">Corporate</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status data" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Status</SelectItem>
-            <SelectItem value="complete">Data lengkap</SelectItem>
-            <SelectItem value="incomplete">Belum lengkap</SelectItem>
-          </SelectContent>
-        </Select>
+        <Button variant="outline" size="sm" onClick={exportCSV}><Download className="mr-1 h-4 w-4" />Export CSV</Button>
+        <Button size="sm" onClick={() => setEdit({ patient_type: "Umum", jenis_kelamin: "L", is_active: true })}><Plus className="mr-1 h-4 w-4" />Pasien Baru</Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No RM</TableHead>
-              <TableHead>Nama</TableHead>
-              <TableHead>NIK</TableHead>
-              <TableHead>Usia / JK</TableHead>
-              <TableHead>HP</TableHead>
-              <TableHead>Payer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TableHeader><TableRow>
+            <TableHead>No RM</TableHead><TableHead>Nama</TableHead><TableHead>Usia/JK</TableHead>
+            <TableHead>HP</TableHead><TableHead>Tipe</TableHead><TableHead>Status</TableHead>
+            <TableHead className="text-right">Aksi</TableHead>
+          </TableRow></TableHeader>
           <TableBody>
-            {slice.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-16 text-center text-sm text-muted-foreground">
-                  Tidak ada pasien yang cocok dengan filter.
-                </TableCell>
-              </TableRow>
-            ) : slice.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-mono text-xs">{p.id}</TableCell>
-                <TableCell className="font-medium">{p.name}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{maskNIK(p.nik)}</TableCell>
-                <TableCell>{calcAge(p.dob)} / {p.gender}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{maskPhone(p.phone)}</TableCell>
-                <TableCell><Badge variant="secondary">{p.payer}</Badge></TableCell>
-                <TableCell>
-                  {p.complete
-                    ? <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20">Lengkap</Badge>
-                    : <Badge variant="destructive">Belum lengkap</Badge>}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setOpen(p)} aria-label="Lihat">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => toast.success(`Edit ${p.id} (mock)`)} aria-label="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => toast.message(`Arsipkan ${p.id} (mock)`)} aria-label="Arsipkan">
-                      <Archive className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {listQ.isLoading ? <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">Memuat…</TableCell></TableRow>
+              : data.length === 0 ? <TableRow><TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">Belum ada pasien.</TableCell></TableRow>
+              : data.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-mono text-xs">{p.no_rm}</TableCell>
+                  <TableCell className="font-medium">{p.nama}</TableCell>
+                  <TableCell>{calcAge(p.tgl_lahir)} / {p.jenis_kelamin ?? "-"}</TableCell>
+                  <TableCell className="font-mono text-xs">{p.telp ?? "-"}</TableCell>
+                  <TableCell><Badge variant="secondary">{p.patient_type}</Badge></TableCell>
+                  <TableCell>{p.is_active ? <Badge className="bg-emerald-500/15 text-emerald-600">Aktif</Badge> : <Badge variant="destructive">Nonaktif</Badge>}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => setDetail(p)}><Eye className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => setEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => { if (confirm(`${p.is_active ? "Nonaktifkan" : "Aktifkan"} pasien ${p.nama}?`)) deactM.mutate(p); }}><Power className="h-4 w-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
+      <div className="mt-2 text-xs text-muted-foreground">Total {data.length} pasien</div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-        <span>Menampilkan {slice.length} dari {filtered.length} pasien</span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-          <span>Hal. {safePage} / {totalPages}</span>
-          <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-        </div>
-      </div>
+      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{edit?.id ? "Edit Pasien" : "Pasien Baru"}</DialogTitle></DialogHeader>
+          {edit && <PasienForm value={edit} onChange={setEdit} />}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEdit(null)}>Batal</Button>
+            <Button disabled={upsertM.isPending} onClick={() => edit && upsertM.mutate(edit)}>{upsertM.isPending ? "Menyimpan…" : "Simpan"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Detail Pasien</DialogTitle></DialogHeader>
-          {open && (
-            <div className="space-y-3 text-sm">
-              <Row k="No RM" v={open.id} />
-              <Row k="Nama" v={open.name} />
-              <Row k="NIK (masked)" v={maskNIK(open.nik)} />
-              <Row k="Tgl Lahir" v={`${formatDateID(open.dob)} (${calcAge(open.dob)} th)`} />
-              <Row k="Jenis Kelamin" v={open.gender === "L" ? "Laki-laki" : "Perempuan"} />
-              <Row k="Alamat" v={open.address} />
-              <Row k="HP (masked)" v={maskPhone(open.phone)} />
-              <Row k="Payer" v={open.payer} />
-              <Row k="Alergi" v={open.allergies.length ? open.allergies.join(", ") : "Tidak ada"} />
-              <Row k="Kontak Darurat" v={`${open.emergencyContact.name} (${open.emergencyContact.relation}) — ${maskPhone(open.emergencyContact.phone)}`} />
-              <Row k="Kunjungan Terakhir" v={`${formatDateID(open.lastVisit)} • ${open.visitCount}x kunjungan`} />
-              <Row k="Status Data" v={open.complete ? "Lengkap" : "Belum lengkap"} />
+          {detail && (
+            <div className="space-y-2 text-sm">
+              <Row k="No RM" v={detail.no_rm ?? "-"} />
+              <Row k="Nama" v={detail.nama} />
+              <Row k="NIK" v={detail.nik ?? "-"} />
+              <Row k="Tgl Lahir" v={detail.tgl_lahir ?? "-"} />
+              <Row k="JK" v={detail.jenis_kelamin ?? "-"} />
+              <Row k="HP" v={detail.telp ?? "-"} />
+              <Row k="Alamat" v={detail.alamat ?? "-"} />
+              <Row k="Tipe" v={detail.patient_type} />
+              <Row k="Alergi" v={detail.alergi ?? "Tidak ada"} />
+              <Row k="Kontak Darurat" v={detail.kontak_darurat ?? "-"} />
             </div>
           )}
         </DialogContent>
@@ -164,13 +149,36 @@ function PasienPage() {
 }
 
 function Row({ k, v }: { k: string; v: string }) {
+  return <div className="grid grid-cols-3 gap-2 border-b pb-1"><span className="text-muted-foreground">{k}</span><span className="col-span-2">{v}</span></div>;
+}
+
+function PasienForm({ value, onChange }: { value: Partial<Pasien>; onChange: (v: Partial<Pasien>) => void }) {
+  const set = (k: keyof Pasien, v: unknown) => onChange({ ...value, [k]: v });
   return (
-    <div className="grid grid-cols-3 gap-2 border-b border-border/60 pb-2 last:border-0">
-      <span className="text-muted-foreground">{k}</span>
-      <span className="col-span-2">{v}</span>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div><Label>Nama Lengkap *</Label><Input value={value.nama ?? ""} onChange={(e) => set("nama", e.target.value)} /></div>
+      <div><Label>NIK (16 digit)</Label><Input value={value.nik ?? ""} onChange={(e) => set("nik", e.target.value)} /></div>
+      <div><Label>Tgl Lahir</Label><Input type="date" value={value.tgl_lahir ?? ""} onChange={(e) => set("tgl_lahir", e.target.value)} /></div>
+      <div><Label>Jenis Kelamin *</Label>
+        <Select value={value.jenis_kelamin ?? "L"} onValueChange={(v) => set("jenis_kelamin", v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="L">Laki-laki</SelectItem><SelectItem value="P">Perempuan</SelectItem></SelectContent>
+        </Select>
+      </div>
+      <div><Label>No HP *</Label><Input value={value.telp ?? ""} onChange={(e) => set("telp", e.target.value)} /></div>
+      <div><Label>Tipe Pasien *</Label>
+        <Select value={value.patient_type ?? "Umum"} onValueChange={(v) => set("patient_type", v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Umum">Umum</SelectItem><SelectItem value="BPJS">BPJS</SelectItem>
+            <SelectItem value="Asuransi">Asuransi</SelectItem><SelectItem value="Corporate">Corporate</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="md:col-span-2"><Label>Alamat</Label><Input value={value.alamat ?? ""} onChange={(e) => set("alamat", e.target.value)} /></div>
+      <div><Label>Alergi</Label><Input value={value.alergi ?? ""} onChange={(e) => set("alergi", e.target.value)} /></div>
+      <div><Label>Kontak Darurat</Label><Input value={value.kontak_darurat ?? ""} onChange={(e) => set("kontak_darurat", e.target.value)} /></div>
     </div>
   );
 }
-
-// Trigger dialog component for typing (unused in render path but keeps tree-shake happy)
-void DialogTrigger;
+void getPasien;
