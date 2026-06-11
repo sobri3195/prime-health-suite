@@ -15,40 +15,13 @@ import { toast } from "sonner";
 import { useFinanceDate } from "@/context/finance-date";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { listBankStatement, importBankStatement, autoMatchStatement, unmatchStatement, adjustStatement, reconSummary } from "@/lib/finance-recon.functions";
+import { parseBankCsv } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/finance/rekonsiliasi")({
   component: RekonsiliasiPage,
 });
 
 const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
-
-function parseCsv(text: string): { tanggal: string; deskripsi: string; debit: number; kredit: number; saldo?: number; ref?: string }[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const sep = lines[0].includes(";") ? ";" : ",";
-  const hdr = lines[0].split(sep).map((s) => s.trim().toLowerCase());
-  const idx = (k: string) => hdr.findIndex((h) => h.includes(k));
-  const iDate = idx("tanggal") >= 0 ? idx("tanggal") : idx("date");
-  const iDesc = idx("desk") >= 0 ? idx("desk") : idx("desc");
-  const iDeb = idx("debit") >= 0 ? idx("debit") : idx("keluar");
-  const iKre = idx("kredit") >= 0 ? idx("kredit") : idx("masuk");
-  const iSal = idx("saldo");
-  const iRef = idx("ref");
-  const out: any[] = [];
-  for (const ln of lines.slice(1)) {
-    const c = ln.split(sep);
-    if (c.length < 2) continue;
-    out.push({
-      tanggal: c[iDate]?.trim(),
-      deskripsi: c[iDesc]?.trim() ?? "",
-      debit: Number((c[iDeb] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-      kredit: Number((c[iKre] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-      saldo: iSal >= 0 ? Number((c[iSal] ?? "0").replace(/[^\d.-]/g, "")) || null : null,
-      ref: iRef >= 0 ? c[iRef]?.trim() : null,
-    });
-  }
-  return out;
-}
 
 function RekonsiliasiPage() {
   const { from, to } = useFinanceDate();
@@ -71,9 +44,10 @@ function RekonsiliasiPage() {
   // import dialog
   const [openImport, setOpenImport] = useState(false);
   const [csv, setCsv] = useState("");
-  const preview = useMemo(() => parseCsv(csv).slice(0, 5), [csv]);
+  const parsed = useMemo(() => parseBankCsv(csv), [csv]);
+  const validRows = parsed.rows.filter((r) => r.debit > 0 || r.kredit > 0);
   const importM = useMutation({
-    mutationFn: () => importFn({ data: { bank, rows: parseCsv(csv), actor: user?.email } }),
+    mutationFn: () => importFn({ data: { bank, rows: validRows, actor: user?.email } }),
     onSuccess: (r) => { toast.success(`${r.count} mutasi diimport`); setCsv(""); setOpenImport(false); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
@@ -145,14 +119,55 @@ function RekonsiliasiPage() {
 
       {/* Import dialog */}
       <Dialog open={openImport} onOpenChange={setOpenImport}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Import Mutasi Bank ({bank})</DialogTitle></DialogHeader>
-          <div className="space-y-2 text-sm">
-            <p className="text-muted-foreground">Paste CSV. Header wajib mengandung kolom: <code>tanggal, deskripsi, debit, kredit</code>. Opsional: <code>saldo, ref</code>. Format tanggal: <code>YYYY-MM-DD</code>.</p>
-            <Textarea rows={10} value={csv} onChange={(e) => setCsv(e.target.value)} placeholder={`tanggal,deskripsi,debit,kredit,saldo\n2026-06-01,Setoran kasir,0,5000000,15000000`} />
-            {preview.length > 0 && <div className="rounded border p-2 text-xs">Preview {preview.length}/{parseCsv(csv).length}: {preview.map((p, i) => <div key={i}>{p.tanggal} • {p.deskripsi} • D {fmt(p.debit)} • K {fmt(p.kredit)}</div>)}</div>}
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-muted-foreground">
+              Paste mutasi bank dari Excel/CSV. Kolom dideteksi otomatis (alias didukung:
+              <em> tgl/date</em>, <em>keterangan/description</em>, <em>debit/debet/keluar/withdrawal</em>,
+              <em> kredit/credit/masuk/deposit</em>, <em>saldo/balance</em>, <em>ref</em>).
+              Format tanggal otomatis: <code>YYYY-MM-DD</code>, <code>DD/MM/YYYY</code>, <code>DD-MM-YY</code>.
+              Pemisah <code>,</code> / <code>;</code> / TAB. Angka format ID/EN didukung.
+            </p>
+            <Textarea rows={9} value={csv} onChange={(e) => setCsv(e.target.value)} placeholder={`Tanggal;Keterangan;Debet;Kredit;Saldo\n01/06/2026;Setoran kasir;0;5.000.000;15.000.000`} />
+            {csv && (
+              <div className="grid gap-2 rounded border p-2 text-xs">
+                <div className="flex flex-wrap gap-3">
+                  <span><b>Separator</b>: <code>{parsed.separator === "\t" ? "TAB" : parsed.separator}</code></span>
+                  <span><b>Baris valid</b>: {validRows.length}</span>
+                  {parsed.errors.length > 0 && <span className="text-rose-600"><b>Error</b>: {parsed.errors.length}</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
+                  {Object.entries(parsed.mapping).map(([k, v]) => (
+                    <div key={k} className="flex items-center gap-1">
+                      <Badge variant={v ? "secondary" : "outline"} className={v ? "bg-emerald-500/15 text-emerald-700" : "text-rose-600"}>{k}</Badge>
+                      <span className="truncate text-muted-foreground">{v ?? "— tidak terdeteksi"}</span>
+                    </div>
+                  ))}
+                </div>
+                {parsed.errors.length > 0 && (
+                  <div className="max-h-24 overflow-auto rounded bg-rose-50 p-2 text-rose-700">
+                    {parsed.errors.slice(0, 5).map((e, i) => <div key={i}>baris {e.line}: {e.reason}</div>)}
+                    {parsed.errors.length > 5 && <div>… +{parsed.errors.length - 5} error lainnya</div>}
+                  </div>
+                )}
+                {validRows.length > 0 && (
+                  <div className="max-h-32 overflow-auto rounded border bg-muted/30 p-1">
+                    {validRows.slice(0, 5).map((p, i) => (
+                      <div key={i} className="text-[11px]">{p.tanggal} • {p.deskripsi} • D {fmt(p.debit)} • K {fmt(p.kredit)}{p.saldo != null && ` • S ${fmt(p.saldo)}`}</div>
+                    ))}
+                    {validRows.length > 5 && <div className="text-[11px] text-muted-foreground">… +{validRows.length - 5} baris lainnya</div>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpenImport(false)}>Batal</Button><Button onClick={() => importM.mutate()} disabled={!csv || importM.isPending}>Import</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenImport(false)}>Batal</Button>
+            <Button onClick={() => importM.mutate()} disabled={!validRows.length || importM.isPending}>
+              Import {validRows.length || 0} baris
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

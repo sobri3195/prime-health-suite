@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   listExpenses, upsertExpense, voidExpense, getExpense, listLookups,
 } from "@/lib/finance-tx.functions";
+import { listTplVoucher } from "@/lib/finance-template.functions";
 import { useFinanceDate } from "@/context/finance-date";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { useAuth } from "@/lib/auth";
@@ -43,6 +44,8 @@ function PengeluaranPage() {
   });
   const rows = data?.rows ?? [];
   const { data: lookups } = useQuery({ queryKey: ["fin-lookups"], queryFn: () => lookupsFn() });
+  const tplFn = useServerFn(listTplVoucher);
+  const { data: tpls } = useQuery({ queryKey: ["fin-tpl-vch"], queryFn: () => tplFn() });
   const beban = useMemo(() => (lookups?.coa ?? []).filter((c: any) => c.type === "Expense"), [lookups]);
 
   const [editing, setEditing] = useState<any | null>(null);
@@ -147,6 +150,37 @@ function PengeluaranPage() {
           <DialogHeader><DialogTitle>{editing?.id ? "Edit Voucher" : "Voucher Baru"}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid gap-3">
+              {!editing.id && (tpls?.rows?.length ?? 0) > 0 && (
+                <div className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 p-2 text-xs">
+                  <Label className="text-xs">Pakai Template:</Label>
+                  <select
+                    className="h-8 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const tpl = (tpls?.rows ?? []).find((t: any) => t.id === e.target.value);
+                      if (!tpl) return;
+                      const items = (tpls?.items ?? []).filter((it: any) => it.template_id === tpl.id)
+                        .map((it: any) => ({ deskripsi: it.deskripsi, coa_code: it.coa_code ?? tpl.coa_code ?? "", qty: Number(it.qty), harga: Number(it.harga) }));
+                      setEditing({
+                        ...editing,
+                        vendor_id: tpl.vendor_id ?? editing.vendor_id,
+                        coa_code: tpl.coa_code ?? editing.coa_code,
+                        metode: tpl.metode ?? editing.metode,
+                        pajak_pct: Number(tpl.pajak_pct ?? editing.pajak_pct),
+                        keterangan: tpl.keterangan ?? editing.keterangan,
+                        items: items.length ? items : editing.items,
+                      });
+                      toast.success(`Template "${tpl.nama}" diterapkan`);
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="" disabled>— pilih template untuk auto-fill —</option>
+                    {(tpls?.rows ?? []).filter((t: any) => t.is_active !== false).map((t: any) => (
+                      <option key={t.id} value={t.id}>{t.nama}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="grid gap-3 md:grid-cols-3">
                 <Field label="Tanggal"><Input type="date" value={editing.tanggal} onChange={(e) => setEditing({ ...editing, tanggal: e.target.value })} /></Field>
                 <Field label="Vendor">
