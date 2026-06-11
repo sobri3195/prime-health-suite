@@ -458,18 +458,22 @@ export const upsertExpense = createServerFn({ method: "POST" })
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", kredit: total },
       ],
     });
+    await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
     return { expense: hdr };
   });
 
 export const voidExpense = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; reason: string }) => ({
+  .inputValidator((d: { id: string; reason: string; actor?: string }) => ({
     id: z.string().uuid().parse(d.id),
     reason: z.string().min(3).parse(d.reason),
+    actor: d.actor,
   }))
   .handler(async ({ data }) => {
     const sb = await adminClient();
+    const { data: before } = await sb.from("fin_expense").select("*").eq("id", data.id).single();
     await sb.from("fin_expense").update({ status: "void", void_reason: data.reason }).eq("id", data.id);
     await reverseJournal("expense", data.id, new Date().toISOString().slice(0, 10), data.reason);
+    await writeFinAudit({ actor_email: data.actor, action: "void", entity: "expense", entity_id: data.id, entity_no: before?.no_voucher, reason: data.reason, before });
     return { ok: true };
   });
 
