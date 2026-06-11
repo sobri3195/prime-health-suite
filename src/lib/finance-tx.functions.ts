@@ -234,6 +234,7 @@ export const voidInvoice = createServerFn({ method: "POST" })
     if (!inv) throw new Error("Invoice tidak ditemukan");
     await sb.from("fin_invoice").update({ status: data.kind, void_reason: data.reason }).eq("id", data.id);
     await reverseJournal("invoice", data.id, new Date().toISOString().slice(0, 10), data.reason);
+    await writeFinAudit({ action: "void", entity: "invoice", entity_id: data.id, entity_no: inv.no_invoice, reason: data.reason, before: inv });
     return { ok: true };
   });
 
