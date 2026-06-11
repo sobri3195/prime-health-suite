@@ -150,10 +150,12 @@ export type Database = {
           keluhan: string | null
           no_antrean: string | null
           no_urut: number | null
+          pasien_id: string | null
+          source: string
           status: string
           tanggal: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -164,10 +166,12 @@ export type Database = {
           keluhan?: string | null
           no_antrean?: string | null
           no_urut?: number | null
+          pasien_id?: string | null
+          source?: string
           status?: string
           tanggal: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -178,10 +182,12 @@ export type Database = {
           keluhan?: string | null
           no_antrean?: string | null
           no_urut?: number | null
+          pasien_id?: string | null
+          source?: string
           status?: string
           tanggal?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -189,6 +195,13 @@ export type Database = {
             columns: ["dokter_id"]
             isOneToOne: false
             referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apps_booking_pasien_id_fkey"
+            columns: ["pasien_id"]
+            isOneToOne: false
+            referencedRelation: "apps_pasien"
             referencedColumns: ["id"]
           },
         ]
@@ -407,16 +420,20 @@ export type Database = {
           deletion_requested_at: string | null
           foto_url: string | null
           id: string
+          insurance_name: string | null
+          is_active: boolean
           jenis_kelamin: string | null
           kontak_darurat: string | null
           nama: string
           nik: string | null
           no_bpjs: string | null
+          no_rm: string | null
           patient_code: string
+          patient_type: string
           telp: string | null
           tgl_lahir: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           alamat?: string | null
@@ -427,16 +444,20 @@ export type Database = {
           deletion_requested_at?: string | null
           foto_url?: string | null
           id?: string
+          insurance_name?: string | null
+          is_active?: boolean
           jenis_kelamin?: string | null
           kontak_darurat?: string | null
           nama?: string
           nik?: string | null
           no_bpjs?: string | null
+          no_rm?: string | null
           patient_code?: string
+          patient_type?: string
           telp?: string | null
           tgl_lahir?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           alamat?: string | null
@@ -447,16 +468,20 @@ export type Database = {
           deletion_requested_at?: string | null
           foto_url?: string | null
           id?: string
+          insurance_name?: string | null
+          is_active?: boolean
           jenis_kelamin?: string | null
           kontak_darurat?: string | null
           nama?: string
           nik?: string | null
           no_bpjs?: string | null
+          no_rm?: string | null
           patient_code?: string
+          patient_type?: string
           telp?: string | null
           tgl_lahir?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -781,6 +806,9 @@ export type Database = {
           is_ptkp_k0: boolean
           name: string
           npwp: string | null
+          phone: string | null
+          schedule_note: string | null
+          sip_number: string | null
           spesialisasi: string | null
           updated_at: string
         }
@@ -793,6 +821,9 @@ export type Database = {
           is_ptkp_k0?: boolean
           name: string
           npwp?: string | null
+          phone?: string | null
+          schedule_note?: string | null
+          sip_number?: string | null
           spesialisasi?: string | null
           updated_at?: string
         }
@@ -805,6 +836,9 @@ export type Database = {
           is_ptkp_k0?: boolean
           name?: string
           npwp?: string | null
+          phone?: string | null
+          schedule_note?: string | null
+          sip_number?: string | null
           spesialisasi?: string | null
           updated_at?: string
         }
@@ -1628,6 +1662,453 @@ export type Database = {
           },
         ]
       }
+      klinik_medical_record: {
+        Row: {
+          alergi: string | null
+          anamnesis: string | null
+          created_at: string
+          diagnosis: string | null
+          dokter_id: string | null
+          follow_up_date: string | null
+          fundus: string | null
+          icd10_code: string | null
+          id: string
+          is_final: boolean
+          notes: string | null
+          pasien_id: string
+          riwayat_penyakit: string | null
+          slit_lamp: string | null
+          tindakan: string | null
+          tio_od: string | null
+          tio_os: string | null
+          treatment_plan: string | null
+          updated_at: string
+          visit_id: string
+          visus_od: string | null
+          visus_os: string | null
+        }
+        Insert: {
+          alergi?: string | null
+          anamnesis?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          dokter_id?: string | null
+          follow_up_date?: string | null
+          fundus?: string | null
+          icd10_code?: string | null
+          id?: string
+          is_final?: boolean
+          notes?: string | null
+          pasien_id: string
+          riwayat_penyakit?: string | null
+          slit_lamp?: string | null
+          tindakan?: string | null
+          tio_od?: string | null
+          tio_os?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+          visit_id: string
+          visus_od?: string | null
+          visus_os?: string | null
+        }
+        Update: {
+          alergi?: string | null
+          anamnesis?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          dokter_id?: string | null
+          follow_up_date?: string | null
+          fundus?: string | null
+          icd10_code?: string | null
+          id?: string
+          is_final?: boolean
+          notes?: string | null
+          pasien_id?: string
+          riwayat_penyakit?: string | null
+          slit_lamp?: string | null
+          tindakan?: string | null
+          tio_od?: string | null
+          tio_os?: string | null
+          treatment_plan?: string | null
+          updated_at?: string
+          visit_id?: string
+          visus_od?: string | null
+          visus_os?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_medical_record_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_medical_record_pasien_id_fkey"
+            columns: ["pasien_id"]
+            isOneToOne: false
+            referencedRelation: "apps_pasien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_medical_record_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_visit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klinik_obat: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string
+          expired_date: string | null
+          id: string
+          is_active: boolean
+          min_stock: number
+          name: string
+          notes: string | null
+          price: number
+          stock: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string
+          expired_date?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name: string
+          notes?: string | null
+          price?: number
+          stock?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string
+          expired_date?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name?: string
+          notes?: string | null
+          price?: number
+          stock?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      klinik_prescription: {
+        Row: {
+          created_at: string
+          dispensed_at: string | null
+          dispensed_by: string | null
+          dokter_id: string | null
+          id: string
+          notes: string | null
+          pasien_id: string
+          status: string
+          updated_at: string
+          visit_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispensed_at?: string | null
+          dispensed_by?: string | null
+          dokter_id?: string | null
+          id?: string
+          notes?: string | null
+          pasien_id: string
+          status?: string
+          updated_at?: string
+          visit_id: string
+        }
+        Update: {
+          created_at?: string
+          dispensed_at?: string | null
+          dispensed_by?: string | null
+          dokter_id?: string | null
+          id?: string
+          notes?: string | null
+          pasien_id?: string
+          status?: string
+          updated_at?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_prescription_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_prescription_pasien_id_fkey"
+            columns: ["pasien_id"]
+            isOneToOne: false
+            referencedRelation: "apps_pasien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_prescription_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_visit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klinik_prescription_item: {
+        Row: {
+          created_at: string
+          dosage: string | null
+          duration: string | null
+          frequency: string | null
+          id: string
+          instruction: string | null
+          obat_id: string | null
+          obat_name: string
+          prescription_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          frequency?: string | null
+          id?: string
+          instruction?: string | null
+          obat_id?: string | null
+          obat_name: string
+          prescription_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          frequency?: string | null
+          id?: string
+          instruction?: string | null
+          obat_id?: string | null
+          obat_name?: string
+          prescription_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_prescription_item_obat_id_fkey"
+            columns: ["obat_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_obat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_prescription_item_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_prescription"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klinik_queue: {
+        Row: {
+          called_at: string | null
+          counter: string | null
+          created_at: string
+          dokter_id: string | null
+          done_at: string | null
+          id: string
+          pasien_id: string
+          queue_date: string
+          queue_no: string
+          served_at: string | null
+          status: string
+          updated_at: string
+          visit_id: string | null
+        }
+        Insert: {
+          called_at?: string | null
+          counter?: string | null
+          created_at?: string
+          dokter_id?: string | null
+          done_at?: string | null
+          id?: string
+          pasien_id: string
+          queue_date?: string
+          queue_no: string
+          served_at?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Update: {
+          called_at?: string | null
+          counter?: string | null
+          created_at?: string
+          dokter_id?: string | null
+          done_at?: string | null
+          id?: string
+          pasien_id?: string
+          queue_date?: string
+          queue_no?: string
+          served_at?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_queue_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_queue_pasien_id_fkey"
+            columns: ["pasien_id"]
+            isOneToOne: false
+            referencedRelation: "apps_pasien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_queue_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_visit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klinik_stock_movement: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          movement_type: string
+          note: string | null
+          obat_id: string
+          quantity: number
+          ref_id: string | null
+          ref_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type: string
+          note?: string | null
+          obat_id: string
+          quantity: number
+          ref_id?: string | null
+          ref_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type?: string
+          note?: string | null
+          obat_id?: string
+          quantity?: number
+          ref_id?: string | null
+          ref_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_stock_movement_obat_id_fkey"
+            columns: ["obat_id"]
+            isOneToOne: false
+            referencedRelation: "klinik_obat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klinik_visit: {
+        Row: {
+          booking_id: string | null
+          chief_complaint: string | null
+          created_at: string
+          created_by: string | null
+          dokter_id: string | null
+          id: string
+          notes: string | null
+          pasien_id: string
+          patient_type: string
+          payment_status: string
+          status: string
+          updated_at: string
+          visit_date: string
+        }
+        Insert: {
+          booking_id?: string | null
+          chief_complaint?: string | null
+          created_at?: string
+          created_by?: string | null
+          dokter_id?: string | null
+          id?: string
+          notes?: string | null
+          pasien_id: string
+          patient_type?: string
+          payment_status?: string
+          status?: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Update: {
+          booking_id?: string | null
+          chief_complaint?: string | null
+          created_at?: string
+          created_by?: string | null
+          dokter_id?: string | null
+          id?: string
+          notes?: string | null
+          pasien_id?: string
+          patient_type?: string
+          payment_status?: string
+          status?: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_visit_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "apps_booking"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_visit_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_visit_pasien_id_fkey"
+            columns: ["pasien_id"]
+            isOneToOne: false
+            referencedRelation: "apps_pasien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1726,6 +2207,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      klinik_is_admin: { Args: { _uid: string }; Returns: boolean }
+      klinik_is_staff: { Args: { _uid: string }; Returns: boolean }
+      klinik_next_no_rm: { Args: never; Returns: string }
+      klinik_next_queue_no: {
+        Args: { _counter?: string; _date?: string }
+        Returns: string
       }
     }
     Enums: {
