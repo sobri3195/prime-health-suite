@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Download, Search, Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, Search, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
-import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
 import { addAudit } from "@/lib/audit-log";
 import { useAuth } from "@/lib/auth";
+import { useFinanceAccess } from "@/lib/finance-access";
+import { FinanceExportBar } from "@/components/finance-export-bar";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
