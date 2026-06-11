@@ -78,9 +78,22 @@ function FinanceDashboard() {
               onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
             />
           </div>
-          <Button variant="outline" size="sm" onClick={() => toast.success("Export disiapkan")}>
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Quick Export
-          </Button>
+          <FinanceExportBar
+            resource="pendapatan-dashboard"
+            title="Pendapatan Periode"
+            columns={[
+              { key: "date", header: "Tanggal" },
+              { key: "invoice", header: "Invoice" },
+              { key: "payer", header: "Payer" },
+              { key: "doctor", header: "Dokter" },
+              { key: "service", header: "Layanan" },
+              { key: "total", header: "Total", format: (r) => r.total.toLocaleString("id-ID") },
+              { key: "paid", header: "Dibayar", format: (r) => r.paid.toLocaleString("id-ID") },
+              { key: "status", header: "Status" },
+            ]}
+            rows={filtered}
+            meta={{ page: "dashboard" }}
+          />
           <Button variant="outline" size="sm" onClick={() => toast.success("Demo direset")}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset Demo
           </Button>
