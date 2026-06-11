@@ -44,9 +44,10 @@ function RekonsiliasiPage() {
   // import dialog
   const [openImport, setOpenImport] = useState(false);
   const [csv, setCsv] = useState("");
-  const preview = useMemo(() => parseCsv(csv).slice(0, 5), [csv]);
+  const parsed = useMemo(() => parseBankCsv(csv), [csv]);
+  const validRows = parsed.rows.filter((r) => r.debit > 0 || r.kredit > 0);
   const importM = useMutation({
-    mutationFn: () => importFn({ data: { bank, rows: parseCsv(csv), actor: user?.email } }),
+    mutationFn: () => importFn({ data: { bank, rows: validRows, actor: user?.email } }),
     onSuccess: (r) => { toast.success(`${r.count} mutasi diimport`); setCsv(""); setOpenImport(false); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
