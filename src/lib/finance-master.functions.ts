@@ -12,6 +12,14 @@ const TABLES = [
   "fin_layanan",
   "fin_tarif_pajak",
   "fin_profil_klinik",
+  "fin_persediaan",
+  "fin_persediaan_mutasi",
+  "fin_aset",
+  "fin_aset_penyusutan",
+  "fin_kas_kecil",
+  "fin_bukti_setor",
+  "fin_surat_tagih",
+  "fin_rab",
 ] as const;
 export type FinTable = (typeof TABLES)[number];
 

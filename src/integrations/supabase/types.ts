@@ -733,6 +733,116 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_aset: {
+        Row: {
+          akumulasi_penyusutan: number | null
+          coa_akm_penyusutan: string | null
+          coa_aset: string | null
+          coa_beban_penyusutan: string | null
+          cost_center_code: string | null
+          created_at: string
+          harga_perolehan: number
+          id: string
+          kategori: string | null
+          kode: string
+          metode: string | null
+          nama: string
+          nilai_buku: number | null
+          nilai_residu: number | null
+          status: string | null
+          tanggal_perolehan: string
+          umur_bulan: number | null
+          updated_at: string
+        }
+        Insert: {
+          akumulasi_penyusutan?: number | null
+          coa_akm_penyusutan?: string | null
+          coa_aset?: string | null
+          coa_beban_penyusutan?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          harga_perolehan?: number
+          id?: string
+          kategori?: string | null
+          kode: string
+          metode?: string | null
+          nama: string
+          nilai_buku?: number | null
+          nilai_residu?: number | null
+          status?: string | null
+          tanggal_perolehan?: string
+          umur_bulan?: number | null
+          updated_at?: string
+        }
+        Update: {
+          akumulasi_penyusutan?: number | null
+          coa_akm_penyusutan?: string | null
+          coa_aset?: string | null
+          coa_beban_penyusutan?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          harga_perolehan?: number
+          id?: string
+          kategori?: string | null
+          kode?: string
+          metode?: string | null
+          nama?: string
+          nilai_buku?: number | null
+          nilai_residu?: number | null
+          status?: string | null
+          tanggal_perolehan?: string
+          umur_bulan?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_aset_penyusutan: {
+        Row: {
+          akumulasi: number
+          aset_id: string
+          beban: number
+          created_at: string
+          id: string
+          nilai_buku: number
+          periode: string
+          posted: boolean | null
+          tanggal: string
+          updated_at: string
+        }
+        Insert: {
+          akumulasi?: number
+          aset_id: string
+          beban?: number
+          created_at?: string
+          id?: string
+          nilai_buku?: number
+          periode: string
+          posted?: boolean | null
+          tanggal?: string
+          updated_at?: string
+        }
+        Update: {
+          akumulasi?: number
+          aset_id?: string
+          beban?: number
+          created_at?: string
+          id?: string
+          nilai_buku?: number
+          periode?: string
+          posted?: boolean | null
+          tanggal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_aset_penyusutan_aset_id_fkey"
+            columns: ["aset_id"]
+            isOneToOne: false
+            referencedRelation: "fin_aset"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fin_audit_log: {
         Row: {
           action: string
@@ -823,6 +933,48 @@ export type Database = {
           ref?: string | null
           saldo?: number | null
           tanggal?: string
+        }
+        Relationships: []
+      }
+      fin_bukti_setor: {
+        Row: {
+          amount: number
+          bank_coa: string
+          created_at: string
+          id: string
+          kas_coa: string
+          keterangan: string | null
+          no_setor: string
+          ref_bank: string | null
+          status: string
+          tanggal: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          bank_coa: string
+          created_at?: string
+          id?: string
+          kas_coa: string
+          keterangan?: string | null
+          no_setor: string
+          ref_bank?: string | null
+          status?: string
+          tanggal?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bank_coa?: string
+          created_at?: string
+          id?: string
+          kas_coa?: string
+          keterangan?: string | null
+          no_setor?: string
+          ref_bank?: string | null
+          status?: string
+          tanggal?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1306,6 +1458,48 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_kas_kecil: {
+        Row: {
+          amount: number
+          coa_lawan: string | null
+          created_at: string
+          id: string
+          keterangan: string | null
+          no_voucher: string
+          penerima: string | null
+          status: string
+          tanggal: string
+          tipe: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          coa_lawan?: string | null
+          created_at?: string
+          id?: string
+          keterangan?: string | null
+          no_voucher: string
+          penerima?: string | null
+          status?: string
+          tanggal?: string
+          tipe: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          coa_lawan?: string | null
+          created_at?: string
+          id?: string
+          keterangan?: string | null
+          no_voucher?: string
+          penerima?: string | null
+          status?: string
+          tanggal?: string
+          tipe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fin_kategori_layanan: {
         Row: {
           code: string
@@ -1491,6 +1685,101 @@ export type Database = {
           },
         ]
       }
+      fin_persediaan: {
+        Row: {
+          coa_persediaan: string | null
+          created_at: string
+          harga_beli: number | null
+          harga_jual: number | null
+          id: string
+          is_active: boolean | null
+          kategori: string | null
+          kode: string
+          min_stok: number | null
+          nama: string
+          satuan: string | null
+          stok: number | null
+          updated_at: string
+        }
+        Insert: {
+          coa_persediaan?: string | null
+          created_at?: string
+          harga_beli?: number | null
+          harga_jual?: number | null
+          id?: string
+          is_active?: boolean | null
+          kategori?: string | null
+          kode: string
+          min_stok?: number | null
+          nama: string
+          satuan?: string | null
+          stok?: number | null
+          updated_at?: string
+        }
+        Update: {
+          coa_persediaan?: string | null
+          created_at?: string
+          harga_beli?: number | null
+          harga_jual?: number | null
+          id?: string
+          is_active?: boolean | null
+          kategori?: string | null
+          kode?: string
+          min_stok?: number | null
+          nama?: string
+          satuan?: string | null
+          stok?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_persediaan_mutasi: {
+        Row: {
+          created_at: string
+          harga: number | null
+          id: string
+          keterangan: string | null
+          persediaan_id: string
+          qty: number
+          ref_no: string | null
+          tanggal: string
+          tipe: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          harga?: number | null
+          id?: string
+          keterangan?: string | null
+          persediaan_id: string
+          qty: number
+          ref_no?: string | null
+          tanggal?: string
+          tipe: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          harga?: number | null
+          id?: string
+          keterangan?: string | null
+          persediaan_id?: string
+          qty?: number
+          ref_no?: string | null
+          tanggal?: string
+          tipe?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_persediaan_mutasi_persediaan_id_fkey"
+            columns: ["persediaan_id"]
+            isOneToOne: false
+            referencedRelation: "fin_persediaan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fin_profil_klinik: {
         Row: {
           alamat: string | null
@@ -1526,6 +1815,42 @@ export type Database = {
           nama?: string
           npwp?: string | null
           telp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_rab: {
+        Row: {
+          anggaran: number
+          catatan: string | null
+          coa_code: string
+          coa_nama: string | null
+          cost_center_code: string | null
+          created_at: string
+          id: string
+          periode: string
+          updated_at: string
+        }
+        Insert: {
+          anggaran?: number
+          catatan?: string | null
+          coa_code: string
+          coa_nama?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          id?: string
+          periode: string
+          updated_at?: string
+        }
+        Update: {
+          anggaran?: number
+          catatan?: string | null
+          coa_code?: string
+          coa_nama?: string | null
+          cost_center_code?: string | null
+          created_at?: string
+          id?: string
+          periode?: string
           updated_at?: string
         }
         Relationships: []
@@ -1576,6 +1901,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fin_surat_tagih: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          id: string
+          invoice_ids: Json | null
+          no_surat: string
+          payer_id: string | null
+          payer_nama: string | null
+          periode_dari: string | null
+          periode_sampai: string | null
+          status: string
+          tanggal: string
+          total: number | null
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          invoice_ids?: Json | null
+          no_surat: string
+          payer_id?: string | null
+          payer_nama?: string | null
+          periode_dari?: string | null
+          periode_sampai?: string | null
+          status?: string
+          tanggal?: string
+          total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          invoice_ids?: Json | null
+          no_surat?: string
+          payer_id?: string | null
+          payer_nama?: string | null
+          periode_dari?: string | null
+          periode_sampai?: string | null
+          status?: string
+          tanggal?: string
+          total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       fin_tarif_pajak: {
         Row: {

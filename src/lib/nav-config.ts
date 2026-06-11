@@ -5,7 +5,7 @@ import {
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
   Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
-  Clock, Timer, GraduationCap,
+  Clock, Timer, GraduationCap, Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -86,24 +86,59 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "honor-input", label: "Input Jasa Medis", icon: Coins, group: "Dokter & Honor" },
     { slug: "honor-rekap", label: "Rekap Jasa Dokter", icon: BarChart3, group: "Dokter & Honor" },
     { slug: "honor-potongan", label: "Potongan Jasa Dokter", icon: MinusSquare, group: "Dokter & Honor" },
-    { slug: "payroll", label: "Payroll Karyawan", icon: Wallet, group: "Dokter & Honor" },
+    { slug: "honor-pembayaran", label: "Pembayaran Honor", icon: Wallet, group: "Dokter & Honor" },
+    { slug: "honor-pph", label: "PPh Honor Dokter", icon: ShieldCheck, group: "Dokter & Honor" },
 
-    { slug: "piutang", label: "Piutang & Klaim", icon: ReceiptText, group: "Operasional" },
-    { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Operasional" },
-    { slug: "pajak", label: "Pajak", icon: ShieldCheck, group: "Operasional" },
-    { slug: "bank", label: "Bank & Rekonsiliasi", icon: Landmark, group: "Operasional" },
-    { slug: "rekonsiliasi", label: "Rekonsiliasi Kas/Bank", icon: ArrowDownUp, group: "Operasional" },
-    { slug: "voucher", label: "Voucher", icon: PiggyBank, group: "Operasional" },
+    { slug: "piutang", label: "Piutang & Klaim", icon: ReceiptText, group: "Piutang & Hutang" },
+    { slug: "aging-piutang", label: "Aging Piutang", icon: ReceiptText, group: "Piutang & Hutang" },
+    { slug: "aging-hutang", label: "Aging Hutang", icon: ReceiptText, group: "Piutang & Hutang" },
+    { slug: "surat-tagih", label: "Surat Penagihan Asuransi", icon: FileText, group: "Piutang & Hutang" },
+
+    { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Pengajuan & Voucher" },
+    { slug: "vendor-bayar", label: "Pembayaran Vendor", icon: Truck, group: "Pengajuan & Voucher" },
+    { slug: "voucher", label: "Voucher (Umum)", icon: PiggyBank, group: "Pengajuan & Voucher" },
+    { slug: "voucher-bbk", label: "Voucher BBK (Penerimaan)", icon: PiggyBank, group: "Pengajuan & Voucher" },
+    { slug: "voucher-bkk", label: "Voucher BKK (Pengeluaran)", icon: PiggyBank, group: "Pengajuan & Voucher" },
+    { slug: "kas-kecil", label: "Kas Kecil", icon: Coins, group: "Pengajuan & Voucher" },
+    { slug: "voucher-kas-kecil", label: "Voucher Kas Kecil", icon: Coins, group: "Pengajuan & Voucher" },
+    { slug: "bukti-setor", label: "Bukti Setor Bank", icon: Landmark, group: "Pengajuan & Voucher" },
+
+    { slug: "bank", label: "Bank", icon: Landmark, group: "Bank & Rekonsiliasi" },
+    { slug: "rekonsiliasi", label: "Rekonsiliasi Kas/Bank", icon: ArrowDownUp, group: "Bank & Rekonsiliasi" },
+
+    { slug: "persediaan", label: "Master Persediaan", icon: Boxes, group: "Persediaan" },
+    { slug: "persediaan-mutasi", label: "Mutasi Persediaan", icon: ArrowDownUp, group: "Persediaan" },
+    { slug: "persediaan-laporan", label: "Laporan Persediaan", icon: FileBarChart, group: "Persediaan" },
+
+    { slug: "aset", label: "Master Aset", icon: Building2, group: "Aset Tetap" },
+    { slug: "aset-penyusutan", label: "Penyusutan Aset", icon: TrendingDown, group: "Aset Tetap" },
+    { slug: "aset-laporan", label: "Laporan Aset by Cost Center", icon: FileBarChart, group: "Aset Tetap" },
+
+    { slug: "pajak", label: "Pajak (Umum)", icon: ShieldCheck, group: "Pajak" },
+    { slug: "pajak-pph2123", label: "PPh 21 / 23", icon: ShieldCheck, group: "Pajak" },
+    { slug: "pajak-pph-honor", label: "PPh Honor Dokter", icon: ShieldCheck, group: "Pajak" },
+    { slug: "pajak-ppn", label: "PPN Prepopulated", icon: ShieldCheck, group: "Pajak" },
+    { slug: "pajak-rekap", label: "Rekap Pajak Bulanan", icon: FileSpreadsheet, group: "Pajak" },
+
+    { slug: "payroll", label: "Payroll (Umum)", icon: Wallet, group: "Payroll" },
+    { slug: "payroll-absensi", label: "Absensi", icon: Clock, group: "Payroll" },
+    { slug: "payroll-rekap", label: "Rekap Gaji", icon: BarChart3, group: "Payroll" },
+    { slug: "payroll-slip", label: "Slip Gaji", icon: FileText, group: "Payroll" },
 
     { slug: "jurnal", label: "Jurnal", icon: BookOpen, group: "Akuntansi" },
     { slug: "buku-besar", label: "Buku Besar", icon: BookOpen, group: "Akuntansi" },
     { slug: "laba-rugi", label: "Laba Rugi", icon: LineChart, group: "Akuntansi" },
+    { slug: "laba-rugi-payer", label: "Laba Rugi by Payer", icon: LineChart, group: "Akuntansi" },
     { slug: "arus-kas", label: "Arus Kas", icon: ArrowDownUp, group: "Akuntansi" },
     { slug: "neraca", label: "Neraca Saldo", icon: Scale, group: "Akuntansi" },
+    { slug: "perubahan-modal", label: "Perubahan Modal", icon: TrendingDown, group: "Akuntansi" },
+    { slug: "rab", label: "RAB vs Realisasi", icon: FileSpreadsheet, group: "Akuntansi" },
     { slug: "laporan", label: "Laporan Manajemen", icon: FileSpreadsheet, group: "Akuntansi" },
 
+    { slug: "import-export", label: "Import / Export", icon: ArrowDownUp, group: "Sistem" },
     { slug: "audit", label: "Audit Log Finance", icon: ScrollText, group: "Sistem" },
     { slug: "settings", label: "Settings", icon: Settings, group: "Sistem" },
+    { slug: "reset-data", label: "Reset Data", icon: Trash2, group: "Sistem" },
   ],
 };
 
