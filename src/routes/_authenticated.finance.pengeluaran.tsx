@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   listExpenses, upsertExpense, voidExpense, getExpense, listLookups,
 } from "@/lib/finance-tx.functions";
+import { listTplVoucher } from "@/lib/finance-template.functions";
 import { useFinanceDate } from "@/context/finance-date";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { useAuth } from "@/lib/auth";
