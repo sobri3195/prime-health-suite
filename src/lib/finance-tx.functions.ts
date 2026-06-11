@@ -4,7 +4,7 @@ import { z } from "zod";
 // ---------- helpers ----------
 async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  return supabaseAdmin as any;
 }
 
 async function nextNo(prefix: string, table: string, col: string) {
