@@ -1,112 +1,50 @@
+## Tujuan
+Empat fitur besar di modul `/finance`, dibangun di atas tabel transaksional yang sudah ada (`fin_invoice`, `fin_expense`, `fin_journal_*`, `fin_pembayaran`, `fin_coa`).
 
-# Rencana Implementasi SIM Klinik Prime Mata
+---
 
-Scope sangat besar — saya akan kerjakan dalam **3 iterasi berurutan** dalam satu sesi build ini. Setiap iterasi menghasilkan fitur yang sudah jalan end-to-end sebelum lanjut. Modul finance, HR, diklat lama TIDAK disentuh.
+### 1. Template Invoice & Voucher
+Tambah tabel master template supaya kasir/AP tinggal pilih, tidak isi ulang.
 
-## Strategi Integrasi Tabel
+- `fin_template_invoice`: nama, payer default, kategori, daftar item default (layanan, qty, harga, diskon %, pajak id), COA pendapatan, catatan.
+- `fin_template_voucher`: nama, vendor default, daftar item (deskripsi, COA biaya, jumlah, PPN id), metode bayar default.
+- `fin_mdr_rule`: aturan MDR per metode bayar (Debit/Credit/QRIS) × bank/acquirer → `rate %` + COA beban MDR. Dipakai otomatis saat catat pembayaran non-tunai: hitung MDR, kurangi kas masuk, dan post jurnal `Dr Beban MDR / Cr Kas` bersamaan.
+- UI: tab "Template" di halaman Pendapatan & Pengeluaran (CRUD), dan tombol **"Pakai Template"** di form invoice/voucher yang prefill seluruh baris.
+- Halaman master baru `/finance/master-mdr` untuk aturan MDR.
 
-Pakai ulang tabel existing, hanya extend kolom yang kurang:
+### 2. Rekonsiliasi Kas/Bank
+- Tabel `fin_bank_statement`: import mutasi bank (tanggal, deskripsi, debit, kredit, saldo, bank_id, ref). Import via paste CSV (tanpa upload file — parse client-side, kirim baris ke server fn).
+- Tabel `fin_reconciliation`: pasangan `statement_id` ↔ `journal_line_id` (atau `pembayaran_id` / `expense_id`), status `matched|unmatched|adjusted`, selisih.
+- Auto-match: cocokkan by tanggal ±2 hari + amount exact. Sisa = unmatched.
+- UI `/finance/rekonsiliasi`: dua kolom (Mutasi Bank | Catatan Buku Besar) + tombol Match, Unmatch, dan **"Buat Jurnal Penyesuaian"** untuk selisih (mis. biaya admin bank, bunga) → langsung post ke `fin_journal_entry` dengan sumber `adjustment`.
+- KPI atas: saldo buku, saldo bank, selisih, jumlah unmatched.
 
-| Konsep SIM Klinik | Tabel yang dipakai | Aksi |
-|---|---|---|
-| Pasien (RM) | `apps_pasien` | + kolom `no_rm`, `nik`, `alergi`, `patient_type`, `emergency_contact` |
-| Dokter | `fin_dokter` | + kolom `sip_number`, `schedule_note` |
-| Layanan/tindakan | `fin_layanan` | sudah cukup |
-| Obat | tabel baru `klinik_obat` + `klinik_stock_movement` | finance tidak punya master obat |
-| Appointment | `apps_booking` | + kolom `complaint`, `source` |
-| Antrian | tabel baru `klinik_queue` | |
-| Visit/kunjungan | tabel baru `klinik_visit` | |
-| Rekam medis mata | tabel baru `klinik_medical_record` (kolom mata: visus OD/OS, TIO, slit lamp, fundus, ICD-10) | |
-| Resep | tabel baru `klinik_prescription` + `klinik_prescription_item` | |
-| Invoice/billing | `fin_invoice` + `fin_invoice_item` + `fin_pembayaran` | sudah ada, tinggal dipakai dari visit |
-| Audit log | `clinic_audit_log` | sudah ada |
-| Role | `user_roles` + enum `app_role` | + role baru jika belum ada |
+### 3. Audit Log Finance (server-side, bukan localStorage)
+- Tabel `fin_audit_log`: `actor_id`, `actor_email`, `action` (create/edit/void/pay/post/reconcile), `entity` (invoice/expense/pembayaran/journal), `entity_id`, `before` jsonb, `after` jsonb, `changed_fields` text[], `reason`, `ip`, `created_at`.
+- Helper server `logFinAudit(ctx, …)` dipanggil di setiap mutator di `finance-tx.functions.ts`.
+- Void wajib `reason` (form modal — sudah ada field `void_reason` di invoice, perluas ke expense + pembayaran).
+- UI `/finance/audit` diganti: baca dari `fin_audit_log`, filter actor/entity/action/tanggal, diff `before` vs `after` ditampilkan inline (badge field berubah).
+- RLS: hanya `super_admin`, `finance_manager`, `accounting` boleh SELECT; semua user authenticated boleh INSERT lewat server fn (yang sudah pasti dipanggil dari handler bermiddleware).
 
-## Iterasi 1 — Auth, RBAC, Master Data
+### 4. Laporan Manajemen
+Server fn `getProfitLoss`, `getTrialBalance`, `getCashFlow` — semua agregasi langsung dari `fin_journal_line` + `fin_coa.type`.
 
-1. **Migration database** (1 file)
-   - Tambah role enum: `admin_klinik`, `dokter`, `perawat_optometri`, `pendaftaran`, `kasir`, `farmasi`, `manajemen` (super_admin sudah ada).
-   - Extend `apps_pasien` & `fin_dokter` & `apps_booking` dengan kolom baru.
-   - Tabel baru: `klinik_obat`, `klinik_stock_movement`, `klinik_queue`, `klinik_visit`, `klinik_medical_record`, `klinik_prescription`, `klinik_prescription_item`.
-   - GRANT + RLS + policy via `has_role()` untuk setiap tabel baru.
-   - Function `klinik_generate_no_rm()` dan `klinik_next_queue_number(date)`.
-   - Seed: 20 pasien, 5 dokter, 30 obat, 20 layanan, 10 appointment + antrian hari ini, 30 visit historis, 20 invoice.
+- **Laba Rugi** (`/finance/laba-rugi` — sudah ada, refactor pakai data nyata): Pendapatan − HPP − Beban Operasional = Laba, group per COA, periode bebas.
+- **Neraca Saldo** (`/finance/buku-besar` tambah tab atau halaman baru `/finance/neraca-saldo`): semua COA dengan total Debit & Kredit s/d tanggal, harus balance.
+- **Arus Kas** (`/finance/arus-kas` — sudah ada, refactor): metode langsung — kumpulkan jurnal yang menyentuh COA kas/bank (1100, 1110, dst), klasifikasi Operasi/Investasi/Pendanaan via flag di `fin_coa` (tambah kolom `cash_flow_section`).
+- Komponen bersama `<ReportExportBar>` (CSV + PDF via `jspdf` yang sudah dipakai `exporter.ts`) — semua laporan punya filter tanggal (sudah ada `FinanceDateContext`) dan tombol ekspor.
 
-2. **RBAC frontend**
-   - Extend `src/lib/rbac.tsx` dengan helper `useClinicAccess()` untuk semua role baru.
-   - Sidebar role-aware di `src/lib/nav-config.ts` — tambah section "SIM Klinik".
-   - Halaman `/sim-klinik/users` (manajemen user, assign role, nonaktif) — super_admin only.
+---
 
-3. **Master data CRUD** (komponen reusable sudah ada via `master-crud.tsx`)
-   - `/sim-klinik/pasien` — list, search, filter, tambah/edit/detail, export CSV
-   - `/sim-klinik/dokter` — pakai ulang/extend fin_dokter UI
-   - `/sim-klinik/layanan` — pakai ulang fin_layanan
-   - `/sim-klinik/obat` — CRUD + indikator stok rendah & expired
+### Teknis singkat
+- Migrasi tunggal: `fin_template_invoice`, `fin_template_invoice_item`, `fin_template_voucher`, `fin_template_voucher_item`, `fin_mdr_rule`, `fin_bank_statement`, `fin_reconciliation`, `fin_audit_log`, kolom baru `fin_coa.cash_flow_section`, kolom `void_reason` di `fin_expense` & `fin_pembayaran`. Semua + GRANT + RLS (write = role finance, read = role finance).
+- Server fn baru: `src/lib/finance-template.functions.ts`, `finance-recon.functions.ts`, `finance-report.functions.ts`, plus helper audit di file existing `finance-tx.functions.ts`.
+- Pembayaran non-tunai otomatis pakai `fin_mdr_rule` (kalau ada) → jurnal MDR ikut diposting di transaksi yang sama.
+- Tidak menyentuh `_authenticated/route.tsx`, `client.ts`, `types.ts`, atau auth-middleware files.
 
-## Iterasi 2 — Workflow Klinis + Farmasi + Kasir
+### Yang TIDAK termasuk
+- Bank feed otomatis (Open Banking) — hanya import manual CSV.
+- Multi-currency.
+- Closing period / lock periode.
 
-4. **Pendaftaran & Appointment** `/sim-klinik/pendaftaran`
-   - Cari pasien (no_rm/nama/NIK/HP) atau buat baru
-   - Form appointment (dokter, tanggal, jam, keluhan, jenis pasien)
-   - Tombol check-in → otomatis buat queue + visit `registered`
-
-5. **Antrian** `/sim-klinik/antrian`
-   - List antrian hari ini, filter counter/dokter
-   - Tombol Panggil / Mulai / Selesai
-   - Display mode (besar) untuk layar antrian
-   - Auto-refresh via TanStack Query refetchInterval 5s
-
-6. **Rekam Medis** `/sim-klinik/rekam-medis`
-   - Daftar pasien hari ini (dokter login)
-   - Form pemeriksaan mata lengkap + 7 template cepat (katarak, glaukoma, dll)
-   - Timeline riwayat kunjungan
-   - Tombol "Buat Resep" dan "Tambah Tindakan ke Invoice"
-   - Final record locked (kecuali admin, dengan audit)
-
-7. **Farmasi** `/sim-klinik/farmasi`
-   - Daftar resep masuk (status sent_to_pharmacy)
-   - Dispense → kurangi stok via `klinik_stock_movement` (transaksi)
-   - Cegah dispense jika stok kurang
-   - Sub-tab: Stock In, Stock Out, Adjustment, Riwayat, Alert (low stock/expired)
-
-8. **Kasir** `/sim-klinik/kasir`
-   - Daftar visit `billing` → generate invoice (auto-pull tindakan + obat dispensed)
-   - Form pembayaran (tunai/transfer/QRIS/debit/asuransi), partial allowed
-   - Cetak invoice (window.print + style A5)
-   - Saat lunas: invoice paid + visit done
-
-## Iterasi 3 — Dashboard, Laporan, Audit, Notif
-
-9. **Dashboard** `/sim-klinik` — 11 KPI cards clickable, grafik kunjungan 30 hari, grafik pendapatan 12 bulan, distribusi jenis pasien (donut), top 10 layanan, aktivitas terbaru. Global date filter (today/7d/30d/MTD/YTD/custom).
-
-10. **Laporan** `/sim-klinik/laporan` (10 sub-tab) — semua filter date + dokter + status, ringkasan + tabel + grafik + export CSV + print.
-
-11. **Notification Bell** di header — query alert (low stock, invoice unpaid >7 hari, resep pending, appointment hari ini).
-
-12. **Audit Log Viewer** `/sim-klinik/audit` — pakai `clinic_audit_log`, filter user/action/table/tanggal, diff before/after JSON readable.
-
-## Detail Teknis
-
-- Stack: TanStack Start (existing), Supabase, TanStack Query, RHF + Zod, Recharts, shadcn/ui, sonner toast.
-- Server functions: `src/lib/klinik-*.functions.ts` per modul, `requireSupabaseAuth` middleware.
-- Audit log: helper `withAudit()` di `src/lib/clinic-audit.ts` (sudah ada) dipakai di setiap mutasi.
-- RLS: setiap tabel klinik baru pakai pola `has_role(auth.uid(), 'super_admin') OR has_role(... role lain ...)`. Dokter hanya bisa lihat medical_record/visit yang dia handle.
-- Sidebar: tambah group "SIM Klinik" di `nav-config.ts`, role filter sudah ada.
-- Reusable: `master-crud.tsx`, `finance-export-bar.tsx`, `finance-date-filter.tsx` (rename context jadi generic).
-- Bahasa Indonesia untuk semua label.
-- Responsive: grid `md:grid-cols-2`, table wrap di overflow-x-auto.
-
-## Hal yang TIDAK dikerjakan iterasi ini
-
-- Mobile app `/apps` (pasien) — tetap apa adanya, hanya `apps_pasien` di-extend.
-- WhatsApp/email notification beneran (cukup toast + bell in-app).
-- PDF native (pakai `window.print` + CSS print).
-- Online appointment booking publik (sudah ada di `/apps/booking`).
-
-## Risiko & Catatan
-
-- Iterasi ini menambah ~9 tabel + ~30 file baru. Saya akan commit migration paling dulu (perlu approval Anda), lalu lanjut implementasi setelah migration jalan.
-- Modul lama (finance/HR/diklat) hanya disentuh untuk nav-config (tambah group baru di atas/bawah).
-- Setelah Iterasi 1 selesai, saya konfirmasi singkat sebelum Iterasi 2 supaya Anda bisa review arah.
-
-**Apakah rencana ini disetujui? Saya mulai dengan migration database + seed sebagai langkah pertama.**
+Lanjut implementasi setelah Anda setujui.
