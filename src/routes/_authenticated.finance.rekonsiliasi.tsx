@@ -23,34 +23,6 @@ export const Route = createFileRoute("/_authenticated/finance/rekonsiliasi")({
 
 const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
 
-function parseCsv(text: string): { tanggal: string; deskripsi: string; debit: number; kredit: number; saldo?: number; ref?: string }[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const sep = lines[0].includes(";") ? ";" : ",";
-  const hdr = lines[0].split(sep).map((s) => s.trim().toLowerCase());
-  const idx = (k: string) => hdr.findIndex((h) => h.includes(k));
-  const iDate = idx("tanggal") >= 0 ? idx("tanggal") : idx("date");
-  const iDesc = idx("desk") >= 0 ? idx("desk") : idx("desc");
-  const iDeb = idx("debit") >= 0 ? idx("debit") : idx("keluar");
-  const iKre = idx("kredit") >= 0 ? idx("kredit") : idx("masuk");
-  const iSal = idx("saldo");
-  const iRef = idx("ref");
-  const out: any[] = [];
-  for (const ln of lines.slice(1)) {
-    const c = ln.split(sep);
-    if (c.length < 2) continue;
-    out.push({
-      tanggal: c[iDate]?.trim(),
-      deskripsi: c[iDesc]?.trim() ?? "",
-      debit: Number((c[iDeb] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-      kredit: Number((c[iKre] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-      saldo: iSal >= 0 ? Number((c[iSal] ?? "0").replace(/[^\d.-]/g, "")) || null : null,
-      ref: iRef >= 0 ? c[iRef]?.trim() : null,
-    });
-  }
-  return out;
-}
-
 function RekonsiliasiPage() {
   const { from, to } = useFinanceDate();
   const { canEdit, user } = useFinanceAccess();
