@@ -1,363 +1,192 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Plus, Printer, Eye, Pencil, Send, Trash2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { visits } from "@/data/clinicData";
-import { addSync, formatIDR } from "@/lib/sync-log";
-import { addAudit } from "@/lib/audit-log";
-import { clinicAudit } from "@/lib/clinic-audit";
-import { useAuth } from "@/lib/auth";
-import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
+import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({
-  component: BillingPage,
-});
-
-type BillStatus = "draft" | "issued" | "sent_to_cashier" | "paid" | "cancelled";
-
-interface BillItem { name: string; qty: number; price: number }
-interface Billing {
-  id: string;
-  invoice: string;
-  visitId: string;
-  patientCode: string;
-  payer: string;
-  doctor: string;
-  items: BillItem[];
-  discount: number;
-  status: BillStatus;
-  createdAt: string;
-  sentToFinance?: boolean;
-}
-
-const STATUS_LABEL: Record<BillStatus, string> = {
-  draft: "Draft", issued: "Issued", sent_to_cashier: "Sent to Cashier",
-  paid: "Paid", cancelled: "Cancelled",
-};
-
-function seed(): Billing[] {
-  return visits.slice(0, 6).map((v, i) => ({
-    id: `BIL-${String(1001 + i).padStart(5, "0")}`,
-    invoice: `INV/2026/06/${String(101 + i).padStart(4, "0")}`,
-    visitId: v.id,
-    patientCode: v.patientId,
-    payer: v.payer,
-    doctor: v.doctor,
-    items: [
-      { name: "Konsultasi Dokter Sp.M", qty: 1, price: 175000 },
-      ...(i % 2 === 0 ? [{ name: "Refraksi", qty: 1, price: 85000 }] : []),
-      ...(i % 3 === 0 ? [{ name: "Tonometri", qty: 1, price: 75000 }] : []),
-    ],
-    discount: i === 1 ? 25000 : 0,
-    status: (["draft","issued","sent_to_cashier","paid","issued","draft"] as BillStatus[])[i],
-    createdAt: new Date(Date.now() - i * 36e5).toISOString(),
-  }));
-}
-
-const sum = (b: Billing) =>
-  b.items.reduce((a, x) => a + x.qty * x.price, 0) - b.discount;
+export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
 
 function BillingPage() {
-  const { user } = useAuth();
-  const [list, setList] = useState<Billing[]>(seed());
-  const [detail, setDetail] = useState<Billing | null>(null);
-  const [edit, setEdit] = useState<Billing | null>(null);
-  const [newOpen, setNewOpen] = useState(false);
+  const qc = useQueryClient();
+  const callVisits = useServerFn(listVisits);
+  const callDetail = useServerFn(getVisitDetail);
+  const callLayanan = useServerFn(listLayanan);
+  const callGen = useServerFn(generateInvoiceFromVisit);
+  const callInv = useServerFn(listInvoiceForBilling);
 
-  const updateStatus = (id: string, s: BillStatus) => {
-    setList((arr) => arr.map((b) => b.id === id ? { ...b, status: s } : b));
-    clinicAudit("Billing", "update", id, { status: s });
-    toast.success(`${id} → ${STATUS_LABEL[s]}`);
-  };
+  const today = new Date().toISOString().slice(0, 10);
+  const [billVisit, setBillVisit] = useState<string | null>(null);
 
-  const sendToFinance = (b: Billing) => {
-    const payload = {
-      billing_id: b.id,
-      invoice_number: b.invoice,
-      patient_code: b.patientCode,
-      payer: b.payer,
-      doctor: b.doctor,
-      service_items: b.items,
-      total_amount: sum(b),
-      billing_status: b.status,
-      created_at: b.createdAt,
-    };
-    addSync({
-      source: "SIM Klinik", target: "Finance",
-      channel: "billing.invoice", refId: b.id,
-      status: "success", payload,
-    });
-    addAudit({
-      actor: user?.email ?? "system",
-      action: "sync",
-      target: `sim-klinik/billing/${b.id} → finance`,
-      meta: { invoice: b.invoice, amount: sum(b) },
-    });
-    clinicAudit("Billing", "sync_to_finance", b.id, { invoice: b.invoice, amount: sum(b) });
-    setList((arr) => arr.map((x) => x.id === b.id ? { ...x, sentToFinance: true } : x));
-    toast.success(`Invoice ${b.invoice} terkirim ke Finance`);
-  };
+  // Visits ready for billing
+  const visitsQ = useQuery({ queryKey: ["klinik","visits-billing"], queryFn: () => callVisits({ data: { status: "billing" } }) });
+  const invoicesQ = useQuery({ queryKey: ["klinik","invoices",today], queryFn: () => callInv({ data: {} }) });
 
-  const printBill = (b: Billing) => toast.message(`Cetak ${b.invoice} (mock)`);
-  const remove = (id: string) => {
-    setList((arr) => arr.filter((b) => b.id !== id));
-    clinicAudit("Billing", "delete", id);
-    toast.message(`${id} dihapus`);
-  };
-
-  const billingCols: Column<Billing>[] = [
-    { key: "id", header: "Billing ID" },
-    { key: "invoice", header: "Invoice" },
-    { key: "patientCode", header: "Kode Pasien" },
-    { key: "payer", header: "Penjamin" },
-    { key: "doctor", header: "Dokter" },
-    { key: "status", header: "Status", format: (b) => STATUS_LABEL[b.status] },
-    { key: "createdAt", header: "Dibuat", format: (b) => new Date(b.createdAt).toLocaleString("id-ID") },
-    { key: "items", header: "Total (Rp)", format: (b) => sum(b).toLocaleString("id-ID") },
-  ];
-  const onCsv = () => { exportCsv(`billing-${new Date().toISOString().slice(0,10)}.csv`, billingCols, list); clinicAudit("Billing", "export", "csv"); };
-  const onPdf = () => { exportPdf(`billing-${new Date().toISOString().slice(0,10)}.pdf`, "Billing Klinik", billingCols, list); clinicAudit("Billing", "export", "pdf"); };
+  type Visit = { id: string; visit_date: string; chief_complaint: string | null; apps_pasien?: { no_rm: string; nama: string; patient_type: string }; fin_dokter?: { name: string } };
+  const visits = (visitsQ.data ?? []) as Visit[];
 
   return (
     <div>
-      <PageHeader
-        title="Billing Klinik"
-        desc="Billing operasional klinik. Detail finance (jurnal, laba rugi) dikelola di Prime Simon Finance."
-      />
+      <PageHeader title="Kasir & Billing" desc="Generate invoice dari kunjungan dan catat pembayaran." />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          {list.length} billing • Kirim ke Finance untuk pencatatan jurnal & piutang.
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onCsv}>Export CSV</Button>
-          <Button variant="outline" size="sm" onClick={onPdf}>Export PDF</Button>
-          <Button onClick={() => setNewOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> Billing Baru</Button>
-        </div>
-      </div>
-
-      {list.length === 0 && (
-        <div className="mb-4 rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center text-sm text-muted-foreground">
-          Belum ada billing. Klik <b>Billing Baru</b> untuk membuat tagihan pertama.
-        </div>
-      )}
-
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Patient Code</TableHead>
-              <TableHead>Payer</TableHead>
-              <TableHead>Dokter</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Finance</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.map((b) => (
-              <TableRow key={b.id}>
-                <TableCell className="font-mono text-xs">{b.id}</TableCell>
-                <TableCell className="font-mono text-xs">{b.invoice}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{b.patientCode}</TableCell>
-                <TableCell><Badge variant="secondary">{b.payer}</Badge></TableCell>
-                <TableCell className="text-sm">{b.doctor}</TableCell>
-                <TableCell className="text-right font-mono">{formatIDR(sum(b))}</TableCell>
-                <TableCell><StatusBadge s={b.status} /></TableCell>
-                <TableCell>
-                  {b.sentToFinance
-                    ? <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20">Synced</Badge>
-                    : <Badge variant="outline">Belum</Badge>}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setDetail(b)} aria-label="Detail"><Eye className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => setEdit(b)} aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => printBill(b)} aria-label="Cetak"><Printer className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => sendToFinance(b)}>
-                      <Send className="h-3.5 w-3.5" /> Finance
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove(b.id)} aria-label="Hapus"><Trash2 className="h-4 w-4" /></Button>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="p-3">
+          <h3 className="mb-2 text-sm font-semibold">Pasien Siap Bayar ({visits.length})</h3>
+          <div className="space-y-2">
+            {visits.length === 0 ? <p className="text-xs text-muted-foreground">Belum ada pasien menunggu billing.</p>
+              : visits.map((v) => (
+                <div key={v.id} className="flex items-center gap-2 rounded border p-2">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{v.apps_pasien?.nama}</div>
+                    <div className="text-xs text-muted-foreground">{v.apps_pasien?.no_rm} • {v.fin_dokter?.name} • <Badge variant="outline" className="text-[10px]">{v.apps_pasien?.patient_type}</Badge></div>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  <Button size="sm" onClick={() => setBillVisit(v.id)}><Receipt className="mr-1 h-3 w-3" />Buat Invoice</Button>
+                </div>
+              ))}
+          </div>
+        </Card>
+        <Card className="p-3">
+          <h3 className="mb-2 text-sm font-semibold">Invoice Terbaru</h3>
+          <Table>
+            <TableHeader><TableRow><TableHead>No</TableHead><TableHead>Pasien</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {((invoicesQ.data ?? []) as Array<{ id: string; no_invoice: string; patient_name: string | null; status: string; total: number }>).slice(0, 12).map((i) => (
+                <TableRow key={i.id}>
+                  <TableCell className="font-mono text-xs">{i.no_invoice}</TableCell>
+                  <TableCell className="text-sm">{i.patient_name}</TableCell>
+                  <TableCell><Badge variant={i.status === "paid" ? "default" : i.status === "partial" ? "secondary" : "destructive"}>{i.status}</Badge></TableCell>
+                  <TableCell className="text-right">Rp {Number(i.total).toLocaleString("id-ID")}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
-      <DetailDialog b={detail} onClose={() => setDetail(null)} onStatus={updateStatus} onSend={sendToFinance} />
-      <EditDialog b={edit} onClose={() => setEdit(null)} onSave={(nb) => {
-        setList((arr) => arr.map((x) => x.id === nb.id ? nb : x));
-        toast.success(`${nb.id} diperbarui`);
-      }} />
-      <NewDialog open={newOpen} onOpenChange={setNewOpen} onCreate={(b) => setList([b, ...list])} />
+      {billVisit && <BillingDialog visit_id={billVisit} onClose={() => setBillVisit(null)}
+        callDetail={callDetail} callLayanan={callLayanan} callGen={callGen}
+        onCreated={() => { qc.invalidateQueries({ queryKey: ["klinik"] }); setBillVisit(null); }} />}
     </div>
   );
 }
 
-function StatusBadge({ s }: { s: BillStatus }) {
-  const cls: Record<BillStatus, string> = {
-    draft: "bg-muted text-muted-foreground",
-    issued: "bg-blue-500/15 text-blue-600",
-    sent_to_cashier: "bg-amber-500/15 text-amber-600",
-    paid: "bg-emerald-500/15 text-emerald-600",
-    cancelled: "bg-rose-500/15 text-rose-600",
-  };
-  return <span className={`rounded-full px-2 py-0.5 text-xs ${cls[s]}`}>{STATUS_LABEL[s]}</span>;
-}
+function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, onCreated }: {
+  visit_id: string; onClose: () => void;
+  callDetail: (a: { data: { id: string } }) => Promise<unknown>;
+  callLayanan: () => Promise<unknown>;
+  callGen: (a: { data: unknown }) => Promise<unknown>;
+  onCreated: () => void;
+}) {
+  const detailQ = useQuery({ queryKey: ["klinik","visit-bill",visit_id], queryFn: () => callDetail({ data: { id: visit_id } }) });
+  const layananQ = useQuery({ queryKey: ["klinik","layanan"], queryFn: () => callLayanan() });
 
-function DetailDialog({
-  b, onClose, onStatus, onSend,
-}: { b: Billing | null; onClose: () => void; onStatus: (id: string, s: BillStatus) => void; onSend: (b: Billing) => void }) {
-  if (!b) return null;
-  const subtotal = b.items.reduce((a, x) => a + x.qty * x.price, 0);
-  return (
-    <Dialog open={!!b} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader><DialogTitle>{b.invoice}</DialogTitle></DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div><span className="text-muted-foreground">Billing ID:</span> <span className="font-mono">{b.id}</span></div>
-            <div><span className="text-muted-foreground">Patient Code:</span> <span className="font-mono">{b.patientCode}</span></div>
-            <div><span className="text-muted-foreground">Payer:</span> {b.payer}</div>
-            <div><span className="text-muted-foreground">Dokter:</span> {b.doctor}</div>
-          </div>
-          <div className="overflow-hidden rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-left text-xs">
-                <tr><th className="px-3 py-2">Layanan</th><th className="px-3 py-2 text-right">Qty</th><th className="px-3 py-2 text-right">Harga</th><th className="px-3 py-2 text-right">Subtotal</th></tr>
-              </thead>
-              <tbody>
-                {b.items.map((it, i) => (
-                  <tr key={i} className="border-t border-border">
-                    <td className="px-3 py-2">{it.name}</td>
-                    <td className="px-3 py-2 text-right">{it.qty}</td>
-                    <td className="px-3 py-2 text-right font-mono">{formatIDR(it.price)}</td>
-                    <td className="px-3 py-2 text-right font-mono">{formatIDR(it.qty * it.price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="space-y-1 text-right text-sm">
-            <div>Subtotal: <span className="font-mono">{formatIDR(subtotal)}</span></div>
-            <div>Diskon: <span className="font-mono">-{formatIDR(b.discount)}</span></div>
-            <div className="text-base font-semibold">Total: <span className="font-mono">{formatIDR(subtotal - b.discount)}</span></div>
-          </div>
-        </div>
-        <DialogFooter className="flex-wrap gap-2">
-          <Button variant="outline" onClick={() => onStatus(b.id, "issued")}>Issue</Button>
-          <Button variant="outline" onClick={() => onStatus(b.id, "sent_to_cashier")}>To Cashier</Button>
-          <Button variant="outline" onClick={() => onStatus(b.id, "paid")}>Paid</Button>
-          <Button onClick={() => onSend(b)} className="gap-1"><Send className="h-4 w-4" /> Send to Finance</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EditDialog({
-  b, onClose, onSave,
-}: { b: Billing | null; onClose: () => void; onSave: (b: Billing) => void }) {
+  type Item = { description: string; quantity: number; unit_price: number; layanan_id: string | null };
+  const [items, setItems] = useState<Item[]>([]);
   const [discount, setDiscount] = useState(0);
-  const [status, setStatus] = useState<BillStatus>("draft");
+  const [paid, setPaid] = useState(0);
+  const [method, setMethod] = useState<"cash"|"transfer"|"qris"|"debit"|"credit"|"insurance">("cash");
 
-  useMemo(() => {
-    if (b) { setDiscount(b.discount); setStatus(b.status); }
-  }, [b]);
+  type Detail = { visit: { id: string; apps_pasien?: { nama: string; no_rm: string; patient_type: string }; fin_dokter?: { name: string } }; prescriptions: Array<{ klinik_prescription_item: Array<{ obat_name: string; quantity: number; unit_price: number }> }> };
+  const detail = detailQ.data as Detail | undefined;
 
-  if (!b) return null;
+  // Pre-fill prescription items as line items on first load
+  useEffect(() => {
+    if (!detail) return;
+    const pres: Item[] = [];
+    detail.prescriptions.forEach((p) => p.klinik_prescription_item.forEach((it) => pres.push({
+      description: `Obat: ${it.obat_name}`, quantity: it.quantity, unit_price: it.unit_price, layanan_id: null,
+    })));
+    setItems(pres);
+  }, [detail]);
+
+  const layanan = (layananQ.data ?? []) as Array<{ id: string; name: string; tarif: number }>;
+  const subtotal = items.reduce((a, b) => a + b.quantity * b.unit_price, 0);
+  const total = Math.max(0, subtotal - discount);
+
+  const genM = useMutation({
+    mutationFn: () => callGen({ data: { visit_id, items, payment_method: method, paid_amount: paid, discount } }),
+    onSuccess: (i) => { toast.success("Invoice dibuat"); onCreated(); printInvoice(i as Inv); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  type Inv = { no_invoice: string; patient_name: string | null; total: number; tanggal: string };
+  function printInvoice(inv: Inv) {
+    const w = window.open("", "_blank", "width=400,height=600");
+    if (!w) return;
+    w.document.write(`<html><head><title>${inv.no_invoice}</title><style>body{font-family:sans-serif;padding:20px;font-size:12px}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:2px 0}.r{text-align:right}.b{border-top:1px solid #333;margin-top:8px;padding-top:8px}</style></head><body>
+      <h2>Klinik Utama Prime Mata</h2><div>Jl. Contoh, Jakarta</div>
+      <div class="b">Invoice: <b>${inv.no_invoice}</b><br>Tanggal: ${inv.tanggal}<br>Pasien: ${inv.patient_name ?? "-"}</div>
+      <table>${items.map((it) => `<tr><td>${it.description}</td><td class="r">${it.quantity} x ${it.unit_price.toLocaleString("id-ID")}</td><td class="r">${(it.quantity*it.unit_price).toLocaleString("id-ID")}</td></tr>`).join("")}</table>
+      <div class="b"><table><tr><td>Subtotal</td><td class="r">${subtotal.toLocaleString("id-ID")}</td></tr>
+      <tr><td>Diskon</td><td class="r">${discount.toLocaleString("id-ID")}</td></tr>
+      <tr><td><b>TOTAL</b></td><td class="r"><b>${total.toLocaleString("id-ID")}</b></td></tr>
+      <tr><td>Dibayar (${method})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr></table></div>
+      <div class="b" style="text-align:center">Terima kasih</div>
+      <script>window.print()</script></body></html>`);
+  }
+
+  const addLayanan = (l: { id: string; name: string; tarif: number }) => setItems([...items, { description: l.name, quantity: 1, unit_price: Number(l.tarif), layanan_id: l.id }]);
+
   return (
-    <Dialog open={!!b} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit {b.invoice}</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5">
-            <Label className="text-xs">Diskon (Rp)</Label>
-            <Input type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label className="text-xs">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as BillStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(STATUS_LABEL) as BillStatus[]).map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader><DialogTitle>Generate Invoice — {detail?.visit?.apps_pasien?.nama}</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-[1fr_280px] gap-4">
+          <div>
+            <Label className="text-xs">Pilih Tindakan/Layanan</Label>
+            <div className="mb-3 max-h-32 overflow-y-auto rounded border p-1">
+              {layanan.map((l) => <button key={l.id} onClick={() => addLayanan(l)} className="block w-full px-2 py-1 text-left text-xs hover:bg-muted/40">{l.name} <span className="float-right">Rp {Number(l.tarif).toLocaleString("id-ID")}</span></button>)}
+            </div>
+            <Table>
+              <TableHeader><TableRow><TableHead>Deskripsi</TableHead><TableHead className="w-16">Qty</TableHead><TableHead>Harga</TableHead><TableHead></TableHead></TableRow></TableHeader>
+              <TableBody>
+                {items.map((it, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell><Input value={it.description} onChange={(e) => { const c=[...items]; c[idx].description=e.target.value; setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" value={it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity=Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" value={it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price=Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Button size="icon" variant="ghost" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
+                  </TableRow>
                 ))}
-              </SelectContent>
-            </Select>
+              </TableBody>
+            </Table>
+            <Button variant="outline" size="sm" onClick={() => setItems([...items, { description: "", quantity: 1, unit_price: 0, layanan_id: null }])}><Plus className="mr-1 h-3 w-3" />Item manual</Button>
+          </div>
+          <div className="space-y-2">
+            <div className="rounded border p-3 text-sm">
+              <div className="flex justify-between"><span>Subtotal</span><span>Rp {subtotal.toLocaleString("id-ID")}</span></div>
+              <div className="mt-2"><Label>Diskon</Label><Input type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} /></div>
+              <div className="mt-2 flex justify-between font-bold"><span>TOTAL</span><span>Rp {total.toLocaleString("id-ID")}</span></div>
+              <div className="mt-2"><Label>Metode Bayar</Label>
+                <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Tunai</SelectItem><SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="qris">QRIS</SelectItem><SelectItem value="debit">Debit</SelectItem>
+                    <SelectItem value="credit">Kredit</SelectItem><SelectItem value="insurance">Asuransi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-2"><Label>Dibayar</Label><Input type="number" value={paid} onChange={(e) => setPaid(Number(e.target.value))} /></div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {paid >= total ? "Lunas" : paid > 0 ? `Sisa Rp ${(total-paid).toLocaleString("id-ID")}` : "Belum bayar"}
+              </div>
+            </div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Batal</Button>
-          <Button onClick={() => { onSave({ ...b, discount, status }); onClose(); }}>Simpan</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function NewDialog({
-  open, onOpenChange, onCreate,
-}: { open: boolean; onOpenChange: (v: boolean) => void; onCreate: (b: Billing) => void }) {
-  const [visitId, setVisitId] = useState(visits[0].id);
-
-  const create = () => {
-    const v = visits.find((x) => x.id === visitId);
-    if (!v) return;
-    const b: Billing = {
-      id: `BIL-${Date.now().toString().slice(-6)}`,
-      invoice: `INV/2026/06/${Math.floor(Math.random() * 9000 + 1000)}`,
-      visitId: v.id, patientCode: v.patientId,
-      payer: v.payer, doctor: v.doctor,
-      items: [{ name: "Konsultasi Dokter Sp.M", qty: 1, price: 175000 }],
-      discount: 0, status: "draft",
-      createdAt: new Date().toISOString(),
-    };
-    onCreate(b);
-    onOpenChange(false);
-    toast.success(`Billing ${b.id} dibuat`);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Billing Baru</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5">
-            <Label className="text-xs">Generate dari Kunjungan</Label>
-            <Select value={visitId} onValueChange={setVisitId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {visits.map((v) => <SelectItem key={v.id} value={v.id}>{v.id} — {v.patientName}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Item layanan dasar akan ditambahkan otomatis. Tambah/edit item via dialog edit.
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button onClick={create}>Buat</Button>
+          <Button disabled={items.length === 0 || genM.isPending} onClick={() => genM.mutate()}><Printer className="mr-1 h-4 w-4" />Buat & Cetak Invoice</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
