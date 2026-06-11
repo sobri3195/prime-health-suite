@@ -77,6 +77,7 @@ import { Route as AuthenticatedFinanceHonorPotonganRouteImport } from './routes/
 import { Route as AuthenticatedFinanceHonorInputRouteImport } from './routes/_authenticated.finance.honor-input'
 import { Route as AuthenticatedFinanceBukuBesarRouteImport } from './routes/_authenticated.finance.buku-besar'
 import { Route as AuthenticatedFinanceBankRouteImport } from './routes/_authenticated.finance.bank'
+import { Route as AuthenticatedFinanceAuditRouteImport } from './routes/_authenticated.finance.audit'
 import { Route as AuthenticatedFinanceArusKasRouteImport } from './routes/_authenticated.finance.arus-kas'
 import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authenticated.finance.$section'
 import { Route as AuthenticatedAppsNotifikasiRouteImport } from './routes/_authenticated.apps.notifikasi'
@@ -472,6 +473,12 @@ const AuthenticatedFinanceBankRoute =
     path: '/bank',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceAuditRoute =
+  AuthenticatedFinanceAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceArusKasRoute =
   AuthenticatedFinanceArusKasRouteImport.update({
     id: '/arus-kas',
@@ -533,6 +540,7 @@ export interface FileRoutesByFullPath {
   '/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
+  '/finance/audit': typeof AuthenticatedFinanceAuditRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
   '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
@@ -605,6 +613,7 @@ export interface FileRoutesByTo {
   '/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
+  '/finance/audit': typeof AuthenticatedFinanceAuditRoute
   '/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
   '/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
@@ -682,6 +691,7 @@ export interface FileRoutesById {
   '/_authenticated/apps/notifikasi': typeof AuthenticatedAppsNotifikasiRoute
   '/_authenticated/finance/$section': typeof AuthenticatedFinanceSectionRoute
   '/_authenticated/finance/arus-kas': typeof AuthenticatedFinanceArusKasRoute
+  '/_authenticated/finance/audit': typeof AuthenticatedFinanceAuditRoute
   '/_authenticated/finance/bank': typeof AuthenticatedFinanceBankRoute
   '/_authenticated/finance/buku-besar': typeof AuthenticatedFinanceBukuBesarRoute
   '/_authenticated/finance/honor-input': typeof AuthenticatedFinanceHonorInputRoute
@@ -759,6 +769,7 @@ export interface FileRouteTypes {
     | '/apps/notifikasi'
     | '/finance/$section'
     | '/finance/arus-kas'
+    | '/finance/audit'
     | '/finance/bank'
     | '/finance/buku-besar'
     | '/finance/honor-input'
@@ -831,6 +842,7 @@ export interface FileRouteTypes {
     | '/apps/notifikasi'
     | '/finance/$section'
     | '/finance/arus-kas'
+    | '/finance/audit'
     | '/finance/bank'
     | '/finance/buku-besar'
     | '/finance/honor-input'
@@ -907,6 +919,7 @@ export interface FileRouteTypes {
     | '/_authenticated/apps/notifikasi'
     | '/_authenticated/finance/$section'
     | '/_authenticated/finance/arus-kas'
+    | '/_authenticated/finance/audit'
     | '/_authenticated/finance/bank'
     | '/_authenticated/finance/buku-besar'
     | '/_authenticated/finance/honor-input'
@@ -1453,6 +1466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceBankRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/audit': {
+      id: '/_authenticated/finance/audit'
+      path: '/audit'
+      fullPath: '/finance/audit'
+      preLoaderRoute: typeof AuthenticatedFinanceAuditRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/arus-kas': {
       id: '/_authenticated/finance/arus-kas'
       path: '/arus-kas'
@@ -1520,6 +1540,7 @@ const AuthenticatedAppsRouteWithChildren =
 interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceSectionRoute: typeof AuthenticatedFinanceSectionRoute
   AuthenticatedFinanceArusKasRoute: typeof AuthenticatedFinanceArusKasRoute
+  AuthenticatedFinanceAuditRoute: typeof AuthenticatedFinanceAuditRoute
   AuthenticatedFinanceBankRoute: typeof AuthenticatedFinanceBankRoute
   AuthenticatedFinanceBukuBesarRoute: typeof AuthenticatedFinanceBukuBesarRoute
   AuthenticatedFinanceHonorInputRoute: typeof AuthenticatedFinanceHonorInputRoute
@@ -1556,6 +1577,7 @@ interface AuthenticatedFinanceRouteChildren {
 const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceSectionRoute: AuthenticatedFinanceSectionRoute,
   AuthenticatedFinanceArusKasRoute: AuthenticatedFinanceArusKasRoute,
+  AuthenticatedFinanceAuditRoute: AuthenticatedFinanceAuditRoute,
   AuthenticatedFinanceBankRoute: AuthenticatedFinanceBankRoute,
   AuthenticatedFinanceBukuBesarRoute: AuthenticatedFinanceBukuBesarRoute,
   AuthenticatedFinanceHonorInputRoute: AuthenticatedFinanceHonorInputRoute,

@@ -18,6 +18,9 @@ import {
   formatIDR, formatCompactIDR, generateInsights,
 } from "@/lib/finance";
 import type { Invoice, Payer } from "@/types/finance";
+import { useFinanceDate } from "@/context/finance-date";
+import { FinanceExportBar } from "@/components/finance-export-bar";
+
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,
@@ -25,11 +28,15 @@ export const Route = createFileRoute("/_authenticated/finance/")({
 
 function FinanceDashboard() {
   const navigate = useNavigate();
-  const [period] = useState("Mei 2026");
+  const { from, to, label: period } = useFinanceDate();
   const [globalQ, setGlobalQ] = useState("");
 
-  const filter = useMemo(() => ({ period: "mtd", doctor: "all", service: "all", payer: "all", status: "all", from: "", to: "" } as const), []);
-  const filtered = useMemo(() => applyFilter(invoices, filter), [filter]);
+  const inRange = useMemo(
+    () => invoices.filter((r) => (!from || r.date >= from) && (!to || r.date <= to)),
+    [from, to],
+  );
+  const filter = useMemo(() => ({ period: "all", doctor: "all", service: "all", payer: "all", status: "all", from, to } as const), [from, to]);
+  const filtered = useMemo(() => applyFilter(inRange, filter), [inRange, filter]);
 
   const mtdRev = filtered.reduce((a, r) => a + r.total, 0);
   const outstanding = sumOutstanding(filtered);
@@ -71,9 +78,22 @@ function FinanceDashboard() {
               onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
             />
           </div>
-          <Button variant="outline" size="sm" onClick={() => toast.success("Export disiapkan")}>
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Quick Export
-          </Button>
+          <FinanceExportBar
+            resource="pendapatan-dashboard"
+            title="Pendapatan Periode"
+            columns={[
+              { key: "date", header: "Tanggal" },
+              { key: "invoice", header: "Invoice" },
+              { key: "payer", header: "Payer" },
+              { key: "doctor", header: "Dokter" },
+              { key: "service", header: "Layanan" },
+              { key: "total", header: "Total", format: (r) => r.total.toLocaleString("id-ID") },
+              { key: "paid", header: "Dibayar", format: (r) => r.paid.toLocaleString("id-ID") },
+              { key: "status", header: "Status" },
+            ]}
+            rows={filtered}
+            meta={{ page: "dashboard" }}
+          />
           <Button variant="outline" size="sm" onClick={() => toast.success("Demo direset")}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset Demo
           </Button>
