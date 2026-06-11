@@ -20,7 +20,7 @@ import {
 import type { Invoice, Payer } from "@/types/finance";
 import { useFinanceDate } from "@/context/finance-date";
 import { FinanceExportBar } from "@/components/finance-export-bar";
-import { aging as agingFn } from "@/lib/finance";
+
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,
