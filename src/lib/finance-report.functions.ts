@@ -143,8 +143,8 @@ export const drillCoa = createServerFn({ method: "POST" })
       ref_no: r.fin_journal_entry?.ref_no,
       entry_keterangan: r.fin_journal_entry?.keterangan,
     }));
-    const totalDebit = lines.reduce((a, l) => a + l.debit, 0);
-    const totalKredit = lines.reduce((a, l) => a + l.kredit, 0);
+    const totalDebit = lines.reduce((a: number, l: any) => a + l.debit, 0);
+    const totalKredit = lines.reduce((a: number, l: any) => a + l.kredit, 0);
     return { lines, totalDebit, totalKredit };
   });
 
