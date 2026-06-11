@@ -44,6 +44,8 @@ function PengeluaranPage() {
   });
   const rows = data?.rows ?? [];
   const { data: lookups } = useQuery({ queryKey: ["fin-lookups"], queryFn: () => lookupsFn() });
+  const tplFn = useServerFn(listTplVoucher);
+  const { data: tpls } = useQuery({ queryKey: ["fin-tpl-vch"], queryFn: () => tplFn() });
   const beban = useMemo(() => (lookups?.coa ?? []).filter((c: any) => c.type === "Expense"), [lookups]);
 
   const [editing, setEditing] = useState<any | null>(null);
