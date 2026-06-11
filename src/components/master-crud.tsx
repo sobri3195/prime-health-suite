@@ -168,8 +168,10 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
                 {fields.map((f) => <TableCell key={f.key} className="text-sm">{renderCell(f, r[f.key])}</TableCell>)}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing({ ...r }); setIsNew(false); }}><Pencil className="h-4 w-4" /></Button>
-                    {!singleton && (
+                    <Button size="icon" variant="ghost" onClick={() => { setEditing({ ...r }); setIsNew(false); }} title={canEdit ? "Edit" : "Lihat (read-only)"}>
+                      {canEdit ? <Pencil className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                    </Button>
+                    {!singleton && canEdit && (
                       <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => { if (confirm("Hapus data ini?")) deleteMut.mutate(r.id); }}>
                         <Trash2 className="h-4 w-4 text-rose-500" />
                       </Button>
