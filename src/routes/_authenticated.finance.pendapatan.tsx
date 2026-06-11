@@ -15,6 +15,7 @@ import {
   listInvoices, upsertInvoice, voidInvoice, getInvoice,
   createPayment, deletePayment, listLookups,
 } from "@/lib/finance-tx.functions";
+import { listTplInvoice } from "@/lib/finance-template.functions";
 import { useFinanceDate } from "@/context/finance-date";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { useAuth } from "@/lib/auth";
