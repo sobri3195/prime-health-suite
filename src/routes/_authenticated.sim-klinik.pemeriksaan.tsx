@@ -132,7 +132,7 @@ function PemeriksaanPage() {
                 {detailQ.data?.prescriptions && detailQ.data.prescriptions.length > 0 && (
                   <div className="rounded-md border p-2">
                     <div className="text-xs font-semibold">Resep aktif:</div>
-                    {detailQ.data.prescriptions.map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
+                    {(detailQ.data.prescriptions as Array<{ id: string; status: string; klinik_prescription_item?: unknown[] }>).map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
                   </div>
                 )}
               </div>
