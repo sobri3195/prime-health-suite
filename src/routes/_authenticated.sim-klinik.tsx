@@ -12,7 +12,7 @@ function Layout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = userFor("sim-klinik");
-  const { data: roles, isLoading: rolesLoading } = useRoles();
+  const { data: roles, isLoading: rolesLoading, fetchStatus } = useRoles({ enabled: user?.role === "admin_klinik" || user?.role === "super_admin" });
 
   useEffect(() => {
     if (!user || !canAccess(user.role, "sim-klinik")) {
@@ -34,7 +34,7 @@ function Layout() {
 
   return (
     <AppShell system="sim-klinik">
-      {rolesLoading ? null : rbacEnforced && !isSuperAdmin && !allowed ? (
+      {rolesLoading && fetchStatus !== "idle" ? null : rbacEnforced && !isSuperAdmin && !allowed ? (
         <div>
           <PageHeader title="Akses Ditolak" />
           <div className="rounded-2xl border border-border bg-card p-10 text-center">
