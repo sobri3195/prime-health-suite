@@ -1729,7 +1729,17 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "super_admin" | "dokter" | "perawat" | "kasir" | "pasien"
+      app_role:
+        | "super_admin"
+        | "dokter"
+        | "perawat"
+        | "kasir"
+        | "pasien"
+        | "admin_klinik"
+        | "perawat_optometri"
+        | "pendaftaran"
+        | "farmasi"
+        | "manajemen"
       hr_attendance_status:
         | "hadir"
         | "telat"
@@ -1867,7 +1877,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "dokter", "perawat", "kasir", "pasien"],
+      app_role: [
+        "super_admin",
+        "dokter",
+        "perawat",
+        "kasir",
+        "pasien",
+        "admin_klinik",
+        "perawat_optometri",
+        "pendaftaran",
+        "farmasi",
+        "manajemen",
+      ],
       hr_attendance_status: ["hadir", "telat", "alpa", "izin", "sakit", "cuti"],
       hr_overtime_mode: ["uang", "jam"],
       hr_overtime_status: ["pending", "approved", "rejected", "cancelled"],
