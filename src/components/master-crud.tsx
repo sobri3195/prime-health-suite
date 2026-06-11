@@ -45,6 +45,7 @@ interface Props {
 
 export function MasterCrudPage({ title, desc, module, table, fields, newRow, singleton }: Props) {
   const { user } = useAuth();
+  const { canEdit, isViewer } = useFinanceAccess();
   const qc = useQueryClient();
   const listFn = useServerFn(listFinMaster);
   const upsertFn = useServerFn(upsertFinMaster);
@@ -68,11 +69,18 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
     : rows;
 
   const upsertMut = useMutation({
-    mutationFn: (row: MasterRow) =>
-      upsertFn({ data: { table, row, id: row.id } }),
+    mutationFn: (row: MasterRow) => {
+      if (!canEdit) throw new Error("Read-only: Anda tidak memiliki izin mengubah data.");
+      return upsertFn({ data: { table, row, id: row.id } });
+    },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey });
-      addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { id: vars.code ?? vars.id } });
+      addAudit({
+        actor: user?.email ?? "system",
+        action: "role_change",
+        target: `finance/master/${module}`,
+        meta: { op: vars.id ? "update" : "create", id: vars.id, code: vars.code, name: vars.name },
+      });
       toast.success(`${title}: tersimpan`);
       setEditing(null);
       setIsNew(false);
@@ -81,26 +89,30 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
   });
 
   const deleteMut = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { table, id } }),
+    mutationFn: (id: string) => {
+      if (!canEdit) throw new Error("Read-only: Anda tidak memiliki izin menghapus data.");
+      return deleteFn({ data: { table, id } });
+    },
     onSuccess: (_d, id) => {
       qc.invalidateQueries({ queryKey });
-      addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { delete: id } });
+      addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { op: "delete", id } });
       toast.success(`${title}: data dihapus`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const exportCSV = () => {
-    const csv = toCSV(filtered, fields.map((f) => ({ key: f.key, label: f.label, get: (r: MasterRow) => r[f.key] })));
-    downloadCSV(exportFileName(module, "all"), csv);
-    toast.success(`Export ${filtered.length} baris (CSV)`);
-  };
 
   const renderCell = (f: Field, v: any) => {
     if (f.type === "boolean") return v ? "Ya" : "Tidak";
     if (f.type === "number" && typeof v === "number") return v.toLocaleString("id-ID");
     return String(v ?? "—");
   };
+
+  const LockedBtn = ({ children }: { children: React.ReactNode }) => (
+    <Tooltip>
+      <TooltipTrigger asChild><span>{children}</span></TooltipTrigger>
+      <TooltipContent>Read-only — hanya admin finance yang dapat mengubah.</TooltipContent>
+    </Tooltip>
+  );
 
   return (
     <div>
@@ -111,17 +123,29 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari…" className="pl-9" />
         </div>
-        <Button variant="outline" className="gap-1" onClick={exportCSV}><Download className="h-4 w-4" /> Export CSV</Button>
+        <FinanceExportBar
+          resource={`master-${module}`}
+          title={title}
+          columns={fields.map((f) => ({ key: f.key, header: f.label, format: (r: MasterRow) => renderCell(f, r[f.key]) }))}
+          rows={filtered}
+        />
         {!singleton && (
-          <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
-            <Plus className="h-4 w-4" /> Tambah
-          </Button>
+          canEdit ? (
+            <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
+              <Plus className="h-4 w-4" /> Tambah
+            </Button>
+          ) : (
+            <LockedBtn>
+              <Button className="gap-1" disabled><Lock className="h-4 w-4" /> Tambah</Button>
+            </LockedBtn>
+          )
         )}
-        {singleton && rows.length === 0 && (
+        {singleton && rows.length === 0 && canEdit && (
           <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
             <Plus className="h-4 w-4" /> Buat
           </Button>
         )}
+        {isViewer && <Badge variant="secondary" className="gap-1 bg-blue-500/15 text-blue-700"><Lock className="h-3 w-3" />Viewer</Badge>}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
