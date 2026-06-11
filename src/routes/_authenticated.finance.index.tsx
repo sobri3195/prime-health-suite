@@ -25,11 +25,15 @@ export const Route = createFileRoute("/_authenticated/finance/")({
 
 function FinanceDashboard() {
   const navigate = useNavigate();
-  const [period] = useState("Mei 2026");
+  const { from, to, label: period } = useFinanceDate();
   const [globalQ, setGlobalQ] = useState("");
 
-  const filter = useMemo(() => ({ period: "mtd", doctor: "all", service: "all", payer: "all", status: "all", from: "", to: "" } as const), []);
-  const filtered = useMemo(() => applyFilter(invoices, filter), [filter]);
+  const inRange = useMemo(
+    () => invoices.filter((r) => (!from || r.date >= from) && (!to || r.date <= to)),
+    [from, to],
+  );
+  const filter = useMemo(() => ({ period: "all", doctor: "all", service: "all", payer: "all", status: "all", from, to } as const), [from, to]);
+  const filtered = useMemo(() => applyFilter(inRange, filter), [inRange, filter]);
 
   const mtdRev = filtered.reduce((a, r) => a + r.total, 0);
   const outstanding = sumOutstanding(filtered);
