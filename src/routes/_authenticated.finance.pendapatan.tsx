@@ -50,6 +50,8 @@ function PendapatanPage() {
   const rows = data?.rows ?? [];
 
   const { data: lookups } = useQuery({ queryKey: ["fin-lookups"], queryFn: () => lookupsFn() });
+  const tplFn = useServerFn(listTplInvoice);
+  const { data: tpls } = useQuery({ queryKey: ["fin-tpl-inv"], queryFn: () => tplFn() });
 
   const [editing, setEditing] = useState<any | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
