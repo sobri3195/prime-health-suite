@@ -218,6 +218,7 @@ export const upsertInvoice = createServerFn({ method: "POST" })
         ...(pajak > 0 ? [{ coa_code: "2200", coa_nama: "PPN Keluaran", kredit: pajak }] : []),
       ],
     });
+    await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "invoice", entity_id: invoice.id, entity_no: invoice.no_invoice, after: invoice });
     return { invoice };
   });
 
