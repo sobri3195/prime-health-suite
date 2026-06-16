@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, FileSpreadsheet, Download, ExternalLink, Bell } from "lucide-react";
 import { useFinanceDate, type DatePreset } from "@/context/finance-date";
-import { reconJurnal, reconUnposted, postingAudit } from "@/lib/finance-recon-jurnal.functions";
+import { reconJurnal, reconUnposted, postingAudit, slaConfig } from "@/lib/finance-recon-jurnal.functions";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 import { exportCsv, exportPdf, exportReportPdf, type Column } from "@/lib/exporter";
 import { toast } from "sonner";
@@ -34,8 +34,8 @@ const sumberRoute: Record<string, string> = {
   invoice: "/finance/piutang",
 };
 
-// SLA aging threshold (hours) — show alert when unposted longer than this.
-const UNPOSTED_SLA_HOURS = 24;
+// SLA aging threshold (hours) — configurable per environment via FINANCE_UNPOSTED_SLA_HOURS.
+const DEFAULT_SLA_HOURS = 24;
 
 const PERIOD_PRESETS: { key: Exclude<DatePreset, "custom">; label: string }[] = [
   { key: "today", label: "Harian" },
@@ -55,6 +55,11 @@ function Page() {
   const reconFn = useServerFn(reconJurnal);
   const unpostedFn = useServerFn(reconUnposted);
   const auditFn = useServerFn(postingAudit);
+  const slaFn = useServerFn(slaConfig);
+
+  const sla = useQuery({ queryKey: ["sla-config"], queryFn: () => slaFn(), staleTime: 5 * 60_000 });
+  const UNPOSTED_SLA_HOURS = sla.data?.slaHours ?? DEFAULT_SLA_HOURS;
+  const slaSource = sla.data?.source ?? "default";
 
   const recon = useQuery({ queryKey: ["recon-jurnal", from, to], queryFn: () => reconFn({ data: { from, to } }) });
   const unposted = useQuery({ queryKey: ["recon-unposted", from, to], queryFn: () => unpostedFn({ data: { from, to } }) });
@@ -89,7 +94,7 @@ function Page() {
   ];
   const auditCols: Column<any>[] = [
     { key: "no_jurnal", header: "No. Jurnal" },
-    { key: "tanggal", header: "Tanggal" },
+    { key: "tanggal", header: "Tanggal", format: (r) => r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "" },
     { key: "sumber", header: "Sumber" },
     { key: "ref_no", header: "Referensi" },
     { key: "posted_by", header: "Dipost oleh" },
@@ -209,6 +214,9 @@ function Page() {
             </Button>
           ))}
           <span className="ml-2 text-xs text-muted-foreground">{from} → {to}</span>
+          <Badge variant="outline" className="ml-1 gap-1 text-[10px]" title={slaSource === "env" ? "Dari FINANCE_UNPOSTED_SLA_HOURS" : "Default (set FINANCE_UNPOSTED_SLA_HOURS untuk override)"}>
+            <Bell className="h-3 w-3" /> SLA {UNPOSTED_SLA_HOURS}j · {slaSource}
+          </Badge>
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleCsvRecon}>

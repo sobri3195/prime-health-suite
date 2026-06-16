@@ -22,6 +22,7 @@ import {
 import type { Invoice, Payer } from "@/types/finance";
 import { useFinanceDate } from "@/context/finance-date";
 import { FinanceExportBar } from "@/components/finance-export-bar";
+import { ReconWidget } from "@/components/recon-widget";
 
 
 export const Route = createFileRoute("/_authenticated/finance/")({
@@ -197,8 +198,8 @@ function FinanceDashboard() {
         <TopDokterCard rows={invoices} />
       </div>
 
-      {/* Saldo Bank + Anomalies + Insights */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      {/* Saldo Bank + Anomalies + Insights + Konsistensi */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-4">
         <Card title="Saldo Bank">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40">
@@ -236,6 +237,8 @@ function FinanceDashboard() {
             </ul>
           )}
         </Card>
+
+        <ReconWidget />
       </div>
 
       {/* AR Aging + AP Aging + Recent Activities + Finance Alerts */}
