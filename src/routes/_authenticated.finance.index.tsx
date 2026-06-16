@@ -52,8 +52,7 @@ function FinanceDashboard() {
 
   const mtdRev = filtered.reduce((a, r) => a + r.total, 0);
   const outstanding = sumOutstanding(filtered);
-  const hutang = 37_800_000;
-  const kasMasuk = filtered.reduce((a, r) => a + r.paid, 0) + 20_000_000;
+  const kasMasuk = filtered.reduce((a, r) => a + r.paid, 0);
   const kasKeluar = expenseMTD;
   const target = monthlyTrend[monthlyTrend.length - 1]?.target ?? 0;
   const targetPct = target ? Math.round((mtdRev / target) * 100) : 0;
