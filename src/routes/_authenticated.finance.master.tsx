@@ -1,97 +1,113 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { master } from "@/data/financeData";
-import { formatIDR } from "@/lib/finance";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getMasterSnapshot } from "@/lib/finance-dashboard.functions";
+import { ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finance/master")({
   component: MasterFinance,
 });
 
-const TABS = ["Payer", "Vendor", "COA", "Bank Account", "Kategori Biaya", "Pajak", "Target Revenue", "Mapping Layanan"] as const;
-type Tab = (typeof TABS)[number];
+const QUICK_LINKS: { label: string; href: string }[] = [
+  { label: "Profil Klinik", href: "/finance/master-profil-klinik" },
+  { label: "Dokter", href: "/finance/master-dokter" },
+  { label: "Karyawan", href: "/finance/master-karyawan" },
+  { label: "Vendor", href: "/finance/master-vendor" },
+  { label: "Payer / Asuransi", href: "/finance/master-payer" },
+  { label: "COA", href: "/finance/master-coa" },
+  { label: "Cost Center", href: "/finance/master-cost-center" },
+  { label: "Tarif Pajak", href: "/finance/master-tarif-pajak" },
+  { label: "Kategori Layanan", href: "/finance/master-kategori-layanan" },
+  { label: "Aturan MDR", href: "/finance/master-mdr" },
+  { label: "Template Invoice", href: "/finance/master-template-invoice" },
+  { label: "Template Voucher", href: "/finance/master-template-voucher" },
+];
 
 function MasterFinance() {
-  const [tab, setTab] = useState<Tab>("Payer");
+  const call = useServerFn(getMasterSnapshot);
+  const q = useQuery({ queryKey: ["fin", "master-snapshot"], queryFn: () => call() });
+  const d = q.data;
 
   return (
     <div>
-      <PageHeader title="Master Data Finance" desc="Pengaturan referensi keuangan klinik." />
+      <PageHeader title="Master Data Finance" desc="Ringkasan referensi keuangan (live). Buka halaman master untuk CRUD lengkap." />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {QUICK_LINKS.map((l) => (
+          <Button key={l.href} asChild variant="outline" size="sm" className="h-8 gap-1">
+            <Link to={l.href}>{l.label} <ExternalLink className="h-3 w-3" /></Link>
+          </Button>
+        ))}
+      </div>
+
+      <Tabs defaultValue="payer">
         <TabsList className="mb-4 flex-wrap">
-          {TABS.map((t) => <TabsTrigger key={t} value={t}>{t}</TabsTrigger>)}
+          <TabsTrigger value="payer">Payer ({d?.payers.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="vendor">Vendor ({d?.vendors.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="coa">COA ({d?.coa.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="tax">Pajak ({d?.taxes.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="cc">Cost Center ({d?.costCenters.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="kat">Kategori Layanan ({d?.kategori.length ?? 0})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="Payer" className="mt-0">
-          <Card cols={["ID","Nama","Tipe","Status"]}
-            rows={master.payers.map((p) => [p.id, p.name, p.type, <Badge key="s" variant="secondary">{p.status}</Badge>])} />
+        <TabsContent value="payer">
+          <Card cols={["Kode", "Nama", "Tipe", "Status"]} rows={(d?.payers ?? []).map((p: any) => [
+            <span key="c" className="font-mono text-xs">{p.code ?? "—"}</span>, p.name, p.tipe ?? "—",
+            <Badge key="s" variant="secondary">{p.is_active ? "Aktif" : "Nonaktif"}</Badge>,
+          ])} loading={q.isLoading} />
         </TabsContent>
-        <TabsContent value="Vendor" className="mt-0">
-          <Card cols={["ID","Nama","Tipe","Status"]}
-            rows={master.vendors.map((v) => [v.id, v.name, v.type, <Badge key="s" variant="secondary">{v.status}</Badge>])} />
+        <TabsContent value="vendor">
+          <Card cols={["Kode", "Nama", "Kategori", "Status"]} rows={(d?.vendors ?? []).map((v: any) => [
+            <span key="c" className="font-mono text-xs">{v.code ?? "—"}</span>, v.name, v.kategori ?? "—",
+            <Badge key="s" variant="secondary">{v.is_active ? "Aktif" : "Nonaktif"}</Badge>,
+          ])} loading={q.isLoading} />
         </TabsContent>
-        <TabsContent value="COA" className="mt-0">
-          <Card cols={["Kode","Nama Akun","Tipe"]}
-            rows={master.coa.map((c) => [
-              <span key="c" className="font-mono text-xs">{c.code}</span>,
-              c.name,
-              <Badge key="t" variant="secondary">{c.type}</Badge>,
-            ])} />
+        <TabsContent value="coa">
+          <Card cols={["Kode", "Nama Akun", "Tipe"]} rows={(d?.coa ?? []).map((c: any) => [
+            <span key="c" className="font-mono text-xs">{c.code}</span>, c.name,
+            <Badge key="t" variant="secondary">{c.type}</Badge>,
+          ])} loading={q.isLoading} />
         </TabsContent>
-        <TabsContent value="Bank Account" className="mt-0">
-          <Card cols={["ID","Bank","No Rekening","Saldo"]}
-            rows={master.banks.map((b) => [
-              b.id, b.name, <span key="a" className="font-mono">{b.account}</span>,
-              <span key="b" className="font-mono">{formatIDR(b.balance)}</span>,
-            ])} alignLast />
+        <TabsContent value="tax">
+          <Card cols={["Kode", "Jenis", "Nama", "Tarif"]} rows={(d?.taxes ?? []).map((t: any) => [
+            <span key="c" className="font-mono text-xs">{t.code}</span>, t.jenis, t.name,
+            `${(Number(t.tarif_pct) || 0).toFixed(1)}%`,
+          ])} loading={q.isLoading} />
         </TabsContent>
-        <TabsContent value="Kategori Biaya" className="mt-0">
-          <Card cols={["ID","Kategori","Akun"]}
-            rows={master.costCategories.map((c) => [c.id, c.name, <span key="a" className="font-mono text-xs">{c.account}</span>])} />
+        <TabsContent value="cc">
+          <Card cols={["Kode", "Nama", "Status"]} rows={(d?.costCenters ?? []).map((c: any) => [
+            <span key="c" className="font-mono text-xs">{c.code}</span>, c.name,
+            <Badge key="s" variant="secondary">{c.is_active ? "Aktif" : "Nonaktif"}</Badge>,
+          ])} loading={q.isLoading} />
         </TabsContent>
-        <TabsContent value="Pajak" className="mt-0">
-          <Card cols={["ID","Nama Pajak","Tarif"]}
-            rows={master.taxes.map((t) => [t.id, t.name, `${(t.rate * 100).toFixed(0)}%`])} />
-        </TabsContent>
-        <TabsContent value="Target Revenue" className="mt-0">
-          <Card cols={["Periode","Target"]}
-            rows={master.revenueTargets.map((t) => [t.period, <span key="a" className="font-mono">{formatIDR(t.amount)}</span>])} alignLast />
-        </TabsContent>
-        <TabsContent value="Mapping Layanan" className="mt-0">
-          <Card cols={["Layanan","Akun Pendapatan"]}
-            rows={master.serviceMapping.map((m) => [m.service, <span key="a" className="font-mono text-xs">{m.account}</span>])} />
+        <TabsContent value="kat">
+          <Card cols={["Kode", "Nama", "Status"]} rows={(d?.kategori ?? []).map((k: any) => [
+            <span key="c" className="font-mono text-xs">{k.code ?? "—"}</span>, k.name,
+            <Badge key="s" variant="secondary">{k.is_active ? "Aktif" : "Nonaktif"}</Badge>,
+          ])} loading={q.isLoading} />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function Card({ cols, rows, alignLast }: { cols: string[]; rows: React.ReactNode[][]; alignLast?: boolean }) {
+function Card({ cols, rows, loading }: { cols: string[]; rows: React.ReactNode[][]; loading?: boolean }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <Table>
-        <TableHeader>
-          <TableRow>
-            {cols.map((c, i) => (
-              <TableHead key={c} className={alignLast && i === cols.length - 1 ? "text-right" : ""}>{c}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
+        <TableHeader><TableRow>{cols.map((c) => <TableHead key={c}>{c}</TableHead>)}</TableRow></TableHeader>
         <TableBody>
-          {rows.length === 0 ? (
-            <TableRow><TableCell colSpan={cols.length} className="py-12 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+          {loading ? (
+            <TableRow><TableCell colSpan={cols.length} className="py-10 text-center text-sm text-muted-foreground">Memuat…</TableCell></TableRow>
+          ) : rows.length === 0 ? (
+            <TableRow><TableCell colSpan={cols.length} className="py-12 text-center text-sm text-muted-foreground">Tidak ada data. Tambah via halaman master.</TableCell></TableRow>
           ) : rows.map((r, i) => (
-            <TableRow key={i}>
-              {r.map((c, j) => (
-                <TableCell key={j} className={alignLast && j === r.length - 1 ? "text-right" : ""}>{c}</TableCell>
-              ))}
-            </TableRow>
+            <TableRow key={i}>{r.map((c, j) => <TableCell key={j}>{c}</TableCell>)}</TableRow>
           ))}
         </TableBody>
       </Table>
