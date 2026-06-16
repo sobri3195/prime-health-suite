@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_fin_post_bukti_setor ON public.fin_bukti_setor;
