@@ -49,11 +49,11 @@ function PiutangPage() {
           <TableHeader><TableRow>
             <TableHead>No. Invoice</TableHead><TableHead>Tanggal</TableHead><TableHead>Pasien</TableHead>
             <TableHead className="text-right">Total</TableHead><TableHead className="text-right">Terbayar</TableHead>
-            <TableHead className="text-right">Outstanding</TableHead><TableHead className="text-right">Umur</TableHead><TableHead>Status</TableHead>
+            <TableHead className="text-right">Outstanding</TableHead><TableHead className="text-right">Umur</TableHead><TableHead>Status</TableHead><TableHead>Jurnal</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
-              : rows.length === 0 ? <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Tidak ada piutang outstanding.</TableCell></TableRow>
+            {isLoading ? <TableRow><TableCell colSpan={9} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              : rows.length === 0 ? <TableRow><TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">Tidak ada piutang outstanding.</TableCell></TableRow>
               : rows.map((r: any) => {
                 const sisa = Number(r.total) - Number(r.dibayar ?? 0);
                 const umur = daysBetween(r.tanggal);
@@ -67,6 +67,7 @@ function PiutangPage() {
                     <TableCell className="text-right font-mono font-semibold">{fmt(sisa)}</TableCell>
                     <TableCell className="text-right">{umur} hari</TableCell>
                     <TableCell><Badge variant="secondary" className={umur > 90 ? "bg-rose-500/15 text-rose-700" : umur > 60 ? "bg-amber-500/15 text-amber-700" : "bg-muted text-muted-foreground"}>{r.status}</Badge></TableCell>
+                    <TableCell><Badge variant="secondary" className={r.posted_journal_id ? "bg-emerald-500/15 text-emerald-700" : "bg-amber-500/15 text-amber-700"}>{r.posted_journal_id ? "Posted" : "Unposted"}</Badge></TableCell>
                   </TableRow>
                 );
               })}
