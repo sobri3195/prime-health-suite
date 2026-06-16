@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, FileSpreadsheet, Download, ExternalLink, Bell } from "lucide-react";
 import { useFinanceDate, type DatePreset } from "@/context/finance-date";
-import { reconJurnal, reconUnposted, postingAudit } from "@/lib/finance-recon-jurnal.functions";
+import { reconJurnal, reconUnposted, postingAudit, slaConfig } from "@/lib/finance-recon-jurnal.functions";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 import { exportCsv, exportPdf, exportReportPdf, type Column } from "@/lib/exporter";
 import { toast } from "sonner";
