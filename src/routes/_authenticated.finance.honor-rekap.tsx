@@ -1,42 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
-import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
-import { invoices } from "@/data/financeData";
-import { applyFilter, formatIDR } from "@/lib/finance";
+import { formatIDR } from "@/lib/finance";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
 import { toast } from "sonner";
+import { useFinanceDate } from "@/context/finance-date";
+import { getHonorRekap } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/honor-rekap")({
   component: Page,
 });
 
-const PCT: Record<string, number> = {
-  "dr. Rini, Sp.M": 40, "dr. Bagas, Sp.M": 45, "dr. Anisa, Sp.M": 45,
-  "dr. Hadi, Sp.M(K)": 50, "dr. Tania, Sp.M": 40, "dr. Yusuf, Sp.M": 45,
-};
-
 function Page() {
-  const [filter, setFilter] = useState(defaultFilter);
-  const doctors = useMemo(() => Array.from(new Set(invoices.map((r) => r.doctor))), []);
-  const services = useMemo(() => Array.from(new Set(invoices.map((r) => r.category))), []);
+  const { from, to, label } = useFinanceDate();
+  const call = useServerFn(getHonorRekap);
+  const q = useQuery({
+    queryKey: ["fin", "honor-rekap", from, to],
+    queryFn: () => call({ data: { from, to } }),
+  });
 
-  const rows = applyFilter(invoices, filter);
-  const rekap = useMemo(() => {
-    const map = new Map<string, { dokter: string; gross: number; pct: number; jasa: number; count: number }>();
-    rows.forEach((r) => {
-      const pct = PCT[r.doctor] ?? 40;
-      const ex = map.get(r.doctor) ?? { dokter: r.doctor, gross: 0, pct, jasa: 0, count: 0 };
-      ex.gross += r.total; ex.count += 1; ex.jasa += Math.round((r.total * pct) / 100);
-      map.set(r.doctor, ex);
-    });
-    return Array.from(map.values()).sort((a, b) => b.jasa - a.jasa);
-  }, [rows]);
-
-  const totalJasa = rekap.reduce((a, r) => a + r.jasa, 0);
+  const rekap = q.data?.rows ?? [];
+  const totalJasa = useMemo(() => rekap.reduce((a, r) => a + r.jasa, 0), [rekap]);
 
   const exportCSV = () => {
     const csv = toCSV(rekap, [
@@ -46,18 +35,19 @@ function Page() {
       { key: "pct", label: "% Jasa", get: (r) => r.pct },
       { key: "jasa", label: "Jasa Medis", get: (r) => r.jasa },
     ]);
-    downloadCSV(exportFileName("honor-rekap", filter.period), csv);
+    downloadCSV(exportFileName("honor-rekap", label), csv);
     toast.success(`Export ${rekap.length} dokter`);
   };
 
   return (
     <div>
-      <PageHeader title="Rekap Jasa Medis Dokter" desc="Akumulasi jasa medis per dokter dalam periode terpilih." />
-      <FinanceFilters value={filter} onChange={setFilter} doctors={doctors} services={services} />
+      <PageHeader title="Rekap Jasa Medis Dokter" desc={`Akumulasi jasa medis per dokter (live, periode ${label}). % jasa dari master Dokter.`} />
 
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm">Total Jasa Medis: <span className="font-semibold">{formatIDR(totalJasa)}</span></div>
-        <Button variant="outline" className="gap-1" onClick={exportCSV}><Download className="h-4 w-4" /> Export CSV</Button>
+        <Button variant="outline" className="gap-1" onClick={exportCSV} disabled={!rekap.length}>
+          <Download className="h-4 w-4" /> Export CSV
+        </Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -70,7 +60,11 @@ function Page() {
             <TableHead className="text-right">Jasa Medis</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {rekap.map((r) => (
+            {q.isLoading ? (
+              <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">Memuat…</TableCell></TableRow>
+            ) : rekap.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">Tidak ada honor pada periode ini.</TableCell></TableRow>
+            ) : rekap.map((r) => (
               <TableRow key={r.dokter}>
                 <TableCell className="text-sm">{r.dokter}</TableCell>
                 <TableCell className="text-right text-sm">{r.count}</TableCell>
