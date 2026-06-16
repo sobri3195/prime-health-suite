@@ -87,7 +87,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "honor-rekap", label: "Rekap Jasa Dokter", icon: BarChart3, group: "Dokter & Honor" },
     { slug: "honor-potongan", label: "Potongan Jasa Dokter", icon: MinusSquare, group: "Dokter & Honor" },
     { slug: "honor-pembayaran", label: "Pembayaran Honor", icon: Wallet, group: "Dokter & Honor" },
-    { slug: "honor-pph", label: "PPh Honor Dokter", icon: ShieldCheck, group: "Dokter & Honor" },
+    
 
     { slug: "piutang", label: "Piutang & Klaim", icon: ReceiptText, group: "Piutang & Hutang" },
     { slug: "aging-piutang", label: "Aging Piutang", icon: ReceiptText, group: "Piutang & Hutang" },
@@ -96,14 +96,14 @@ export const NAV: Record<System, NavItem[]> = {
 
     { slug: "pengeluaran", label: "Pengeluaran", icon: TrendingDown, group: "Pengajuan & Voucher" },
     { slug: "vendor-bayar", label: "Pembayaran Vendor", icon: Truck, group: "Pengajuan & Voucher" },
-    { slug: "voucher", label: "Voucher (Umum)", icon: PiggyBank, group: "Pengajuan & Voucher" },
+    
     { slug: "voucher-bbk", label: "Voucher BBK (Penerimaan)", icon: PiggyBank, group: "Pengajuan & Voucher" },
     { slug: "voucher-bkk", label: "Voucher BKK (Pengeluaran)", icon: PiggyBank, group: "Pengajuan & Voucher" },
     { slug: "kas-kecil", label: "Kas Kecil", icon: Coins, group: "Pengajuan & Voucher" },
     { slug: "voucher-kas-kecil", label: "Voucher Kas Kecil", icon: Coins, group: "Pengajuan & Voucher" },
     { slug: "bukti-setor", label: "Bukti Setor Bank", icon: Landmark, group: "Pengajuan & Voucher" },
 
-    { slug: "bank", label: "Bank", icon: Landmark, group: "Bank & Rekonsiliasi" },
+    
     { slug: "rekonsiliasi", label: "Rekonsiliasi Kas/Bank", icon: ArrowDownUp, group: "Bank & Rekonsiliasi" },
 
     { slug: "persediaan", label: "Master Persediaan", icon: Boxes, group: "Persediaan" },
