@@ -94,7 +94,7 @@ function Page() {
   ];
   const auditCols: Column<any>[] = [
     { key: "no_jurnal", header: "No. Jurnal" },
-    { key: "tanggal", header: "Tanggal" },
+    { key: "tanggal", header: "Tanggal", format: (r) => r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "" },
     { key: "sumber", header: "Sumber" },
     { key: "ref_no", header: "Referensi" },
     { key: "posted_by", header: "Dipost oleh" },
