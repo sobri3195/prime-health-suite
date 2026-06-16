@@ -424,7 +424,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
         subtotal, pajak, total,
         metode: data.metode,
         bank: data.bank ?? null,
-        status: "posted",
+        status: "draft",
         created_by: data.actor ?? null,
       }).select().single();
       if (error) throw new Error(error.message);
