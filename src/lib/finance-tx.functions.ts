@@ -462,7 +462,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", kredit: total },
       ],
     });
-    await sb.from("fin_expense").update({ posted_journal_id: expEntry.id, posted_at: new Date().toISOString() }).eq("id", hdr.id);
+    await sb.from("fin_expense").update({ posted_journal_id: expEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", hdr.id);
     await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
     return { expense: hdr };
   });
