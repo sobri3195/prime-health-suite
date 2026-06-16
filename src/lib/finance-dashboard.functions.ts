@@ -258,7 +258,8 @@ export const getBukuBesar = createServerFn({ method: "POST" })
       acc.set(l.coa_code, cur);
     });
 
-    const rows = (coa ?? []).map((c: any) => {
+    type Row = { account: string; accountName: string; type: string; opening: number; debit: number; credit: number; closing: number };
+    const rows: Row[] = (coa ?? []).map((c: any): Row => {
       const a = acc.get(c.code) ?? { debit: 0, kredit: 0 };
       const op = opening.get(c.code) ?? 0;
       const closing = op + a.debit - a.kredit;
@@ -271,7 +272,7 @@ export const getBukuBesar = createServerFn({ method: "POST" })
         credit: a.kredit,
         closing,
       };
-    }).filter((r: any) => r.opening !== 0 || r.debit !== 0 || r.credit !== 0);
+    }).filter((r: Row) => r.opening !== 0 || r.debit !== 0 || r.credit !== 0);
 
     return { rows };
   });
