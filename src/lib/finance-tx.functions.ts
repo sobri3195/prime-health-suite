@@ -299,8 +299,8 @@ export const createPayment = createServerFn({ method: "POST" })
     const newStatus = newPaid >= Number(inv.total) ? "paid" : newPaid > 0 ? "partial" : inv.status;
     await sb.from("fin_invoice").update({ dibayar: newPaid, status: newStatus }).eq("id", data.invoice_id);
 
-    const kasCoa = data.metode === "cash" ? "1100" : "1110";
-    await postJournal({
+    const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const payEntry = await postJournal({
       sumber: "payment",
       ref_id: pay.id,
       ref_no: `PAY-${inv.no_invoice}`,
@@ -310,9 +310,10 @@ export const createPayment = createServerFn({ method: "POST" })
       lines: [
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", debit: netto },
         ...(mdr > 0 ? [{ coa_code: mdrCoa, coa_nama: "Beban MDR", debit: mdr }] : []),
-        { coa_code: "1200", coa_nama: "Piutang Usaha", kredit: data.jumlah },
+        { coa_code: "1-1300", coa_nama: "Piutang Pasien", kredit: data.jumlah },
       ],
     });
+    await sb.from("fin_pembayaran").update({ posted_journal_id: payEntry.id, posted_at: new Date().toISOString() }).eq("id", pay.id);
     await writeFinAudit({ actor_email: data.actor, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
     return { payment: pay, mdr_applied: mdr };
   });
