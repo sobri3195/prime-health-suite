@@ -34,8 +34,8 @@ const sumberRoute: Record<string, string> = {
   invoice: "/finance/piutang",
 };
 
-// SLA aging threshold (hours) — show alert when unposted longer than this.
-const UNPOSTED_SLA_HOURS = 24;
+// SLA aging threshold (hours) — configurable per environment via FINANCE_UNPOSTED_SLA_HOURS.
+const DEFAULT_SLA_HOURS = 24;
 
 const PERIOD_PRESETS: { key: Exclude<DatePreset, "custom">; label: string }[] = [
   { key: "today", label: "Harian" },
