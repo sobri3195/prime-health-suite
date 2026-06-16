@@ -25,7 +25,14 @@ function monthLabelShort(iso: string) {
 }
 
 // ============ LIVE INVOICES (shape compatible with @/types/finance Invoice) ============
-async function fetchInvoices(from?: string, to?: string) {
+type LiveInvoice = {
+  id: string; invoice: string; date: string; dueDate: string; patientCode: string;
+  payer: "Umum" | "BPJS" | "Asuransi" | "Perusahaan"; payerName: string;
+  doctor: string; service: string; category: string;
+  total: number; paid: number;
+  status: "paid" | "partial" | "unpaid" | "overdue" | "cancelled";
+};
+async function fetchInvoices(from?: string, to?: string): Promise<LiveInvoice[]> {
   const s = await sb();
   let q = s.from("fin_invoice").select(`
     id, no_invoice, tanggal, status, total, dibayar, patient_code, patient_name,
