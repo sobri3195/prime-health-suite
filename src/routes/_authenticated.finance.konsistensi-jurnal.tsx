@@ -55,6 +55,11 @@ function Page() {
   const reconFn = useServerFn(reconJurnal);
   const unpostedFn = useServerFn(reconUnposted);
   const auditFn = useServerFn(postingAudit);
+  const slaFn = useServerFn(slaConfig);
+
+  const sla = useQuery({ queryKey: ["sla-config"], queryFn: () => slaFn(), staleTime: 5 * 60_000 });
+  const UNPOSTED_SLA_HOURS = sla.data?.slaHours ?? DEFAULT_SLA_HOURS;
+  const slaSource = sla.data?.source ?? "default";
 
   const recon = useQuery({ queryKey: ["recon-jurnal", from, to], queryFn: () => reconFn({ data: { from, to } }) });
   const unposted = useQuery({ queryKey: ["recon-unposted", from, to], queryFn: () => unpostedFn({ data: { from, to } }) });
