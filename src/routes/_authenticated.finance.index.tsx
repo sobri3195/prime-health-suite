@@ -237,6 +237,8 @@ function FinanceDashboard() {
             </ul>
           )}
         </Card>
+
+        <ReconWidget />
       </div>
 
       {/* AR Aging + AP Aging + Recent Activities + Finance Alerts */}
