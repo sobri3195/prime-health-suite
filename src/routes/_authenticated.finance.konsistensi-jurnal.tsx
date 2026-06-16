@@ -214,6 +214,9 @@ function Page() {
             </Button>
           ))}
           <span className="ml-2 text-xs text-muted-foreground">{from} → {to}</span>
+          <Badge variant="outline" className="ml-1 gap-1 text-[10px]" title={slaSource === "env" ? "Dari FINANCE_UNPOSTED_SLA_HOURS" : "Default (set FINANCE_UNPOSTED_SLA_HOURS untuk override)"}>
+            <Bell className="h-3 w-3" /> SLA {UNPOSTED_SLA_HOURS}j · {slaSource}
+          </Badge>
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleCsvRecon}>
