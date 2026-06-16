@@ -945,6 +945,7 @@ export type Database = {
           kas_coa: string
           keterangan: string | null
           no_setor: string
+          posted_journal_id: string | null
           ref_bank: string | null
           status: string
           tanggal: string
@@ -958,6 +959,7 @@ export type Database = {
           kas_coa: string
           keterangan?: string | null
           no_setor: string
+          posted_journal_id?: string | null
           ref_bank?: string | null
           status?: string
           tanggal?: string
@@ -971,6 +973,7 @@ export type Database = {
           kas_coa?: string
           keterangan?: string | null
           no_setor?: string
+          posted_journal_id?: string | null
           ref_bank?: string | null
           status?: string
           tanggal?: string
@@ -1104,6 +1107,7 @@ export type Database = {
           metode: string
           no_voucher: string
           pajak: number
+          posted_journal_id: string | null
           status: string
           subtotal: number
           tanggal: string
@@ -1124,6 +1128,7 @@ export type Database = {
           metode?: string
           no_voucher: string
           pajak?: number
+          posted_journal_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -1144,6 +1149,7 @@ export type Database = {
           metode?: string
           no_voucher?: string
           pajak?: number
+          posted_journal_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -1643,6 +1649,7 @@ export type Database = {
           metode: string
           netto: number
           no_kartu_last4: string | null
+          posted_journal_id: string | null
           status: string | null
           tanggal: string
           void_reason: string | null
@@ -1657,6 +1664,7 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          posted_journal_id?: string | null
           status?: string | null
           tanggal?: string
           void_reason?: string | null
@@ -1671,6 +1679,7 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          posted_journal_id?: string | null
           status?: string | null
           tanggal?: string
           void_reason?: string | null
@@ -3128,6 +3137,21 @@ export type Database = {
       }
       fin_can_edit: { Args: { _uid: string }; Returns: boolean }
       fin_can_view: { Args: { _uid: string }; Returns: boolean }
+      fin_post_journal: {
+        Args: {
+          _keterangan: string
+          _lines: Json
+          _ref_id: string
+          _ref_no: string
+          _sumber: string
+          _tanggal: string
+        }
+        Returns: string
+      }
+      fin_resolve_cash_bank_coa: {
+        Args: { _bank: string; _metode: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
