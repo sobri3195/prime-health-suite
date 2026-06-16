@@ -283,6 +283,8 @@ export const createPayment = createServerFn({ method: "POST" })
       }
     }
     const netto = Number(data.jumlah) - mdr;
+    // Insert as 'draft' so the AFTER INSERT trigger skips; server fn posts the
+    // journal (with detailed lines) then flips status to 'posted' on the same row.
     const { data: pay, error } = await sb.from("fin_pembayaran").insert({
       invoice_id: data.invoice_id,
       tanggal: data.tanggal,
@@ -292,6 +294,7 @@ export const createPayment = createServerFn({ method: "POST" })
       jumlah: data.jumlah,
       mdr,
       netto,
+      status: "draft",
     }).select().single();
     if (error) throw new Error(error.message);
 
