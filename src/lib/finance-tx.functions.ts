@@ -316,7 +316,7 @@ export const createPayment = createServerFn({ method: "POST" })
         { coa_code: "1-1300", coa_nama: "Piutang Pasien", kredit: data.jumlah },
       ],
     });
-    await sb.from("fin_pembayaran").update({ posted_journal_id: payEntry.id, posted_at: new Date().toISOString() }).eq("id", pay.id);
+    await sb.from("fin_pembayaran").update({ posted_journal_id: payEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", pay.id);
     await writeFinAudit({ actor_email: data.actor, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
     return { payment: pay, mdr_applied: mdr };
   });
