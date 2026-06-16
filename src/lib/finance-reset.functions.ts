@@ -72,12 +72,12 @@ export const resetFinanceTransactional = createServerFn({ method: "POST" })
         actor_id: userId,
         entity: "finance",
         action: "reset_transactional",
-        ref_id: null,
-        meta: { tables: TRANSACTIONAL_TABLES, results },
+        after: { tables: TRANSACTIONAL_TABLES, results } as unknown as never,
       });
     } catch {
       // ignore
     }
+
 
     return { ok: true, results };
   });
