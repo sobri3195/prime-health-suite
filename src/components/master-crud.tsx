@@ -3,13 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Search, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { handleError } from "@/lib/handle-error";
 import { addAudit } from "@/lib/audit-log";
 import { useAuth } from "@/lib/auth";
 import { useFinanceAccess } from "@/lib/finance-access";
@@ -40,7 +41,7 @@ interface Props {
   table: FinTable;
   fields: Field[];
   newRow: () => MasterRow;
-  singleton?: boolean; // for profil klinik
+  singleton?: boolean;
 }
 
 export function MasterCrudPage({ title, desc, module, table, fields, newRow, singleton }: Props) {
@@ -58,15 +59,8 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
   });
   const rows: MasterRow[] = data?.rows ?? [];
 
-  const [q, setQ] = useState("");
   const [editing, setEditing] = useState<MasterRow | null>(null);
   const [isNew, setIsNew] = useState(false);
-
-  const filtered = q
-    ? rows.filter((r) =>
-        Object.values(r).some((v) => String(v ?? "").toLowerCase().includes(q.toLowerCase())),
-      )
-    : rows;
 
   const upsertMut = useMutation({
     mutationFn: (row: MasterRow) => {
@@ -85,7 +79,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
       setEditing(null);
       setIsNew(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: handleError,
   });
 
   const deleteMut = useMutation({
@@ -98,7 +92,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
       addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { op: "delete", id } });
       toast.success(`${title}: data dihapus`);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: handleError,
   });
 
   const renderCell = (f: Field, v: any) => {
@@ -114,77 +108,69 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
     </Tooltip>
   );
 
+  const columns: DataTableColumn<MasterRow>[] = fields.map((f) => ({
+    key: f.key,
+    header: f.label,
+    sortable: true,
+    align: f.type === "number" ? "right" : undefined,
+    value: (r) => (r[f.key] ?? "") as string | number,
+    cell: (r) => renderCell(f, r[f.key]),
+  }));
+
   return (
     <div>
       <PageHeader title={title} desc={desc} />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari…" className="pl-9" />
-        </div>
-        <FinanceExportBar
-          resource={`master-${module}`}
-          title={title}
-          columns={fields.map((f) => ({ key: f.key, header: f.label, format: (r: MasterRow) => renderCell(f, r[f.key]) }))}
-          rows={filtered}
-        />
-        {!singleton && (
-          canEdit ? (
-            <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
-              <Plus className="h-4 w-4" /> Tambah
+      <DataTable
+        rows={rows}
+        columns={columns}
+        loading={isLoading}
+        rowKey={(r) => r.id}
+        searchPlaceholder={`Cari ${title.toLowerCase()}…`}
+        emptyTitle="Belum ada data"
+        emptyDesc={canEdit ? `Tambahkan ${title.toLowerCase()} pertama untuk memulai.` : "Hubungi admin untuk menambahkan data."}
+        toolbar={
+          <FinanceExportBar
+            resource={`master-${module}`}
+            title={title}
+            columns={fields.map((f) => ({ key: f.key, header: f.label, format: (r: MasterRow) => renderCell(f, r[f.key]) }))}
+            rows={rows}
+          />
+        }
+        actions={
+          <>
+            {!singleton && (
+              canEdit ? (
+                <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
+                  <Plus className="h-4 w-4" /> Tambah
+                </Button>
+              ) : (
+                <LockedBtn>
+                  <Button className="gap-1" disabled><Lock className="h-4 w-4" /> Tambah</Button>
+                </LockedBtn>
+              )
+            )}
+            {singleton && rows.length === 0 && canEdit && (
+              <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
+                <Plus className="h-4 w-4" /> Buat
+              </Button>
+            )}
+            {isViewer && <Badge variant="secondary" className="gap-1 bg-blue-500/15 text-blue-700"><Lock className="h-3 w-3" />Viewer</Badge>}
+          </>
+        }
+        rightActions={(r) => (
+          <>
+            <Button size="icon" variant="ghost" onClick={() => { setEditing({ ...r }); setIsNew(false); }} title={canEdit ? "Edit" : "Lihat (read-only)"}>
+              {canEdit ? <Pencil className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </Button>
-          ) : (
-            <LockedBtn>
-              <Button className="gap-1" disabled><Lock className="h-4 w-4" /> Tambah</Button>
-            </LockedBtn>
-          )
+            {!singleton && canEdit && (
+              <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => { if (confirm("Hapus data ini?")) deleteMut.mutate(r.id); }}>
+                <Trash2 className="h-4 w-4 text-rose-500" />
+              </Button>
+            )}
+          </>
         )}
-        {singleton && rows.length === 0 && canEdit && (
-          <Button className="gap-1" onClick={() => { setEditing(newRow()); setIsNew(true); }}>
-            <Plus className="h-4 w-4" /> Buat
-          </Button>
-        )}
-        {isViewer && <Badge variant="secondary" className="gap-1 bg-blue-500/15 text-blue-700"><Lock className="h-3 w-3" />Viewer</Badge>}
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {fields.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={fields.length + 1} className="py-16 text-center">
-                <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
-              </TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={fields.length + 1} className="py-16 text-center text-sm text-muted-foreground">Belum ada data.</TableCell></TableRow>
-            ) : filtered.map((r) => (
-              <TableRow key={r.id}>
-                {fields.map((f) => <TableCell key={f.key} className="text-sm">{renderCell(f, r[f.key])}</TableCell>)}
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing({ ...r }); setIsNew(false); }} title={canEdit ? "Edit" : "Lihat (read-only)"}>
-                      {canEdit ? <Pencil className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-                    </Button>
-                    {!singleton && canEdit && (
-                      <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => { if (confirm("Hapus data ini?")) deleteMut.mutate(r.id); }}>
-                        <Trash2 className="h-4 w-4 text-rose-500" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="mt-2 text-xs text-muted-foreground">Total {filtered.length} baris</div>
+      />
 
       <Dialog open={!!editing} onOpenChange={(o) => { if (!o) { setEditing(null); setIsNew(false); } }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -193,7 +179,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
             <div className="grid gap-3 py-2">
               {fields.map((f) => (
                 <div key={f.key} className="grid gap-1.5">
-                  <Label className="text-xs">{f.label}</Label>
+                  <Label className="text-xs">{f.label}{f.required && <span className="text-rose-500"> *</span>}</Label>
                   {f.type === "select" ? (
                     <select
                       className="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -225,7 +211,12 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditing(null); setIsNew(false); }}>{canEdit ? "Batal" : "Tutup"}</Button>
             {canEdit && (
-              <Button disabled={upsertMut.isPending} onClick={() => editing && upsertMut.mutate(editing)}>
+              <Button disabled={upsertMut.isPending} onClick={() => {
+                if (!editing) return;
+                const missing = fields.find((f) => f.required && (editing[f.key] === undefined || editing[f.key] === null || editing[f.key] === ""));
+                if (missing) { toast.error(`Field "${missing.label}" wajib diisi`); return; }
+                upsertMut.mutate(editing);
+              }}>
                 {upsertMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Simpan
               </Button>
             )}
