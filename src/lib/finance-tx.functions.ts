@@ -273,13 +273,13 @@ export const createPayment = createServerFn({ method: "POST" })
 
     // Auto-apply MDR rule when not explicitly provided
     let mdr = Number(data.mdr ?? 0);
-    let mdrCoa = "5900";
+    let mdrCoa = "6-3100";
     if (!data.mdr && data.metode !== "cash") {
       const { data: rules } = await sb.from("fin_mdr_rule").select("*").eq("is_active", true).eq("metode", data.metode);
       const rule = (rules ?? []).find((r: any) => !r.bank || r.bank === data.bank) ?? (rules ?? [])[0];
       if (rule) {
         mdr = Math.round((Number(data.jumlah) * Number(rule.rate_pct) / 100) + Number(rule.fixed_fee));
-        mdrCoa = rule.coa_code || "5900";
+        mdrCoa = rule.coa_code || "6-3100";
       }
     }
     const netto = Number(data.jumlah) - mdr;
@@ -455,7 +455,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
           debit: Number(it.subtotal),
           keterangan: it.deskripsi,
         })),
-        ...(pajak > 0 ? [{ coa_code: "1-1500", coa_nama: "PPN Masukan", debit: pajak }] : []),
+        ...(pajak > 0 ? [{ coa_code: "1-1700", coa_nama: "PPN Masukan", debit: pajak }] : []),
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", kredit: total },
       ],
     });
