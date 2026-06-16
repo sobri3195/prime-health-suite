@@ -79,7 +79,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
       setEditing(null);
       setIsNew(false);
     },
-    onError: handleError,
+    onError: (e) => handleError(e),
   });
 
   const deleteMut = useMutation({
@@ -92,7 +92,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
       addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { op: "delete", id } });
       toast.success(`${title}: data dihapus`);
     },
-    onError: handleError,
+    onError: (e) => handleError(e),
   });
 
   const renderCell = (f: Field, v: any) => {
