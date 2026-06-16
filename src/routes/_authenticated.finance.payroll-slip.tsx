@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2, Printer, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { generatePayslipPDF, downloadPDF } from "@/lib/pdf-templates";
+
 
 const search = z.object({ run: z.string().optional() });
 
@@ -68,10 +70,11 @@ function Page() {
             <TableHead className="text-right">Nominal Lembur</TableHead>
             <TableHead className="text-right">Potongan</TableHead>
             <TableHead className="text-right">Take Home</TableHead>
+            <TableHead className="text-right">Slip</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {loading ? <TableRow><TableCell colSpan={6} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
-              : items.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">Belum ada slip untuk periode ini.</TableCell></TableRow>
+            {loading ? <TableRow><TableCell colSpan={7} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              : items.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada slip untuk periode ini.</TableCell></TableRow>
               : items.map((it) => (
                 <TableRow key={it.id}>
                   <TableCell className="font-semibold">{it.nama_snapshot}</TableCell>
@@ -80,10 +83,36 @@ function Page() {
                   <TableCell className="text-right font-mono">{fmt(it.nominal_lembur)}</TableCell>
                   <TableCell className="text-right font-mono text-rose-600">{fmt(it.potongan)}</TableCell>
                   <TableCell className="text-right font-mono font-semibold text-emerald-600">{fmt(it.take_home)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
+                      if (!curRun) return;
+                      const doc = generatePayslipPDF({
+                        nama: it.nama_snapshot,
+                        nip: it.nip_snapshot,
+                        jabatan: it.jabatan_snapshot,
+                        periode_label: `${BULAN[curRun.periode_bulan - 1]} ${curRun.periode_tahun}`,
+                        gaji_pokok: Number(it.gaji_pokok) || 0,
+                        tunjangan: Number(it.tunjangan) || 0,
+                        total_jam_lembur: Number(it.total_jam_lembur) || 0,
+                        nominal_lembur: Number(it.nominal_lembur) || 0,
+                        bonus: Number(it.bonus) || 0,
+                        potongan_pph: Number(it.potongan_pph) || 0,
+                        potongan_bpjs: Number(it.potongan_bpjs) || 0,
+                        potongan_lain: Number(it.potongan_lain) || 0,
+                        potongan_total: Number(it.potongan) || 0,
+                        take_home: Number(it.take_home) || 0,
+                        catatan: it.catatan,
+                      });
+                      downloadPDF(doc, `slip-${it.nama_snapshot}-${curRun.periode_tahun}-${String(curRun.periode_bulan).padStart(2,"0")}.pdf`);
+                    }}>
+                      <FileDown className="h-3.5 w-3.5" /> PDF
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
+
       </div>
     </div>
   );

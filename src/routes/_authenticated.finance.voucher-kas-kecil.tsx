@@ -4,8 +4,10 @@ import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { generateVoucherPDF, downloadPDF } from "@/lib/pdf-templates";
+
 
 export const Route = createFileRoute("/_authenticated/finance/voucher-kas-kecil")({
   component: Page,
@@ -48,10 +50,11 @@ function Page() {
             <TableHead>No. Voucher</TableHead><TableHead>Tanggal</TableHead><TableHead>Tipe</TableHead>
             <TableHead>Penerima/Pembayar</TableHead><TableHead>Keterangan</TableHead>
             <TableHead className="text-right">Jumlah</TableHead><TableHead>Status</TableHead>
+            <TableHead className="text-right">PDF</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {loading ? <TableRow><TableCell colSpan={7} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
-              : rows.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada voucher kas kecil.</TableCell></TableRow>
+            {loading ? <TableRow><TableCell colSpan={8} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              : rows.length === 0 ? <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Belum ada voucher kas kecil.</TableCell></TableRow>
               : rows.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs">{r.no_voucher}</TableCell>
@@ -61,10 +64,29 @@ function Page() {
                   <TableCell className="text-sm text-muted-foreground">{r.keterangan ?? ""}</TableCell>
                   <TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell>
                   <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
+                      const isIn = r.tipe === "penerimaan" || r.tipe === "replenish";
+                      const doc = generateVoucherPDF({
+                        jenis: "KAS KECIL",
+                        no_voucher: r.no_voucher,
+                        tanggal: r.tanggal,
+                        pihak_label: isIn ? "Diterima dari" : "Dibayarkan kepada",
+                        pihak_nama: r.penerima ?? "-",
+                        keterangan: r.keterangan ?? "",
+                        items: [{ label: `${r.tipe.toUpperCase()} — ${r.keterangan ?? ""}`, nominal: Number(r.amount) || 0 }],
+                        total: Number(r.amount) || 0,
+                      });
+                      downloadPDF(doc, `KK-${r.no_voucher}.pdf`);
+                    }}>
+                      <FileDown className="h-3.5 w-3.5" /> PDF
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
+
       </div>
     </div>
   );
