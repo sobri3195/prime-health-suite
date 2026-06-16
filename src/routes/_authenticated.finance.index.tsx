@@ -198,8 +198,8 @@ function FinanceDashboard() {
         <TopDokterCard rows={invoices} />
       </div>
 
-      {/* Saldo Bank + Anomalies + Insights */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      {/* Saldo Bank + Anomalies + Insights + Konsistensi */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-4">
         <Card title="Saldo Bank">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40">
