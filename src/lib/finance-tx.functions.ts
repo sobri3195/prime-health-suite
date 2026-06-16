@@ -202,9 +202,8 @@ export const upsertInvoice = createServerFn({ method: "POST" })
     const { error: ie } = await sb.from("fin_invoice_item").insert(itemsPayload);
     if (ie) throw new Error(ie.message);
 
-    // reverse old journal if edit, then post new
     if (data.id) await reverseJournal("invoice", invoice.id, data.tanggal, "Edit invoice");
-    await postJournal({
+    const invEntry = await postJournal({
       sumber: "invoice",
       ref_id: invoice.id,
       ref_no: invoice.no_invoice,
@@ -212,12 +211,13 @@ export const upsertInvoice = createServerFn({ method: "POST" })
       keterangan: `Invoice ${invoice.no_invoice} - ${data.patient_name ?? data.patient_code}`,
       created_by: data.actor,
       lines: [
-        { coa_code: "1200", coa_nama: "Piutang Usaha", debit: total },
-        ...(diskon > 0 ? [{ coa_code: "4900", coa_nama: "Diskon Penjualan", debit: diskon }] : []),
-        { coa_code: "4100", coa_nama: "Pendapatan Jasa Klinik", kredit: subtotal },
-        ...(pajak > 0 ? [{ coa_code: "2200", coa_nama: "PPN Keluaran", kredit: pajak }] : []),
+        { coa_code: "1-1300", coa_nama: "Piutang Pasien", debit: total },
+        ...(diskon > 0 ? [{ coa_code: "4-9000", coa_nama: "Diskon Penjualan", debit: diskon }] : []),
+        { coa_code: "4-1000", coa_nama: "Pendapatan Jasa Klinik", kredit: subtotal },
+        ...(pajak > 0 ? [{ coa_code: "2-2100", coa_nama: "PPN Keluaran", kredit: pajak }] : []),
       ],
     });
+    await sb.from("fin_invoice").update({ posted_journal_id: invEntry.id, posted_at: new Date().toISOString() }).eq("id", invoice.id);
     await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "invoice", entity_id: invoice.id, entity_no: invoice.no_invoice, after: invoice });
     return { invoice };
   });
