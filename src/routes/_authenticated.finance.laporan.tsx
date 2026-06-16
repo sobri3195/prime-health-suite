@@ -1,68 +1,57 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import { invoices, master } from "@/data/financeData";
-import { expenseSources, bankMutations, openingBankBalance } from "@/data/financeSources";
-import { incomeStatement, cashFlow, trialBalance, ledger, periodFilter } from "@/lib/journal";
 import { formatIDR, sumOutstanding } from "@/lib/finance";
 import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
+import { useFinanceDate } from "@/context/finance-date";
+import { getProfitLoss, getCashFlow, getTrialBalance, getBalanceSheet } from "@/lib/finance-report.functions";
+import { getFinanceDashboard, getBukuBesar, getPajakRekap } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/laporan")({ component: LaporanPage });
 
-const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agt","Sep","Okt","Nov","Des"];
-
 function LaporanPage() {
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(currentYear);
-  const [month, setMonth] = useState<string>("all");
+  const { from, to, label } = useFinanceDate();
+  const year = new Date(from || new Date().toISOString()).getFullYear();
 
-  const period = periodFilter(month === "all" ? "all" : Number(month), year);
-  const inv = useMemo(() => invoices.filter((i) => {
-    const d = new Date(i.date);
-    if (d.getFullYear() !== year) return false;
-    if (month !== "all" && d.getMonth() !== Number(month)) return false;
-    return true;
-  }), [year, month]);
-  const exp = useMemo(() => expenseSources.filter((e) => {
-    const d = new Date(e.date);
-    if (d.getFullYear() !== year) return false;
-    if (month !== "all" && d.getMonth() !== Number(month)) return false;
-    return true;
-  }), [year, month]);
+  const plFn = useServerFn(getProfitLoss);
+  const cfFn = useServerFn(getCashFlow);
+  const tbFn = useServerFn(getTrialBalance);
+  const bsFn = useServerFn(getBalanceSheet);
+  const bbFn = useServerFn(getBukuBesar);
+  const dashFn = useServerFn(getFinanceDashboard);
+  const taxFn = useServerFn(getPajakRekap);
 
-  const is = useMemo(() => incomeStatement(period), [year, month]);
-  const cf = useMemo(() => cashFlow(period), [year, month]);
-  const tb = useMemo(() => trialBalance(period), [year, month]);
-  const lg = useMemo(() => ledger(period), [year, month]);
+  const pl = useQuery({ queryKey: ["fin", "pl", from, to], queryFn: () => plFn({ data: { from, to } }) });
+  const cf = useQuery({ queryKey: ["fin", "cf", from, to], queryFn: () => cfFn({ data: { from, to } }) });
+  const tb = useQuery({ queryKey: ["fin", "tb", from, to], queryFn: () => tbFn({ data: { from, to } }) });
+  const bs = useQuery({ queryKey: ["fin", "bs", to], queryFn: () => bsFn({ data: { to } }) });
+  const bb = useQuery({ queryKey: ["fin", "bb", from, to], queryFn: () => bbFn({ data: { from, to } }) });
+  const dash = useQuery({ queryKey: ["fin", "dash", from, to], queryFn: () => dashFn({ data: { from, to } }) });
+  const tax = useQuery({ queryKey: ["fin", "pajak", year], queryFn: () => taxFn({ data: { year } }) });
+
+  const invoices = dash.data?.invoices ?? [];
+  const revenue = pl.data?.totalRev ?? 0;
+  const opex = pl.data?.totalExp ?? 0;
+  const ebitda = revenue - opex;
+  const cashIn = cf.data?.details?.filter((d) => d.amount > 0).reduce((a, d) => a + d.amount, 0) ?? 0;
+  const cashOut = -(cf.data?.details?.filter((d) => d.amount < 0).reduce((a, d) => a + d.amount, 0) ?? 0);
+  const netCash = cf.data?.net ?? 0;
 
   const csv = (name: string, rows: any[], cols: any[]) => {
-    downloadCSV(exportFileName(name, `${year}-${month}`), toCSV(rows, cols));
+    downloadCSV(exportFileName(name, label), toCSV(rows, cols));
     toast.success(`Export ${rows.length} baris (CSV)`);
   };
 
   return (
     <div>
-      <PageHeader title="Laporan Manajemen" desc="Semua laporan menggunakan data jurnal & transaksi yang sama dengan dashboard." />
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-          <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{[currentYear, currentYear - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={month} onValueChange={setMonth}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Bulan</SelectItem>
-            {MONTHS.map((m, i) => <SelectItem key={m} value={String(i)}>{m}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <PageHeader title="Laporan Manajemen" desc={`Semua laporan dihitung live dari jurnal posted — periode ${label}.`} />
 
       <Tabs defaultValue="executive">
         <TabsList className="flex-wrap">
@@ -70,26 +59,25 @@ function LaporanPage() {
           <TabsTrigger value="rugi-laba">Laba Rugi</TabsTrigger>
           <TabsTrigger value="ebitda">EBITDA</TabsTrigger>
           <TabsTrigger value="arus-kas">Arus Kas</TabsTrigger>
-          <TabsTrigger value="neraca">Neraca Saldo</TabsTrigger>
+          <TabsTrigger value="neraca-saldo">Neraca Saldo</TabsTrigger>
+          <TabsTrigger value="neraca">Neraca</TabsTrigger>
           <TabsTrigger value="bb">Buku Besar</TabsTrigger>
           <TabsTrigger value="pendapatan">Pendapatan</TabsTrigger>
           <TabsTrigger value="piutang">Piutang</TabsTrigger>
-          <TabsTrigger value="pengeluaran">Pengeluaran</TabsTrigger>
           <TabsTrigger value="pajak">Pajak</TabsTrigger>
-          <TabsTrigger value="bank">Bank</TabsTrigger>
         </TabsList>
 
         <TabsContent value="executive">
           <div className="grid gap-3 sm:grid-cols-4">
             {[
-              { l: "Pendapatan", v: is.revenue, c: "text-emerald-600" },
-              { l: "Biaya", v: is.opex, c: "text-rose-600" },
-              { l: "EBITDA", v: is.ebitda },
-              { l: "Net Profit", v: is.netProfit, c: is.netProfit >= 0 ? "text-emerald-600" : "text-rose-600" },
-              { l: "Pajak Estimasi", v: is.tax },
-              { l: "Outstanding Piutang", v: sumOutstanding(inv) },
-              { l: "Total Pengeluaran", v: exp.reduce((a, e) => a + e.amount, 0) },
-              { l: "Saldo Kas/Bank Akhir", v: openingBankBalance + cf.net },
+              { l: "Pendapatan", v: revenue, c: "text-emerald-600" },
+              { l: "Biaya", v: opex, c: "text-rose-600" },
+              { l: "EBITDA", v: ebitda },
+              { l: "Laba Bersih", v: pl.data?.profit ?? 0, c: (pl.data?.profit ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600" },
+              { l: "Outstanding Piutang", v: sumOutstanding(invoices) },
+              { l: "Total Pengeluaran", v: dash.data?.expenseAll ?? 0 },
+              { l: "Saldo Kas/Bank", v: dash.data?.bankBalance ?? 0 },
+              { l: "Net Cash Flow Periode", v: netCash },
             ].map((k) => (
               <div key={k.l} className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">{k.l}</div>
@@ -100,108 +88,129 @@ function LaporanPage() {
         </TabsContent>
 
         <TabsContent value="rugi-laba">
-          <ReportCard title="Laporan Laba Rugi" onExport={() => csv("laba-rugi",
+          <ReportCard title="Laba Rugi" onExport={() => csv("laba-rugi",
             [
-              { label: "Pendapatan", val: is.revenue },
-              { label: "Beban Operasional", val: -is.opex },
-              { label: "EBITDA", val: is.ebitda },
-              { label: "Pajak", val: -is.tax },
-              { label: "Laba Bersih", val: is.netProfit },
+              { label: "Pendapatan", val: revenue },
+              { label: "Beban Operasional", val: -opex },
+              { label: "Laba Bersih", val: pl.data?.profit ?? 0 },
             ],
-            [{ key: "l", label: "Pos", get: (r: any) => r.label }, { key: "v", label: "Nilai", get: (r: any) => r.val }]
+            [{ key: "l", label: "Pos", get: (r: any) => r.label }, { key: "v", label: "Nilai", get: (r: any) => r.val }],
           )}>
-            <ReportRow label="Pendapatan" val={is.revenue} />
-            <ReportRow label="Beban Operasional" val={-is.opex} />
-            <ReportRow label="EBITDA" val={is.ebitda} bold />
-            <ReportRow label="Pajak (estimasi)" val={-is.tax} />
-            <ReportRow label="Laba Bersih" val={is.netProfit} bold />
+            <ReportRow label="Pendapatan" val={revenue} />
+            <ReportRow label="Beban Operasional" val={-opex} />
+            <ReportRow label="Laba Bersih" val={pl.data?.profit ?? 0} bold />
           </ReportCard>
         </TabsContent>
 
         <TabsContent value="ebitda">
           <ReportCard title="EBITDA" onExport={() => csv("ebitda",
-            [{ label: "EBITDA", val: is.ebitda }, { label: "Margin", val: is.revenue ? is.ebitda / is.revenue : 0 }],
-            [{ key: "l", label: "Pos", get: (r:any)=>r.label }, { key: "v", label: "Nilai", get: (r:any)=>r.val }]
+            [{ label: "EBITDA", val: ebitda }],
+            [{ key: "l", label: "Pos", get: (r: any) => r.label }, { key: "v", label: "Nilai", get: (r: any) => r.val }],
           )}>
-            <ReportRow label="Pendapatan" val={is.revenue} />
-            <ReportRow label="Total Beban" val={-is.opex} />
-            <ReportRow label="EBITDA" val={is.ebitda} bold />
-            <ReportRow label="Margin EBITDA" val={is.revenue ? `${((is.ebitda/is.revenue)*100).toFixed(1)}%` : "—"} />
+            <ReportRow label="Pendapatan" val={revenue} />
+            <ReportRow label="Total Beban" val={-opex} />
+            <ReportRow label="EBITDA" val={ebitda} bold />
+            <ReportRow label="Margin EBITDA" val={revenue ? `${((ebitda / revenue) * 100).toFixed(1)}%` : "—"} />
           </ReportCard>
         </TabsContent>
 
         <TabsContent value="arus-kas">
           <ReportCard title="Arus Kas" onExport={() => csv("arus-kas",
-            [{ label: "Masuk", val: cf.inflow }, { label: "Keluar", val: cf.outflow }, { label: "Net", val: cf.net }],
-            [{ key: "l", label: "Pos", get: (r:any)=>r.label }, { key: "v", label: "Nilai", get: (r:any)=>r.val }]
+            [
+              { label: "Operasional", val: cf.data?.sections.operating ?? 0 },
+              { label: "Investasi", val: cf.data?.sections.investing ?? 0 },
+              { label: "Pendanaan", val: cf.data?.sections.financing ?? 0 },
+              { label: "Net", val: netCash },
+            ],
+            [{ key: "l", label: "Pos", get: (r: any) => r.label }, { key: "v", label: "Nilai", get: (r: any) => r.val }],
           )}>
-            <ReportRow label="Saldo Awal" val={openingBankBalance} />
-            <ReportRow label="Arus Masuk" val={cf.inflow} />
-            <ReportRow label="Arus Keluar" val={-cf.outflow} />
-            <ReportRow label="Net Cash Flow" val={cf.net} bold />
-            <ReportRow label="Saldo Akhir" val={openingBankBalance + cf.net} bold />
+            <ReportRow label="Operasional" val={cf.data?.sections.operating ?? 0} />
+            <ReportRow label="Investasi" val={cf.data?.sections.investing ?? 0} />
+            <ReportRow label="Pendanaan" val={cf.data?.sections.financing ?? 0} />
+            <ReportRow label="Arus Masuk" val={cashIn} />
+            <ReportRow label="Arus Keluar" val={-cashOut} />
+            <ReportRow label="Net Cash Flow" val={netCash} bold />
           </ReportCard>
         </TabsContent>
 
-        <TabsContent value="neraca">
-          <ReportTable title="Neraca Saldo (Trial Balance)" rows={tb} cols={[
-            { h: "Akun", get: (r: any) => `${r.account} – ${r.accountName}` },
-            { h: "Debit", align: "right", get: (r: any) => formatIDR(r.debit) },
-            { h: "Kredit", align: "right", get: (r: any) => formatIDR(r.credit) },
-          ]} onExport={() => csv("neraca", tb, [
-            { key: "a", label: "Akun", get: (r: any) => `${r.account} ${r.accountName}` },
-            { key: "d", label: "Debit", get: (r: any) => r.debit },
-            { key: "c", label: "Kredit", get: (r: any) => r.credit },
+        <TabsContent value="neraca-saldo">
+          <ReportTable title="Neraca Saldo (Trial Balance)" rows={tb.data?.rows ?? []} cols={[
+            { h: "Akun", get: (r: any) => `${r.code} – ${r.name}` },
+            { h: "Debit", align: "right", get: (r: any) => formatIDR(r.debit_bal) },
+            { h: "Kredit", align: "right", get: (r: any) => formatIDR(r.kredit_bal) },
+          ]} onExport={() => csv("neraca-saldo", tb.data?.rows ?? [], [
+            { key: "c", label: "Kode", get: (r: any) => r.code },
+            { key: "n", label: "Akun", get: (r: any) => r.name },
+            { key: "d", label: "Debit", get: (r: any) => r.debit_bal },
+            { key: "k", label: "Kredit", get: (r: any) => r.kredit_bal },
           ])} />
         </TabsContent>
 
+        <TabsContent value="neraca">
+          <div className="grid gap-4 md:grid-cols-3">
+            <ReportCard title={`Aset (Rp ${(bs.data?.totalAsset ?? 0).toLocaleString("id-ID")})`}>
+              {(bs.data?.asset ?? []).map((a: any) => <ReportRow key={a.code} label={`${a.code} ${a.name}`} val={a.amount} />)}
+            </ReportCard>
+            <ReportCard title={`Liabilitas (Rp ${(bs.data?.totalLiab ?? 0).toLocaleString("id-ID")})`}>
+              {(bs.data?.liability ?? []).map((a: any) => <ReportRow key={a.code} label={`${a.code} ${a.name}`} val={a.amount} />)}
+            </ReportCard>
+            <ReportCard title={`Ekuitas (Rp ${(bs.data?.totalEquity ?? 0).toLocaleString("id-ID")})`}>
+              {(bs.data?.equity ?? []).map((a: any) => <ReportRow key={a.code} label={`${a.code} ${a.name}`} val={a.amount} />)}
+            </ReportCard>
+          </div>
+        </TabsContent>
+
         <TabsContent value="bb">
-          <ReportTable title="Buku Besar (Saldo per Akun)" rows={lg} cols={[
+          <ReportTable title="Buku Besar (Saldo per Akun)" rows={bb.data?.rows ?? []} cols={[
             { h: "Akun", get: (r: any) => `${r.account} – ${r.accountName}` },
+            { h: "Saldo Awal", align: "right", get: (r: any) => formatIDR(r.opening) },
             { h: "Debit", align: "right", get: (r: any) => formatIDR(r.debit) },
             { h: "Kredit", align: "right", get: (r: any) => formatIDR(r.credit) },
             { h: "Saldo Akhir", align: "right", get: (r: any) => formatIDR(r.closing) },
-          ]} onExport={() => csv("buku-besar", lg, [
+          ]} onExport={() => csv("buku-besar", bb.data?.rows ?? [], [
             { key: "a", label: "Akun", get: (r: any) => `${r.account} ${r.accountName}` },
+            { key: "o", label: "Saldo Awal", get: (r: any) => r.opening },
             { key: "d", label: "Debit", get: (r: any) => r.debit },
             { key: "c", label: "Kredit", get: (r: any) => r.credit },
-            { key: "s", label: "Saldo", get: (r: any) => r.closing },
+            { key: "s", label: "Saldo Akhir", get: (r: any) => r.closing },
           ])} />
         </TabsContent>
 
         <TabsContent value="pendapatan">
-          <ReportTable title="Laporan Pendapatan" rows={inv} cols={[
+          <ReportTable title="Laporan Pendapatan" rows={invoices} cols={[
             { h: "Invoice", get: (r: any) => r.invoice },
             { h: "Tanggal", get: (r: any) => new Date(r.date).toLocaleDateString("id-ID") },
-            { h: "Payer", get: (r: any) => r.payer },
+            { h: "Payer", get: (r: any) => r.payerName },
+            { h: "Dokter", get: (r: any) => r.doctor },
             { h: "Layanan", get: (r: any) => r.service },
             { h: "Total", align: "right", get: (r: any) => formatIDR(r.total) },
-            { h: "Paid", align: "right", get: (r: any) => formatIDR(r.paid) },
+            { h: "Dibayar", align: "right", get: (r: any) => formatIDR(r.paid) },
             { h: "Status", get: (r: any) => r.status },
-          ]} onExport={() => csv("pendapatan", inv, [
+          ]} onExport={() => csv("pendapatan", invoices, [
             { key: "i", label: "Invoice", get: (r: any) => r.invoice },
             { key: "d", label: "Tanggal", get: (r: any) => r.date },
-            { key: "p", label: "Payer", get: (r: any) => r.payer },
+            { key: "p", label: "Payer", get: (r: any) => r.payerName },
+            { key: "dr", label: "Dokter", get: (r: any) => r.doctor },
             { key: "t", label: "Total", get: (r: any) => r.total },
-            { key: "pd", label: "Paid", get: (r: any) => r.paid },
+            { key: "pd", label: "Dibayar", get: (r: any) => r.paid },
             { key: "s", label: "Status", get: (r: any) => r.status },
           ])} />
         </TabsContent>
 
         <TabsContent value="piutang">
           {(() => {
-            const piutang = inv.filter((i) => i.status === "unpaid" || i.status === "partial" || i.status === "overdue");
+            const piutang = invoices.filter((i) => i.status === "unpaid" || i.status === "partial" || i.status === "overdue");
             return (
               <ReportTable title="Laporan Piutang" rows={piutang} cols={[
                 { h: "Invoice", get: (r: any) => r.invoice },
-                { h: "Payer", get: (r: any) => r.payer },
+                { h: "Payer", get: (r: any) => r.payerName },
                 { h: "Jatuh Tempo", get: (r: any) => new Date(r.dueDate).toLocaleDateString("id-ID") },
                 { h: "Total", align: "right", get: (r: any) => formatIDR(r.total) },
                 { h: "Sisa", align: "right", get: (r: any) => formatIDR(r.total - r.paid) },
                 { h: "Status", get: (r: any) => r.status },
               ]} onExport={() => csv("piutang", piutang, [
                 { key: "i", label: "Invoice", get: (r: any) => r.invoice },
-                { key: "p", label: "Payer", get: (r: any) => r.payer },
+                { key: "p", label: "Payer", get: (r: any) => r.payerName },
                 { key: "d", label: "Jatuh Tempo", get: (r: any) => r.dueDate },
                 { key: "t", label: "Total", get: (r: any) => r.total },
                 { key: "s", label: "Sisa", get: (r: any) => r.total - r.paid },
@@ -211,74 +220,22 @@ function LaporanPage() {
           })()}
         </TabsContent>
 
-        <TabsContent value="pengeluaran">
-          <ReportTable title="Laporan Pengeluaran" rows={exp} cols={[
-            { h: "No", get: (r: any) => r.number },
-            { h: "Vendor", get: (r: any) => r.vendor },
-            { h: "Kategori", get: (r: any) => r.category },
-            { h: "Tanggal", get: (r: any) => new Date(r.date).toLocaleDateString("id-ID") },
-            { h: "Nominal", align: "right", get: (r: any) => formatIDR(r.amount) },
-            { h: "Pajak", align: "right", get: (r: any) => formatIDR(r.tax) },
-            { h: "Status", get: (r: any) => r.status },
-          ]} onExport={() => csv("pengeluaran", exp, [
-            { key: "n", label: "No", get: (r: any) => r.number },
-            { key: "v", label: "Vendor", get: (r: any) => r.vendor },
-            { key: "a", label: "Nominal", get: (r: any) => r.amount },
-            { key: "t", label: "Pajak", get: (r: any) => r.tax },
-            { key: "s", label: "Status", get: (r: any) => r.status },
-          ])} />
-        </TabsContent>
-
         <TabsContent value="pajak">
-          {(() => {
-            const rev = inv.reduce((a, r) => a + (r.status === "paid" ? r.total : r.paid), 0);
-            const ppnOut = Math.round(rev * 0.11);
-            const ppnIn = exp.filter((e) => e.status === "paid").reduce((a, e) => a + e.tax, 0);
-            const drFee = Math.round(rev * 0.4 * 0.05);
-            const rows = [
-              { jenis: "PPN Pendapatan", base: rev, amount: ppnOut },
-              { jenis: "PPN Masukan", base: exp.reduce((a, e) => a + e.amount, 0), amount: ppnIn },
-              { jenis: "PPh 21 Dokter", base: Math.round(rev * 0.4), amount: drFee },
-              { jenis: "Pajak Bersih (estimasi)", base: 0, amount: ppnOut - ppnIn + drFee },
-            ];
-            return (
-              <ReportTable title="Laporan Pajak" rows={rows} cols={[
-                { h: "Jenis", get: (r: any) => r.jenis },
-                { h: "DPP", align: "right", get: (r: any) => r.base ? formatIDR(r.base) : "—" },
-                { h: "Pajak", align: "right", get: (r: any) => formatIDR(r.amount) },
-              ]} onExport={() => csv("pajak", rows, [
-                { key: "j", label: "Jenis", get: (r: any) => r.jenis },
-                { key: "d", label: "DPP", get: (r: any) => r.base },
-                { key: "p", label: "Pajak", get: (r: any) => r.amount },
-              ])} />
-            );
-          })()}
-        </TabsContent>
-
-        <TabsContent value="bank">
-          {(() => {
-            const filtered = bankMutations.filter((m) => {
-              const d = new Date(m.date);
-              if (d.getFullYear() !== year) return false;
-              if (month !== "all" && d.getMonth() !== Number(month)) return false;
-              return true;
-            });
-            return (
-              <ReportTable title="Laporan Bank" rows={filtered} cols={[
-                { h: "Tanggal", get: (r: any) => new Date(r.date).toLocaleDateString("id-ID") },
-                { h: "Bank", get: (r: any) => master.banks.find((b) => b.id === r.bankId)?.name },
-                { h: "Deskripsi", get: (r: any) => r.description },
-                { h: "Masuk", align: "right", get: (r: any) => r.amount > 0 ? formatIDR(r.amount) : "—" },
-                { h: "Keluar", align: "right", get: (r: any) => r.amount < 0 ? formatIDR(Math.abs(r.amount)) : "—" },
-                { h: "Status", get: (r: any) => r.matched ? "Reconciled" : "Open" },
-              ]} onExport={() => csv("bank", filtered, [
-                { key: "d", label: "Tanggal", get: (r: any) => r.date },
-                { key: "desc", label: "Deskripsi", get: (r: any) => r.description },
-                { key: "amt", label: "Nominal", get: (r: any) => r.amount },
-                { key: "m", label: "Matched", get: (r: any) => r.matched ? "Yes" : "No" },
-              ])} />
-            );
-          })()}
+          <ReportTable title={`Pajak Bulanan ${year}`} rows={tax.data?.rows ?? []} cols={[
+            { h: "Periode", get: (r: any) => r.period },
+            { h: "Revenue", align: "right", get: (r: any) => formatIDR(r.revenue) },
+            { h: "PPN Out (11%)", align: "right", get: (r: any) => formatIDR(r.ppnOut) },
+            { h: "PPN In", align: "right", get: (r: any) => formatIDR(r.ppnIn) },
+            { h: "PPN Net", align: "right", get: (r: any) => formatIDR(r.ppnNet) },
+            { h: "PPh 21 Dokter", align: "right", get: (r: any) => formatIDR(r.pph21) },
+          ]} onExport={() => csv("pajak", tax.data?.rows ?? [], [
+            { key: "p", label: "Periode", get: (r: any) => r.period },
+            { key: "r", label: "Revenue", get: (r: any) => r.revenue },
+            { key: "po", label: "PPN Out", get: (r: any) => r.ppnOut },
+            { key: "pi", label: "PPN In", get: (r: any) => r.ppnIn },
+            { key: "pn", label: "PPN Net", get: (r: any) => r.ppnNet },
+            { key: "pph", label: "PPh 21 Dokter", get: (r: any) => r.pph21 },
+          ])} />
         </TabsContent>
       </Tabs>
     </div>
@@ -301,7 +258,7 @@ function ReportRow({ label, val, bold }: { label: string; val: number | string; 
   return (
     <div className={`flex justify-between border-b border-border/40 py-2 ${bold ? "font-semibold" : ""}`}>
       <span className={bold ? "" : "text-muted-foreground"}>{label}</span>
-      <span className="font-mono">{typeof val === "number" ? formatIDR(val) : val}</span>
+      <span className="font-mono text-sm">{typeof val === "number" ? formatIDR(val) : val}</span>
     </div>
   );
 }
@@ -311,17 +268,17 @@ function ReportTable({ title, rows, cols, onExport }: { title: string; rows: any
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border p-3">
         <div className="font-semibold">{title}</div>
-        <Button size="sm" variant="outline" className="gap-1" onClick={onExport}><Download className="h-4 w-4" /> CSV</Button>
+        <Button size="sm" variant="outline" className="gap-1" onClick={onExport} disabled={!rows.length}>
+          <Download className="h-4 w-4" /> CSV
+        </Button>
       </div>
       <div className="max-h-[60vh] overflow-auto">
         <Table>
-          <TableHeader>
-            <TableRow>{cols.map((c, i) => <TableHead key={i} className={c.align === "right" ? "text-right" : ""}>{c.h}</TableHead>)}</TableRow>
-          </TableHeader>
+          <TableHeader><TableRow>{cols.map((c, i) => <TableHead key={i} className={c.align === "right" ? "text-right" : ""}>{c.h}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableRow><TableCell colSpan={cols.length} className="py-10 text-center text-sm text-muted-foreground">Tidak ada data untuk periode ini.</TableCell></TableRow>
-            ) : rows.slice(0, 80).map((r, i) => (
+              <TableRow><TableCell colSpan={cols.length} className="py-10 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+            ) : rows.slice(0, 200).map((r, i) => (
               <TableRow key={i}>
                 {cols.map((c, j) => <TableCell key={j} className={`text-xs ${c.align === "right" ? "text-right font-mono" : ""}`}>{c.get(r)}</TableCell>)}
               </TableRow>

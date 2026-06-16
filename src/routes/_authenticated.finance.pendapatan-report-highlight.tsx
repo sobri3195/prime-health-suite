@@ -1,49 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
-import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
-import { invoices } from "@/data/financeData";
-import { applyFilter, formatIDR, byPayer, topBy, sumRevenue } from "@/lib/finance";
+import { formatIDR } from "@/lib/finance";
+import { useFinanceDate } from "@/context/finance-date";
+import { getReportHighlight } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/pendapatan-report-highlight")({
   component: Page,
 });
 
 function Page() {
-  const [filter, setFilter] = useState(defaultFilter);
-  const doctors = useMemo(() => Array.from(new Set(invoices.map((r) => r.doctor))), []);
-  const services = useMemo(() => Array.from(new Set(invoices.map((r) => r.category))), []);
-
-  const rows = applyFilter(invoices, filter);
-  const total = sumRevenue(rows);
-  const dokter = topBy(rows, "doctor", 1)[0];
-  const layanan = topBy(rows, "service", 1)[0];
-  const payerMap = byPayer(rows);
-  const topPayer = Object.entries(payerMap).sort((a, b) => b[1] - a[1])[0];
-
-  // top day
-  const byDay = new Map<string, number>();
-  rows.forEach((r) => {
-    const d = new Date(r.date).toISOString().slice(0, 10);
-    byDay.set(d, (byDay.get(d) ?? 0) + r.total);
+  const { from, to } = useFinanceDate();
+  const call = useServerFn(getReportHighlight);
+  const q = useQuery({
+    queryKey: ["fin", "highlight", from, to],
+    queryFn: () => call({ data: { from, to } }),
   });
-  const topDay = Array.from(byDay.entries()).sort((a, b) => b[1] - a[1])[0];
+
+  const d = q.data;
+  const payerMap = d?.payerMap ?? {};
+  const klaim = (Number((payerMap as any).BPJS ?? 0) + Number((payerMap as any).Asuransi ?? 0));
+  const umum = Number((payerMap as any).Umum ?? 0);
+  const total = d?.total ?? 0;
 
   return (
     <div>
-      <PageHeader title="Report Highlight" desc="Sorotan periode: top day, dokter, layanan, dan payer." />
-      <FinanceFilters value={filter} onChange={setFilter} doctors={doctors} services={services} />
+      <PageHeader
+        title="Report Highlight"
+        desc={`Sorotan periode ${from || "awal"} – ${to || "sekarang"}: top day, dokter, layanan, dan payer (data live).`}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card label="Total Pendapatan" value={formatIDR(total)} desc={`${rows.length} invoice`} />
-        <Card label="Top Day" value={topDay ? new Date(topDay[0]).toLocaleDateString("id-ID") : "—"} desc={topDay ? formatIDR(topDay[1]) : "—"} />
-        <Card label="Top Dokter" value={dokter?.name ?? "—"} desc={dokter ? formatIDR(dokter.value) : "—"} />
-        <Card label="Top Layanan" value={layanan?.name ?? "—"} desc={layanan ? formatIDR(layanan.value) : "—"} />
-        <Card label="Top Payer" value={topPayer?.[0] ?? "—"} desc={topPayer ? formatIDR(topPayer[1]) : "—"} />
-        <Card label="Rata-rata Invoice" value={formatIDR(rows.length ? Math.round(total / rows.length) : 0)} desc="ATV" />
-        <Card label="% Klaim" value={`${((((payerMap.BPJS ?? 0) + (payerMap.Asuransi ?? 0)) / Math.max(1, total)) * 100).toFixed(1)}%`} desc="BPJS + Asuransi" />
-        <Card label="% Umum" value={`${(((payerMap.Umum ?? 0) / Math.max(1, total)) * 100).toFixed(1)}%`} desc="Cash payer" />
+        <Card label="Total Pendapatan" value={formatIDR(total)} desc={`${d?.count ?? 0} invoice`} />
+        <Card label="Top Day" value={d?.topDay ? new Date(d.topDay[0]).toLocaleDateString("id-ID") : "—"} desc={d?.topDay ? formatIDR(d.topDay[1]) : "—"} />
+        <Card label="Top Dokter" value={d?.topDoctor?.[0] ?? "—"} desc={d?.topDoctor ? formatIDR(d.topDoctor[1]) : "—"} />
+        <Card label="Top Layanan" value={d?.topService?.[0] ?? "—"} desc={d?.topService ? formatIDR(d.topService[1]) : "—"} />
+        <Card label="Top Payer" value={d?.topPayer?.[0] ?? "—"} desc={d?.topPayer ? formatIDR(d.topPayer[1]) : "—"} />
+        <Card label="Rata-rata Invoice" value={formatIDR(d?.count ? Math.round(total / d.count) : 0)} desc="ATV" />
+        <Card label="% Klaim" value={`${total ? ((klaim / total) * 100).toFixed(1) : "0.0"}%`} desc="BPJS + Asuransi" />
+        <Card label="% Umum" value={`${total ? ((umum / total) * 100).toFixed(1) : "0.0"}%`} desc="Cash payer" />
       </div>
+
+      {q.isLoading && <p className="mt-4 text-xs text-muted-foreground">Memuat…</p>}
+      {q.isError && <p className="mt-4 text-xs text-rose-600">Gagal memuat: {(q.error as Error).message}</p>}
     </div>
   );
 }

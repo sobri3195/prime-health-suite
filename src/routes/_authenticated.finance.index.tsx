@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +14,7 @@ import {
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { invoices, monthlyTrend, expenseMTD, bankBalance, anomalies } from "@/data/financeData";
+import { getFinanceDashboard } from "@/lib/finance-dashboard.functions";
 import {
   applyFilter, sumOutstanding, byPayer, topBy, netProfit, aging,
   formatIDR, formatCompactIDR, generateInsights,
@@ -31,17 +33,26 @@ function FinanceDashboard() {
   const { from, to, label: period } = useFinanceDate();
   const [globalQ, setGlobalQ] = useState("");
 
-  const inRange = useMemo(
-    () => invoices.filter((r) => (!from || r.date >= from) && (!to || r.date <= to)),
-    [from, to],
-  );
+  const call = useServerFn(getFinanceDashboard);
+  const q = useQuery({
+    queryKey: ["fin", "dashboard", from, to],
+    queryFn: () => call({ data: { from, to } }),
+  });
+
+  const invoices = (q.data?.invoices ?? []) as unknown as Invoice[];
+  const monthlyTrend = q.data?.monthlyTrend ?? [];
+  const expenseMTD = q.data?.expenseAll ?? 0;
+  const bankBalance = q.data?.bankBalance ?? 0;
+  const anomalies = q.data?.anomalies ?? [];
+  const hutang = q.data?.hutang ?? 0;
+
+  const inRange = invoices;
   const filter = useMemo(() => ({ period: "all", doctor: "all", service: "all", payer: "all", status: "all", from, to } as const), [from, to]);
   const filtered = useMemo(() => applyFilter(inRange, filter), [inRange, filter]);
 
   const mtdRev = filtered.reduce((a, r) => a + r.total, 0);
   const outstanding = sumOutstanding(filtered);
-  const hutang = 37_800_000;
-  const kasMasuk = filtered.reduce((a, r) => a + r.paid, 0) + 20_000_000;
+  const kasMasuk = filtered.reduce((a, r) => a + r.paid, 0);
   const kasKeluar = expenseMTD;
   const target = monthlyTrend[monthlyTrend.length - 1]?.target ?? 0;
   const targetPct = target ? Math.round((mtdRev / target) * 100) : 0;
