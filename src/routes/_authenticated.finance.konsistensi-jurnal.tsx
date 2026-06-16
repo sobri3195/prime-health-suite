@@ -42,12 +42,12 @@ function Page() {
       <PageHeader
         title="Konsistensi Jurnal"
         desc="Bandingkan total transaksi live (pembayaran, pengeluaran, setoran, invoice) dengan ringkasan jurnal & buku besar. Setiap selisih atau transaksi unposted ditampilkan untuk ditindaklanjuti."
-        action={
-          <Button variant="outline" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); }} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </Button>
-        }
       />
+      <div className="mb-3 flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); }} className="gap-2">
+          <RefreshCw className="h-4 w-4" /> Refresh
+        </Button>
+      </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <div className={`rounded-xl border p-4 ${allConsistent ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/10"}`}>
