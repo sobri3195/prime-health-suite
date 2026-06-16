@@ -96,6 +96,7 @@ import { Route as AuthenticatedFinanceMasterRouteImport } from './routes/_authen
 import { Route as AuthenticatedFinanceLaporanRouteImport } from './routes/_authenticated.finance.laporan'
 import { Route as AuthenticatedFinanceLabaRugiPayerRouteImport } from './routes/_authenticated.finance.laba-rugi-payer'
 import { Route as AuthenticatedFinanceLabaRugiRouteImport } from './routes/_authenticated.finance.laba-rugi'
+import { Route as AuthenticatedFinanceKonsistensiJurnalRouteImport } from './routes/_authenticated.finance.konsistensi-jurnal'
 import { Route as AuthenticatedFinanceKasKecilRouteImport } from './routes/_authenticated.finance.kas-kecil'
 import { Route as AuthenticatedFinanceJurnalRouteImport } from './routes/_authenticated.finance.jurnal'
 import { Route as AuthenticatedFinanceImportExportRouteImport } from './routes/_authenticated.finance.import-export'
@@ -619,6 +620,12 @@ const AuthenticatedFinanceLabaRugiRoute =
     path: '/laba-rugi',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceKonsistensiJurnalRoute =
+  AuthenticatedFinanceKonsistensiJurnalRouteImport.update({
+    id: '/konsistensi-jurnal',
+    path: '/konsistensi-jurnal',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceKasKecilRoute =
   AuthenticatedFinanceKasKecilRouteImport.update({
     id: '/kas-kecil',
@@ -785,6 +792,7 @@ export interface FileRoutesByFullPath {
   '/finance/import-export': typeof AuthenticatedFinanceImportExportRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/kas-kecil': typeof AuthenticatedFinanceKasKecilRoute
+  '/finance/konsistensi-jurnal': typeof AuthenticatedFinanceKonsistensiJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -891,6 +899,7 @@ export interface FileRoutesByTo {
   '/finance/import-export': typeof AuthenticatedFinanceImportExportRoute
   '/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/finance/kas-kecil': typeof AuthenticatedFinanceKasKecilRoute
+  '/finance/konsistensi-jurnal': typeof AuthenticatedFinanceKonsistensiJurnalRoute
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -1002,6 +1011,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/import-export': typeof AuthenticatedFinanceImportExportRoute
   '/_authenticated/finance/jurnal': typeof AuthenticatedFinanceJurnalRoute
   '/_authenticated/finance/kas-kecil': typeof AuthenticatedFinanceKasKecilRoute
+  '/_authenticated/finance/konsistensi-jurnal': typeof AuthenticatedFinanceKonsistensiJurnalRoute
   '/_authenticated/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/_authenticated/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/_authenticated/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
@@ -1113,6 +1123,7 @@ export interface FileRouteTypes {
     | '/finance/import-export'
     | '/finance/jurnal'
     | '/finance/kas-kecil'
+    | '/finance/konsistensi-jurnal'
     | '/finance/laba-rugi'
     | '/finance/laba-rugi-payer'
     | '/finance/laporan'
@@ -1219,6 +1230,7 @@ export interface FileRouteTypes {
     | '/finance/import-export'
     | '/finance/jurnal'
     | '/finance/kas-kecil'
+    | '/finance/konsistensi-jurnal'
     | '/finance/laba-rugi'
     | '/finance/laba-rugi-payer'
     | '/finance/laporan'
@@ -1329,6 +1341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/import-export'
     | '/_authenticated/finance/jurnal'
     | '/_authenticated/finance/kas-kecil'
+    | '/_authenticated/finance/konsistensi-jurnal'
     | '/_authenticated/finance/laba-rugi'
     | '/_authenticated/finance/laba-rugi-payer'
     | '/_authenticated/finance/laporan'
@@ -2027,6 +2040,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceLabaRugiRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/konsistensi-jurnal': {
+      id: '/_authenticated/finance/konsistensi-jurnal'
+      path: '/konsistensi-jurnal'
+      fullPath: '/finance/konsistensi-jurnal'
+      preLoaderRoute: typeof AuthenticatedFinanceKonsistensiJurnalRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/kas-kecil': {
       id: '/_authenticated/finance/kas-kecil'
       path: '/kas-kecil'
@@ -2214,6 +2234,7 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceImportExportRoute: typeof AuthenticatedFinanceImportExportRoute
   AuthenticatedFinanceJurnalRoute: typeof AuthenticatedFinanceJurnalRoute
   AuthenticatedFinanceKasKecilRoute: typeof AuthenticatedFinanceKasKecilRoute
+  AuthenticatedFinanceKonsistensiJurnalRoute: typeof AuthenticatedFinanceKonsistensiJurnalRoute
   AuthenticatedFinanceLabaRugiRoute: typeof AuthenticatedFinanceLabaRugiRoute
   AuthenticatedFinanceLabaRugiPayerRoute: typeof AuthenticatedFinanceLabaRugiPayerRoute
   AuthenticatedFinanceLaporanRoute: typeof AuthenticatedFinanceLaporanRoute
@@ -2284,6 +2305,8 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceImportExportRoute: AuthenticatedFinanceImportExportRoute,
   AuthenticatedFinanceJurnalRoute: AuthenticatedFinanceJurnalRoute,
   AuthenticatedFinanceKasKecilRoute: AuthenticatedFinanceKasKecilRoute,
+  AuthenticatedFinanceKonsistensiJurnalRoute:
+    AuthenticatedFinanceKonsistensiJurnalRoute,
   AuthenticatedFinanceLabaRugiRoute: AuthenticatedFinanceLabaRugiRoute,
   AuthenticatedFinanceLabaRugiPayerRoute:
     AuthenticatedFinanceLabaRugiPayerRoute,

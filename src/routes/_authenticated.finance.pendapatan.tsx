@@ -140,14 +140,14 @@ function PendapatanPage() {
             <TableRow>
               <TableHead>No. Invoice</TableHead><TableHead>Tanggal</TableHead><TableHead>Pasien</TableHead>
               <TableHead className="text-right">Total</TableHead><TableHead className="text-right">Dibayar</TableHead>
-              <TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead>
+              <TableHead>Status</TableHead><TableHead>Jurnal</TableHead><TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
             ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada invoice.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Belum ada invoice.</TableCell></TableRow>
             ) : rows.map((r: any) => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-xs">{r.no_invoice}</TableCell>
@@ -156,6 +156,11 @@ function PendapatanPage() {
                 <TableCell className="text-right font-mono">{fmt(r.total)}</TableCell>
                 <TableCell className="text-right font-mono">{fmt(r.dibayar ?? 0)}</TableCell>
                 <TableCell><StatusBadge s={r.status} /></TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className={r.posted_journal_id ? "bg-emerald-500/15 text-emerald-700" : "bg-amber-500/15 text-amber-700"}>
+                    {r.posted_journal_id ? "Posted" : "Unposted"}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="ghost" onClick={() => openDetail(r)}>Detail</Button>

@@ -5,7 +5,7 @@ import {
   PiggyBank, ArrowDownUp, Building2, Briefcase, Truck, ShieldQuestion, Boxes, BadgePercent, Layers,
   CreditCard, Trophy, FileBarChart, CalendarDays, ListChecks, Coins, MinusSquare,
   Home, Brain, ShoppingBag, User, ShieldCheck as ShieldCheckIcon,
-  Clock, Timer, GraduationCap, Trash2,
+  Clock, Timer, GraduationCap, Trash2, CheckCircle2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { System } from "./auth";
@@ -127,6 +127,7 @@ export const NAV: Record<System, NavItem[]> = {
 
     { slug: "jurnal", label: "Jurnal", icon: BookOpen, group: "Akuntansi" },
     { slug: "buku-besar", label: "Buku Besar", icon: BookOpen, group: "Akuntansi" },
+    { slug: "konsistensi-jurnal", label: "Konsistensi Jurnal", icon: CheckCircle2, group: "Akuntansi" },
     { slug: "laba-rugi", label: "Laba Rugi", icon: LineChart, group: "Akuntansi" },
     { slug: "laba-rugi-payer", label: "Laba Rugi by Payer", icon: LineChart, group: "Akuntansi" },
     { slug: "arus-kas", label: "Arus Kas", icon: ArrowDownUp, group: "Akuntansi" },

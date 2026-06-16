@@ -945,6 +945,7 @@ export type Database = {
           kas_coa: string
           keterangan: string | null
           no_setor: string
+          posted_at: string | null
           posted_journal_id: string | null
           ref_bank: string | null
           status: string
@@ -959,6 +960,7 @@ export type Database = {
           kas_coa: string
           keterangan?: string | null
           no_setor: string
+          posted_at?: string | null
           posted_journal_id?: string | null
           ref_bank?: string | null
           status?: string
@@ -973,6 +975,7 @@ export type Database = {
           kas_coa?: string
           keterangan?: string | null
           no_setor?: string
+          posted_at?: string | null
           posted_journal_id?: string | null
           ref_bank?: string | null
           status?: string
@@ -1107,6 +1110,7 @@ export type Database = {
           metode: string
           no_voucher: string
           pajak: number
+          posted_at: string | null
           posted_journal_id: string | null
           status: string
           subtotal: number
@@ -1128,6 +1132,7 @@ export type Database = {
           metode?: string
           no_voucher: string
           pajak?: number
+          posted_at?: string | null
           posted_journal_id?: string | null
           status?: string
           subtotal?: number
@@ -1149,6 +1154,7 @@ export type Database = {
           metode?: string
           no_voucher?: string
           pajak?: number
+          posted_at?: string | null
           posted_journal_id?: string | null
           status?: string
           subtotal?: number
@@ -1225,6 +1231,8 @@ export type Database = {
           patient_code: string
           patient_name: string | null
           payer_id: string | null
+          posted_at: string | null
+          posted_journal_id: string | null
           status: string
           subtotal: number
           tanggal: string
@@ -1246,6 +1254,8 @@ export type Database = {
           patient_code: string
           patient_name?: string | null
           payer_id?: string | null
+          posted_at?: string | null
+          posted_journal_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -1267,6 +1277,8 @@ export type Database = {
           patient_code?: string
           patient_name?: string | null
           payer_id?: string | null
+          posted_at?: string | null
+          posted_journal_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -1288,6 +1300,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fin_payer"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_invoice_posted_journal_id_fkey"
+            columns: ["posted_journal_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_invoice_posted_journal_id_fkey"
+            columns: ["posted_journal_id"]
+            isOneToOne: false
+            referencedRelation: "fin_posting_audit"
+            referencedColumns: ["journal_id"]
           },
         ]
       }
@@ -1425,6 +1451,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fin_journal_entry"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_journal_line_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_posting_audit"
+            referencedColumns: ["journal_id"]
           },
         ]
       }
@@ -1649,6 +1682,7 @@ export type Database = {
           metode: string
           netto: number
           no_kartu_last4: string | null
+          posted_at: string | null
           posted_journal_id: string | null
           status: string | null
           tanggal: string
@@ -1664,6 +1698,7 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          posted_at?: string | null
           posted_journal_id?: string | null
           status?: string | null
           tanggal?: string
@@ -1679,6 +1714,7 @@ export type Database = {
           metode?: string
           netto?: number
           no_kartu_last4?: string | null
+          posted_at?: string | null
           posted_journal_id?: string | null
           status?: string | null
           tanggal?: string
@@ -3092,6 +3128,45 @@ export type Database = {
           },
         ]
       }
+      fin_posting_audit: {
+        Row: {
+          journal_id: string | null
+          journal_status: string | null
+          no_jurnal: string | null
+          posted_at: string | null
+          posted_by: string | null
+          ref_id: string | null
+          ref_no: string | null
+          sumber: string | null
+          tanggal: string | null
+          total: number | null
+        }
+        Insert: {
+          journal_id?: string | null
+          journal_status?: string | null
+          no_jurnal?: string | null
+          posted_at?: string | null
+          posted_by?: never
+          ref_id?: string | null
+          ref_no?: string | null
+          sumber?: string | null
+          tanggal?: string | null
+          total?: number | null
+        }
+        Update: {
+          journal_id?: string | null
+          journal_status?: string | null
+          no_jurnal?: string | null
+          posted_at?: string | null
+          posted_by?: never
+          ref_id?: string | null
+          ref_no?: string | null
+          sumber?: string | null
+          tanggal?: string | null
+          total?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       apps_accept_consent: {
@@ -3147,6 +3222,30 @@ export type Database = {
           _tanggal: string
         }
         Returns: string
+      }
+      fin_recon_jurnal: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          ledger_total: number
+          live_count: number
+          live_total: number
+          posted_count: number
+          posted_total: number
+          selisih: number
+          sumber: string
+          unposted_count: number
+        }[]
+      }
+      fin_recon_unposted: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          amount: number
+          id: string
+          keterangan: string
+          ref_no: string
+          sumber: string
+          tanggal: string
+        }[]
       }
       fin_resolve_cash_bank_coa: {
         Args: { _bank: string; _metode: string }

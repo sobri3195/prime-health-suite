@@ -202,9 +202,8 @@ export const upsertInvoice = createServerFn({ method: "POST" })
     const { error: ie } = await sb.from("fin_invoice_item").insert(itemsPayload);
     if (ie) throw new Error(ie.message);
 
-    // reverse old journal if edit, then post new
     if (data.id) await reverseJournal("invoice", invoice.id, data.tanggal, "Edit invoice");
-    await postJournal({
+    const invEntry = await postJournal({
       sumber: "invoice",
       ref_id: invoice.id,
       ref_no: invoice.no_invoice,
@@ -212,12 +211,13 @@ export const upsertInvoice = createServerFn({ method: "POST" })
       keterangan: `Invoice ${invoice.no_invoice} - ${data.patient_name ?? data.patient_code}`,
       created_by: data.actor,
       lines: [
-        { coa_code: "1200", coa_nama: "Piutang Usaha", debit: total },
-        ...(diskon > 0 ? [{ coa_code: "4900", coa_nama: "Diskon Penjualan", debit: diskon }] : []),
-        { coa_code: "4100", coa_nama: "Pendapatan Jasa Klinik", kredit: subtotal },
-        ...(pajak > 0 ? [{ coa_code: "2200", coa_nama: "PPN Keluaran", kredit: pajak }] : []),
+        { coa_code: "1-1300", coa_nama: "Piutang Pasien", debit: total },
+        ...(diskon > 0 ? [{ coa_code: "4-9000", coa_nama: "Diskon Penjualan", debit: diskon }] : []),
+        { coa_code: "4-1000", coa_nama: "Pendapatan Jasa Klinik", kredit: subtotal },
+        ...(pajak > 0 ? [{ coa_code: "2-2100", coa_nama: "PPN Keluaran", kredit: pajak }] : []),
       ],
     });
+    await sb.from("fin_invoice").update({ posted_journal_id: invEntry.id, posted_at: new Date().toISOString() }).eq("id", invoice.id);
     await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "invoice", entity_id: invoice.id, entity_no: invoice.no_invoice, after: invoice });
     return { invoice };
   });
@@ -273,16 +273,18 @@ export const createPayment = createServerFn({ method: "POST" })
 
     // Auto-apply MDR rule when not explicitly provided
     let mdr = Number(data.mdr ?? 0);
-    let mdrCoa = "5900";
+    let mdrCoa = "6-3100";
     if (!data.mdr && data.metode !== "cash") {
       const { data: rules } = await sb.from("fin_mdr_rule").select("*").eq("is_active", true).eq("metode", data.metode);
       const rule = (rules ?? []).find((r: any) => !r.bank || r.bank === data.bank) ?? (rules ?? [])[0];
       if (rule) {
         mdr = Math.round((Number(data.jumlah) * Number(rule.rate_pct) / 100) + Number(rule.fixed_fee));
-        mdrCoa = rule.coa_code || "5900";
+        mdrCoa = rule.coa_code || "6-3100";
       }
     }
     const netto = Number(data.jumlah) - mdr;
+    // Insert as 'draft' so the AFTER INSERT trigger skips; server fn posts the
+    // journal (with detailed lines) then flips status to 'posted' on the same row.
     const { data: pay, error } = await sb.from("fin_pembayaran").insert({
       invoice_id: data.invoice_id,
       tanggal: data.tanggal,
@@ -292,6 +294,7 @@ export const createPayment = createServerFn({ method: "POST" })
       jumlah: data.jumlah,
       mdr,
       netto,
+      status: "draft",
     }).select().single();
     if (error) throw new Error(error.message);
 
@@ -299,8 +302,8 @@ export const createPayment = createServerFn({ method: "POST" })
     const newStatus = newPaid >= Number(inv.total) ? "paid" : newPaid > 0 ? "partial" : inv.status;
     await sb.from("fin_invoice").update({ dibayar: newPaid, status: newStatus }).eq("id", data.invoice_id);
 
-    const kasCoa = data.metode === "cash" ? "1100" : "1110";
-    await postJournal({
+    const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const payEntry = await postJournal({
       sumber: "payment",
       ref_id: pay.id,
       ref_no: `PAY-${inv.no_invoice}`,
@@ -310,9 +313,10 @@ export const createPayment = createServerFn({ method: "POST" })
       lines: [
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", debit: netto },
         ...(mdr > 0 ? [{ coa_code: mdrCoa, coa_nama: "Beban MDR", debit: mdr }] : []),
-        { coa_code: "1200", coa_nama: "Piutang Usaha", kredit: data.jumlah },
+        { coa_code: "1-1300", coa_nama: "Piutang Pasien", kredit: data.jumlah },
       ],
     });
+    await sb.from("fin_pembayaran").update({ posted_journal_id: payEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", pay.id);
     await writeFinAudit({ actor_email: data.actor, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
     return { payment: pay, mdr_applied: mdr };
   });
@@ -420,7 +424,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
         subtotal, pajak, total,
         metode: data.metode,
         bank: data.bank ?? null,
-        status: "posted",
+        status: "draft",
         created_by: data.actor ?? null,
       }).select().single();
       if (error) throw new Error(error.message);
@@ -439,8 +443,8 @@ export const upsertExpense = createServerFn({ method: "POST" })
     if (ie) throw new Error(ie.message);
 
     if (data.id) await reverseJournal("expense", hdr.id, data.tanggal, "Edit voucher");
-    const kasCoa = data.metode === "cash" ? "1100" : "1110";
-    await postJournal({
+    const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const expEntry = await postJournal({
       sumber: "expense",
       ref_id: hdr.id,
       ref_no: hdr.no_voucher,
@@ -449,15 +453,16 @@ export const upsertExpense = createServerFn({ method: "POST" })
       created_by: data.actor,
       lines: [
         ...itemsPayload.map((it) => ({
-          coa_code: it.coa_code || "5000",
+          coa_code: it.coa_code || "6-3000",
           coa_nama: "Beban",
           debit: Number(it.subtotal),
           keterangan: it.deskripsi,
         })),
-        ...(pajak > 0 ? [{ coa_code: "2210", coa_nama: "PPN Masukan", debit: pajak }] : []),
+        ...(pajak > 0 ? [{ coa_code: "1-1700", coa_nama: "PPN Masukan", debit: pajak }] : []),
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", kredit: total },
       ],
     });
+    await sb.from("fin_expense").update({ posted_journal_id: expEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", hdr.id);
     await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
     return { expense: hdr };
   });
