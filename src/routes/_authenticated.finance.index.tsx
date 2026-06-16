@@ -178,7 +178,7 @@ function FinanceDashboard() {
             <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate({ to: "/finance/pendapatan" })}>
               <Plus className="mr-2 h-4 w-4" /> Input Pendapatan
             </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher" })}>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher-bkk" })}>
               <FileText className="mr-2 h-4 w-4" /> Buat Voucher
             </Button>
             <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/master" })}>
