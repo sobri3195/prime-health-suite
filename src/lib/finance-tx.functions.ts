@@ -440,8 +440,8 @@ export const upsertExpense = createServerFn({ method: "POST" })
     if (ie) throw new Error(ie.message);
 
     if (data.id) await reverseJournal("expense", hdr.id, data.tanggal, "Edit voucher");
-    const kasCoa = data.metode === "cash" ? "1100" : "1110";
-    await postJournal({
+    const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const expEntry = await postJournal({
       sumber: "expense",
       ref_id: hdr.id,
       ref_no: hdr.no_voucher,
@@ -450,15 +450,16 @@ export const upsertExpense = createServerFn({ method: "POST" })
       created_by: data.actor,
       lines: [
         ...itemsPayload.map((it) => ({
-          coa_code: it.coa_code || "5000",
+          coa_code: it.coa_code || "6-3000",
           coa_nama: "Beban",
           debit: Number(it.subtotal),
           keterangan: it.deskripsi,
         })),
-        ...(pajak > 0 ? [{ coa_code: "2210", coa_nama: "PPN Masukan", debit: pajak }] : []),
+        ...(pajak > 0 ? [{ coa_code: "1-1500", coa_nama: "PPN Masukan", debit: pajak }] : []),
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", kredit: total },
       ],
     });
+    await sb.from("fin_expense").update({ posted_journal_id: expEntry.id, posted_at: new Date().toISOString() }).eq("id", hdr.id);
     await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
     return { expense: hdr };
   });
