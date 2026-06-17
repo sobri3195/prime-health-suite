@@ -88,34 +88,55 @@ function Page() {
         </div>
         <h1 className="mt-6 text-2xl font-semibold">Atur password baru</h1>
         <p className="mt-2 text-sm opacity-70">
-          {ready ? `Setelah disimpan, Anda akan diarahkan ke login ${brand.shortName}.` : "Memvalidasi link recovery…"}
+          {ready
+            ? `Setelah disimpan, Anda akan diarahkan ke login ${brand.shortName}.`
+            : expired
+              ? "Link recovery tidak valid atau sudah kedaluwarsa."
+              : "Memvalidasi link recovery…"}
         </p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          <label className="block">
-            <div className="text-xs font-medium opacity-70">Password baru</div>
-            <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2">
-              <Lock className="h-4 w-4 opacity-50" />
-              <input
-                type="password"
-                required
-                minLength={6}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-transparent text-sm outline-none"
-                placeholder="Min. 6 karakter"
-              />
+
+        {expired ? (
+          <div className="mt-6 space-y-3">
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
+              Link reset password tidak ditemukan atau sudah kedaluwarsa. Mohon minta link baru dari halaman login.
             </div>
-          </label>
-          <button
-            type="submit"
-            disabled={!ready || loading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
-            style={{ background: brand.accent }}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Simpan password <ArrowRight className="h-4 w-4" /></>}
-          </button>
-        </form>
+            <button
+              type="button"
+              onClick={() => navigate({ to: `/${system}/login`, replace: true })}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow"
+              style={{ background: brand.accent }}
+            >
+              Kembali ke login {brand.shortName} <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+            <label className="block">
+              <div className="text-xs font-medium opacity-70">Password baru</div>
+              <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2">
+                <Lock className="h-4 w-4 opacity-50" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-transparent text-sm outline-none"
+                  placeholder="Min. 6 karakter"
+                />
+              </div>
+            </label>
+            <button
+              type="submit"
+              disabled={!ready || loading}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
+              style={{ background: brand.accent }}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Simpan password <ArrowRight className="h-4 w-4" /></>}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
