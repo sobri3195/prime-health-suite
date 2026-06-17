@@ -33,6 +33,7 @@ function Page() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -41,7 +42,17 @@ function Page() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+    // If still no session after 5 seconds → link is missing/expired.
+    const t = setTimeout(() => {
+      setReady((r) => {
+        if (!r) setExpired(true);
+        return r;
+      });
+    }, 5000);
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(t);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
