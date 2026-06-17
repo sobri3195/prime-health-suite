@@ -25,8 +25,38 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
 
   const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
 
+  // Anti-bruteforce: client-side rate limit. 5 failed attempts → 60s lockout.
+  // Stored in localStorage so refresh doesn't bypass it.
+  const RL_KEY = "ph_apps_login_rl_v1";
+  const MAX_ATTEMPTS = 5;
+  const LOCK_MS = 60_000;
+
+  function readRl(): { fails: number; lockedUntil: number } {
+    try {
+      const raw = localStorage.getItem(RL_KEY);
+      if (!raw) return { fails: 0, lockedUntil: 0 };
+      return JSON.parse(raw);
+    } catch {
+      return { fails: 0, lockedUntil: 0 };
+    }
+  }
+  function writeRl(v: { fails: number; lockedUntil: number }) {
+    try { localStorage.setItem(RL_KEY, JSON.stringify(v)); } catch { /* ignore */ }
+  }
+  function resetRl() { try { localStorage.removeItem(RL_KEY); } catch { /* ignore */ } }
+  function checkLock(): number {
+    const rl = readRl();
+    const left = rl.lockedUntil - Date.now();
+    return left > 0 ? left : 0;
+  }
+
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
+    const left = checkLock();
+    if (mode === "login" && left > 0) {
+      toast.error(`Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil(left / 1000)} detik.`);
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -49,13 +79,24 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
 
       } else if (mode === "login") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          const rl = readRl();
+          const fails = rl.fails + 1;
+          const lockedUntil = fails >= MAX_ATTEMPTS ? Date.now() + LOCK_MS : 0;
+          writeRl({ fails: lockedUntil ? 0 : fails, lockedUntil });
+          if (lockedUntil) {
+            toast.error(`Login dikunci ${LOCK_MS / 1000} detik setelah ${MAX_ATTEMPTS} percobaan gagal.`);
+            throw new Error("Terlalu banyak percobaan gagal.");
+          }
+          throw error;
+        }
+        resetRl();
         if (data.user) bridgeLogin("apps", data.user.email || email, "front_office");
         toast.success("Selamat datang!");
         navigate({ to: safeRedirect, replace: true });
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${window.location.origin}/reset-password?system=apps`,
         });
         if (error) throw error;
         toast.success("Link reset password dikirim ke email Anda.");
