@@ -58,6 +58,8 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
       return;
     }
     setLoading(true);
+    const e2 = email.trim().toLowerCase();
+    if (e2 !== email) setEmail(e2);
     try {
       if (mode === "signup") {
         if (!consent) {
@@ -66,7 +68,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
           return;
         }
         const { error } = await supabase.auth.signUp({
-          email,
+          email: e2,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/apps`,
@@ -78,7 +80,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
         setMode("login");
 
       } else if (mode === "login") {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: e2, password });
         if (error) {
           const rl = readRl();
           const fails = rl.fails + 1;
@@ -91,11 +93,11 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
           throw error;
         }
         resetRl();
-        if (data.user) bridgeLogin("apps", data.user.email || email, "front_office");
+        if (data.user) bridgeLogin("apps", data.user.email || e2, "front_office");
         toast.success("Selamat datang!");
         navigate({ to: safeRedirect, replace: true });
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(e2, {
           redirectTo: `${window.location.origin}/reset-password?system=apps`,
         });
         if (error) throw error;
