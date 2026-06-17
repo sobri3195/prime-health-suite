@@ -96,7 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const next: Sessions = {};
     for (const s of SYSTEMS) {
       try {
-        const raw = sessionStorage.getItem(SESSION_KEY(s));
+        // Prefer persisted (localStorage), fall back to session-scoped.
+        const raw =
+          localStorage.getItem(SESSION_KEY(s)) ??
+          sessionStorage.getItem(SESSION_KEY(s));
         if (raw) next[s] = JSON.parse(raw);
       } catch { /* ignore */ }
     }
@@ -105,17 +108,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const userFor = useCallback((s: System) => sessions[s] ?? null, [sessions]);
 
-  const login = useCallback((system: System, email: string, role: Role) => {
-    const u: AuthUser = {
-      id: "usr_" + Math.random().toString(36).slice(2, 8),
-      name: email.split("@")[0] || "User",
-      email,
-      role,
-    };
-    setSessions((prev) => ({ ...prev, [system]: u }));
-    try { sessionStorage.setItem(SESSION_KEY(system), JSON.stringify(u)); } catch {}
-    addAudit({ actor: u.email, action: "login", target: `auth:${system}`, meta: { role } });
-  }, []);
+  const login = useCallback(
+    (system: System, email: string, role: Role, opts?: { remember?: boolean }) => {
+      const normalized = email.trim().toLowerCase();
+      const u: AuthUser = {
+        id: "usr_" + Math.random().toString(36).slice(2, 8),
+        name: normalized.split("@")[0] || "User",
+        email: normalized,
+        role,
+      };
+      setSessions((prev) => ({ ...prev, [system]: u }));
+      try {
+        const json = JSON.stringify(u);
+        if (opts?.remember) {
+          localStorage.setItem(SESSION_KEY(system), json);
+          sessionStorage.removeItem(SESSION_KEY(system));
+        } else {
+          sessionStorage.setItem(SESSION_KEY(system), json);
+          localStorage.removeItem(SESSION_KEY(system));
+        }
+      } catch { /* ignore */ }
+      addAudit({ actor: u.email, action: "login", target: `auth:${system}`, meta: { role } });
+    },
+    [],
+  );
 
   const logout = useCallback((system?: System) => {
     const target = system ?? currentSystem;
@@ -127,7 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       delete n[target];
       return n;
     });
-    try { sessionStorage.removeItem(SESSION_KEY(target)); } catch {}
+    try {
+      sessionStorage.removeItem(SESSION_KEY(target));
+      localStorage.removeItem(SESSION_KEY(target));
+    } catch { /* ignore */ }
   }, [sessions, currentSystem]);
 
   // For non-system paths (e.g. /qa), fall back to any existing session.
