@@ -1,26 +1,33 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, Mail, Lock, User as UserIcon } from "lucide-react";
+import { ArrowRight, Loader2, Mail, User as UserIcon, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
+import { PasswordInput } from "@/components/auth/password-input";
+import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
 
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const brand = BRAND.apps;
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("demo@prime.id");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [nama, setNama] = useState("");
   const [consent, setConsent] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { login: bridgeLogin } = useAuth();
+  const emailId = useId();
+  const pwId = useId();
+  const nameId = useId();
+  const errId = useId();
 
 
   const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
