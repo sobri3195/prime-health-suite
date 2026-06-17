@@ -15,7 +15,7 @@ export function SystemLoginForm({
   const navigate = useNavigate();
   const brand = BRAND[system];
   const roles = rolesFor(system);
-  const [email, setEmail] = useState(`user@${system}.id`);
+  const [email, setEmail] = useState("demo@prime.id");
   const [password, setPassword] = useState("demo1234");
   const [role, setRole] = useState<Role>(roles[0]);
 

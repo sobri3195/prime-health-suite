@@ -13,8 +13,8 @@ type Mode = "login" | "signup" | "forgot";
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const brand = BRAND.apps;
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@prime.id");
+  const [password, setPassword] = useState("demo1234");
   const [nama, setNama] = useState("");
   const [consent, setConsent] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -83,6 +83,33 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
     }
   }
 
+  async function handleDemo() {
+    setLoading(true);
+    const demoEmail = "demo@prime.id";
+    const demoPass = "demo1234";
+    try {
+      let res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+      if (res.error) {
+        // Auto sign-up jika belum ada (auto-confirm aktif)
+        const signup = await supabase.auth.signUp({
+          email: demoEmail,
+          password: demoPass,
+          options: { data: { nama: "Demo Pasien", consent_marketing: false } },
+        });
+        if (signup.error) throw signup.error;
+        res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+        if (res.error) throw res.error;
+      }
+      if (res.data.user) bridgeLogin("apps", res.data.user.email || demoEmail, "front_office");
+      toast.success("Masuk sebagai Demo");
+      navigate({ to: safeRedirect, replace: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal masuk demo");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2" style={{ background: brand.background, color: brand.foreground }}>
       <div className="flex items-center justify-center px-6 py-12">
@@ -117,6 +144,21 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
               >
                 <GoogleIcon /> Lanjutkan dengan Google
               </button>
+              <button
+                type="button"
+                onClick={handleDemo}
+                disabled={loading}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+              >
+                Masuk sebagai Demo (demo@prime.id)
+              </button>
+              <div className="mt-2 rounded-md bg-black/5 px-3 py-2 text-[11px] leading-relaxed opacity-80">
+                Akun demo bersama untuk ketiga sistem:
+                <br />
+                <b>Email:</b> demo@prime.id · <b>Password:</b> demo1234
+                <br />
+                Bisa juga dipakai login di SIM Klinik & Finance.
+              </div>
               <div className="my-5 flex items-center gap-3 text-xs opacity-50">
                 <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
               </div>
