@@ -166,19 +166,6 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
     }
   }
 
-  return (
-    <div className="grid min-h-screen lg:grid-cols-2" style={{ background: brand.background, color: brand.foreground }}>
-      <div className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="inline-flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg text-xl" style={{ background: brand.accent, color: "#fff" }}>
-              {brand.faviconEmoji}
-            </div>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold">{brand.name}</div>
-              <div className="text-[10px] uppercase tracking-widest opacity-60">{brand.tagline}</div>
-            </div>
-          </div>
 
   return (
     <div
