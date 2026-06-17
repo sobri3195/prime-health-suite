@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable";
 import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
 import { PasswordInput } from "@/components/auth/password-input";
+import { PasswordStrength } from "@/components/auth/password-strength";
 import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
@@ -291,6 +292,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
                 ariaDescribedBy={error ? errId : undefined}
               />
             )}
+            {mode === "signup" && <PasswordStrength value={password} />}
 
             {mode === "signup" && (
               <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">
