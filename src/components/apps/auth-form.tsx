@@ -1,26 +1,33 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, Mail, Lock, User as UserIcon } from "lucide-react";
+import { ArrowRight, Loader2, Mail, User as UserIcon, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
+import { PasswordInput } from "@/components/auth/password-input";
+import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
 
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const brand = BRAND.apps;
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("demo@prime.id");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [nama, setNama] = useState("");
   const [consent, setConsent] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { login: bridgeLogin } = useAuth();
+  const emailId = useId();
+  const pwId = useId();
+  const nameId = useId();
+  const errId = useId();
 
 
   const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
@@ -105,7 +112,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
         setMode("login");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal memproses");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal memproses");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -121,7 +130,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
       if (result.redirected) return;
       navigate({ to: safeRedirect, replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal sign-in Google");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal sign-in Google");
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   }
@@ -147,103 +158,137 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
       toast.success("Masuk sebagai Demo");
       navigate({ to: safeRedirect, replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal masuk demo");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal masuk demo");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className="grid min-h-screen lg:grid-cols-2" style={{ background: brand.background, color: brand.foreground }}>
-      <div className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="inline-flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg text-xl" style={{ background: brand.accent, color: "#fff" }}>
-              {brand.faviconEmoji}
-            </div>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold">{brand.name}</div>
-              <div className="text-[10px] uppercase tracking-widest opacity-60">{brand.tagline}</div>
-            </div>
-          </div>
 
-          <h1 className="mt-10 text-2xl font-semibold">
-            {mode === "signup" ? "Daftar akun pasien" : mode === "forgot" ? "Lupa password" : "Masuk akun pasien"}
-          </h1>
-          <p className="mt-1.5 text-sm opacity-70">
-            {mode === "signup"
-              ? "Buat akun untuk booking, lihat resep, dan riwayat pemeriksaan."
-              : mode === "forgot"
-              ? "Masukkan email Anda untuk menerima link reset password."
-              : "Akses jadwal, antrean, dan resep mata Anda."}
-          </p>
+  return (
+    <div
+      className="grid min-h-dvh lg:grid-cols-2"
+      style={{ background: brand.background, color: brand.foreground }}
+    >
+      <main
+        className="flex items-center justify-center px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] py-12"
+        aria-labelledby="apps-login-heading"
+      >
+        <div className="w-full max-w-sm">
+          <header>
+            <div className="inline-flex items-center gap-2">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-xl"
+                style={{ background: brand.accent, color: "#fff" }}
+                aria-hidden
+              >
+                {brand.faviconEmoji}
+              </div>
+              <div className="leading-tight">
+                <div className="text-sm font-semibold">{brand.name}</div>
+                <div className="text-[10px] uppercase tracking-widest opacity-60">{brand.tagline}</div>
+              </div>
+            </div>
+
+            <h1 id="apps-login-heading" className="mt-10 text-2xl font-semibold">
+              {mode === "signup" ? "Daftar akun pasien" : mode === "forgot" ? "Lupa password" : "Masuk akun pasien"}
+            </h1>
+            <p className="mt-1.5 text-sm opacity-70">
+              {mode === "signup"
+                ? "Buat akun untuk booking, lihat resep, dan riwayat pemeriksaan."
+                : mode === "forgot"
+                ? "Masukkan email Anda untuk menerima link reset password."
+                : "Akses jadwal, antrean, dan resep mata Anda."}
+            </p>
+          </header>
 
           {mode !== "forgot" && (
             <>
               <button
                 onClick={handleGoogle}
                 disabled={loading}
+                type="button"
+                aria-busy={loading}
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-60"
               >
-                <GoogleIcon /> Lanjutkan dengan Google
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <GoogleIcon />}
+                Lanjutkan dengan Google
               </button>
-              <button
-                type="button"
-                onClick={handleDemo}
-                disabled={loading}
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
-              >
-                Masuk sebagai Demo (demo@prime.id)
-              </button>
-              <div className="mt-2 rounded-md bg-black/5 px-3 py-2 text-[11px] leading-relaxed opacity-80">
-                Akun demo bersama untuk ketiga sistem:
-                <br />
-                <b>Email:</b> demo@prime.id · <b>Password:</b> demo1234
-                <br />
-                Bisa juga dipakai login di SIM Klinik & Finance.
-              </div>
+              {!IS_PROD && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleDemo}
+                    disabled={loading}
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    Masuk sebagai Demo (demo@prime.id)
+                  </button>
+                  <div className="mt-2 rounded-md bg-black/5 px-3 py-2 text-[11px] leading-relaxed opacity-80">
+                    Akun demo bersama untuk ketiga sistem:
+                    <br />
+                    <b>Email:</b> demo@prime.id · <b>Password:</b> demo1234
+                  </div>
+                </>
+              )}
               <div className="my-5 flex items-center gap-3 text-xs opacity-50">
                 <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
               </div>
             </>
           )}
 
-          <form className="space-y-3" onSubmit={handleEmail}>
+          <form className="space-y-3" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
             {mode === "signup" && (
-              <Field label="Nama lengkap" icon={UserIcon}>
-                <input
-                  type="text"
-                  required
-                  minLength={2}
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
-                  className="w-full bg-transparent text-sm outline-none"
-                  placeholder="Nama Anda"
-                />
-              </Field>
+              <label htmlFor={nameId} className="block">
+                <div className="text-xs font-medium opacity-70">Nama lengkap</div>
+                <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400">
+                  <UserIcon className="h-4 w-4 opacity-50" aria-hidden />
+                  <input
+                    id={nameId}
+                    type="text"
+                    required
+                    minLength={2}
+                    autoComplete="name"
+                    value={nama}
+                    onChange={(e) => setNama(e.target.value)}
+                    className="w-full bg-transparent text-sm outline-none"
+                    placeholder="Nama Anda"
+                  />
+                </div>
+              </label>
             )}
-            <Field label="Email" icon={Mail}>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent text-sm outline-none"
-                placeholder="anda@email.com"
-              />
-            </Field>
-            {mode !== "forgot" && (
-              <Field label="Password" icon={Lock}>
+
+            <label htmlFor={emailId} className="block">
+              <div className="text-xs font-medium opacity-70">Email</div>
+              <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400">
+                <Mail className="h-4 w-4 opacity-50" aria-hidden />
                 <input
-                  type="password"
+                  id={emailId}
+                  type="email"
                   required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="username"
+                  inputMode="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-invalid={!!error || undefined}
+                  aria-describedby={error ? errId : undefined}
                   className="w-full bg-transparent text-sm outline-none"
-                  placeholder="Min. 6 karakter"
+                  placeholder="anda@email.com"
                 />
-              </Field>
+              </div>
+            </label>
+
+            {mode !== "forgot" && (
+              <PasswordInput
+                id={pwId}
+                value={password}
+                onChange={setPassword}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                ariaInvalid={!!error}
+                ariaDescribedBy={error ? errId : undefined}
+              />
             )}
 
             {mode === "signup" && (
@@ -276,18 +321,36 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
               </div>
             )}
 
-
+            {error && (
+              <div
+                id={errId}
+                role="alert"
+                aria-live="assertive"
+                className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
+              >
+                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+                <span>{error}</span>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
               style={{ background: brand.accent }}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
-                {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
-                <ArrowRight className="h-4 w-4" />
-              </>}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  <span>Memproses…</span>
+                </>
+              ) : (
+                <>
+                  {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </>
+              )}
             </button>
           </form>
 
@@ -311,29 +374,25 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
               <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">← Kembali ke login</button>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="relative hidden overflow-hidden lg:block" style={{ background: brand.accent }}>
+          <footer className="mt-6 text-center text-[11px] opacity-60">
+            <p className="space-x-3">
+              <a href="/privacy" className="underline hover:opacity-100">Kebijakan Privasi</a>
+              <span aria-hidden>·</span>
+              <a href="/terms" className="underline hover:opacity-100">Syarat Layanan</a>
+            </p>
+          </footer>
+        </div>
+      </main>
+
+      <aside className="relative hidden overflow-hidden lg:block" style={{ background: brand.accent }} aria-hidden>
         <div className="relative flex h-full flex-col justify-end p-12 text-white">
           <div className="mb-6 text-7xl">{brand.faviconEmoji}</div>
           <blockquote className="max-w-md text-2xl font-medium leading-snug">{brand.name}</blockquote>
           <div className="mt-2 text-sm text-white/80">{brand.tagline}</div>
         </div>
-      </div>
+      </aside>
     </div>
-  );
-}
-
-function Field({ label, icon: Icon, children }: { label: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <div className="text-xs font-medium opacity-70">{label}</div>
-      <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400">
-        <Icon className="h-4 w-4 opacity-50" />
-        {children}
-      </div>
-    </label>
   );
 }
 
