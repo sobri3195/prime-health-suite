@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, Mail, Lock, ShieldAlert, CheckCircle2, LogOut } from "lucide-react";
+import { ArrowRight, Loader2, Mail, ShieldAlert, CheckCircle2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { ROLE_LABEL, rolesFor, useAuth, type Role, type System } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
 import { getMyRoles } from "@/lib/auth.functions";
+import { PasswordInput } from "@/components/auth/password-input";
+import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -35,11 +37,14 @@ export function SystemLoginForm({
   const fetchRoles = useServerFn(getMyRoles);
 
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("demo@prime.id");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const emailId = useId();
+  const pwId = useId();
+  const errId = useId();
 
   const safe = redirect && redirect.startsWith(`/${system}`) ? redirect : `/${system}`;
   const otherSessions = OTHER_SYSTEMS[system]
@@ -96,7 +101,7 @@ export function SystemLoginForm({
       if (error) throw error;
       await resolveRoleAndEnter(e2);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Gagal masuk";
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal masuk");
       setError(msg);
       toast.error(msg);
     } finally {
@@ -117,7 +122,7 @@ export function SystemLoginForm({
       const { data } = await supabase.auth.getUser();
       await resolveRoleAndEnter(normEmail(data.user?.email || ""));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Gagal sign-in Google";
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal sign-in Google");
       setError(msg);
       toast.error(msg);
       setLoading(false);
@@ -145,7 +150,7 @@ export function SystemLoginForm({
       }
       await resolveRoleAndEnter(demoEmail);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Gagal masuk demo";
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal masuk demo");
       setError(msg);
       toast.error(msg);
     } finally {
