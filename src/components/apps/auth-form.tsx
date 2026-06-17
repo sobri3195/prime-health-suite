@@ -83,6 +83,33 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
     }
   }
 
+  async function handleDemo() {
+    setLoading(true);
+    const demoEmail = "demo@prime.id";
+    const demoPass = "demo1234";
+    try {
+      let res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+      if (res.error) {
+        // Auto sign-up jika belum ada (auto-confirm aktif)
+        const signup = await supabase.auth.signUp({
+          email: demoEmail,
+          password: demoPass,
+          options: { data: { nama: "Demo Pasien", consent_marketing: false } },
+        });
+        if (signup.error) throw signup.error;
+        res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+        if (res.error) throw res.error;
+      }
+      if (res.data.user) bridgeLogin("apps", res.data.user.email || demoEmail, "front_office");
+      toast.success("Masuk sebagai Demo");
+      navigate({ to: safeRedirect, replace: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal masuk demo");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2" style={{ background: brand.background, color: brand.foreground }}>
       <div className="flex items-center justify-center px-6 py-12">
