@@ -7,7 +7,7 @@ import { brandHead } from "@/lib/brand";
 
 export const Route = createFileRoute("/apps/login")({
   validateSearch: z.object({ redirect: z.string().optional() }).optional(),
-  head: () => brandHead("apps", "Masuk Pasien"),
+  head: () => brandHead("apps", "Masuk Pasien", { noindex: true }),
   ssr: false,
   component: Page,
 });
@@ -28,6 +28,20 @@ function Page() {
     });
   }, [navigate, search]);
 
-  if (!checked) return null;
+  if (!checked) {
+    return (
+      <div
+        className="grid min-h-dvh place-items-center bg-amber-50/40"
+        role="status"
+        aria-live="polite"
+        aria-label="Memuat halaman masuk"
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+          <p className="text-xs text-amber-900/70">Memuat…</p>
+        </div>
+      </div>
+    );
+  }
   return <PatientAuthForm redirect={search?.redirect} />;
 }

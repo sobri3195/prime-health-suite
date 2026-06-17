@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable";
 import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
 import { PasswordInput } from "@/components/auth/password-input";
+import { PasswordStrength } from "@/components/auth/password-strength";
 import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
@@ -239,7 +240,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
             </>
           )}
 
-          <form className="space-y-3" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
+          <form key={mode} className="space-y-3 animate-fade-in" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
             {mode === "signup" && (
               <label htmlFor={nameId} className="block">
                 <div className="text-xs font-medium opacity-70">Nama lengkap</div>
@@ -266,6 +267,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
                 <Mail className="h-4 w-4 opacity-50" aria-hidden />
                 <input
                   id={emailId}
+                  autoFocus
                   type="email"
                   required
                   autoComplete="username"
@@ -290,6 +292,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
                 ariaDescribedBy={error ? errId : undefined}
               />
             )}
+            {mode === "signup" && <PasswordStrength value={password} />}
 
             {mode === "signup" && (
               <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">

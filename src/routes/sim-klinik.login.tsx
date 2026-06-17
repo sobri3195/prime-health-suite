@@ -7,7 +7,7 @@ import { brandHead } from "@/lib/brand";
 
 export const Route = createFileRoute("/sim-klinik/login")({
   validateSearch: z.object({ redirect: z.string().optional() }).optional(),
-  head: () => brandHead("sim-klinik", "Masuk"),
+  head: () => brandHead("sim-klinik", "Masuk", { noindex: true }),
   ssr: false,
   component: Page,
 });

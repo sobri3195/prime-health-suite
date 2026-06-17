@@ -252,7 +252,8 @@ export function SystemLoginForm({
           )}
 
           <form
-            className="space-y-3"
+            key={mode}
+            className="space-y-3 animate-fade-in"
             onSubmit={handleSubmit}
             noValidate
             aria-describedby={error ? errId : undefined}
@@ -263,6 +264,7 @@ export function SystemLoginForm({
                 <Mail className="h-4 w-4 opacity-50" aria-hidden />
                 <input
                   id={emailId}
+                  autoFocus
                   type="email"
                   required
                   autoComplete="username"
