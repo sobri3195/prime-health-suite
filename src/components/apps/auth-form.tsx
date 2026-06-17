@@ -112,7 +112,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
         setMode("login");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal memproses");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal memproses");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -128,7 +130,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
       if (result.redirected) return;
       navigate({ to: safeRedirect, replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal sign-in Google");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal sign-in Google");
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   }
@@ -154,7 +158,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
       toast.success("Masuk sebagai Demo");
       navigate({ to: safeRedirect, replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal masuk demo");
+      const msg = translateAuthError(e instanceof Error ? e.message : "Gagal masuk demo");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
