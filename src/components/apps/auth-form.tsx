@@ -13,8 +13,8 @@ type Mode = "login" | "signup" | "forgot";
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const brand = BRAND.apps;
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@prime.id");
+  const [password, setPassword] = useState("demo1234");
   const [nama, setNama] = useState("");
   const [consent, setConsent] = useState(false);
   const [marketing, setMarketing] = useState(false);
