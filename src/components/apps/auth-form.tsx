@@ -14,7 +14,7 @@ import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/
 type Mode = "login" | "signup" | "forgot";
 
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
-  const brand = BRAND.apps;
+  
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState(DEFAULT_EMAIL);
   const [password, setPassword] = useState(DEFAULT_PASSWORD);
