@@ -67,7 +67,7 @@ type AuthState = {
   /** Is the user authenticated within the *current* system. */
   isAuthenticated: boolean;
   /** Login into a specific system. Other systems remain untouched. */
-  login: (system: System, email: string, role: Role) => void;
+  login: (system: System, email: string, role: Role, opts?: { remember?: boolean }) => void;
   /** Logout from a specific system (defaults to currentSystem). */
   logout: (system?: System) => void;
   /** Read session for a specific system (does not depend on URL). */
