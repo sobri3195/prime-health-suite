@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { ArrowRight, Loader2, Mail, Lock, ShieldAlert } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABEL, rolesFor, useAuth, type Role, type System } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
+import { getMyRoles } from "@/lib/auth.functions";
+
+type Mode = "login" | "signup" | "forgot";
 
 export function SystemLoginForm({
   system,
@@ -14,16 +20,97 @@ export function SystemLoginForm({
   const { login } = useAuth();
   const navigate = useNavigate();
   const brand = BRAND[system];
-  const roles = rolesFor(system);
+  const allowed = rolesFor(system);
+  const fetchRoles = useServerFn(getMyRoles);
+
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("demo@prime.id");
   const [password, setPassword] = useState("demo1234");
-  const [role, setRole] = useState<Role>(roles[0]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const safe = redirect && redirect.startsWith(`/${system}`) ? redirect : `/${system}`;
+
+  async function resolveRoleAndEnter() {
+    const { roles } = await fetchRoles();
+    const role = roles.find((r) => (allowed as string[]).includes(r)) as Role | undefined;
+    if (!role) {
+      await supabase.auth.signOut();
+      throw new Error(
+        `Akun Anda belum punya peran untuk ${brand.shortName}. Hubungi admin.`,
+      );
+    }
     login(system, email, role);
-    const safe = redirect && redirect.startsWith(`/${system}`) ? redirect : `/${system}`;
+    toast.success(`Masuk sebagai ${ROLE_LABEL[role]}`);
     navigate({ to: safe, replace: true });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password?system=${system}`,
+        });
+        if (error) throw error;
+        toast.success("Link reset password dikirim ke email Anda.");
+        setMode("login");
+        return;
+      }
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/${system}` },
+        });
+        if (error) throw error;
+        // try immediate sign-in (auto-confirm enabled)
+        const si = await supabase.auth.signInWithPassword({ email, password });
+        if (si.error) {
+          toast.success("Akun dibuat. Cek email untuk verifikasi, lalu masuk.");
+          setMode("login");
+          return;
+        }
+        await resolveRoleAndEnter();
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await resolveRoleAndEnter();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Gagal masuk";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDemo() {
+    setLoading(true);
+    setError(null);
+    try {
+      const demoEmail = "demo@prime.id";
+      const demoPass = "demo1234";
+      setEmail(demoEmail);
+      setPassword(demoPass);
+      let res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+      if (res.error) {
+        const su = await supabase.auth.signUp({ email: demoEmail, password: demoPass });
+        if (su.error) throw su.error;
+        res = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPass });
+        if (res.error) throw res.error;
+      }
+      await resolveRoleAndEnter();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Gagal masuk demo";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -48,55 +135,115 @@ export function SystemLoginForm({
             </div>
           </div>
 
-          <h1 className="mt-10 text-2xl font-semibold">Masuk ke {brand.shortName}</h1>
+          <h1 className="mt-10 text-2xl font-semibold">
+            {mode === "signup"
+              ? `Daftar akun ${brand.shortName}`
+              : mode === "forgot"
+              ? "Lupa password"
+              : `Masuk ke ${brand.shortName}`}
+          </h1>
           <p className="mt-1.5 text-sm opacity-70">
-            Akses hanya untuk pengguna terdaftar {brand.name}.
+            {mode === "forgot"
+              ? "Masukkan email Anda untuk menerima link reset password."
+              : `Peran Anda diverifikasi otomatis dari sistem (RBAC ${brand.shortName}).`}
           </p>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            <Field label="Email">
+          <form className="mt-8 space-y-3" onSubmit={handleSubmit}>
+            <Field label="Email" icon={Mail}>
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2"
-                style={{ outlineColor: brand.accent }}
+                className="w-full bg-transparent text-sm outline-none"
+                placeholder="anda@email.com"
               />
             </Field>
-            <Field label="Password">
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2"
-              />
-            </Field>
-            <Field label="Peran (demo)">
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-                className="mt-1.5 w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2"
+            {mode !== "forgot" && (
+              <Field label="Password" icon={Lock}>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-transparent text-sm outline-none"
+                  placeholder="Min. 6 karakter"
+                />
+              </Field>
+            )}
+
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
               >
-                {roles.map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABEL[r]}
-                  </option>
-                ))}
-              </select>
-            </Field>
+                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow hover:opacity-95"
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
               style={{ background: brand.accent }}
             >
-              Masuk <ArrowRight className="h-4 w-4" />
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
+
+            {mode === "login" && (
+              <button
+                type="button"
+                onClick={handleDemo}
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+              >
+                Masuk sebagai Demo (demo@prime.id)
+              </button>
+            )}
           </form>
 
-          <p className="mt-6 text-center text-xs opacity-50">
-            Mock auth — sesi {brand.name} terpisah dari sistem lain.
+          <div className="mt-5 space-y-1.5 text-center text-xs">
+            {mode === "login" && (
+              <>
+                <button onClick={() => setMode("forgot")} className="opacity-70 hover:opacity-100">
+                  Lupa password?
+                </button>
+                <div>
+                  Belum punya akun?{" "}
+                  <button onClick={() => setMode("signup")} className="font-semibold underline">
+                    Daftar
+                  </button>
+                </div>
+              </>
+            )}
+            {mode === "signup" && (
+              <div>
+                Sudah punya akun?{" "}
+                <button onClick={() => setMode("login")} className="font-semibold underline">
+                  Masuk
+                </button>
+              </div>
+            )}
+            {mode === "forgot" && (
+              <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">
+                ← Kembali ke login
+              </button>
+            )}
+          </div>
+
+          <p className="mt-6 text-center text-[11px] opacity-50">
+            Sesi {brand.shortName} terpisah per sistem. Peran ditentukan server (tabel user_roles).
           </p>
         </div>
       </div>
@@ -117,11 +264,22 @@ export function SystemLoginForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
   return (
-    <div>
-      <label className="text-sm font-medium">{label}</label>
-      {children}
-    </div>
+    <label className="block">
+      <div className="text-xs font-medium opacity-70">{label}</div>
+      <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2">
+        <Icon className="h-4 w-4 opacity-50" />
+        {children}
+      </div>
+    </label>
   );
 }
