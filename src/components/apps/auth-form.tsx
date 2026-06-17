@@ -239,7 +239,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
             </>
           )}
 
-          <form className="space-y-3" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
+          <form key={mode} className="space-y-3 animate-fade-in" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
             {mode === "signup" && (
               <label htmlFor={nameId} className="block">
                 <div className="text-xs font-medium opacity-70">Nama lengkap</div>
@@ -266,6 +266,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
                 <Mail className="h-4 w-4 opacity-50" aria-hidden />
                 <input
                   id={emailId}
+                  autoFocus
                   type="email"
                   required
                   autoComplete="username"
