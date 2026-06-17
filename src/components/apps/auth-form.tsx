@@ -5,16 +5,16 @@ import { toast } from "sonner";
 import { ArrowRight, Loader2, Mail, User as UserIcon, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordStrength } from "@/components/auth/password-strength";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
 
 export function PatientAuthForm({ redirect }: { redirect?: string }) {
-  const brand = BRAND.apps;
+  
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState(DEFAULT_EMAIL);
   const [password, setPassword] = useState(DEFAULT_PASSWORD);
@@ -168,236 +168,199 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
   }
 
 
+  const heading =
+    mode === "signup" ? "Daftar akun pasien" : mode === "forgot" ? "Lupa password" : "Masuk akun pasien";
+  const subheading =
+    mode === "signup"
+      ? "Buat akun untuk booking, lihat resep, dan riwayat pemeriksaan."
+      : mode === "forgot"
+      ? "Masukkan email Anda untuk menerima link reset password."
+      : "Akses jadwal, antrean, dan resep mata Anda.";
+
   return (
-    <div
-      className="grid min-h-dvh lg:grid-cols-2"
-      style={{ background: brand.background, color: brand.foreground }}
-    >
-      <main
-        className="flex items-center justify-center px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] py-12"
-        aria-labelledby="apps-login-heading"
-      >
-        <div className="w-full max-w-sm">
-          <header>
-            <div className="inline-flex items-center gap-2">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-xl"
-                style={{ background: brand.accent, color: "#fff" }}
-                aria-hidden
-              >
-                {brand.faviconEmoji}
-              </div>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold">{brand.name}</div>
-                <div className="text-[10px] uppercase tracking-widest opacity-60">{brand.tagline}</div>
-              </div>
-            </div>
-
-            <h1 id="apps-login-heading" className="mt-10 text-2xl font-semibold">
-              {mode === "signup" ? "Daftar akun pasien" : mode === "forgot" ? "Lupa password" : "Masuk akun pasien"}
-            </h1>
-            <p className="mt-1.5 text-sm opacity-70">
-              {mode === "signup"
-                ? "Buat akun untuk booking, lihat resep, dan riwayat pemeriksaan."
-                : mode === "forgot"
-                ? "Masukkan email Anda untuk menerima link reset password."
-                : "Akses jadwal, antrean, dan resep mata Anda."}
-            </p>
-          </header>
-
-          {mode !== "forgot" && (
+    <AuthShell system="apps" heading={heading} subheading={subheading}>
+      {mode !== "forgot" && (
+        <>
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            type="button"
+            aria-busy={loading}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <GoogleIcon />}
+            Lanjutkan dengan Google
+          </button>
+          {!IS_PROD && (
             <>
               <button
-                onClick={handleGoogle}
-                disabled={loading}
                 type="button"
-                aria-busy={loading}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-60"
+                onClick={handleDemo}
+                disabled={loading}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <GoogleIcon />}
-                Lanjutkan dengan Google
+                Masuk sebagai Demo (demo@prime.id)
               </button>
-              {!IS_PROD && (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleDemo}
-                    disabled={loading}
-                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
-                  >
-                    Masuk sebagai Demo (demo@prime.id)
-                  </button>
-                  <div className="mt-2 rounded-md bg-black/5 px-3 py-2 text-[11px] leading-relaxed opacity-80">
-                    Akun demo bersama untuk ketiga sistem:
-                    <br />
-                    <b>Email:</b> demo@prime.id · <b>Password:</b> demo1234
-                  </div>
-                </>
-              )}
-              <div className="my-5 flex items-center gap-3 text-xs opacity-50">
-                <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
+              <div className="mt-2 rounded-md bg-black/5 px-3 py-2 text-[11px] leading-relaxed opacity-80">
+                Akun demo bersama untuk ketiga sistem:
+                <br />
+                <b>Email:</b> demo@prime.id · <b>Password:</b> demo1234
               </div>
             </>
           )}
-
-          <form key={mode} className="space-y-3 animate-fade-in" onSubmit={handleEmail} noValidate aria-describedby={error ? errId : undefined}>
-            {mode === "signup" && (
-              <label htmlFor={nameId} className="block">
-                <div className="text-xs font-medium opacity-70">Nama lengkap</div>
-                <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400">
-                  <UserIcon className="h-4 w-4 opacity-50" aria-hidden />
-                  <input
-                    id={nameId}
-                    type="text"
-                    required
-                    minLength={2}
-                    autoComplete="name"
-                    value={nama}
-                    onChange={(e) => setNama(e.target.value)}
-                    className="w-full bg-transparent text-sm outline-none"
-                    placeholder="Nama Anda"
-                  />
-                </div>
-              </label>
-            )}
-
-            <label htmlFor={emailId} className="block">
-              <div className="text-xs font-medium opacity-70">Email</div>
-              <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400">
-                <Mail className="h-4 w-4 opacity-50" aria-hidden />
-                <input
-                  id={emailId}
-                  autoFocus
-                  type="email"
-                  required
-                  autoComplete="username"
-                  inputMode="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  aria-invalid={!!error || undefined}
-                  aria-describedby={error ? errId : undefined}
-                  className="w-full bg-transparent text-sm outline-none"
-                  placeholder="anda@email.com"
-                />
-              </div>
-            </label>
-
-            {mode !== "forgot" && (
-              <PasswordInput
-                id={pwId}
-                value={password}
-                onChange={setPassword}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                ariaInvalid={!!error}
-                ariaDescribedBy={error ? errId : undefined}
-              />
-            )}
-            {mode === "signup" && <PasswordStrength value={password} />}
-
-            {mode === "signup" && (
-              <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">
-                <label className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    Saya menyetujui{" "}
-                    <a href="/privacy" target="_blank" rel="noreferrer" className="font-semibold underline">
-                      Kebijakan Privasi
-                    </a>{" "}
-                    dan pengelolaan data kesehatan saya sesuai UU PDP No. 27/2022.
-                  </span>
-                </label>
-                <label className="flex items-start gap-2 opacity-80">
-                  <input
-                    type="checkbox"
-                    checked={marketing}
-                    onChange={(e) => setMarketing(e.target.checked)}
-                    className="mt-0.5"
-                  />
-                  <span>Saya bersedia menerima informasi promosi & edukasi mata (opsional).</span>
-                </label>
-              </div>
-            )}
-
-            {error && (
-              <div
-                id={errId}
-                role="alert"
-                aria-live="assertive"
-                className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
-              >
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              aria-busy={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
-              style={{ background: brand.accent }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  <span>Memproses…</span>
-                </>
-              ) : (
-                <>
-                  {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-5 space-y-1.5 text-center text-xs">
-            {mode === "login" && (
-              <>
-                <button onClick={() => setMode("forgot")} className="opacity-70 hover:opacity-100">Lupa password?</button>
-                <div>
-                  Belum punya akun?{" "}
-                  <button onClick={() => setMode("signup")} className="font-semibold underline">Daftar</button>
-                </div>
-              </>
-            )}
-            {mode === "signup" && (
-              <div>
-                Sudah punya akun?{" "}
-                <button onClick={() => setMode("login")} className="font-semibold underline">Masuk</button>
-              </div>
-            )}
-            {mode === "forgot" && (
-              <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">← Kembali ke login</button>
-            )}
+          <div className="my-5 flex items-center gap-3 text-xs opacity-50">
+            <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
           </div>
+        </>
+      )}
 
-          <footer className="mt-6 text-center text-[11px] opacity-60">
-            <p className="space-x-3">
-              <a href="/privacy" className="underline hover:opacity-100">Kebijakan Privasi</a>
-              <span aria-hidden>·</span>
-              <a href="/terms" className="underline hover:opacity-100">Syarat Layanan</a>
-            </p>
-          </footer>
-        </div>
-      </main>
+      <form
+        key={mode}
+        className="space-y-3 animate-fade-in"
+        onSubmit={handleEmail}
+        noValidate
+        aria-describedby={error ? errId : undefined}
+      >
+        {mode === "signup" && (
+          <label htmlFor={nameId} className="block">
+            <div className="text-xs font-medium opacity-70">Nama lengkap</div>
+            <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-[color:var(--brand-accent)]">
+              <UserIcon className="h-4 w-4 opacity-50" aria-hidden />
+              <input
+                id={nameId}
+                type="text"
+                required
+                minLength={2}
+                autoComplete="name"
+                value={nama}
+                onChange={(e) => setNama(e.target.value)}
+                className="w-full bg-transparent text-sm outline-none"
+                placeholder="Nama Anda"
+              />
+            </div>
+          </label>
+        )}
 
-      <aside className="relative hidden overflow-hidden lg:block" style={{ background: brand.accent }} aria-hidden>
-        <div className="relative flex h-full flex-col justify-end p-12 text-white">
-          <div className="mb-6 text-7xl">{brand.faviconEmoji}</div>
-          <blockquote className="max-w-md text-2xl font-medium leading-snug">{brand.name}</blockquote>
-          <div className="mt-2 text-sm text-white/80">{brand.tagline}</div>
-        </div>
-      </aside>
-    </div>
+        <label htmlFor={emailId} className="block">
+          <div className="text-xs font-medium opacity-70">Email</div>
+          <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-[color:var(--brand-accent)]">
+            <Mail className="h-4 w-4 opacity-50" aria-hidden />
+            <input
+              id={emailId}
+              autoFocus
+              type="email"
+              required
+              autoComplete="username"
+              inputMode="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={!!error || undefined}
+              aria-describedby={error ? errId : undefined}
+              className="w-full bg-transparent text-sm outline-none"
+              placeholder="anda@email.com"
+            />
+          </div>
+        </label>
+
+        {mode !== "forgot" && (
+          <PasswordInput
+            id={pwId}
+            value={password}
+            onChange={setPassword}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            ariaInvalid={!!error}
+            ariaDescribedBy={error ? errId : undefined}
+          />
+        )}
+        {mode === "signup" && <PasswordStrength value={password} />}
+
+        {mode === "signup" && (
+          <div className="space-y-2 rounded-md border border-black/10 bg-white/60 p-3 text-xs">
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                required
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Saya menyetujui{" "}
+                <a href="/privacy" target="_blank" rel="noreferrer" className="font-semibold underline">
+                  Kebijakan Privasi
+                </a>{" "}
+                dan pengelolaan data kesehatan saya sesuai UU PDP No. 27/2022.
+              </span>
+            </label>
+            <label className="flex items-start gap-2 opacity-80">
+              <input
+                type="checkbox"
+                checked={marketing}
+                onChange={(e) => setMarketing(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>Saya bersedia menerima informasi promosi & edukasi mata (opsional).</span>
+            </label>
+          </div>
+        )}
+
+        {error && (
+          <div
+            id={errId}
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
+          >
+            <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          aria-busy={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow transition-opacity hover:opacity-90 disabled:opacity-60"
+          style={{ background: "var(--brand-accent)" }}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <span>Memproses…</span>
+            </>
+          ) : (
+            <>
+              {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </>
+          )}
+        </button>
+      </form>
+
+      <div className="mt-5 space-y-1.5 text-center text-xs">
+        {mode === "login" && (
+          <>
+            <button onClick={() => setMode("forgot")} className="opacity-70 hover:opacity-100">Lupa password?</button>
+            <div>
+              Belum punya akun?{" "}
+              <button onClick={() => setMode("signup")} className="font-semibold underline">Daftar</button>
+            </div>
+          </>
+        )}
+        {mode === "signup" && (
+          <div>
+            Sudah punya akun?{" "}
+            <button onClick={() => setMode("login")} className="font-semibold underline">Masuk</button>
+          </div>
+        )}
+        {mode === "forgot" && (
+          <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">← Kembali ke login</button>
+        )}
+      </div>
+    </AuthShell>
   );
 }
+
 
 function GoogleIcon() {
   return (

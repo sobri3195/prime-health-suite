@@ -9,6 +9,7 @@ import { ROLE_LABEL, rolesFor, useAuth, type Role, type System } from "@/lib/aut
 import { BRAND } from "@/lib/brand";
 import { getMyRoles } from "@/lib/auth.functions";
 import { PasswordInput } from "@/components/auth/password-input";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { translateAuthError, DEFAULT_EMAIL, DEFAULT_PASSWORD, IS_PROD } from "@/lib/auth-helpers";
 
 type Mode = "login" | "signup" | "forgot";
@@ -158,250 +159,202 @@ export function SystemLoginForm({
     }
   }
 
+  const heading =
+    mode === "signup"
+      ? `Daftar akun ${brand.shortName}`
+      : mode === "forgot"
+      ? "Lupa password"
+      : `Masuk ke ${brand.shortName}`;
+  const subheading =
+    mode === "forgot"
+      ? "Masukkan email Anda untuk menerima link reset password."
+      : `Peran Anda diverifikasi otomatis dari sistem (RBAC ${brand.shortName}).`;
+
+  const banner =
+    otherSessions.length > 0 && mode === "login" ? (
+      <div className="mt-5 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900">
+        <div className="flex items-center gap-1.5 font-medium">
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Anda sudah masuk di sistem lain
+        </div>
+        <ul className="mt-2 space-y-1">
+          {otherSessions.map((o) => (
+            <li key={o.system} className="flex items-center justify-between gap-2">
+              <span>
+                <b>{BRAND[o.system].shortName}</b> — {o.user!.email} ({ROLE_LABEL[o.user!.role]})
+              </span>
+              <div className="flex items-center gap-1">
+                <Link
+                  to={`/${o.system}`}
+                  className="rounded border border-emerald-300 bg-white px-2 py-0.5 hover:bg-emerald-100"
+                >
+                  Buka
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => logout(o.system)}
+                  className="inline-flex items-center gap-0.5 rounded border border-red-200 bg-white px-2 py-0.5 text-red-700 hover:bg-red-50"
+                  aria-label={`Keluar dari ${BRAND[o.system].shortName}`}
+                >
+                  <LogOut className="h-3 w-3" aria-hidden />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+
   return (
-    <div
-      className="grid min-h-dvh lg:grid-cols-2"
-      style={{ background: brand.background, color: brand.foreground }}
-    >
-      <main
-        className="flex items-center justify-center px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] py-12"
-        aria-labelledby="login-heading"
+    <AuthShell system={system} heading={heading} subheading={subheading} banner={banner}>
+      {mode !== "forgot" && (
+        <>
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            type="button"
+            aria-busy={loading}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <GoogleIcon />}
+            Lanjutkan dengan Google
+          </button>
+          <div className="my-4 flex items-center gap-3 text-xs opacity-50">
+            <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
+          </div>
+        </>
+      )}
+
+      <form
+        key={mode}
+        className="space-y-3 animate-fade-in"
+        onSubmit={handleSubmit}
+        noValidate
+        aria-describedby={error ? errId : undefined}
       >
-        <div className="w-full max-w-sm">
-          <header>
-            <Link to="/login" className="inline-flex items-center gap-2 hover:opacity-80">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-xl"
-                style={{ background: brand.accent, color: "#fff" }}
-                aria-hidden
-              >
-                {brand.faviconEmoji}
-              </div>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold">{brand.name}</div>
-                <div className="text-[10px] uppercase tracking-widest opacity-60">
-                  {brand.tagline}
-                </div>
-              </div>
-            </Link>
+        <label htmlFor={emailId} className="block">
+          <div className="text-xs font-medium opacity-70">Email</div>
+          <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-[color:var(--brand-accent)]">
+            <Mail className="h-4 w-4 opacity-50" aria-hidden />
+            <input
+              id={emailId}
+              autoFocus
+              type="email"
+              required
+              autoComplete="username"
+              inputMode="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={(e) => setEmail(normEmail(e.target.value))}
+              aria-invalid={!!error || undefined}
+              aria-describedby={error ? errId : undefined}
+              className="w-full bg-transparent text-sm outline-none"
+              placeholder="anda@email.com"
+            />
+          </div>
+        </label>
 
-            <h1 id="login-heading" className="mt-10 text-2xl font-semibold">
-              {mode === "signup"
-                ? `Daftar akun ${brand.shortName}`
-                : mode === "forgot"
-                ? "Lupa password"
-                : `Masuk ke ${brand.shortName}`}
-            </h1>
-            <p className="mt-1.5 text-sm opacity-70">
-              {mode === "forgot"
-                ? "Masukkan email Anda untuk menerima link reset password."
-                : `Peran Anda diverifikasi otomatis dari sistem (RBAC ${brand.shortName}).`}
-            </p>
-          </header>
+        {mode !== "forgot" && (
+          <PasswordInput
+            id={pwId}
+            value={password}
+            onChange={setPassword}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            ariaInvalid={!!error}
+            ariaDescribedBy={error ? errId : undefined}
+          />
+        )}
 
-          {/* Cross-system indicator */}
-          {otherSessions.length > 0 && mode === "login" && (
-            <div className="mt-5 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900">
-              <div className="flex items-center gap-1.5 font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Anda sudah masuk di sistem lain
-              </div>
-              <ul className="mt-2 space-y-1">
-                {otherSessions.map((o) => (
-                  <li key={o.system} className="flex items-center justify-between gap-2">
-                    <span>
-                      <b>{BRAND[o.system].shortName}</b> — {o.user!.email} ({ROLE_LABEL[o.user!.role]})
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Link
-                        to={`/${o.system}`}
-                        className="rounded border border-emerald-300 bg-white px-2 py-0.5 hover:bg-emerald-100"
-                      >
-                        Buka
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => logout(o.system)}
-                        className="inline-flex items-center gap-0.5 rounded border border-red-200 bg-white px-2 py-0.5 text-red-700 hover:bg-red-50"
-                        aria-label={`Keluar dari ${BRAND[o.system].shortName}`}
-                      >
-                        <LogOut className="h-3 w-3" aria-hidden />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {mode === "login" && (
+          <label className="flex items-center gap-2 text-xs opacity-80">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            Ingat saya di perangkat ini
+          </label>
+        )}
 
-          {mode !== "forgot" && (
+        {error && (
+          <div
+            id={errId}
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
+          >
+            <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          aria-busy={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow transition-opacity hover:opacity-90 disabled:opacity-60"
+          style={{ background: "var(--brand-accent)" }}
+        >
+          {loading ? (
             <>
-              <button
-                onClick={handleGoogle}
-                disabled={loading}
-                type="button"
-                aria-busy={loading}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <GoogleIcon />}
-                Lanjutkan dengan Google
-              </button>
-              <div className="my-4 flex items-center gap-3 text-xs opacity-50">
-                <div className="h-px flex-1 bg-black/10" /> atau <div className="h-px flex-1 bg-black/10" />
-              </div>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <span>Memproses…</span>
+            </>
+          ) : (
+            <>
+              {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </>
           )}
+        </button>
 
-          <form
-            key={mode}
-            className="space-y-3 animate-fade-in"
-            onSubmit={handleSubmit}
-            noValidate
-            aria-describedby={error ? errId : undefined}
+        {mode === "login" && !IS_PROD && (
+          <button
+            type="button"
+            onClick={handleDemo}
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
           >
-            <label htmlFor={emailId} className="block">
-              <div className="text-xs font-medium opacity-70">Email</div>
-              <div className="mt-1 flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 focus-within:ring-2">
-                <Mail className="h-4 w-4 opacity-50" aria-hidden />
-                <input
-                  id={emailId}
-                  autoFocus
-                  type="email"
-                  required
-                  autoComplete="username"
-                  inputMode="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={(e) => setEmail(normEmail(e.target.value))}
-                  aria-invalid={!!error || undefined}
-                  aria-describedby={error ? errId : undefined}
-                  className="w-full bg-transparent text-sm outline-none"
-                  placeholder="anda@email.com"
-                />
-              </div>
-            </label>
+            Masuk sebagai Demo (demo@prime.id)
+          </button>
+        )}
+      </form>
 
-            {mode !== "forgot" && (
-              <PasswordInput
-                id={pwId}
-                value={password}
-                onChange={setPassword}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                ariaInvalid={!!error}
-                ariaDescribedBy={error ? errId : undefined}
-              />
-            )}
-
-            {mode === "login" && (
-              <label className="flex items-center gap-2 text-xs opacity-80">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                />
-                Ingat saya di perangkat ini
-              </label>
-            )}
-
-            {error && (
-              <div
-                id={errId}
-                role="alert"
-                aria-live="assertive"
-                className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800"
-              >
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              aria-busy={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-white shadow disabled:opacity-60"
-              style={{ background: brand.accent }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  <span>Memproses…</span>
-                </>
-              ) : (
-                <>
-                  {mode === "signup" ? "Daftar" : mode === "forgot" ? "Kirim link reset" : "Masuk"}
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </>
-              )}
+      <div className="mt-5 space-y-1.5 text-center text-xs">
+        {mode === "login" && (
+          <>
+            <button onClick={() => setMode("forgot")} className="opacity-70 hover:opacity-100">
+              Lupa password?
             </button>
-
-            {mode === "login" && !IS_PROD && (
-              <button
-                type="button"
-                onClick={handleDemo}
-                disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
-              >
-                Masuk sebagai Demo (demo@prime.id)
+            <div>
+              Belum punya akun?{" "}
+              <button onClick={() => setMode("signup")} className="font-semibold underline">
+                Daftar
               </button>
-            )}
-          </form>
-
-          <div className="mt-5 space-y-1.5 text-center text-xs">
-            {mode === "login" && (
-              <>
-                <button onClick={() => setMode("forgot")} className="opacity-70 hover:opacity-100">
-                  Lupa password?
-                </button>
-                <div>
-                  Belum punya akun?{" "}
-                  <button onClick={() => setMode("signup")} className="font-semibold underline">
-                    Daftar
-                  </button>
-                </div>
-              </>
-            )}
-            {mode === "signup" && (
-              <div>
-                Sudah punya akun?{" "}
-                <button onClick={() => setMode("login")} className="font-semibold underline">
-                  Masuk
-                </button>
-              </div>
-            )}
-            {mode === "forgot" && (
-              <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">
-                ← Kembali ke login
-              </button>
-            )}
+            </div>
+          </>
+        )}
+        {mode === "signup" && (
+          <div>
+            Sudah punya akun?{" "}
+            <button onClick={() => setMode("login")} className="font-semibold underline">
+              Masuk
+            </button>
           </div>
+        )}
+        {mode === "forgot" && (
+          <button onClick={() => setMode("login")} className="opacity-70 hover:opacity-100">
+            ← Kembali ke login
+          </button>
+        )}
+      </div>
 
-          <footer className="mt-6 space-y-2 text-center text-[11px] opacity-60">
-            <p>Sesi {brand.shortName} terpisah per sistem. Peran ditentukan server (tabel user_roles).</p>
-            <p className="space-x-3">
-              <a href="/privacy" className="underline hover:opacity-100">Kebijakan Privasi</a>
-              <span aria-hidden>·</span>
-              <a href="/terms" className="underline hover:opacity-100">Syarat Layanan</a>
-            </p>
-          </footer>
-        </div>
-      </main>
-
-      <aside
-        className="relative hidden overflow-hidden lg:block"
-        style={{ background: brand.accent }}
-        aria-hidden
-      >
-        <div className="relative flex h-full flex-col justify-end p-12 text-white">
-          <div className="text-7xl mb-6">{brand.faviconEmoji}</div>
-          <blockquote className="max-w-md text-2xl font-medium leading-snug">
-            {brand.name}
-          </blockquote>
-          <div className="mt-2 text-sm text-white/80">{brand.tagline}</div>
-        </div>
-      </aside>
-    </div>
+      <p className="mt-4 text-center text-[11px] opacity-60">
+        Sesi {brand.shortName} terpisah per sistem. Peran ditentukan server (tabel user_roles).
+      </p>
+    </AuthShell>
   );
 }
+
 
 function Field({
   label,
