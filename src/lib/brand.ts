@@ -54,14 +54,17 @@ export function faviconDataUrl(emoji: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-export function brandHead(system: System, pageTitle?: string) {
+export function brandHead(system: System, pageTitle?: string, opts?: { noindex?: boolean }) {
   const b = BRAND[system];
+  const meta: Array<Record<string, string>> = [
+    { title: pageTitle ? `${pageTitle} — ${b.titleSuffix}` : b.titleSuffix },
+    { name: "description", content: b.tagline },
+    { name: "theme-color", content: b.accent },
+  ];
+  if (opts?.noindex) meta.push({ name: "robots", content: "noindex,nofollow" });
   return {
-    meta: [
-      { title: pageTitle ? `${pageTitle} — ${b.titleSuffix}` : b.titleSuffix },
-      { name: "description", content: b.tagline },
-      { name: "theme-color", content: b.accent },
-    ],
+    meta,
     links: [{ rel: "icon", type: "image/svg+xml", href: faviconDataUrl(b.faviconEmoji) }],
   };
 }
+
