@@ -1,32 +1,40 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { toast } from "sonner";
 import { Lock, Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
+import type { System } from "@/lib/auth";
+
+const SYSTEMS: System[] = ["apps", "sim-klinik", "finance"];
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: z.object({
+    system: z.enum(["apps", "sim-klinik", "finance"]).optional(),
+  }).optional(),
   head: () => ({
     meta: [
-      { title: "Reset Password — Prime Apps" },
-      { name: "description", content: "Atur password baru untuk akun pasien Prime Apps." },
+      { title: "Reset Password — Prime Health Suite" },
+      { name: "description", content: "Atur password baru untuk akun Anda." },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "icon", type: "image/svg+xml", href: faviconDataUrl(BRAND.apps.faviconEmoji) }],
+    links: [{ rel: "icon", type: "image/svg+xml", href: faviconDataUrl("✦") }],
   }),
   ssr: false,
   component: Page,
 });
 
 function Page() {
-  const brand = BRAND.apps;
+  const search = Route.useSearch();
+  const system: System = (search?.system && SYSTEMS.includes(search.system) ? search.system : "apps") as System;
+  const brand = BRAND[system];
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase places the recovery token in the URL hash and auto-creates a session
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
@@ -44,7 +52,7 @@ function Page() {
       if (error) throw error;
       toast.success("Password diperbarui. Silakan masuk kembali.");
       await supabase.auth.signOut();
-      navigate({ to: "/apps/login", replace: true });
+      navigate({ to: `/${system}/login`, replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal memperbarui password");
     } finally {
@@ -53,11 +61,23 @@ function Page() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6" style={{ background: brand.background, color: brand.foreground }}>
+    <div
+      className="flex min-h-screen items-center justify-center px-6"
+      style={{ background: brand.background, color: brand.foreground }}
+    >
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold">Atur password baru</h1>
+        <div className="inline-flex items-center gap-2">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-xl"
+            style={{ background: brand.accent, color: "#fff" }}
+          >
+            {brand.faviconEmoji}
+          </div>
+          <div className="text-sm font-semibold">{brand.name}</div>
+        </div>
+        <h1 className="mt-6 text-2xl font-semibold">Atur password baru</h1>
         <p className="mt-2 text-sm opacity-70">
-          {ready ? "Masukkan password baru untuk akun Anda." : "Memvalidasi link recovery…"}
+          {ready ? `Setelah disimpan, Anda akan diarahkan ke login ${brand.shortName}.` : "Memvalidasi link recovery…"}
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
           <label className="block">
@@ -68,6 +88,7 @@ function Page() {
                 type="password"
                 required
                 minLength={6}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-transparent text-sm outline-none"
