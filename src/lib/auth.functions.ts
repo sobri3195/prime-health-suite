@@ -5,9 +5,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // has no roles yet, grant baseline operational roles so SIM / Finance work
 // without manual seeding. Non-demo users get only their real roles.
 const DEMO_EMAIL = "demo@prime.id";
-// DB app_role enum is SIM-Klinik-scoped. We map these to broader TS Role
-// values on the client (e.g. 'super_admin' covers all three systems).
 const DEMO_DB_ROLES = ["super_admin", "kasir", "pendaftaran"] as const;
+
+// Role-scoped demo accounts (one-click login per persona).
+// Each maps to DB roles that, after DB_TO_TS mapping below, give the right
+// access on SIM Klinik / Finance.
+const DEMO_ROLE_MAP: Record<string, readonly string[]> = {
+  "demo-kasir@prime.id": ["kasir"],
+  "demo-dokter@prime.id": ["dokter"],
+  "demo-manajemen@prime.id": ["manajemen", "super_admin"],
+};
 
 type DbRole =
   | "super_admin" | "admin_klinik" | "dokter" | "perawat" | "perawat_optometri"
