@@ -90,6 +90,8 @@ function Landing() {
             Lihat Alur Kerja
           </a>
         </div>
+
+        <LoginHub />
       </section>
 
       {/* Problem */}
