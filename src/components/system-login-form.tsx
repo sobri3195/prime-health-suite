@@ -130,11 +130,10 @@ export function SystemLoginForm({
     }
   }
 
-  async function handleDemo() {
+  async function handleDemo(demoEmail = "demo@prime.id") {
     setLoading(true);
     setError(null);
     try {
-      const demoEmail = "demo@prime.id";
       const demoPass = "demo1234";
       setEmail(demoEmail);
       setPassword(demoPass);
@@ -158,6 +157,20 @@ export function SystemLoginForm({
       setLoading(false);
     }
   }
+
+  const DEMO_PERSONAS: Record<System, { label: string; email: string }[]> = {
+    apps: [{ label: "Demo Pasien", email: "demo@prime.id" }],
+    "sim-klinik": [
+      { label: "Demo Kasir", email: "demo-kasir@prime.id" },
+      { label: "Demo Dokter", email: "demo-dokter@prime.id" },
+      { label: "Demo Manajer", email: "demo-manajemen@prime.id" },
+    ],
+    finance: [
+      { label: "Demo Manajer", email: "demo-manajemen@prime.id" },
+      { label: "Demo Kasir", email: "demo-kasir@prime.id" },
+    ],
+  };
+  const personas = DEMO_PERSONAS[system];
 
   const heading =
     mode === "signup"
