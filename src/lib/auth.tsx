@@ -155,10 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     currentSystem,
     isAuthenticated: !!user,
+    hydrated,
     login,
     logout,
     userFor,
-  }), [user, currentSystem, login, logout, userFor]);
+  }), [user, currentSystem, hydrated, login, logout, userFor]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
