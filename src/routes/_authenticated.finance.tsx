@@ -8,6 +8,7 @@ import { FinanceDateFilter } from "@/components/finance-date-filter";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Eye } from "lucide-react";
+import { LoginSkeleton } from "@/components/auth/login-skeleton";
 
 function FinanceHeaderBar() {
   const { isAdmin, isViewer } = useFinanceAccess();
