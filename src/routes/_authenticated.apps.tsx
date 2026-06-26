@@ -46,14 +46,8 @@ function Layout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (checking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm opacity-70">
-        Memuat…
-      </div>
-    );
-  }
-  if (!authed) return null;
+  if (checking) return <LoginSkeleton system="apps" />;
+  if (!authed) return <LoginSkeleton system="apps" />;
 
   return (
     <AppShell system="apps">
