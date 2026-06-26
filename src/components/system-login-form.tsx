@@ -320,15 +320,26 @@ export function SystemLoginForm({
           )}
         </button>
 
-        {mode === "login" && !IS_PROD && (
-          <button
-            type="button"
-            onClick={handleDemo}
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
-          >
-            Masuk sebagai Demo (demo@prime.id)
-          </button>
+        {mode === "login" && !IS_PROD && personas.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-center text-[10px] uppercase tracking-widest opacity-50">
+              Akses cepat demo
+            </div>
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${personas.length}, minmax(0, 1fr))` }}>
+              {personas.map((p) => (
+                <button
+                  key={p.email}
+                  type="button"
+                  onClick={() => handleDemo(p.email)}
+                  disabled={loading}
+                  className="rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-2 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+                  title={p.email}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </form>
 
