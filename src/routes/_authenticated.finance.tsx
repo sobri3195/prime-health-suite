@@ -8,6 +8,7 @@ import { FinanceDateFilter } from "@/components/finance-date-filter";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Eye } from "lucide-react";
+import { LoginSkeleton } from "@/components/auth/login-skeleton";
 
 function FinanceHeaderBar() {
   const { isAdmin, isViewer } = useFinanceAccess();
@@ -31,18 +32,20 @@ function FinanceHeaderBar() {
 }
 
 function Layout() {
-  const { userFor } = useAuth();
+  const { userFor, hydrated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = userFor("finance");
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user || !canAccess(user.role, "finance")) {
       navigate({ to: "/finance/login", search: { redirect: pathname }, replace: true });
     }
-  }, [user, navigate, pathname]);
+  }, [hydrated, user, navigate, pathname]);
 
-  if (!user || !canAccess(user.role, "finance")) return null;
+  if (!hydrated) return <LoginSkeleton system="finance" />;
+  if (!user || !canAccess(user.role, "finance")) return <LoginSkeleton system="finance" />;
   return (
     <AppShell system="finance">
       <FinanceDateProvider>

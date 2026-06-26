@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { brandHead } from "@/lib/brand";
+import { LoginSkeleton } from "@/components/auth/login-skeleton";
 
 function Layout() {
   const navigate = useNavigate();
@@ -45,14 +46,8 @@ function Layout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (checking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm opacity-70">
-        Memuat…
-      </div>
-    );
-  }
-  if (!authed) return null;
+  if (checking) return <LoginSkeleton system="apps" />;
+  if (!authed) return <LoginSkeleton system="apps" />;
 
   return (
     <AppShell system="apps">
