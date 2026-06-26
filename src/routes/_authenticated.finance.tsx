@@ -31,18 +31,20 @@ function FinanceHeaderBar() {
 }
 
 function Layout() {
-  const { userFor } = useAuth();
+  const { userFor, hydrated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = userFor("finance");
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user || !canAccess(user.role, "finance")) {
       navigate({ to: "/finance/login", search: { redirect: pathname }, replace: true });
     }
-  }, [user, navigate, pathname]);
+  }, [hydrated, user, navigate, pathname]);
 
-  if (!user || !canAccess(user.role, "finance")) return null;
+  if (!hydrated) return <LoginSkeleton system="finance" />;
+  if (!user || !canAccess(user.role, "finance")) return <LoginSkeleton system="finance" />;
   return (
     <AppShell system="finance">
       <FinanceDateProvider>
