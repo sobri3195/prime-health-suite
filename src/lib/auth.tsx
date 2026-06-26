@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { addAudit } from "./audit-log";
+import { secureStore } from "./secure-store";
 
 export type Role =
   | "super_admin"
