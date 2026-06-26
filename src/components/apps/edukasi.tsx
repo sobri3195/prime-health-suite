@@ -51,7 +51,7 @@ export function PatientArtikelDetail({ slug }: { slug: string }) {
   const a = q.data.artikel;
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/apps/edukasi" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+      <Link to="/apps/$section" params={{ section: "edukasi" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground">
         <ArrowLeft className="h-4 w-4" /> {t("edu.back")}
       </Link>
       <article className="rounded-2xl border border-[#e9dfb8] bg-white p-6 shadow-sm">

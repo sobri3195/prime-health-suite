@@ -99,7 +99,7 @@ export function PatientBeranda() {
             <div className="mt-1 text-[11px] opacity-90">Pilih dokter & jadwal.</div>
           </Link>
           <Link
-            to="/apps/ai"
+            to="/apps/$section" params={{ section: "ai" }}
             className="rounded-2xl border border-[#e9dfb8] bg-white p-4 text-left transition hover:bg-[#fdf8e8]"
           >
             <Brain className="mb-3 h-5 w-5 text-[#6b5a16]" />
@@ -154,7 +154,7 @@ export function PatientBeranda() {
             </div>
             <div className="mt-2 text-sm">{upcoming.keluhan || "Pemeriksaan mata"}</div>
             <div className="mt-2"><Pill tone={upcoming.status === "confirmed" ? "green" : "amber"}>{statusLabel(upcoming.status)}</Pill></div>
-            <Link to="/apps/laporan" className="mt-3 inline-block text-sm font-semibold text-[#6b5a16]">
+            <Link to="/apps/$section" params={{ section: "laporan" }} className="mt-3 inline-block text-sm font-semibold text-[#6b5a16]">
               Lihat semua booking →
             </Link>
           </>
@@ -173,12 +173,12 @@ export function PatientBeranda() {
         <h3 className="mb-2 text-base font-semibold">Menu Cepat</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { l: "Riwayat & Resep", i: ClipboardList, to: "/apps/laporan" as const },
-            { l: "Resep Kacamata", i: Glasses, to: "/apps/laporan" as const },
-            { l: "Hasil AI Mata", i: ScanEye, to: "/apps/ai" as const },
-            { l: "Edukasi Mata", i: BookOpen, to: "/apps" as const },
+            { l: "Riwayat & Resep", i: ClipboardList, section: "laporan" },
+            { l: "Resep Kacamata", i: Glasses, section: "laporan" },
+            { l: "Hasil AI Mata", i: ScanEye, section: "ai" },
+            { l: "Edukasi Mata", i: BookOpen, section: "edukasi" },
           ].map((m) => (
-            <Link key={m.l} to={m.to} className="rounded-2xl border border-[#e9dfb8] bg-white p-4 transition hover:bg-[#fdf8e8]">
+            <Link key={m.l} to="/apps/$section" params={{ section: m.section }} className="rounded-2xl border border-[#e9dfb8] bg-white p-4 transition hover:bg-[#fdf8e8]">
               <m.i className="mb-2 h-5 w-5 text-[#6b5a16]" />
               <div className="text-sm font-semibold">{m.l}</div>
             </Link>
@@ -508,7 +508,7 @@ export function PatientAI() {
                 className="flex-1 rounded-xl bg-[#a08a2a] py-2.5 text-sm font-semibold text-white">
                 {hasil.risk === "Tinggi" ? "Rujuk ke Booking Dokter (segera)" : "Booking Dokter"}
               </button>
-              <button onClick={() => navigate({ to: "/apps/chat" })}
+              <button onClick={() => navigate({ to: "/apps/$section", params: { section: "chat" } })}
                 className="rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-4 text-sm font-medium text-[#5a4a14]">
                 Chat FO
               </button>

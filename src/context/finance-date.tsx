@@ -100,7 +100,7 @@ export function FinanceDateProvider({ children }: { children: ReactNode }) {
     setState(next);
     navigate({
       to: ".",
-      search: (prev: Record<string, unknown>) => ({ ...prev, from: next.from, to: next.to, preset: next.preset }),
+      search: ((prev: Record<string, unknown> = {}) => ({ ...prev, from: next.from, to: next.to, preset: next.preset })) as never,
       replace: true,
     });
   }, [navigate]);
