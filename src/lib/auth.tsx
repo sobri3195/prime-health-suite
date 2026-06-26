@@ -84,15 +84,15 @@ function systemFromPath(pathname: string): System | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<Sessions>({});
+  const [hydrated, setHydrated] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const currentSystem = systemFromPath(pathname);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") { setHydrated(true); return; }
     const next: Sessions = {};
     for (const s of SYSTEMS) {
       try {
-        // Prefer persisted (localStorage), fall back to session-scoped.
         const raw =
           localStorage.getItem(SESSION_KEY(s)) ??
           sessionStorage.getItem(SESSION_KEY(s));
@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch { /* ignore */ }
     }
     setSessions(next);
+    setHydrated(true);
   }, []);
 
   const userFor = useCallback((s: System) => sessions[s] ?? null, [sessions]);
