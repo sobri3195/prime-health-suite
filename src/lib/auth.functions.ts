@@ -42,15 +42,21 @@ export const getMyRoles = createServerFn({ method: "GET" })
     let dbRoles = ((data as string[] | null) ?? []).filter(Boolean);
 
     const email = (context.claims as { email?: string } | null)?.email ?? null;
-    if (dbRoles.length === 0 && email === DEMO_EMAIL) {
+    const lowerEmail = email?.toLowerCase() ?? null;
+    let seedRoles: readonly string[] | null = null;
+    if (dbRoles.length === 0 && lowerEmail) {
+      if (lowerEmail === DEMO_EMAIL) seedRoles = DEMO_DB_ROLES;
+      else if (DEMO_ROLE_MAP[lowerEmail]) seedRoles = DEMO_ROLE_MAP[lowerEmail];
+    }
+    if (seedRoles) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("user_roles")
         .upsert(
-          DEMO_DB_ROLES.map((role) => ({ user_id: context.userId, role: role as DbRole })),
+          seedRoles.map((role) => ({ user_id: context.userId, role: role as DbRole })),
           { onConflict: "user_id,role" },
         );
-      dbRoles = [...DEMO_DB_ROLES];
+      dbRoles = [...seedRoles];
     }
 
     const roles = Array.from(
