@@ -5,9 +5,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // has no roles yet, grant baseline operational roles so SIM / Finance work
 // without manual seeding. Non-demo users get only their real roles.
 const DEMO_EMAIL = "demo@prime.id";
-// DB app_role enum is SIM-Klinik-scoped. We map these to broader TS Role
-// values on the client (e.g. 'super_admin' covers all three systems).
 const DEMO_DB_ROLES = ["super_admin", "kasir", "pendaftaran"] as const;
+
+// Role-scoped demo accounts (one-click login per persona).
+// Each maps to DB roles that, after DB_TO_TS mapping below, give the right
+// access on SIM Klinik / Finance.
+const DEMO_ROLE_MAP: Record<string, readonly string[]> = {
+  "demo-kasir@prime.id": ["kasir"],
+  "demo-dokter@prime.id": ["dokter"],
+  "demo-manajemen@prime.id": ["manajemen", "super_admin"],
+};
 
 type DbRole =
   | "super_admin" | "admin_klinik" | "dokter" | "perawat" | "perawat_optometri"
@@ -35,15 +42,21 @@ export const getMyRoles = createServerFn({ method: "GET" })
     let dbRoles = ((data as string[] | null) ?? []).filter(Boolean);
 
     const email = (context.claims as { email?: string } | null)?.email ?? null;
-    if (dbRoles.length === 0 && email === DEMO_EMAIL) {
+    const lowerEmail = email?.toLowerCase() ?? null;
+    let seedRoles: readonly string[] | null = null;
+    if (dbRoles.length === 0 && lowerEmail) {
+      if (lowerEmail === DEMO_EMAIL) seedRoles = DEMO_DB_ROLES;
+      else if (DEMO_ROLE_MAP[lowerEmail]) seedRoles = DEMO_ROLE_MAP[lowerEmail];
+    }
+    if (seedRoles) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("user_roles")
         .upsert(
-          DEMO_DB_ROLES.map((role) => ({ user_id: context.userId, role: role as DbRole })),
+          seedRoles.map((role) => ({ user_id: context.userId, role: role as DbRole })),
           { onConflict: "user_id,role" },
         );
-      dbRoles = [...DEMO_DB_ROLES];
+      dbRoles = [...seedRoles];
     }
 
     const roles = Array.from(

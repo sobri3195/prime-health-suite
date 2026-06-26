@@ -4,6 +4,7 @@ import {
   Database, Clock, Lock, CheckCircle2, TrendingUp, FileBarChart, Activity,
 } from "lucide-react";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
+import { useAuth } from "@/lib/auth";
 
 const SITE = "https://prime-health-suite.lovable.app";
 
@@ -90,6 +91,8 @@ function Landing() {
             Lihat Alur Kerja
           </a>
         </div>
+
+        <LoginHub />
       </section>
 
       {/* Problem */}
@@ -406,3 +409,63 @@ function Landing() {
     </div>
   );
 }
+
+function LoginHub() {
+  const { userFor, hydrated } = useAuth();
+  return (
+    <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-left shadow-xl backdrop-blur">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+          Login Hub
+        </div>
+        <div className="text-[10px] text-slate-500">Sesi terpisah per sistem</div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {SYSTEMS.map(({ key, loginTo, icon: Icon }) => {
+          const b = BRAND[key];
+          const u = hydrated ? userFor(key) : null;
+          const homeTo = key === "sim-klinik" ? "/sim-klinik" : key === "finance" ? "/finance" : "/apps";
+          return (
+            <div key={key} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-md"
+                  style={{ background: `${b.accent}22`, color: b.accent }}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="text-sm font-semibold text-white">{b.shortName}</div>
+              </div>
+              {u ? (
+                <>
+                  <div className="mt-3 truncate text-[11px] text-emerald-400" title={u.email}>
+                    ● {u.email}
+                  </div>
+                  <Link
+                    to={homeTo}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-slate-950"
+                    style={{ background: b.accent }}
+                  >
+                    Buka <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="mt-3 text-[11px] text-slate-500">Belum masuk</div>
+                  <Link
+                    to={loginTo}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-slate-950"
+                    style={{ background: b.accent }}
+                  >
+                    Masuk <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+

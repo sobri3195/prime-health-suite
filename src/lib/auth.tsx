@@ -60,17 +60,13 @@ export type AuthUser = { id: string; name: string; email: string; role: Role };
 type Sessions = Partial<Record<System, AuthUser>>;
 
 type AuthState = {
-  /** User of the system implied by the current URL (or null). */
   user: AuthUser | null;
-  /** Current system inferred from the URL, or null on neutral routes. */
   currentSystem: System | null;
-  /** Is the user authenticated within the *current* system. */
   isAuthenticated: boolean;
-  /** Login into a specific system. Other systems remain untouched. */
+  /** True once the initial session hydration from storage has completed. */
+  hydrated: boolean;
   login: (system: System, email: string, role: Role, opts?: { remember?: boolean }) => void;
-  /** Logout from a specific system (defaults to currentSystem). */
   logout: (system?: System) => void;
-  /** Read session for a specific system (does not depend on URL). */
   userFor: (system: System) => AuthUser | null;
 };
 
@@ -88,15 +84,15 @@ function systemFromPath(pathname: string): System | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<Sessions>({});
+  const [hydrated, setHydrated] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const currentSystem = systemFromPath(pathname);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") { setHydrated(true); return; }
     const next: Sessions = {};
     for (const s of SYSTEMS) {
       try {
-        // Prefer persisted (localStorage), fall back to session-scoped.
         const raw =
           localStorage.getItem(SESSION_KEY(s)) ??
           sessionStorage.getItem(SESSION_KEY(s));
@@ -104,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch { /* ignore */ }
     }
     setSessions(next);
+    setHydrated(true);
   }, []);
 
   const userFor = useCallback((s: System) => sessions[s] ?? null, [sessions]);
@@ -158,10 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     currentSystem,
     isAuthenticated: !!user,
+    hydrated,
     login,
     logout,
     userFor,
-  }), [user, currentSystem, login, logout, userFor]);
+  }), [user, currentSystem, hydrated, login, logout, userFor]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

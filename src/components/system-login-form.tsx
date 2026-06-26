@@ -130,11 +130,10 @@ export function SystemLoginForm({
     }
   }
 
-  async function handleDemo() {
+  async function handleDemo(demoEmail = "demo@prime.id") {
     setLoading(true);
     setError(null);
     try {
-      const demoEmail = "demo@prime.id";
       const demoPass = "demo1234";
       setEmail(demoEmail);
       setPassword(demoPass);
@@ -158,6 +157,20 @@ export function SystemLoginForm({
       setLoading(false);
     }
   }
+
+  const DEMO_PERSONAS: Record<System, { label: string; email: string }[]> = {
+    apps: [{ label: "Demo Pasien", email: "demo@prime.id" }],
+    "sim-klinik": [
+      { label: "Demo Kasir", email: "demo-kasir@prime.id" },
+      { label: "Demo Dokter", email: "demo-dokter@prime.id" },
+      { label: "Demo Manajer", email: "demo-manajemen@prime.id" },
+    ],
+    finance: [
+      { label: "Demo Manajer", email: "demo-manajemen@prime.id" },
+      { label: "Demo Kasir", email: "demo-kasir@prime.id" },
+    ],
+  };
+  const personas = DEMO_PERSONAS[system];
 
   const heading =
     mode === "signup"
@@ -307,15 +320,26 @@ export function SystemLoginForm({
           )}
         </button>
 
-        {mode === "login" && !IS_PROD && (
-          <button
-            type="button"
-            onClick={handleDemo}
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
-          >
-            Masuk sebagai Demo (demo@prime.id)
-          </button>
+        {mode === "login" && !IS_PROD && personas.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-center text-[10px] uppercase tracking-widest opacity-50">
+              Akses cepat demo
+            </div>
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${personas.length}, minmax(0, 1fr))` }}>
+              {personas.map((p) => (
+                <button
+                  key={p.email}
+                  type="button"
+                  onClick={() => handleDemo(p.email)}
+                  disabled={loading}
+                  className="rounded-md border border-dashed border-amber-500/60 bg-amber-50 px-2 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+                  title={p.email}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </form>
 
