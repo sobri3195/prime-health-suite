@@ -73,8 +73,21 @@ type AuthState = {
 
 const Ctx = createContext<AuthState | null>(null);
 
-// Per-system session keys. Cleared on tab close.
+// Per-system session keys. Stored in cookies (Secure/SameSite=Lax), not localStorage.
+// Legacy localStorage/sessionStorage values are migrated on first read.
 const SESSION_KEY = (s: System) => `ph_session_${s}_v1`;
+
+function readLegacy(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = localStorage.getItem(key) ?? sessionStorage.getItem(key);
+    if (v) {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    }
+    return v;
+  } catch { return null; }
+}
 
 function systemFromPath(pathname: string): System | null {
   const seg = pathname.split("/").filter(Boolean)[0];
@@ -94,10 +107,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const next: Sessions = {};
     for (const s of SYSTEMS) {
       try {
-        const raw =
-          localStorage.getItem(SESSION_KEY(s)) ??
-          sessionStorage.getItem(SESSION_KEY(s));
-        if (raw) next[s] = JSON.parse(raw);
+        const key = SESSION_KEY(s);
+        const raw = secureStore.get(key) ?? readLegacy(key);
+        if (raw) {
+          next[s] = JSON.parse(raw);
+          // Re-persist legacy values as session cookies to clear localStorage.
+          if (!secureStore.get(key)) secureStore.set(key, raw, false);
+        }
       } catch { /* ignore */ }
     }
     setSessions(next);
@@ -117,14 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setSessions((prev) => ({ ...prev, [system]: u }));
       try {
-        const json = JSON.stringify(u);
-        if (opts?.remember) {
-          localStorage.setItem(SESSION_KEY(system), json);
-          sessionStorage.removeItem(SESSION_KEY(system));
-        } else {
-          sessionStorage.setItem(SESSION_KEY(system), json);
-          localStorage.removeItem(SESSION_KEY(system));
-        }
+        secureStore.set(SESSION_KEY(system), JSON.stringify(u), !!opts?.remember);
       } catch { /* ignore */ }
       addAudit({ actor: u.email, action: "login", target: `auth:${system}`, meta: { role } });
     },
@@ -141,10 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       delete n[target];
       return n;
     });
-    try {
-      sessionStorage.removeItem(SESSION_KEY(target));
-      localStorage.removeItem(SESSION_KEY(target));
-    } catch { /* ignore */ }
+    try { secureStore.remove(SESSION_KEY(target)); } catch { /* ignore */ }
   }, [sessions, currentSystem]);
 
   // For non-system paths (e.g. /qa), fall back to any existing session.
