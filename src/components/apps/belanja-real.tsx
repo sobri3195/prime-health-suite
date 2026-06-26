@@ -52,7 +52,7 @@ export function PatientBelanjaReal() {
             <h1 className="text-2xl font-bold">{t("shop.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t("shop.subtitle")}</p>
           </div>
-          <Link to="/apps/cart" className="relative rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] p-2.5" aria-label={t("cart.title")}>
+          <Link to="/apps/$section" params={{ section: "cart" }} className="relative rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] p-2.5" aria-label={t("cart.title")}>
             <ShoppingCart className="h-5 w-5 text-[#5a4a14]" />
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 rounded-full bg-[#6b5a16] px-1.5 text-[10px] font-bold text-white">{cartCount}</span>
@@ -131,7 +131,7 @@ export function PatientCart() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/apps/belanja" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+      <Link to="/apps/$section" params={{ section: "belanja" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground">
         <ArrowLeft className="h-4 w-4" /> {t("cart.back")}
       </Link>
       <h1 className="text-2xl font-bold">{t("cart.title")}</h1>
@@ -141,7 +141,7 @@ export function PatientCart() {
         <div className="space-y-3">
           <EmptyState title={t("cart.empty.title")} hint={t("cart.empty.hint")} />
           <div className="text-center">
-            <Link to="/apps/belanja" className="inline-block rounded-xl bg-[#6b5a16] px-4 py-2 text-xs font-semibold text-white">
+            <Link to="/apps/$section" params={{ section: "belanja" }} className="inline-block rounded-xl bg-[#6b5a16] px-4 py-2 text-xs font-semibold text-white">
               {t("cart.start_shopping")}
             </Link>
           </div>
@@ -174,7 +174,7 @@ export function PatientCart() {
               <div className="text-sm text-muted-foreground">{t("cart.total")}</div>
               <div className="text-xl font-bold">{fmt(total)}</div>
             </div>
-            <Link to="/apps/checkout"
+            <Link to="/apps/$section" params={{ section: "checkout" }}
               className="mt-3 block rounded-xl bg-[#6b5a16] py-3 text-center text-sm font-semibold text-white">
               {t("cart.checkout")}
             </Link>
@@ -202,7 +202,7 @@ export function PatientCheckout() {
       qc.invalidateQueries({ queryKey: ["apps", "cart"] });
       qc.invalidateQueries({ queryKey: ["apps", "orders"] });
       qc.invalidateQueries({ queryKey: ["apps", "poin"] });
-      navigate({ to: "/apps/orders" });
+      navigate({ to: "/apps/$section", params: { section: "orders" } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -212,7 +212,7 @@ export function PatientCheckout() {
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <Link to="/apps/cart" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+      <Link to="/apps/$section" params={{ section: "cart" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground">
         <ArrowLeft className="h-4 w-4" /> {t("checkout.back")}
       </Link>
       <h1 className="text-2xl font-bold">{t("checkout.title")}</h1>
@@ -223,7 +223,7 @@ export function PatientCheckout() {
         <div className="space-y-3">
           <EmptyState title={t("cart.empty.title")} hint={t("cart.empty.hint")} />
           <div className="text-center">
-            <Link to="/apps/belanja" className="inline-block rounded-xl bg-[#6b5a16] px-4 py-2 text-xs font-semibold text-white">
+            <Link to="/apps/$section" params={{ section: "belanja" }} className="inline-block rounded-xl bg-[#6b5a16] px-4 py-2 text-xs font-semibold text-white">
               {t("cart.start_shopping")}
             </Link>
           </div>
