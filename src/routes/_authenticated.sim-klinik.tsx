@@ -6,21 +6,24 @@ import { brandHead } from "@/lib/brand";
 import { useRoles, hasAnyRole } from "@/lib/rbac";
 import { findNav } from "@/lib/nav-config";
 import { Lock, ShieldAlert } from "lucide-react";
+import { LoginSkeleton } from "@/components/auth/login-skeleton";
 
 function Layout() {
-  const { userFor } = useAuth();
+  const { userFor, hydrated } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = userFor("sim-klinik");
   const { data: roles, isLoading: rolesLoading, fetchStatus } = useRoles({ enabled: user?.role === "admin_klinik" || user?.role === "super_admin" });
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user || !canAccess(user.role, "sim-klinik")) {
       navigate({ to: "/sim-klinik/login", search: { redirect: pathname }, replace: true });
     }
-  }, [user, navigate, pathname]);
+  }, [hydrated, user, navigate, pathname]);
 
-  if (!user || !canAccess(user.role, "sim-klinik")) return null;
+  if (!hydrated) return <LoginSkeleton system="sim-klinik" />;
+  if (!user || !canAccess(user.role, "sim-klinik")) return <LoginSkeleton system="sim-klinik" />;
 
   const slug = pathname.split("/").slice(3).join("/") || "";
   const meta = findNav("sim-klinik", slug);
