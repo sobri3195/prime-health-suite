@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { brandHead } from "@/lib/brand";
+import { LoginSkeleton } from "@/components/auth/login-skeleton";
 
 function Layout() {
   const navigate = useNavigate();
