@@ -116,7 +116,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -126,16 +126,17 @@ export function DataTable<T>({
                 return (
                   <TableHead
                     key={c.key}
+                    aria-sort={isSorted ? (sort?.dir === "asc" ? "ascending" : "descending") : undefined}
                     className={`${c.className ?? ""} ${c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : ""}`}
                   >
                     {c.sortable ? (
                       <button
                         type="button"
                         onClick={() => toggleSort(c.key)}
-                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        className="inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                       >
                         {c.header}
-                        <Icon className="h-3 w-3 opacity-60" />
+                        <Icon className="h-3 w-3 opacity-60" aria-hidden="true" />
                       </button>
                     ) : (
                       c.header

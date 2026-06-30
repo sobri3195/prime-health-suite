@@ -6,6 +6,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      // z-[100] sits above shadcn Dialog (z-50) and Sheet overlays so toasts
+      // remain visible even when a modal is open.
+      style={{ zIndex: 100 } as React.CSSProperties}
       toastOptions={{
         classNames: {
           toast:
