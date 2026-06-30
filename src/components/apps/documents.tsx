@@ -162,9 +162,20 @@ export function DocumentsPage() {
         <input
           ref={fileRef}
           type="file"
+          accept={ALLOWED_MIME.join(",")}
           className="hidden"
-          onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            if (f) {
+              if (f.size === 0) { toast.error("File kosong (0 byte)"); e.target.value = ""; return; }
+              if (f.size > MAX_BYTES) { toast.error(`Maks ${formatBytes(MAX_BYTES)}`); e.target.value = ""; return; }
+              const mime = f.type || "application/octet-stream";
+              if (!ALLOWED_MIME.includes(mime)) { toast.error(`Tipe tidak didukung: ${mime}`); e.target.value = ""; return; }
+            }
+            setPendingFile(f);
+          }}
         />
+
       </div>
 
       {pendingFile && (
