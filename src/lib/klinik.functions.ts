@@ -6,6 +6,13 @@ import { appendAuditRow } from "@/lib/clinic.functions";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = any;
 
+function clinicInvoiceNo(date = new Date()) {
+  const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+  const hms = `${String(date.getHours()).padStart(2, "0")}${String(date.getMinutes()).padStart(2, "0")}${String(date.getSeconds()).padStart(2, "0")}`;
+  const suffix = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `INV-${ymd}-${hms}-${suffix}`;
+}
+
 /* =============================================================
  * PASIEN
  * ============================================================*/
@@ -524,21 +531,32 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     const total = Math.max(0, subtotal - Number(data.discount));
     const status = data.paid_amount >= total ? "paid" : data.paid_amount > 0 ? "partial" : "unpaid";
     const now = new Date();
-    const noInv = `INV-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*9000+1000)}`;
-    const { data: inv, error: ie } = await sb.from("fin_invoice").insert({
-      no_invoice: noInv, tanggal: now.toISOString().slice(0,10),
-      patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
-      patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
-      subtotal, pajak: 0, total, status,
-      catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
-    }).select("*").single();
-    if (ie) throw ie;
+    let inv: any = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data: invoice, error: ie } = await sb.from("fin_invoice").insert({
+        no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
+        patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
+        patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
+        subtotal, pajak: 0, total, status,
+        catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
+      }).select("*").single();
+      if (!ie) {
+        inv = invoice;
+        break;
+      }
+      if (ie.code !== "23505" || attempt === 2) throw ie;
+    }
+    if (!inv) throw new Error("Gagal membuat invoice unik");
     // items
     if (data.items.length) {
-      await sb.from("fin_invoice_item").insert(data.items.map((it) => ({
+      const { error: itemError } = await sb.from("fin_invoice_item").insert(data.items.map((it) => ({
         invoice_id: inv.id, layanan_id: it.layanan_id ?? null,
-        deskripsi: it.description, qty: it.quantity, harga_satuan: it.unit_price, subtotal: it.quantity * it.unit_price,
+        layanan_nama: it.description, qty: it.quantity, tarif: it.unit_price, subtotal: it.quantity * it.unit_price,
       })));
+      if (itemError) {
+        await sb.from("fin_invoice").delete().eq("id", inv.id);
+        throw itemError;
+      }
     }
     // update visit
     const payStatus = status === "paid" ? "paid" : status === "partial" ? "partial" : "unpaid";

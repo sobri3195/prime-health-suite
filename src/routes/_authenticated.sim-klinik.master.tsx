@@ -81,10 +81,10 @@ const TABS: Tab[] = [
     key: "obat",
     label: "Obat / Farmasi",
     table: "klinik_obat",
-    select: "id,code,name,satuan,stock,harga_jual,is_active",
+    select: "id,code,name,unit,stock,price,is_active",
     map: (r) => ({
       id: r.id, code: r.code ?? "-", name: r.name,
-      meta: `Stok ${r.stock ?? 0} ${r.satuan ?? ""} • Rp ${Number(r.harga_jual ?? 0).toLocaleString("id-ID")}`,
+      meta: `Stok ${r.stock ?? 0} ${r.unit ?? ""} • Rp ${Number(r.price ?? 0).toLocaleString("id-ID")}`,
       status: r.is_active ? "Aktif" : "Nonaktif",
     }),
   },
