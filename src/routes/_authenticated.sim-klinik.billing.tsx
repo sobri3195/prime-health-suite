@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling } from "@/lib/klinik.functions";
+import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling, addInvoicePayment } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
