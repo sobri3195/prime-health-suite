@@ -187,7 +187,8 @@ function DiklatAdminPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => { if (confirm("Hapus diklat ini?")) delMut.mutate(r.id); }}
+                        aria-label="Hapus diklat"
+                        onClick={() => setDelId(r.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
