@@ -689,7 +689,7 @@ export const toggleUserActive = createServerFn({ method: "POST" })
       ban_duration: data.active ? "none" : "876000h",
     });
     if (error) throw error;
-    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: data.active ? "activate_user" : "deactivate_user", target: data.user_id, meta: null });
+    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: data.active ? "activate_user" : "deactivate_user", target: data.user_id, meta: undefined });
     return { ok: true };
   });
 
