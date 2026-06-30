@@ -22,6 +22,7 @@ async def main():
 
         async def handler(route):
             if is_list_dokter(route.request.url):
+                print("INTERCEPT", route.request.url[:80])
                 # Probe real shape once
                 # Fulfill with a TSS-shaped envelope wrapping an empty array.
                 # Shape mirrors observed: {t:10, i:0, p:{k:[result,error,context], v:[{t:9,a:[]}, {t:3}, {t:3}]}}
