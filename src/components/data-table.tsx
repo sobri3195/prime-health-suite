@@ -186,11 +186,11 @@ export function DataTable<T>({
         </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="outline" className="h-7 w-7" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+            <Button size="icon" variant="outline" className="h-7 w-7" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} aria-label="Halaman sebelumnya">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-2">Hal. {safePage} / {totalPages}</span>
-            <Button size="icon" variant="outline" className="h-7 w-7" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
+            <span className="px-2" aria-live="polite">Hal. {safePage} / {totalPages}</span>
+            <Button size="icon" variant="outline" className="h-7 w-7" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)} aria-label="Halaman berikutnya">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

@@ -167,8 +167,8 @@ function PendapatanPage() {
                     {canEdit && r.status !== "void" && r.status !== "refunded" && (
                       <>
                         <Button size="sm" variant="ghost" onClick={() => setPayFor(r)} title="Tambah pembayaran"><Receipt className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => setVoidFor(r)}><Ban className="h-4 w-4 text-rose-500" /></Button>
+                        <Button size="icon" aria-label="Edit" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="icon" aria-label="Batalkan" variant="ghost" onClick={() => setVoidFor(r)}><Ban className="h-4 w-4 text-rose-500" /></Button>
                       </>
                     )}
                   </div>
@@ -269,7 +269,7 @@ function PendapatanPage() {
                         <TableCell><Input type="number" className="h-8 text-right" value={it.tarif} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, tarif: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
                         <TableCell><Input type="number" className="h-8 text-right" value={it.qty} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, qty: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
                         <TableCell className="text-right font-mono text-xs">{fmt(it.tarif * it.qty)}</TableCell>
-                        <TableCell><Button size="icon" variant="ghost" onClick={() => setEditing({ ...editing, items: editing.items.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-3 w-3" /></Button></TableCell>
+                        <TableCell><Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setEditing({ ...editing, items: editing.items.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-3 w-3" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -340,7 +340,7 @@ function PendapatanPage() {
                   <Table><TableHeader><TableRow><TableHead>Tanggal</TableHead><TableHead>Metode</TableHead><TableHead className="text-right">Jumlah</TableHead><TableHead></TableHead></TableRow></TableHeader>
                     <TableBody>{detail.payments.map((p: any) => (
                       <TableRow key={p.id}><TableCell>{p.tanggal}</TableCell><TableCell>{p.metode}{p.bank ? ` / ${p.bank}` : ""}</TableCell><TableCell className="text-right">{fmt(p.jumlah)}</TableCell><TableCell>
-                        {canEdit && <Button size="icon" variant="ghost" onClick={() => { if (confirm("Hapus pembayaran?")) delPay({ data: { id: p.id } }).then(() => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); setDetail(null); toast.success("Pembayaran dihapus"); }); }}><Trash2 className="h-3 w-3" /></Button>}
+                        {canEdit && <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => { if (confirm("Hapus pembayaran?")) delPay({ data: { id: p.id } }).then(() => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); setDetail(null); toast.success("Pembayaran dihapus"); }); }}><Trash2 className="h-3 w-3" /></Button>}
                       </TableCell></TableRow>
                     ))}</TableBody>
                   </Table>
