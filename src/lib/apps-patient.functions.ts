@@ -84,10 +84,15 @@ export const createBooking = createServerFn({ method: "POST" })
     const today = new Date().toISOString().slice(0, 10);
     if (data.tanggal < today) throw new Error("Tanggal booking tidak boleh di masa lalu");
 
+    // Resolve patient row (auto-created by handle_new_apps_user trigger).
+    const { data: pas } = await supabase
+      .from("apps_pasien").select("id").eq("user_id", userId).maybeSingle();
+
     const { data: row, error } = await supabase
       .from("apps_booking")
       .insert({
         user_id: userId,
+        pasien_id: pas?.id ?? null,
         dokter_id: data.dokter_id,
         dokter_nama: data.dokter_nama,
         tanggal: data.tanggal,
