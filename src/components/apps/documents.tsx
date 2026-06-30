@@ -39,13 +39,26 @@ function formatBytes(n: number) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+const ALLOWED_MIME = [
+  "application/pdf",
+  "image/jpeg", "image/png", "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain", "text/csv",
+];
+
 export function DocumentsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
+
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["clinic_document"],
@@ -73,21 +86,27 @@ export function DocumentsPage() {
     mutationFn: async () => {
       if (!pendingFile) throw new Error("Pilih file dulu");
       if (!meta.title.trim()) throw new Error("Judul wajib diisi");
+      if (pendingFile.size === 0) throw new Error("File kosong (0 byte) — pilih file lain");
+      if (pendingFile.size > MAX_BYTES) throw new Error(`Ukuran melebihi batas ${formatBytes(MAX_BYTES)}`);
+      const mime = pendingFile.type || "application/octet-stream";
+      if (!ALLOWED_MIME.includes(mime)) throw new Error(`Tipe file tidak didukung: ${mime}`);
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
       if (!uid) throw new Error("Tidak ada sesi");
       const path = `${uid}/${Date.now()}-${pendingFile.name.replace(/[^\w.\-]/g, "_")}`;
+      setProgress(10);
       const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, {
-        contentType: pendingFile.type || "application/octet-stream",
+        contentType: mime,
         upsert: false,
       });
       if (up.error) throw up.error;
+      setProgress(75);
       const { error } = await supabase.from("clinic_document").insert({
         patient_code: meta.patient_code || "-",
         patient_name: meta.patient_name || "Internal",
         doc_type: meta.doc_type,
         title: meta.title.trim(),
-        mime: pendingFile.type || "application/octet-stream",
+        mime,
         size_bytes: pendingFile.size,
         storage_path: path,
         uploaded_by: uid,
@@ -97,16 +116,19 @@ export function DocumentsPage() {
         await supabase.storage.from(BUCKET).remove([path]);
         throw error;
       }
+      setProgress(100);
     },
     onSuccess: () => {
       toast.success("Dokumen terupload");
       setPendingFile(null);
+      setProgress(0);
       setMeta({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Gagal upload"),
+    onError: (e: any) => { setProgress(0); toast.error(e?.message ?? "Gagal upload"); },
   });
+
 
   const onDownload = async (row: DocRow) => {
     if (!row.storage_path) return;
@@ -140,9 +162,20 @@ export function DocumentsPage() {
         <input
           ref={fileRef}
           type="file"
+          accept={ALLOWED_MIME.join(",")}
           className="hidden"
-          onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            if (f) {
+              if (f.size === 0) { toast.error("File kosong (0 byte)"); e.target.value = ""; return; }
+              if (f.size > MAX_BYTES) { toast.error(`Maks ${formatBytes(MAX_BYTES)}`); e.target.value = ""; return; }
+              const mime = f.type || "application/octet-stream";
+              if (!ALLOWED_MIME.includes(mime)) { toast.error(`Tipe tidak didukung: ${mime}`); e.target.value = ""; return; }
+            }
+            setPendingFile(f);
+          }}
         />
+
       </div>
 
       {pendingFile && (
@@ -182,8 +215,14 @@ export function DocumentsPage() {
               onClick={() => upload.mutate()}
               className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground disabled:opacity-60"
             >
-              <Upload className="h-4 w-4" /> {upload.isPending ? "Mengupload…" : "Upload"}
+              <Upload className="h-4 w-4" /> {upload.isPending ? `Mengupload… ${progress}%` : "Upload"}
             </button>
+          {upload.isPending && (
+            <div className="h-2 w-full overflow-hidden rounded bg-muted">
+              <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          )}
+
             <button
               onClick={() => {
                 setPendingFile(null);
