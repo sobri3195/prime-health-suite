@@ -72,3 +72,42 @@ async def rewrite_dokter_empty(ctx: BrowserContext, page: Page):
         return await route.fulfill(response=resp, body=new_body)
     await page.route("**/_serverFn/**", handler)
     return handler
+
+
+# ---------- Debugging attachments (screenshots + console + DOM) ----------
+
+def attach_console(page: Page, sink: list[str]) -> None:
+    """Collect console + pageerror messages into `sink`."""
+    page.on("console", lambda m: sink.append(f"[{m.type}] {m.text}"))
+    page.on("pageerror", lambda e: sink.append(f"[pageerror] {e}"))
+    page.on("requestfailed", lambda r: sink.append(f"[reqfail] {r.url} :: {r.failure}"))
+
+
+async def snap(page: Page, out_dir, label: str) -> None:
+    """Best-effort screenshot at an assert/action point. Never raises."""
+    try:
+        from pathlib import Path as _P
+        d = _P(out_dir); d.mkdir(parents=True, exist_ok=True)
+        await page.screenshot(path=str(d / f"{label}.png"))
+    except Exception as e:
+        print(f"[snap-fail:{label}] {e}")
+
+
+async def dump_failure(page: Page, out_dir, console_sink: list[str], label: str = "FAILURE") -> None:
+    """On test failure: screenshot + DOM + console log dump."""
+    from pathlib import Path as _P
+    d = _P(out_dir); d.mkdir(parents=True, exist_ok=True)
+    try:
+        await page.screenshot(path=str(d / f"{label}.png"))
+    except Exception as e:
+        print(f"[dump-screenshot-fail] {e}")
+    try:
+        html = await page.content()
+        (d / f"{label}.html").write_text(html)
+    except Exception as e:
+        print(f"[dump-html-fail] {e}")
+    try:
+        (d / f"{label}.console.log").write_text("\n".join(console_sink))
+    except Exception as e:
+        print(f"[dump-console-fail] {e}")
+    print(f"[failure-artifacts] dir={d}")
