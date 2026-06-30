@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PhoneCall, PlayCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listQueueToday, updateQueueStatus } from "@/lib/klinik.functions";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/antrian")({ component: AntrianPage });
 
@@ -29,8 +30,9 @@ function AntrianPage() {
   const listQ = useQuery({
     queryKey: ["klinik","queue",date,status],
     queryFn: () => callList({ data: { date, status: status === "all" ? undefined : status } }),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
+  useRealtimeSubscription(["klinik_queue", "klinik_visit"], [["klinik", "queue", date, status]]);
 
   const updM = useMutation({
     mutationFn: (v: { id: string; status: "waiting"|"called"|"in_service"|"done"|"cancelled" }) => callUpd({ data: v }),

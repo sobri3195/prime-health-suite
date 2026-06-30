@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription } from "@/lib/klinik.functions";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({ component: PemeriksaanPage });
 
@@ -37,6 +38,12 @@ function PemeriksaanPage() {
 
   const visitsQ = useQuery({ queryKey: ["klinik","visits",today], queryFn: () => callVisits({ data: { date: today } }) });
   const detailQ = useQuery({ queryKey: ["klinik","visit-detail",selVisit], queryFn: () => callDetail({ data: { id: selVisit! } }), enabled: !!selVisit });
+  useRealtimeSubscription(
+    ["klinik_visit", "klinik_medical_record", "klinik_prescription"],
+    selVisit
+      ? [["klinik", "visits", today], ["klinik", "visit-detail", selVisit]]
+      : [["klinik", "visits", today]],
+  );
 
   type FormType = {
     visit_id: string; pasien_id: string; dokter_id: string | null;
