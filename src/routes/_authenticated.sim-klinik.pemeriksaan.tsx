@@ -113,7 +113,18 @@ function PemeriksaanPage() {
         </Card>
 
         <Card className="p-4">
-          {!form ? <p className="text-sm text-muted-foreground">Pilih pasien di samping untuk mulai pemeriksaan.</p>
+          {selVisit && (detailQ.isLoading || detailQ.isFetching) && !form ? (
+            <div className="space-y-3" aria-busy="true" aria-live="polite">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-9 w-full" />
+              <div className="grid grid-cols-4 gap-2">
+                <Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" />
+              </div>
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-2/3" />
+            </div>
+          ) : !form ? <p className="text-sm text-muted-foreground">Pilih pasien di samping untuk mulai pemeriksaan.</p>
             : (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
