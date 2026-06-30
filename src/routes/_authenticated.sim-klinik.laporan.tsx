@@ -38,7 +38,9 @@ function LaporanPage() {
   const trend = data?.trend ?? [];
   const doctors = data?.doctors ?? [];
   const invoices = data?.invoices ?? [];
+  const payers = (data as { payers?: Array<{ name: string; count: number; revenue: number }> } | undefined)?.payers ?? [];
   const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0 };
+
 
   const invoiceCols: Column<{ tanggal: string; patient_code: string; patient_name: string | null; total: number }>[] = useMemo(() => [
     { key: "tanggal", header: "Tanggal" },
