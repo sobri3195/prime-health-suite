@@ -51,7 +51,8 @@ export function AuditLogPage() {
         <EmptyState title="Tidak ada catatan audit" />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-surface-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Waktu</th><th className="px-4 py-3">User</th>
