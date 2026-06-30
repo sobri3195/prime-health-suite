@@ -119,9 +119,9 @@ function PasienPage() {
                   <TableCell><Badge variant="secondary">{p.patient_type}</Badge></TableCell>
                   <TableCell>{p.is_active ? <Badge className="bg-emerald-500/15 text-emerald-600">Aktif</Badge> : <Badge variant="destructive">Nonaktif</Badge>}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => setDetail(p)}><Eye className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => setEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm(`${p.is_active ? "Nonaktifkan" : "Aktifkan"} pasien ${p.nama}?`)) deactM.mutate(p); }}><Power className="h-4 w-4" /></Button>
+                    <Button size="icon" aria-label="Lihat detail" variant="ghost" onClick={() => setDetail(p)}><Eye className="h-4 w-4" /></Button>
+                    <Button size="icon" aria-label="Edit pasien" variant="ghost" onClick={() => { setErrors({}); setEdit(p); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" aria-label={p.is_active ? "Nonaktifkan pasien" : "Aktifkan pasien"} variant="ghost" onClick={() => setConfirmDeact(p)}><Power className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
