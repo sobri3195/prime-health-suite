@@ -12,7 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, Plus, Pencil, Eye, Download, Power } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { listPasien, upsertPasien, deactivatePasien, getPasien } from "@/lib/klinik.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({ component: PasienPage });
 
