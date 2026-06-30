@@ -48,6 +48,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "antrian", label: "Antrian", icon: ListChecks, roles: ["super_admin","admin_klinik","pendaftaran","dokter","perawat","perawat_optometri","kasir"] },
     { slug: "jadwal", label: "Jadwal Dokter", icon: Calendar, roles: ["super_admin","admin_klinik","pendaftaran","manajemen"] },
     { slug: "pemeriksaan", label: "Pemeriksaan & Rekam Medis", icon: ClipboardList, roles: ["super_admin","admin_klinik","dokter","perawat","perawat_optometri"] },
+    { slug: "tindakan", label: "Tindakan", icon: Activity, roles: ["super_admin","admin_klinik","dokter","perawat","perawat_optometri","kasir","manajemen"] },
     { slug: "resep", label: "Resep & Farmasi", icon: Pill, roles: ["super_admin","admin_klinik","dokter","farmasi"] },
     { slug: "obat", label: "Stok Obat", icon: Boxes, roles: ["super_admin","admin_klinik","farmasi","manajemen"] },
     { slug: "billing", label: "Kasir & Billing", icon: Receipt, roles: ["super_admin","admin_klinik","kasir","manajemen"] },
