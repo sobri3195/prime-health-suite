@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pill, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({ component: ResepPage });
 
