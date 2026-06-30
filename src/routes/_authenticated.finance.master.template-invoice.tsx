@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { listTplInvoice, upsertTplInvoice, deleteTplInvoice } from "@/lib/finance-template.functions";
 import { useFinanceAccess } from "@/lib/finance-access";
 
-export const Route = createFileRoute("/_authenticated/finance/master-template-invoice")({
+export const Route = createFileRoute("/_authenticated/finance/master/template-invoice")({
   component: TplInvoicePage,
 });
 

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
 
-export const Route = createFileRoute("/_authenticated/finance/master-kategori-layanan")({
+export const Route = createFileRoute("/_authenticated/finance/master/kategori-layanan")({
   component: () => (
     <MasterCrudPage
       title="Kategori Layanan"

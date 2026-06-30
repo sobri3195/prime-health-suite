@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { listMdrRule, upsertMdrRule, deleteMdrRule } from "@/lib/finance-template.functions";
 import { useFinanceAccess } from "@/lib/finance-access";
 
-export const Route = createFileRoute("/_authenticated/finance/master-mdr")({
+export const Route = createFileRoute("/_authenticated/finance/master/mdr")({
   component: MasterMdrPage,
 });
 

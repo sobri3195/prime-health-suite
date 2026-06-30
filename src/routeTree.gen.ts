@@ -117,6 +117,7 @@ import { Route as AuthenticatedFinanceSectionRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppsNotifikasiRouteImport } from './routes/_authenticated.apps.notifikasi'
 import { Route as AuthenticatedAppsBookingRouteImport } from './routes/_authenticated.apps.booking'
 import { Route as AuthenticatedAppsSectionRouteImport } from './routes/_authenticated.apps.$section'
+import { Route as AuthenticatedFinanceMasterIndexRouteImport } from './routes/_authenticated.finance.master.index'
 import { Route as AuthenticatedAppsEdukasiSlugRouteImport } from './routes/_authenticated.apps.edukasi.$slug'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -746,6 +747,12 @@ const AuthenticatedAppsSectionRoute =
     path: '/$section',
     getParentRoute: () => AuthenticatedAppsRoute,
   } as any)
+const AuthenticatedFinanceMasterIndexRoute =
+  AuthenticatedFinanceMasterIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFinanceMasterRoute,
+  } as any)
 const AuthenticatedAppsEdukasiSlugRoute =
   AuthenticatedAppsEdukasiSlugRouteImport.update({
     id: '/edukasi/$slug',
@@ -796,19 +803,19 @@ export interface FileRoutesByFullPath {
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
-  '/finance/master': typeof AuthenticatedFinanceMasterRoute
-  '/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
-  '/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
-  '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
-  '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
-  '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
-  '/finance/master-mdr': typeof AuthenticatedFinanceMasterMdrRoute
-  '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
-  '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
-  '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
-  '/finance/master-template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
-  '/finance/master-template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
-  '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
+  '/finance/master': typeof AuthenticatedFinanceMasterRouteWithChildren
+  '/finance/master/coa': typeof AuthenticatedFinanceMasterCoaRoute
+  '/finance/master/cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
+  '/finance/master/dokter': typeof AuthenticatedFinanceMasterDokterRoute
+  '/finance/master/karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
+  '/finance/master/kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master/mdr': typeof AuthenticatedFinanceMasterMdrRoute
+  '/finance/master/payer': typeof AuthenticatedFinanceMasterPayerRoute
+  '/finance/master/profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  '/finance/master/tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master/template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  '/finance/master/template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
+  '/finance/master/vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pajak-pph-honor': typeof AuthenticatedFinancePajakPphHonorRoute
@@ -862,6 +869,7 @@ export interface FileRoutesByFullPath {
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
   '/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
+  '/finance/master/': typeof AuthenticatedFinanceMasterIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -903,19 +911,18 @@ export interface FileRoutesByTo {
   '/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
-  '/finance/master': typeof AuthenticatedFinanceMasterRoute
-  '/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
-  '/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
-  '/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
-  '/finance/master-karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
-  '/finance/master-kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
-  '/finance/master-mdr': typeof AuthenticatedFinanceMasterMdrRoute
-  '/finance/master-payer': typeof AuthenticatedFinanceMasterPayerRoute
-  '/finance/master-profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
-  '/finance/master-tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
-  '/finance/master-template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
-  '/finance/master-template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
-  '/finance/master-vendor': typeof AuthenticatedFinanceMasterVendorRoute
+  '/finance/master/coa': typeof AuthenticatedFinanceMasterCoaRoute
+  '/finance/master/cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
+  '/finance/master/dokter': typeof AuthenticatedFinanceMasterDokterRoute
+  '/finance/master/karyawan': typeof AuthenticatedFinanceMasterKaryawanRoute
+  '/finance/master/kategori-layanan': typeof AuthenticatedFinanceMasterKategoriLayananRoute
+  '/finance/master/mdr': typeof AuthenticatedFinanceMasterMdrRoute
+  '/finance/master/payer': typeof AuthenticatedFinanceMasterPayerRoute
+  '/finance/master/profil-klinik': typeof AuthenticatedFinanceMasterProfilKlinikRoute
+  '/finance/master/tarif-pajak': typeof AuthenticatedFinanceMasterTarifPajakRoute
+  '/finance/master/template-invoice': typeof AuthenticatedFinanceMasterTemplateInvoiceRoute
+  '/finance/master/template-voucher': typeof AuthenticatedFinanceMasterTemplateVoucherRoute
+  '/finance/master/vendor': typeof AuthenticatedFinanceMasterVendorRoute
   '/finance/neraca': typeof AuthenticatedFinanceNeracaRoute
   '/finance/pajak': typeof AuthenticatedFinancePajakRoute
   '/finance/pajak-pph-honor': typeof AuthenticatedFinancePajakPphHonorRoute
@@ -969,6 +976,7 @@ export interface FileRoutesByTo {
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/sim-klinik': typeof AuthenticatedSimKlinikIndexRoute
   '/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
+  '/finance/master': typeof AuthenticatedFinanceMasterIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1015,7 +1023,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/laba-rugi': typeof AuthenticatedFinanceLabaRugiRoute
   '/_authenticated/finance/laba-rugi-payer': typeof AuthenticatedFinanceLabaRugiPayerRoute
   '/_authenticated/finance/laporan': typeof AuthenticatedFinanceLaporanRoute
-  '/_authenticated/finance/master': typeof AuthenticatedFinanceMasterRoute
+  '/_authenticated/finance/master': typeof AuthenticatedFinanceMasterRouteWithChildren
   '/_authenticated/finance/master-coa': typeof AuthenticatedFinanceMasterCoaRoute
   '/_authenticated/finance/master-cost-center': typeof AuthenticatedFinanceMasterCostCenterRoute
   '/_authenticated/finance/master-dokter': typeof AuthenticatedFinanceMasterDokterRoute
@@ -1081,6 +1089,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/sim-klinik/': typeof AuthenticatedSimKlinikIndexRoute
   '/_authenticated/apps/edukasi/$slug': typeof AuthenticatedAppsEdukasiSlugRoute
+  '/_authenticated/finance/master/': typeof AuthenticatedFinanceMasterIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1128,18 +1137,18 @@ export interface FileRouteTypes {
     | '/finance/laba-rugi-payer'
     | '/finance/laporan'
     | '/finance/master'
-    | '/finance/master-coa'
-    | '/finance/master-cost-center'
-    | '/finance/master-dokter'
-    | '/finance/master-karyawan'
-    | '/finance/master-kategori-layanan'
-    | '/finance/master-mdr'
-    | '/finance/master-payer'
-    | '/finance/master-profil-klinik'
-    | '/finance/master-tarif-pajak'
-    | '/finance/master-template-invoice'
-    | '/finance/master-template-voucher'
-    | '/finance/master-vendor'
+    | '/finance/master/coa'
+    | '/finance/master/cost-center'
+    | '/finance/master/dokter'
+    | '/finance/master/karyawan'
+    | '/finance/master/kategori-layanan'
+    | '/finance/master/mdr'
+    | '/finance/master/payer'
+    | '/finance/master/profil-klinik'
+    | '/finance/master/tarif-pajak'
+    | '/finance/master/template-invoice'
+    | '/finance/master/template-voucher'
+    | '/finance/master/vendor'
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pajak-pph-honor'
@@ -1193,6 +1202,7 @@ export interface FileRouteTypes {
     | '/finance/'
     | '/sim-klinik/'
     | '/apps/edukasi/$slug'
+    | '/finance/master/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1234,19 +1244,18 @@ export interface FileRouteTypes {
     | '/finance/laba-rugi'
     | '/finance/laba-rugi-payer'
     | '/finance/laporan'
-    | '/finance/master'
-    | '/finance/master-coa'
-    | '/finance/master-cost-center'
-    | '/finance/master-dokter'
-    | '/finance/master-karyawan'
-    | '/finance/master-kategori-layanan'
-    | '/finance/master-mdr'
-    | '/finance/master-payer'
-    | '/finance/master-profil-klinik'
-    | '/finance/master-tarif-pajak'
-    | '/finance/master-template-invoice'
-    | '/finance/master-template-voucher'
-    | '/finance/master-vendor'
+    | '/finance/master/coa'
+    | '/finance/master/cost-center'
+    | '/finance/master/dokter'
+    | '/finance/master/karyawan'
+    | '/finance/master/kategori-layanan'
+    | '/finance/master/mdr'
+    | '/finance/master/payer'
+    | '/finance/master/profil-klinik'
+    | '/finance/master/tarif-pajak'
+    | '/finance/master/template-invoice'
+    | '/finance/master/template-voucher'
+    | '/finance/master/vendor'
     | '/finance/neraca'
     | '/finance/pajak'
     | '/finance/pajak-pph-honor'
@@ -1300,6 +1309,7 @@ export interface FileRouteTypes {
     | '/finance'
     | '/sim-klinik'
     | '/apps/edukasi/$slug'
+    | '/finance/master'
   id:
     | '__root__'
     | '/'
@@ -1411,6 +1421,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/'
     | '/_authenticated/sim-klinik/'
     | '/_authenticated/apps/edukasi/$slug'
+    | '/_authenticated/finance/master/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1931,84 +1942,84 @@ declare module '@tanstack/react-router' {
     '/_authenticated/finance/master-vendor': {
       id: '/_authenticated/finance/master-vendor'
       path: '/master-vendor'
-      fullPath: '/finance/master-vendor'
+      fullPath: '/finance/master/vendor'
       preLoaderRoute: typeof AuthenticatedFinanceMasterVendorRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-template-voucher': {
       id: '/_authenticated/finance/master-template-voucher'
       path: '/master-template-voucher'
-      fullPath: '/finance/master-template-voucher'
+      fullPath: '/finance/master/template-voucher'
       preLoaderRoute: typeof AuthenticatedFinanceMasterTemplateVoucherRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-template-invoice': {
       id: '/_authenticated/finance/master-template-invoice'
       path: '/master-template-invoice'
-      fullPath: '/finance/master-template-invoice'
+      fullPath: '/finance/master/template-invoice'
       preLoaderRoute: typeof AuthenticatedFinanceMasterTemplateInvoiceRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-tarif-pajak': {
       id: '/_authenticated/finance/master-tarif-pajak'
       path: '/master-tarif-pajak'
-      fullPath: '/finance/master-tarif-pajak'
+      fullPath: '/finance/master/tarif-pajak'
       preLoaderRoute: typeof AuthenticatedFinanceMasterTarifPajakRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-profil-klinik': {
       id: '/_authenticated/finance/master-profil-klinik'
       path: '/master-profil-klinik'
-      fullPath: '/finance/master-profil-klinik'
+      fullPath: '/finance/master/profil-klinik'
       preLoaderRoute: typeof AuthenticatedFinanceMasterProfilKlinikRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-payer': {
       id: '/_authenticated/finance/master-payer'
       path: '/master-payer'
-      fullPath: '/finance/master-payer'
+      fullPath: '/finance/master/payer'
       preLoaderRoute: typeof AuthenticatedFinanceMasterPayerRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-mdr': {
       id: '/_authenticated/finance/master-mdr'
       path: '/master-mdr'
-      fullPath: '/finance/master-mdr'
+      fullPath: '/finance/master/mdr'
       preLoaderRoute: typeof AuthenticatedFinanceMasterMdrRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-kategori-layanan': {
       id: '/_authenticated/finance/master-kategori-layanan'
       path: '/master-kategori-layanan'
-      fullPath: '/finance/master-kategori-layanan'
+      fullPath: '/finance/master/kategori-layanan'
       preLoaderRoute: typeof AuthenticatedFinanceMasterKategoriLayananRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-karyawan': {
       id: '/_authenticated/finance/master-karyawan'
       path: '/master-karyawan'
-      fullPath: '/finance/master-karyawan'
+      fullPath: '/finance/master/karyawan'
       preLoaderRoute: typeof AuthenticatedFinanceMasterKaryawanRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-dokter': {
       id: '/_authenticated/finance/master-dokter'
       path: '/master-dokter'
-      fullPath: '/finance/master-dokter'
+      fullPath: '/finance/master/dokter'
       preLoaderRoute: typeof AuthenticatedFinanceMasterDokterRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-cost-center': {
       id: '/_authenticated/finance/master-cost-center'
       path: '/master-cost-center'
-      fullPath: '/finance/master-cost-center'
+      fullPath: '/finance/master/cost-center'
       preLoaderRoute: typeof AuthenticatedFinanceMasterCostCenterRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
     '/_authenticated/finance/master-coa': {
       id: '/_authenticated/finance/master-coa'
       path: '/master-coa'
-      fullPath: '/finance/master-coa'
+      fullPath: '/finance/master/coa'
       preLoaderRoute: typeof AuthenticatedFinanceMasterCoaRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
@@ -2187,6 +2198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsSectionRouteImport
       parentRoute: typeof AuthenticatedAppsRoute
     }
+    '/_authenticated/finance/master/': {
+      id: '/_authenticated/finance/master/'
+      path: '/'
+      fullPath: '/finance/master/'
+      preLoaderRoute: typeof AuthenticatedFinanceMasterIndexRouteImport
+      parentRoute: typeof AuthenticatedFinanceMasterRoute
+    }
     '/_authenticated/apps/edukasi/$slug': {
       id: '/_authenticated/apps/edukasi/$slug'
       path: '/edukasi/$slug'
@@ -2216,6 +2234,20 @@ const AuthenticatedAppsRouteChildren: AuthenticatedAppsRouteChildren = {
 const AuthenticatedAppsRouteWithChildren =
   AuthenticatedAppsRoute._addFileChildren(AuthenticatedAppsRouteChildren)
 
+interface AuthenticatedFinanceMasterRouteChildren {
+  AuthenticatedFinanceMasterIndexRoute: typeof AuthenticatedFinanceMasterIndexRoute
+}
+
+const AuthenticatedFinanceMasterRouteChildren: AuthenticatedFinanceMasterRouteChildren =
+  {
+    AuthenticatedFinanceMasterIndexRoute: AuthenticatedFinanceMasterIndexRoute,
+  }
+
+const AuthenticatedFinanceMasterRouteWithChildren =
+  AuthenticatedFinanceMasterRoute._addFileChildren(
+    AuthenticatedFinanceMasterRouteChildren,
+  )
+
 interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceSectionRoute: typeof AuthenticatedFinanceSectionRoute
   AuthenticatedFinanceAgingHutangRoute: typeof AuthenticatedFinanceAgingHutangRoute
@@ -2238,7 +2270,7 @@ interface AuthenticatedFinanceRouteChildren {
   AuthenticatedFinanceLabaRugiRoute: typeof AuthenticatedFinanceLabaRugiRoute
   AuthenticatedFinanceLabaRugiPayerRoute: typeof AuthenticatedFinanceLabaRugiPayerRoute
   AuthenticatedFinanceLaporanRoute: typeof AuthenticatedFinanceLaporanRoute
-  AuthenticatedFinanceMasterRoute: typeof AuthenticatedFinanceMasterRoute
+  AuthenticatedFinanceMasterRoute: typeof AuthenticatedFinanceMasterRouteWithChildren
   AuthenticatedFinanceMasterCoaRoute: typeof AuthenticatedFinanceMasterCoaRoute
   AuthenticatedFinanceMasterCostCenterRoute: typeof AuthenticatedFinanceMasterCostCenterRoute
   AuthenticatedFinanceMasterDokterRoute: typeof AuthenticatedFinanceMasterDokterRoute
@@ -2311,7 +2343,7 @@ const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
   AuthenticatedFinanceLabaRugiPayerRoute:
     AuthenticatedFinanceLabaRugiPayerRoute,
   AuthenticatedFinanceLaporanRoute: AuthenticatedFinanceLaporanRoute,
-  AuthenticatedFinanceMasterRoute: AuthenticatedFinanceMasterRoute,
+  AuthenticatedFinanceMasterRoute: AuthenticatedFinanceMasterRouteWithChildren,
   AuthenticatedFinanceMasterCoaRoute: AuthenticatedFinanceMasterCoaRoute,
   AuthenticatedFinanceMasterCostCenterRoute:
     AuthenticatedFinanceMasterCostCenterRoute,

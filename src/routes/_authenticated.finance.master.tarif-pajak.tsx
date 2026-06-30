@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
 
-export const Route = createFileRoute("/_authenticated/finance/master-tarif-pajak")({
+export const Route = createFileRoute("/_authenticated/finance/master/tarif-pajak")({
   component: () => (
     <MasterCrudPage
       title="Tarif Pajak"
