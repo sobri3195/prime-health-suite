@@ -216,14 +216,13 @@ export const getLaporan = createServerFn({ method: "POST" })
 
     if (data.kind === "kunjungan" || data.kind === "tindakan" || data.kind === "payer" || data.kind === "pendapatan") {
       const { data: invoices, error } = await supabase
-        .from("fin_invoice").select("id, tanggal, total, patient_code, patient_name")
+        .from("fin_invoice").select("id, tanggal, total, patient_code, patient_name, payer_id")
         .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
       if (error) throw error;
       const { data: bookings } = await supabase
         .from("apps_booking").select("id, tanggal, dokter_nama, status")
         .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
 
-      // Monthly visits trend
       const trendMap = new Map<string, number>();
       (bookings ?? []).forEach((b) => {
         const m = (b.tanggal as string).slice(0, 7);
@@ -231,10 +230,24 @@ export const getLaporan = createServerFn({ method: "POST" })
       });
       const trend = Array.from(trendMap.entries()).sort().map(([month, visits]) => ({ month, visits }));
 
-      // Doctor load
       const docMap = new Map<string, number>();
       (bookings ?? []).forEach((b) => docMap.set(b.dokter_nama as string, (docMap.get(b.dokter_nama as string) ?? 0) + 1));
       const doctors = Array.from(docMap.entries()).map(([doctor, count]) => ({ doctor, count }));
+
+      const payerIds = Array.from(new Set((invoices ?? []).map((i: { payer_id: string | null }) => i.payer_id).filter(Boolean) as string[]));
+      const payerNames = new Map<string, string>();
+      if (payerIds.length) {
+        const { data: payersRows } = await supabase.from("fin_payer").select("id,name").in("id", payerIds);
+        (payersRows ?? []).forEach((p: { id: string; name: string }) => payerNames.set(p.id, p.name));
+      }
+      const payerAgg = new Map<string, { count: number; revenue: number }>();
+      (invoices ?? []).forEach((i: { payer_id: string | null; total: number }) => {
+        const name = i.payer_id ? (payerNames.get(i.payer_id) ?? "Lainnya") : "Umum";
+        const cur = payerAgg.get(name) ?? { count: 0, revenue: 0 };
+        cur.count += 1; cur.revenue += Number(i.total ?? 0);
+        payerAgg.set(name, cur);
+      });
+      const payers = Array.from(payerAgg.entries()).map(([name, v]) => ({ name, count: v.count, revenue: v.revenue }));
 
       const totalRevenue = (invoices ?? []).reduce((a, b) => a + Number(b.total ?? 0), 0);
       return {
@@ -245,10 +258,10 @@ export const getLaporan = createServerFn({ method: "POST" })
           invoices: (invoices ?? []).length,
           revenue: totalRevenue,
         },
-        trend,
-        doctors,
+        trend, doctors, payers,
         invoices: invoices ?? [],
       };
     }
-    return { kind: data.kind, from, to, totals: { visits: 0, invoices: 0, revenue: 0 }, trend: [], doctors: [], invoices: [] };
+    return { kind: data.kind, from, to, totals: { visits: 0, invoices: 0, revenue: 0 }, trend: [], doctors: [], payers: [], invoices: [] };
   });
+
