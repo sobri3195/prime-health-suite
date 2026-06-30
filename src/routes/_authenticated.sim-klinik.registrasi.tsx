@@ -102,10 +102,15 @@ function RegistrasiPage() {
                 </div>
               </div>
               <div><Label>Dokter</Label>
-                <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih dokter" /></SelectTrigger>
+                <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })} disabled={dokterQ.isLoading || dokterList.length === 0}>
+                  <SelectTrigger aria-label="Pilih dokter"><SelectValue placeholder={dokterQ.isLoading ? "Memuat dokter…" : dokterList.length === 0 ? "Tidak ada dokter tersedia" : "Pilih dokter"} /></SelectTrigger>
                   <SelectContent>{dokterList.map((d) => <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi})` : ""}</SelectItem>)}</SelectContent>
                 </Select>
+                {!dokterQ.isLoading && dokterList.length === 0 && (
+                  <p role="alert" className="mt-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    Daftar dokter kosong. Periksa koneksi internet atau izin akses (role staf klinik). Hubungi admin bila masalah berlanjut, lalu muat ulang halaman.
+                  </p>
+                )}
               </div>
               <div><Label>Sumber</Label>
                 <Select value={form.source} onValueChange={(v) => setForm({ ...form, source: v as typeof form.source })}>
