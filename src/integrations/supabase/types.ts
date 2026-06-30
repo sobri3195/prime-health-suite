@@ -3169,6 +3169,15 @@ export type Database = {
       }
     }
     Functions: {
+      app_health_check: {
+        Args: never
+        Returns: {
+          detail: string
+          last_activity: string
+          status: string
+          system: string
+        }[]
+      }
       apps_accept_consent: {
         Args: { _marketing?: boolean }
         Returns: undefined
