@@ -23,7 +23,7 @@ import {
 } from "recharts";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { upsertJadwal, deleteJadwal } from "@/lib/klinik.functions";
+import { upsertJadwal, deleteJadwal, listJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
   head: () => pageHead({ title: 'Jadwal Dokter — SIM Klinik', description: 'Jadwal praktik dokter, slot, dan kepadatan kunjungan harian.', path: '/sim-klinik/jadwal' }),
