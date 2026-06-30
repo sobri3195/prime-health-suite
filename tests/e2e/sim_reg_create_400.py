@@ -1,11 +1,20 @@
 """E2E: createBooking gagal (400) — toast error, selectedP tetap, bisa retry tanpa reload."""
-import asyncio, sys, time
+import asyncio, random, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 sys.path.insert(0, str(Path(__file__).parent))
 from _helpers import login_demo, open_form_with_new_patient, is_create_booking
 
 SHOT = Path("/tmp/browser/sim-reg-create-400/shots"); SHOT.mkdir(parents=True, exist_ok=True)
+SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30"]
+
+
+async def pick_slot(page, slot: str) -> None:
+    jam_trigger = page.get_by_role("combobox").nth(0)
+    await jam_trigger.click()
+    await page.wait_for_timeout(300)
+    await page.get_by_role("option", name=slot).click()
+    await page.wait_for_timeout(200)
 
 
 async def main():
@@ -26,11 +35,13 @@ async def main():
             return await route.continue_()
         await page.route("**/_serverFn/**", handler)
 
+        ok = False
         try:
             await login_demo(page)
             await page.goto("http://localhost:8080/sim-klinik/registrasi", wait_until="networkidle")
             await page.wait_for_timeout(800)
-            await open_form_with_new_patient(page, f"E2E 400 {int(time.time())}", "0818" + str(int(time.time()))[-7:])
+            nama = f"E2E 400 {int(time.time())}"
+            await open_form_with_new_patient(page, nama, "0818" + str(int(time.time()))[-7:])
 
             trigger = page.get_by_label("Pilih dokter").first
             await trigger.wait_for(state="visible", timeout=8000)
@@ -43,17 +54,20 @@ async def main():
             await page.wait_for_timeout(2000)
             await page.screenshot(path=str(SHOT / "1_after_fail.png"))
 
-            # toast error present (sonner)
             toast_count = await page.locator('[data-sonner-toast]').count()
-            # selectedP masih ada → tombol Buat Booking masih terlihat (form belum di-reset)
             btn_still = await btn.is_visible() and not await btn.is_disabled()
-            # bisa retry: matikan intercept lalu klik lagi
+
+            # Bisa retry tanpa reload: matikan intercept, pakai slot acak (hindari collision).
             fail_create["on"] = False
-            await btn.click()
-            await page.wait_for_timeout(2500)
+            reset_ok = False
+            for slot in random.sample(SLOTS, len(SLOTS)):
+                await pick_slot(page, slot)
+                await btn.click()
+                await page.wait_for_timeout(2500)
+                if await page.get_by_role("button", name="Pasien Baru").count() > 0:
+                    reset_ok = True
+                    break
             await page.screenshot(path=str(SHOT / "2_after_retry.png"))
-            # setelah sukses, form reset → tombol "Cari Pasien" / "Pasien Baru" muncul kembali
-            reset_ok = await page.get_by_role("button", name="Pasien Baru").count() > 0
 
             print("toast_count:", toast_count, "btn_still:", btn_still, "reset_ok:", reset_ok)
             ok = toast_count > 0 and btn_still and reset_ok
