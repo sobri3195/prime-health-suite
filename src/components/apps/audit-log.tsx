@@ -4,12 +4,7 @@ import { getAudit, subscribeAudit } from "@/lib/audit-log";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 
-// Dummy IP per actor for mock display only.
-const ipFor = (actor: string) => {
-  let h = 0;
-  for (const c of actor) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `10.${(h >> 16) & 255}.${(h >> 8) & 255}.${h & 255}`;
-};
+// Note: IP tidak ditangkap pada side ini; kolom IP dihilangkan agar tidak menampilkan data palsu.
 
 const ACT: { value: string; label: string }[] = [
   { value: "all", label: "Semua aksi" },
@@ -52,12 +47,12 @@ export function AuditLogPage() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-surface-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Waktu</th><th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Aksi</th><th className="px-4 py-3">Modul/Target</th>
-                <th className="px-4 py-3">IP</th><th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -67,7 +62,6 @@ export function AuditLogPage() {
                   <td className="px-4 py-2">{a.actor}</td>
                   <td className="px-4 py-2"><StatusBadge tone="info">{a.action}</StatusBadge></td>
                   <td className="px-4 py-2 font-mono text-xs">{a.target}</td>
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{ipFor(a.actor)}</td>
                   <td className="px-4 py-2"><StatusBadge tone="ok">success</StatusBadge></td>
                 </tr>
               ))}
