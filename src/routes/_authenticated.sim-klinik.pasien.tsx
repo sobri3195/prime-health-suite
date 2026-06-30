@@ -48,6 +48,8 @@ function PasienPage() {
   const [pt, setPt] = useState<string>("all");
   const [edit, setEdit] = useState<Partial<Pasien> | null>(null);
   const [detail, setDetail] = useState<Pasien | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmDeact, setConfirmDeact] = useState<Pasien | null>(null);
 
   const listQ = useQuery({
     queryKey: ["klinik", "pasien", { q, pt }],
