@@ -98,7 +98,7 @@ export const deactivatePasien = createServerFn({ method: "POST" })
 export const listDokter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as Supa).from("fin_dokter").select("*").order("name");
+    const { data, error } = await (context.supabase as Supa).from("fin_dokter").select("id, code, name, spesialisasi, default_fee_pct, is_ptkp_k0, is_active, schedule_note, created_at, updated_at").order("name");
     if (error) throw error;
     return data ?? [];
   });
