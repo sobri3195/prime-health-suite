@@ -54,10 +54,15 @@ function PemeriksaanPage() {
   };
   const [form, setForm] = useState<FormType | null>(null);
 
+  // Reset form immediately when switching patient to avoid showing stale data
+  useEffect(() => {
+    setForm(null);
+  }, [selVisit]);
+
   useEffect(() => {
     const v = detailQ.data?.visit;
     const mr = detailQ.data?.medrec;
-    if (v) {
+    if (v && v.id === selVisit) {
       setForm({
         visit_id: v.id, pasien_id: v.pasien_id, dokter_id: v.dokter_id,
         anamnesis: mr?.anamnesis ?? "", visus_od: mr?.visus_od ?? "", visus_os: mr?.visus_os ?? "",
@@ -67,7 +72,7 @@ function PemeriksaanPage() {
         is_final: mr?.is_final ?? false,
       });
     }
-  }, [detailQ.data]);
+  }, [detailQ.data, selVisit]);
 
   const saveM = useMutation({
     mutationFn: (final: boolean) => callSave({ data: { ...form!, is_final: final } as never }),
