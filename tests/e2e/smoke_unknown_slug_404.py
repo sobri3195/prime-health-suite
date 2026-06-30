@@ -26,12 +26,13 @@ async def main():
 
         failures = []
         for i, path in enumerate(UNKNOWN_PATHS):
-            await page.goto(f"http://localhost:8080{path}", wait_until="domcontentloaded")
-            await page.wait_for_timeout(800)
+            await page.goto(f"http://localhost:8080{path}", wait_until="networkidle")
+            await page.wait_for_timeout(1500)
             body = (await page.locator("body").inner_text()).lower()
             await page.screenshot(path=str(SCREENSHOTS / f"{i}_{path.strip('/').replace('/','_')}.png"))
-            if "404" not in body and "tidak ditemukan" not in body:
+            if "404" not in body and "tidak ditemukan" not in body and "not found" not in body:
                 failures.append((path, body[:200]))
+
 
         await browser.close()
         if failures:

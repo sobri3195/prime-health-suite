@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MasterCrudPage } from "@/components/master-crud";
 
-export const Route = createFileRoute("/_authenticated/finance/master-coa")({
+export const Route = createFileRoute("/_authenticated/finance/master/coa")({
   component: () => (
     <MasterCrudPage
       title="Chart of Account (COA)"

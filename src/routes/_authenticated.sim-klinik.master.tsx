@@ -35,7 +35,7 @@ const TABS: Tab[] = [
     label: "Dokter",
     table: "fin_dokter",
     select: "id,code,name,spesialisasi,sip_number,is_active",
-    manageHref: "/finance/master-dokter",
+    manageHref: "/finance/master/dokter",
     map: (r) => ({
       id: r.id,
       code: r.code ?? "-",
@@ -49,7 +49,7 @@ const TABS: Tab[] = [
     label: "Payer / Asuransi",
     table: "fin_payer",
     select: "id,code,name,jenis,is_active",
-    manageHref: "/finance/master-payer",
+    manageHref: "/finance/master/payer",
     map: (r) => ({
       id: r.id, code: r.code ?? "-", name: r.name,
       meta: r.jenis ?? "-",

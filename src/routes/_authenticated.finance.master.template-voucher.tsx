@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { listTplVoucher, upsertTplVoucher, deleteTplVoucher } from "@/lib/finance-template.functions";
 import { useFinanceAccess } from "@/lib/finance-access";
 
-export const Route = createFileRoute("/_authenticated/finance/master-template-voucher")({
+export const Route = createFileRoute("/_authenticated/finance/master/template-voucher")({
   component: TplVoucherPage,
 });
 
