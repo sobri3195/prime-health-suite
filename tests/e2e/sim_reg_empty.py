@@ -23,30 +23,15 @@ async def main():
         async def handler(route):
             if is_list_dokter(route.request.url):
                 # Probe real shape once
-                resp = await ctx.request.fetch(route.request)
-                body = await resp.text()
-                # TSS may wrap as {"result": [...]} or return raw array. Replace either.
-                def empty_arrays(node):
-                    # TSS encodes arrays as {"t":9,"i":N,"p":[...]} — empty them in-place.
-                    if isinstance(node, dict):
-                        if node.get("t") == 9:
-                            if isinstance(node.get("a"), list): node["a"] = []
-                            if isinstance(node.get("p"), list): node["p"] = []
-                        for v in node.values():
-                            empty_arrays(v)
-                    elif isinstance(node, list):
-                        for v in node:
-                            empty_arrays(v)
-                try:
-                    parsed = json.loads(body)
-                    if isinstance(parsed, dict) and "result" in parsed and isinstance(parsed["result"], list):
-                        parsed["result"] = []
-                        new_body = json.dumps(parsed)
-                    else:
-                        empty_arrays(parsed)
-                        new_body = json.dumps(parsed)
-                except Exception:
-                    new_body = "[]"
+                # Fulfill with a TSS-shaped envelope wrapping an empty array.
+                # Shape mirrors observed: {t:10, i:0, p:{k:[result,error,context], v:[{t:9,a:[]}, {t:3}, {t:3}]}}
+                new_body = json.dumps({
+                    "t": 10, "i": 0,
+                    "p": {
+                        "k": ["result", "error", "context"],
+                        "v": [{"t": 9, "i": 1, "a": [], "o": 0}, {"t": 3}, {"t": 3}],
+                    },
+                })
                 return await route.fulfill(
                     status=200,
                     headers={"content-type": "application/json"},
