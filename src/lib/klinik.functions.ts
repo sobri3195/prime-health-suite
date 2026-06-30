@@ -623,27 +623,48 @@ export const getDashboardStats = createServerFn({ method: "POST" })
 /* =============================================================
  * USER MANAGEMENT (super_admin only)
  * ============================================================*/
+const ROLE_ENUM = z.enum(["super_admin","admin_klinik","dokter","perawat","perawat_optometri","pendaftaran","kasir","farmasi","manajemen","pasien"]);
+
+async function assertAdmin(sb: Supa, uid: string) {
+  const { data: ok } = await sb.rpc("klinik_is_admin", { _uid: uid });
+  if (!ok) throw new Error("Hanya admin yang dapat melakukan aksi ini");
+}
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
     const { data: roles, error } = await sb.from("user_roles").select("user_id, role");
     if (error) throw error;
-    return roles ?? [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: list, error: e2 } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    if (e2) throw e2;
+    const roleMap = new Map<string, string[]>();
+    (roles ?? []).forEach((r: { user_id: string; role: string }) => {
+      const arr = roleMap.get(r.user_id) ?? []; arr.push(r.role); roleMap.set(r.user_id, arr);
+    });
+    return (list?.users ?? []).map((u) => ({
+      id: u.id,
+      email: u.email ?? "",
+      name: (u.user_metadata?.full_name as string | undefined) ?? (u.user_metadata?.name as string | undefined) ?? (u.email ?? "").split("@")[0],
+      roles: roleMap.get(u.id) ?? [],
+      status: (u as { banned_until?: string | null }).banned_until ? "inactive" : "active",
+      last_sign_in_at: u.last_sign_in_at ?? null,
+      created_at: u.created_at,
+    }));
   });
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     user_id: z.string().uuid(),
-    role: z.enum(["super_admin","admin_klinik","dokter","perawat","perawat_optometri","pendaftaran","kasir","farmasi","manajemen","pasien"]),
+    role: ROLE_ENUM,
     grant: z.boolean(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    // verify caller is super_admin or admin_klinik
-    const { data: ok } = await sb.rpc("klinik_is_admin", { _uid: context.userId });
-    if (!ok) throw new Error("Hanya admin yang dapat mengubah role");
+    await assertAdmin(sb, context.userId);
     if (data.grant) {
       await sb.from("user_roles").upsert({ user_id: data.user_id, role: data.role }, { onConflict: "user_id,role" });
     } else {
@@ -652,3 +673,23 @@ export const setUserRole = createServerFn({ method: "POST" })
     await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: data.grant ? "grant_role" : "revoke_role", target: data.user_id, meta: { role: data.role } });
     return { ok: true };
   });
+
+export const toggleUserActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    user_id: z.string().uuid(),
+    active: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
+    if (data.user_id === context.userId) throw new Error("Tidak dapat menonaktifkan akun sendiri");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: data.active ? "none" : "876000h",
+    });
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: data.active ? "activate_user" : "deactivate_user", target: data.user_id, meta: null });
+    return { ok: true };
+  });
+
