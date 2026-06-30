@@ -71,7 +71,7 @@ function AntrianPage() {
 
   return (
     <div>
-      <PageHeader title="Antrian Klinik" desc="Manajemen antrian harian dengan auto-refresh tiap 5 detik." />
+      <PageHeader title="Antrian Klinik" desc="Manajemen antrian harian — auto-refresh tiap 15 detik + realtime update." />
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-auto" />
         <Select value={status} onValueChange={setStatus}>
