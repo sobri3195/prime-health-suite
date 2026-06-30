@@ -86,21 +86,27 @@ export function DocumentsPage() {
     mutationFn: async () => {
       if (!pendingFile) throw new Error("Pilih file dulu");
       if (!meta.title.trim()) throw new Error("Judul wajib diisi");
+      if (pendingFile.size === 0) throw new Error("File kosong (0 byte) — pilih file lain");
+      if (pendingFile.size > MAX_BYTES) throw new Error(`Ukuran melebihi batas ${formatBytes(MAX_BYTES)}`);
+      const mime = pendingFile.type || "application/octet-stream";
+      if (!ALLOWED_MIME.includes(mime)) throw new Error(`Tipe file tidak didukung: ${mime}`);
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
       if (!uid) throw new Error("Tidak ada sesi");
       const path = `${uid}/${Date.now()}-${pendingFile.name.replace(/[^\w.\-]/g, "_")}`;
+      setProgress(10);
       const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, {
-        contentType: pendingFile.type || "application/octet-stream",
+        contentType: mime,
         upsert: false,
       });
       if (up.error) throw up.error;
+      setProgress(75);
       const { error } = await supabase.from("clinic_document").insert({
         patient_code: meta.patient_code || "-",
         patient_name: meta.patient_name || "Internal",
         doc_type: meta.doc_type,
         title: meta.title.trim(),
-        mime: pendingFile.type || "application/octet-stream",
+        mime,
         size_bytes: pendingFile.size,
         storage_path: path,
         uploaded_by: uid,
@@ -110,16 +116,19 @@ export function DocumentsPage() {
         await supabase.storage.from(BUCKET).remove([path]);
         throw error;
       }
+      setProgress(100);
     },
     onSuccess: () => {
       toast.success("Dokumen terupload");
       setPendingFile(null);
+      setProgress(0);
       setMeta({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Gagal upload"),
+    onError: (e: any) => { setProgress(0); toast.error(e?.message ?? "Gagal upload"); },
   });
+
 
   const onDownload = async (row: DocRow) => {
     if (!row.storage_path) return;
