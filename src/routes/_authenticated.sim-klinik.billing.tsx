@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling } from "@/lib/klinik.functions";
+import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling, addInvoicePayment } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
@@ -28,6 +28,7 @@ function BillingPage() {
 
   const today = new Date().toISOString().slice(0, 10);
   const [billVisit, setBillVisit] = useState<string | null>(null);
+  const [payInvoice, setPayInvoice] = useState<{ id: string; no: string; total: number; dibayar: number; name: string | null } | null>(null);
 
   // Visits ready for billing
   const visitsQ = useQuery({ queryKey: ["klinik","visits-billing"], queryFn: () => callVisits({ data: { status: "billing" } }) });
@@ -63,14 +64,21 @@ function BillingPage() {
         <Card className="p-3">
           <h3 className="mb-2 text-sm font-semibold">Invoice Terbaru</h3>
           <Table>
-            <TableHeader><TableRow><TableHead>No</TableHead><TableHead>Pasien</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>No</TableHead><TableHead>Pasien</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>
-              {((invoicesQ.data ?? []) as Array<{ id: string; no_invoice: string; patient_name: string | null; status: string; total: number }>).slice(0, 12).map((i) => (
+              {((invoicesQ.data ?? []) as Array<{ id: string; no_invoice: string; patient_name: string | null; status: string; total: number; dibayar: number | null }>).slice(0, 12).map((i) => (
                 <TableRow key={i.id}>
                   <TableCell className="font-mono text-xs">{i.no_invoice}</TableCell>
                   <TableCell className="text-sm">{i.patient_name}</TableCell>
                   <TableCell><Badge variant={i.status === "paid" ? "default" : i.status === "partial" ? "secondary" : "destructive"}>{i.status}</Badge></TableCell>
                   <TableCell className="text-right">Rp {Number(i.total).toLocaleString("id-ID")}</TableCell>
+                  <TableCell className="text-right">
+                    {i.status !== "paid" && (
+                      <Button size="sm" variant="outline" onClick={() => setPayInvoice({ id: i.id, no: i.no_invoice, total: Number(i.total), dibayar: Number(i.dibayar ?? 0), name: i.patient_name })}>
+                        Tambah Bayar
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -78,12 +86,64 @@ function BillingPage() {
         </Card>
       </div>
 
+
       {billVisit && <BillingDialog visit_id={billVisit} onClose={() => setBillVisit(null)}
         callDetail={callDetail} callLayanan={callLayanan} callGen={callGen}
         onCreated={() => { qc.invalidateQueries({ queryKey: ["klinik"] }); setBillVisit(null); }} />}
+      {payInvoice && <AddPaymentDialog invoice={payInvoice} onClose={() => setPayInvoice(null)}
+        onSaved={() => { qc.invalidateQueries({ queryKey: ["klinik"] }); setPayInvoice(null); }} />}
     </div>
   );
 }
+
+function AddPaymentDialog({ invoice, onClose, onSaved }: {
+  invoice: { id: string; no: string; total: number; dibayar: number; name: string | null };
+  onClose: () => void; onSaved: () => void;
+}) {
+  const sisa = Math.max(0, invoice.total - invoice.dibayar);
+  const [amount, setAmount] = useState<number>(sisa);
+  const [method, setMethod] = useState<"cash"|"transfer"|"qris"|"debit"|"credit"|"insurance">("cash");
+  const call = useServerFn(addInvoicePayment);
+  const m = useMutation({
+    mutationFn: () => call({ data: { invoice_id: invoice.id, amount, method } }),
+    onSuccess: () => { toast.success("Pembayaran tercatat"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Tambah Bayar — {invoice.no}</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2 text-sm">
+          <div>Pasien: <b>{invoice.name ?? "—"}</b></div>
+          <div className="grid grid-cols-3 gap-2 rounded border p-2 text-xs">
+            <div>Total<br /><b>Rp {invoice.total.toLocaleString("id-ID")}</b></div>
+            <div>Dibayar<br /><b>Rp {invoice.dibayar.toLocaleString("id-ID")}</b></div>
+            <div>Sisa<br /><b>Rp {sisa.toLocaleString("id-ID")}</b></div>
+          </div>
+          <div className="grid gap-1.5"><Label htmlFor="pay-amt">Jumlah Bayar</Label>
+            <Input id="pay-amt" type="number" min={1} max={sisa} value={amount} onChange={(e) => setAmount(Number(e.target.value))} /></div>
+          <div className="grid gap-1.5"><Label>Metode</Label>
+            <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Tunai</SelectItem><SelectItem value="transfer">Transfer</SelectItem>
+                <SelectItem value="qris">QRIS</SelectItem><SelectItem value="debit">Debit</SelectItem>
+                <SelectItem value="credit">Kredit</SelectItem><SelectItem value="insurance">Asuransi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button disabled={m.isPending || amount <= 0 || amount > sisa} onClick={() => m.mutate()}>
+            {m.isPending ? "Menyimpan…" : "Simpan Pembayaran"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, onCreated }: {
   visit_id: string; onClose: () => void;

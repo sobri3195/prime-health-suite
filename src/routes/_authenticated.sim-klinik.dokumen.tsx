@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -133,15 +133,43 @@ function UploadDialog({
   const [patientName, setPatientName] = useState("");
   const [docType, setDocType] = useState(DOC_TYPES[0]);
   const [title, setTitle] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const upload = useServerFn(uploadDocument);
   const m = useMutation({
-    mutationFn: upload,
-    onSuccess: () => { toast.success("Dokumen terunggah"); onUploaded(); onOpenChange(false); setTitle(""); },
+    mutationFn: async () => {
+      if (!file) throw new Error("Pilih file terlebih dahulu");
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id ?? "anon";
+      const safe = file.name.replace(/[^\w.\-]/g, "_");
+      const path = `${uid}/${Date.now()}-${safe}`;
+      const up = await supabase.storage.from("clinic-documents").upload(path, file, {
+        contentType: file.type || "application/octet-stream", upsert: false,
+      });
+      if (up.error) throw up.error;
+      const mimeCat: "pdf" | "image" | "zip" =
+        file.type.startsWith("image/") ? "image"
+          : file.type.includes("zip") ? "zip" : "pdf";
+      try {
+        return await upload({ data: {
+          patient_code: patientCode, patient_name: patientName,
+          doc_type: docType, title: title || `${docType} — ${patientName}`,
+          mime: mimeCat, size_bytes: file.size, storage_path: path,
+        } });
+      } catch (e) {
+        await supabase.storage.from("clinic-documents").remove([path]);
+        throw e;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Dokumen terunggah"); onUploaded(); onOpenChange(false);
+      setTitle(""); setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+    },
     onError: (e: Error) => toast.error(e.message ?? "Gagal upload"),
   });
-
-  const mime = useMemo(() => (docType === "Foto Mata" ? "image" : docType === "Hasil Lab" ? "zip" : "pdf"), [docType]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -149,8 +177,8 @@ function UploadDialog({
         <DialogHeader><DialogTitle>Upload Dokumen</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid grid-cols-2 gap-2">
-            <div className="grid gap-1.5"><Label className="text-xs">Kode Pasien</Label><Input value={patientCode} onChange={(e) => setPatientCode(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label className="text-xs">Nama Pasien</Label><Input value={patientName} onChange={(e) => setPatientName(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label htmlFor="dok-pc" className="text-xs">Kode Pasien</Label><Input id="dok-pc" value={patientCode} onChange={(e) => setPatientCode(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label htmlFor="dok-pn" className="text-xs">Nama Pasien</Label><Input id="dok-pn" value={patientName} onChange={(e) => setPatientName(e.target.value)} /></div>
           </div>
           <div className="grid gap-1.5">
             <Label className="text-xs">Jenis Dokumen</Label>
@@ -160,19 +188,24 @@ function UploadDialog({
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label className="text-xs">Judul</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`${docType} — ${patientName || "Pasien"}`} />
+            <Label htmlFor="dok-title" className="text-xs">Judul</Label>
+            <Input id="dok-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`${docType} — ${patientName || "Pasien"}`} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="dok-file" className="text-xs">File (PDF / Gambar / ZIP, maks 25MB)</Label>
+            <Input id="dok-file" ref={fileRef} type="file" accept=".pdf,image/*,.zip" onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              if (f && f.size > 25 * 1024 * 1024) { toast.error("Ukuran file > 25MB"); return; }
+              setFile(f);
+            }} />
+            {file && <div className="text-xs text-muted-foreground">{file.name} • {(file.size/1024).toFixed(1)} KB</div>}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
           <Button
-            disabled={m.isPending || !patientCode || !patientName}
-            onClick={() => m.mutate({ data: {
-              patient_code: patientCode, patient_name: patientName,
-              doc_type: docType, title: title || `${docType} — ${patientName}`,
-              mime: mime as "pdf" | "image" | "zip", size_bytes: 0,
-            } })}
+            disabled={m.isPending || !patientCode || !patientName || !file}
+            onClick={() => m.mutate()}
           >
             {m.isPending ? "Mengunggah…" : "Upload"}
           </Button>
@@ -181,3 +214,4 @@ function UploadDialog({
     </Dialog>
   );
 }
+
