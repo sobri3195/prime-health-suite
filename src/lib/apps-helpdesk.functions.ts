@@ -65,8 +65,9 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = { status: data.status };
-    if (data.pic !== undefined) patch.pic = data.pic;
+    const patch = data.pic !== undefined
+      ? { status: data.status, pic: data.pic }
+      : { status: data.status };
     const { error } = await context.supabase.from("apps_ticket").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
