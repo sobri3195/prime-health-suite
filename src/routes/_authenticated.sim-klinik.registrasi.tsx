@@ -73,7 +73,7 @@ function RegistrasiPage() {
 
   // Real-time: jika dokter yang dipilih hilang dari daftar (mis. dinonaktifkan via realtime/refetch),
   // reset pilihan & beri tahu user — tombol Buat Booking otomatis kembali disabled.
-  const selectedDokterMissing = !!form.dokter_id && dokterList.length > 0 && !dokterList.some((d) => d.id === form.dokter_id);
+  const selectedDokterMissing = !!form.dokter_id && !dokterQ.isLoading && !dokterQ.isError && !dokterList.some((d) => d.id === form.dokter_id);
   useEffect(() => {
     if (selectedDokterMissing) {
       setForm((f) => ({ ...f, dokter_id: "" }));
