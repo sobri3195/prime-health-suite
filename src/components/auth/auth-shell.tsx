@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BRAND } from "@/lib/brand";
 import type { System } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /**
  * Single source of truth for login/signup/forgot screens across all 3 systems.
