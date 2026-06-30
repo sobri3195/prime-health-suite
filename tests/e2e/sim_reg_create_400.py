@@ -44,10 +44,11 @@ async def main():
             await open_form_with_new_patient(page, nama, "0818" + str(int(time.time()))[-7:])
 
             trigger = page.get_by_label("Pilih dokter").first
-            await trigger.wait_for(state="visible", timeout=8000)
+            await trigger.wait_for(state="visible", timeout=20000)
             await trigger.click()
-            await page.wait_for_timeout(500)
-            await page.locator('[role="option"]').first.click()
+            await page.wait_for_timeout(600)
+            n_opts = await page.locator('[role="option"]').count()
+            await page.locator('[role="option"]').nth(random.randrange(max(1, n_opts))).click()
 
             btn = page.get_by_role("button", name="Buat Booking").first
             await btn.click()
@@ -57,13 +58,19 @@ async def main():
             toast_count = await page.locator('[data-sonner-toast]').count()
             btn_still = await btn.is_visible() and not await btn.is_disabled()
 
-            # Bisa retry tanpa reload: matikan intercept, pakai slot acak (hindari collision).
+            # Bisa retry tanpa reload: matikan intercept; rotasi slot+dokter sampai sukses.
             fail_create["on"] = False
             reset_ok = False
             for slot in random.sample(SLOTS, len(SLOTS)):
                 await pick_slot(page, slot)
+                # rotasi dokter agar tahan collision di paralel
+                await page.get_by_label("Pilih dokter").first.click()
+                await page.wait_for_timeout(300)
+                k = await page.locator('[role="option"]').count()
+                await page.locator('[role="option"]').nth(random.randrange(max(1, k))).click()
+                await page.wait_for_timeout(200)
                 await btn.click()
-                await page.wait_for_timeout(2500)
+                await page.wait_for_timeout(2800)
                 if await page.get_by_role("button", name="Pasien Baru").count() > 0:
                     reset_ok = True
                     break
