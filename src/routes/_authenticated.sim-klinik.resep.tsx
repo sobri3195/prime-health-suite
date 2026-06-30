@@ -21,6 +21,7 @@ function ResepPage() {
   const callList = useServerFn(listPrescription);
   const callDispense = useServerFn(dispensePrescription);
   const [status, setStatus] = useState("sent_to_pharmacy");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 10000 });
   const dispM = useMutation({
