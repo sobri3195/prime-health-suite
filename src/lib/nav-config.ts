@@ -32,6 +32,7 @@ export const NAV: Record<System, NavItem[]> = {
     { slug: "", label: "Beranda", icon: Home },
     { slug: "ai", label: "AI", icon: Brain },
     { slug: "belanja", label: "Belanja", icon: ShoppingBag },
+    { slug: "booking", label: "Booking Dokter", icon: Calendar },
     { slug: "orders", label: "Riwayat Belanja", icon: Receipt },
     { slug: "edukasi", label: "Edukasi", icon: BookOpen },
     { slug: "wins", label: "Daily Wins", icon: Trophy },

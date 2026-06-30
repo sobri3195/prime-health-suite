@@ -628,6 +628,86 @@ export type Database = {
           },
         ]
       }
+      apps_ticket: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          pic: string | null
+          priority: string
+          reporter: string
+          status: string
+          subject: string
+          ticket_no: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          pic?: string | null
+          priority?: string
+          reporter: string
+          status?: string
+          subject: string
+          ticket_no: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          pic?: string | null
+          priority?: string
+          reporter?: string
+          status?: string
+          subject?: string
+          ticket_no?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apps_ticket_reply: {
+        Row: {
+          author_id: string
+          author_label: string
+          created_at: string
+          id: string
+          message: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id: string
+          author_label?: string
+          created_at?: string
+          id?: string
+          message: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string
+          author_label?: string
+          created_at?: string
+          id?: string
+          message?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_ticket_reply_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apps_ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_audit_log: {
         Row: {
           action: string
