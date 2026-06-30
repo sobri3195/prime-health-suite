@@ -227,9 +227,18 @@ export const checkinBooking = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: bk, error: be } = await sb.from("apps_booking").select("*").eq("id", data.booking_id).maybeSingle();
     if (be || !bk) throw be ?? new Error("Booking tidak ditemukan");
+    // Resolve pasien_id: bookings created from the Apps patient module may
+    // only carry user_id. Backfill via apps_pasien before inserting the visit.
+    let pasienId: string | null = bk.pasien_id;
+    if (!pasienId && bk.user_id) {
+      const { data: pas } = await sb.from("apps_pasien").select("id").eq("user_id", bk.user_id).maybeSingle();
+      pasienId = pas?.id ?? null;
+      if (pasienId) await sb.from("apps_booking").update({ pasien_id: pasienId }).eq("id", bk.id);
+    }
+    if (!pasienId) throw new Error("Pasien belum terdaftar di master pasien. Lengkapi profil pasien terlebih dulu.");
     // create visit
     const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
-      pasien_id: bk.pasien_id, dokter_id: bk.dokter_id, booking_id: bk.id,
+      pasien_id: pasienId, dokter_id: bk.dokter_id, booking_id: bk.id,
       chief_complaint: bk.keluhan, status: "registered", patient_type: "Umum",
       created_by: context.userId,
     }).select("*").single();
