@@ -33,7 +33,9 @@ SCRIPTS = [
     "sim_reg_queue_persist.py",
     "sim_reg_reload_validate.py",
     "sim_reg_slot_persist.py",
+    "smoke_unknown_slug_404.py",
 ]
+
 
 only = os.environ.get("E2E_ONLY", "").strip()
 if only:
