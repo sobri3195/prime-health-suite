@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling, addInvoicePayment } from "@/lib/klinik.functions";
+import { getSettings } from "@/lib/clinic.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
