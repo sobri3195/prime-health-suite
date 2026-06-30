@@ -1,5 +1,6 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,9 @@ import {
 import { addAudit, getAudit } from "@/lib/audit-log";
 import { useAuth } from "@/lib/auth";
 import { formatIDR } from "@/lib/finance";
+import { supabase } from "@/integrations/supabase/client";
+
+type HealthRow = { system: SyncSystem; status: "online" | "idle" | "offline"; last_activity: string | null; detail: string | null };
 
 const SYSTEMS: { id: SyncSystem; desc: string }[] = [
   { id: "SIM Klinik", desc: "Operasional klinik mata, pasien, billing." },
@@ -33,6 +37,11 @@ const STATUS_CLS: Record<SyncEntry["status"], string> = {
   pending: "bg-amber-500/15 text-amber-600",
   failed:  "bg-rose-500/15 text-rose-600",
 };
+const HEALTH_CLS: Record<HealthRow["status"], string> = {
+  online:  "bg-emerald-500/15 text-emerald-600",
+  idle:    "bg-amber-500/15 text-amber-600",
+  offline: "bg-rose-500/15 text-rose-600",
+};
 
 function useSyncLog() {
   return useSyncExternalStore(subscribeSync, getSyncLog, getSyncLog);
@@ -44,10 +53,20 @@ export function IntegrationPage() {
   const [detail, setDetail] = useState<SyncEntry | null>(null);
   const [tick, setTick] = useState(0);
 
-  // Simulated "online" status per system (mock).
-  const [status] = useState<Record<SyncSystem, "online" | "offline">>({
-    "SIM Klinik": "online", "Finance": "online", "Prime Apps": "online",
+  const { data: health = [], refetch: refetchHealth, isFetching: healthLoading } = useQuery({
+    queryKey: ["app_health_check"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_health_check");
+      if (error) throw error;
+      return (data ?? []) as HealthRow[];
+    },
+    refetchInterval: 30000,
   });
+  const statusMap = useMemo(() => {
+    const m = {} as Record<SyncSystem, HealthRow | undefined>;
+    health.forEach((h) => { m[h.system] = h; });
+    return m;
+  }, [health]);
 
   useEffect(() => {
     const t = setInterval(() => setTick((n) => n + 1), 30000);
@@ -129,20 +148,33 @@ export function IntegrationPage() {
       />
 
       {/* System Status */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">Heartbeat dari RPC <span className="font-mono">app_health_check</span> · auto-refresh tiap 30 dtk.</div>
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => refetchHealth()} disabled={healthLoading}>
+          <RefreshCw className={`h-3.5 w-3.5 ${healthLoading ? "animate-spin" : ""}`} /> Cek ulang
+        </Button>
+      </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        {SYSTEMS.map((s) => (
-          <div key={s.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Plug className="h-4 w-4 text-primary" /> {s.id}
+        {SYSTEMS.map((s) => {
+          const h = statusMap[s.id];
+          const st = h?.status ?? "offline";
+          return (
+            <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Plug className="h-4 w-4 text-primary" /> {s.id}
+                </div>
+                <Badge className={HEALTH_CLS[st]}>
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current" /> {st}
+                </Badge>
               </div>
-              <Badge className={status[s.id] === "online" ? "bg-emerald-500/15 text-emerald-600" : "bg-rose-500/15 text-rose-600"}>
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current" /> {status[s.id]}
-              </Badge>
+              <div className="mt-2 text-xs text-muted-foreground">{s.desc}</div>
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                Aktivitas terakhir: {h?.last_activity ? new Date(h.last_activity).toLocaleString("id-ID") : "—"}
+              </div>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">{s.desc}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* KPI */}
