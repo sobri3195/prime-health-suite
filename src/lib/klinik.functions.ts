@@ -792,7 +792,7 @@ export const listJadwal = createServerFn({ method: "GET" })
       .select("id,dokter_id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
       .order("dokter_name");
     if (error) throw error;
-    return (data ?? []) as Array<Record<string, unknown>>;
+    return (data ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
   });
 
 export const listTindakan = createServerFn({ method: "GET" })
@@ -805,7 +805,7 @@ export const listTindakan = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
-    return (data ?? []) as Array<Record<string, unknown>>;
+    return (data ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
   });
 
 const MASTER_TABLES = {
@@ -830,5 +830,5 @@ export const listMaster = createServerFn({ method: "POST" })
     const cols = MASTER_TABLES[data.key];
     const { data: rows, error } = await sb.from(table).select(cols).limit(500);
     if (error) throw error;
-    return (rows ?? []) as Array<Record<string, unknown>>;
+    return (rows ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
   });
