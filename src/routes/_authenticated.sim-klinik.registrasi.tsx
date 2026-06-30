@@ -66,7 +66,17 @@ function RegistrasiPage() {
   });
 
   const dokterList = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
-  const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string } }>, [bookQ.data]);
+  const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string }; klinik_visit?: Array<{ klinik_queue?: Array<{ queue_no: string; status: string }> }> }>, [bookQ.data]);
+
+  // Real-time: jika dokter yang dipilih hilang dari daftar (mis. dinonaktifkan via realtime/refetch),
+  // reset pilihan & beri tahu user — tombol Buat Booking otomatis kembali disabled.
+  const selectedDokterMissing = !!form.dokter_id && dokterList.length > 0 && !dokterList.some((d) => d.id === form.dokter_id);
+  useEffect(() => {
+    if (selectedDokterMissing) {
+      setForm((f) => ({ ...f, dokter_id: "" }));
+      toast.warning("Dokter yang dipilih sudah tidak tersedia. Silakan pilih ulang.");
+    }
+  }, [selectedDokterMissing]);
 
   return (
     <div>
