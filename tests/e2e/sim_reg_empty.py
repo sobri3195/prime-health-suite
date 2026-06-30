@@ -29,8 +29,9 @@ async def main():
                 def empty_arrays(node):
                     # TSS encodes arrays as {"t":9,"i":N,"p":[...]} — empty them in-place.
                     if isinstance(node, dict):
-                        if node.get("t") == 9 and isinstance(node.get("p"), list):
-                            node["p"] = []
+                        if node.get("t") == 9:
+                            if isinstance(node.get("a"), list): node["a"] = []
+                            if isinstance(node.get("p"), list): node["p"] = []
                         for v in node.values():
                             empty_arrays(v)
                     elif isinstance(node, list):
