@@ -42,6 +42,9 @@ function RegistrasiPage() {
   const dokterQ = useQuery({ queryKey: ["klinik","dokter"], retry: 1, queryFn: async () => { const r = await callDokter(); if (!Array.isArray(r)) throw new Error("Akses ditolak ke daftar dokter"); return r; } });
   const bookQ = useQuery({ queryKey: ["klinik","bookings",date], queryFn: () => callBookings({ data: { date } }) });
 
+  // Test hook: expose queryClient untuk simulasi realtime invalidation pada E2E.
+  useEffect(() => { (window as unknown as { __qc?: unknown }).__qc = qc; }, [qc]);
+
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { pasien_id: selectedP!.id, dokter_id: form.dokter_id, tanggal: date, jam_slot: form.jam_slot, keluhan: form.keluhan, source: form.source } }),
     onSuccess: () => { toast.success("Booking dibuat"); qc.invalidateQueries({ queryKey: ["klinik","bookings"] }); setSelectedP(null); setForm({ dokter_id: "", jam_slot: "08:00", keluhan: "", source: "walk_in" }); },
