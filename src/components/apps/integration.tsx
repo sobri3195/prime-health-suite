@@ -148,20 +148,33 @@ export function IntegrationPage() {
       />
 
       {/* System Status */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">Heartbeat dari RPC <span className="font-mono">app_health_check</span> · auto-refresh tiap 30 dtk.</div>
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => refetchHealth()} disabled={healthLoading}>
+          <RefreshCw className={`h-3.5 w-3.5 ${healthLoading ? "animate-spin" : ""}`} /> Cek ulang
+        </Button>
+      </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        {SYSTEMS.map((s) => (
-          <div key={s.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Plug className="h-4 w-4 text-primary" /> {s.id}
+        {SYSTEMS.map((s) => {
+          const h = statusMap[s.id];
+          const st = h?.status ?? "offline";
+          return (
+            <div key={s.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Plug className="h-4 w-4 text-primary" /> {s.id}
+                </div>
+                <Badge className={HEALTH_CLS[st]}>
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current" /> {st}
+                </Badge>
               </div>
-              <Badge className={status[s.id] === "online" ? "bg-emerald-500/15 text-emerald-600" : "bg-rose-500/15 text-rose-600"}>
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current" /> {status[s.id]}
-              </Badge>
+              <div className="mt-2 text-xs text-muted-foreground">{s.desc}</div>
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                Aktivitas terakhir: {h?.last_activity ? new Date(h.last_activity).toLocaleString("id-ID") : "—"}
+              </div>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">{s.desc}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* KPI */}
