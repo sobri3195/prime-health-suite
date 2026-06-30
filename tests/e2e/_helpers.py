@@ -11,15 +11,23 @@ EMPTY_TSS_BODY = json.dumps({
 })
 
 
-def is_list_dokter(url: str) -> bool:
+def _decode_fn(url: str) -> str:
     m = re.search(r"/_serverFn/([A-Za-z0-9_-]+)", url)
     if not m:
-        return False
+        return ""
     s = m.group(1) + "=" * ((4 - len(m.group(1)) % 4) % 4)
     try:
-        return "listDokter" in base64.b64decode(s).decode("utf-8", "ignore")
+        return base64.b64decode(s).decode("utf-8", "ignore")
     except Exception:
-        return False
+        return ""
+
+
+def is_list_dokter(url: str) -> bool:
+    return "listDokter" in _decode_fn(url)
+
+
+def is_create_booking(url: str) -> bool:
+    return "createBooking" in _decode_fn(url)
 
 
 async def login_demo(page: Page) -> None:
