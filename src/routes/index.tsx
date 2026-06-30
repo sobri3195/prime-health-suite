@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const SITE = "https://prime-health-suite.lovable.app";
 
