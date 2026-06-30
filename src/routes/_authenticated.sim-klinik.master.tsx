@@ -11,7 +11,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { ExternalLink, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/master")({
   head: () => pageHead({ title: 'Master Data — SIM Klinik', description: 'Master dokter, payer, tarif, dan referensi klinik terintegrasi Finance.', path: '/sim-klinik/master' }),

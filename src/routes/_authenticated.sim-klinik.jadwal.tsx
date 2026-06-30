@@ -23,7 +23,6 @@ import {
 } from "recharts";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { upsertJadwal, deleteJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({

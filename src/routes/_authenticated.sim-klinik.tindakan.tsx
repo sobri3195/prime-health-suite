@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import { formatIDR } from "@/lib/sync-log";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/tindakan")({
   head: () => pageHead({ title: 'Tindakan & Billing — SIM Klinik', description: 'Daftar tindakan pasien dan status billing live dari Finance.', path: '/sim-klinik/tindakan' }),
