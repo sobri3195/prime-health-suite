@@ -63,20 +63,28 @@ function BillingPage() {
         <Card className="p-3">
           <h3 className="mb-2 text-sm font-semibold">Invoice Terbaru</h3>
           <Table>
-            <TableHeader><TableRow><TableHead>No</TableHead><TableHead>Pasien</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>No</TableHead><TableHead>Pasien</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>
-              {((invoicesQ.data ?? []) as Array<{ id: string; no_invoice: string; patient_name: string | null; status: string; total: number }>).slice(0, 12).map((i) => (
+              {((invoicesQ.data ?? []) as Array<{ id: string; no_invoice: string; patient_name: string | null; status: string; total: number; dibayar: number | null }>).slice(0, 12).map((i) => (
                 <TableRow key={i.id}>
                   <TableCell className="font-mono text-xs">{i.no_invoice}</TableCell>
                   <TableCell className="text-sm">{i.patient_name}</TableCell>
                   <TableCell><Badge variant={i.status === "paid" ? "default" : i.status === "partial" ? "secondary" : "destructive"}>{i.status}</Badge></TableCell>
                   <TableCell className="text-right">Rp {Number(i.total).toLocaleString("id-ID")}</TableCell>
+                  <TableCell className="text-right">
+                    {i.status !== "paid" && (
+                      <Button size="sm" variant="outline" onClick={() => setPayInvoice({ id: i.id, no: i.no_invoice, total: Number(i.total), dibayar: Number(i.dibayar ?? 0), name: i.patient_name })}>
+                        Tambah Bayar
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </Card>
       </div>
+
 
       {billVisit && <BillingDialog visit_id={billVisit} onClose={() => setBillVisit(null)}
         callDetail={callDetail} callLayanan={callLayanan} callGen={callGen}
