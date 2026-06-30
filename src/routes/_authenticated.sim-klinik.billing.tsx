@@ -188,17 +188,27 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
   });
 
   type Inv = { no_invoice: string; patient_name: string | null; total: number; tanggal: string };
+  function escapeHtml(s: string) { return s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c] as string)); }
   function printInvoice(inv: Inv) {
     const w = window.open("", "_blank", "width=400,height=600");
     if (!w) return;
-    w.document.write(`<html><head><title>${inv.no_invoice}</title><style>body{font-family:sans-serif;padding:20px;font-size:12px}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:2px 0}.r{text-align:right}.b{border-top:1px solid #333;margin-top:8px;padding-top:8px}</style></head><body>
-      <h2>Klinik Utama Prime Mata</h2><div>Jl. Contoh, Jakarta</div>
-      <div class="b">Invoice: <b>${inv.no_invoice}</b><br>Tanggal: ${inv.tanggal}<br>Pasien: ${inv.patient_name ?? "-"}</div>
-      <table>${items.map((it) => `<tr><td>${it.description}</td><td class="r">${it.quantity} x ${it.unit_price.toLocaleString("id-ID")}</td><td class="r">${(it.quantity*it.unit_price).toLocaleString("id-ID")}</td></tr>`).join("")}</table>
+    const profile = (settingsQ.data?.profile ?? {}) as Record<string, string | number | boolean>;
+    const clinicName = String(profile.clinicName ?? "Klinik");
+    const address = String(profile.address ?? "");
+    const phone = String(profile.phone ?? "");
+    const email = String(profile.email ?? "");
+    const taxId = String(profile.taxId ?? "");
+    w.document.write(`<html><head><title>${escapeHtml(inv.no_invoice)}</title><style>body{font-family:sans-serif;padding:20px;font-size:12px}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:2px 0}.r{text-align:right}.b{border-top:1px solid #333;margin-top:8px;padding-top:8px}.muted{color:#666;font-size:11px}</style></head><body>
+      <h2>${escapeHtml(clinicName)}</h2>
+      ${address ? `<div class="muted">${escapeHtml(address)}</div>` : ""}
+      ${(phone || email) ? `<div class="muted">${escapeHtml([phone, email].filter(Boolean).join(" • "))}</div>` : ""}
+      ${taxId ? `<div class="muted">NPWP: ${escapeHtml(taxId)}</div>` : ""}
+      <div class="b">Invoice: <b>${escapeHtml(inv.no_invoice)}</b><br>Tanggal: ${escapeHtml(inv.tanggal)}<br>Pasien: ${escapeHtml(inv.patient_name ?? "-")}</div>
+      <table>${items.map((it) => `<tr><td>${escapeHtml(it.description)}</td><td class="r">${it.quantity} x ${it.unit_price.toLocaleString("id-ID")}</td><td class="r">${(it.quantity*it.unit_price).toLocaleString("id-ID")}</td></tr>`).join("")}</table>
       <div class="b"><table><tr><td>Subtotal</td><td class="r">${subtotal.toLocaleString("id-ID")}</td></tr>
       <tr><td>Diskon</td><td class="r">${discount.toLocaleString("id-ID")}</td></tr>
       <tr><td><b>TOTAL</b></td><td class="r"><b>${total.toLocaleString("id-ID")}</b></td></tr>
-      <tr><td>Dibayar (${method})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr></table></div>
+      <tr><td>Dibayar (${escapeHtml(method)})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr></table></div>
       <div class="b" style="text-align:center">Terima kasih</div>
       <script>window.print()</script></body></html>`);
   }
