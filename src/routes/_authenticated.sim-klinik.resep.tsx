@@ -81,6 +81,14 @@ function ResepPage() {
             </Card>
           ))}
       </div>
+      <ConfirmDialog
+        open={!!confirmId}
+        onOpenChange={(o) => !o && setConfirmId(null)}
+        title="Dispense Resep"
+        description="Beri obat ini ke pasien? Stok akan berkurang otomatis."
+        confirmLabel="Ya, Beri Obat"
+        onConfirm={() => { if (confirmId) dispM.mutate(confirmId); setConfirmId(null); }}
+      />
     </div>
   );
 }
