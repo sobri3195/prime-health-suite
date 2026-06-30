@@ -782,3 +782,53 @@ export const deleteJadwal = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+
+export const listJadwal = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase as Supa;
+    const { data, error } = await sb
+      .from("klinik_jadwal")
+      .select("id,dokter_id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
+      .order("dokter_name");
+    if (error) throw error;
+    return (data ?? []) as Array<Record<string, unknown>>;
+  });
+
+export const listTindakan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase as Supa;
+    const { data, error } = await sb
+      .from("fin_invoice_item")
+      .select("id,layanan_nama,tarif,qty,subtotal,created_at,invoice:fin_invoice!inner(no_invoice,tanggal,patient_name,status)")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    return (data ?? []) as Array<Record<string, unknown>>;
+  });
+
+const MASTER_TABLES = {
+  dokter: "id,code,name,spesialisasi,sip_number,is_active",
+  payer: "id,code,name,jenis,is_active",
+  layanan: "id,code,name,kategori_id,tarif,is_active",
+  kategori_layanan: "id,code,name,is_active",
+  obat: "id,code,name,unit,stock,price,is_active",
+  jadwal: "id,dokter_name,poli,day,start_time,end_time,quota,is_active",
+} as const;
+const MASTER_TABLE_MAP: Record<keyof typeof MASTER_TABLES, string> = {
+  dokter: "fin_dokter", payer: "fin_payer", layanan: "fin_layanan",
+  kategori_layanan: "fin_kategori_layanan", obat: "klinik_obat", jadwal: "klinik_jadwal",
+};
+
+export const listMaster = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ key: z.enum(["dokter","payer","layanan","kategori_layanan","obat","jadwal"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const table = MASTER_TABLE_MAP[data.key];
+    const cols = MASTER_TABLES[data.key];
+    const { data: rows, error } = await sb.from(table).select(cols).limit(500);
+    if (error) throw error;
+    return (rows ?? []) as Array<Record<string, unknown>>;
+  });
