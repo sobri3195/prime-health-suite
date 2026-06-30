@@ -81,7 +81,7 @@ export function UsersPage() {
       {listQ.isLoading ? (
         <div className="flex items-center gap-2 p-6 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Memuat…</div>
       ) : listQ.isError ? (
-        <EmptyState title="Gagal memuat" desc={(listQ.error as Error).message} />
+        <EmptyState title="Gagal memuat" hint={(listQ.error as Error).message} />
       ) : items.length === 0 ? (
         <EmptyState title="Tidak ada user" />
       ) : (
