@@ -139,8 +139,8 @@ function PengeluaranPage() {
                   <TableCell className="text-right">
                     {canEdit && r.status !== "void" && (
                       <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => setVoidFor(r)}><Ban className="h-4 w-4 text-rose-500" /></Button>
+                        <Button size="icon" aria-label="Edit" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="icon" aria-label="Batalkan" variant="ghost" onClick={() => setVoidFor(r)}><Ban className="h-4 w-4 text-rose-500" /></Button>
                       </div>
                     )}
                   </TableCell>
@@ -228,7 +228,7 @@ function PengeluaranPage() {
                         <TableCell><Input type="number" className="h-8 text-right" value={it.qty} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, qty: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
                         <TableCell><Input type="number" className="h-8 text-right" value={it.harga} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, harga: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
                         <TableCell className="text-right font-mono text-xs">{fmt(it.qty * it.harga)}</TableCell>
-                        <TableCell><Button size="icon" variant="ghost" onClick={() => setEditing({ ...editing, items: editing.items.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-3 w-3" /></Button></TableCell>
+                        <TableCell><Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setEditing({ ...editing, items: editing.items.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-3 w-3" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

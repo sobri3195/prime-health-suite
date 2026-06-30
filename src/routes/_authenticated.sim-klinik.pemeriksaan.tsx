@@ -188,7 +188,7 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
               {items.map((it, idx) => (
                 <div key={idx} className="rounded border p-2 text-xs">
                   <div className="flex items-center justify-between"><span className="font-medium">{it.obat_name}</span>
-                    <Button size="icon" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button></div>
+                    <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button></div>
                   <div className="mt-1 grid grid-cols-2 gap-1">
                     <Input placeholder="Dosis" value={it.dosage} onChange={(e) => { const c = [...items]; c[idx].dosage = e.target.value; setItems(c); }} />
                     <Input placeholder="Frek." value={it.frequency} onChange={(e) => { const c = [...items]; c[idx].frequency = e.target.value; setItems(c); }} />

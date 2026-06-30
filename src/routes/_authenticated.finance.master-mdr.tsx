@@ -72,8 +72,8 @@ function MasterMdrPage() {
                   <TableCell className="font-mono text-xs">{r.coa_code}</TableCell>
                   <TableCell>{r.is_active ? <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700">Aktif</Badge> : <Badge variant="outline">Nonaktif</Badge>}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => { if (confirm("Hapus aturan?")) delM.mutate(r.id); }}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Edit" disabled={!canEdit} onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Hapus" disabled={!canEdit} onClick={() => { if (confirm("Hapus aturan?")) delM.mutate(r.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}

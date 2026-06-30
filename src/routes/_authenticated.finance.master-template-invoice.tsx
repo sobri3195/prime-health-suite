@@ -76,8 +76,8 @@ function TplInvoicePage() {
                   <TableCell className="text-right">{Number(r.diskon).toLocaleString("id-ID")}</TableCell>
                   <TableCell>{r.is_active ? <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700">Aktif</Badge> : <Badge variant="outline">Nonaktif</Badge>}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => confirm("Hapus template?") && delM.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Edit" disabled={!canEdit} onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Hapus" disabled={!canEdit} onClick={() => confirm("Hapus template?") && delM.mutate(r.id)}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -106,7 +106,7 @@ function TplInvoicePage() {
                     <Input placeholder="Nama layanan" value={it.layanan_nama} onChange={(e) => { const a = [...items]; a[i] = { ...it, layanan_nama: e.target.value }; setItems(a); }} />
                     <Input type="number" placeholder="Tarif" value={it.tarif} onChange={(e) => { const a = [...items]; a[i] = { ...it, tarif: Number(e.target.value) }; setItems(a); }} />
                     <Input type="number" placeholder="Qty" value={it.qty} onChange={(e) => { const a = [...items]; a[i] = { ...it, qty: Number(e.target.value) }; setItems(a); }} />
-                    <Button variant="ghost" size="icon" onClick={() => setItems(items.filter((_, j) => j !== i))}><X className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Tutup" onClick={() => setItems(items.filter((_, j) => j !== i))}><X className="h-4 w-4" /></Button>
                   </div>
                 ))}
               </div>
