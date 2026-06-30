@@ -21,24 +21,27 @@ async def main():
         page = await ctx.new_page()
 
         async def handler(route):
-            if is_list_dokter(route.request.url):
-                print("INTERCEPT", route.request.url[:80])
-                # Probe real shape once
-                # Fulfill with a TSS-shaped envelope wrapping an empty array.
-                # Shape mirrors observed: {t:10, i:0, p:{k:[result,error,context], v:[{t:9,a:[]}, {t:3}, {t:3}]}}
-                new_body = json.dumps({
-                    "t": 10, "i": 0,
-                    "p": {
-                        "k": ["result", "error", "context"],
-                        "v": [{"t": 9, "i": 1, "a": [], "o": 0}, {"t": 3}, {"t": 3}],
-                    },
-                })
-                return await route.fulfill(
-                    status=200,
-                    headers={"content-type": "application/json"},
-                    body=new_body,
-                )
-            return await route.continue_()
+            if not is_list_dokter(route.request.url):
+                return await route.continue_()
+            print("INTERCEPT", route.request.url[:80])
+            # Let the response come back, then rewrite by emptying the t:9 array.
+            resp = await route.fetch()
+            body = await resp.text()
+            try:
+                parsed = json.loads(body)
+                def empty_t9(node):
+                    if isinstance(node, dict):
+                        if node.get("t") == 9:
+                            if isinstance(node.get("a"), list): node["a"] = []
+                            if isinstance(node.get("p"), list): node["p"] = []
+                        for v in node.values(): empty_t9(v)
+                    elif isinstance(node, list):
+                        for v in node: empty_t9(v)
+                empty_t9(parsed)
+                new_body = json.dumps(parsed)
+            except Exception as e:
+                print("PARSE_ERR", e); new_body = body
+            return await route.fulfill(response=resp, body=new_body)
 
         await page.route("**/_serverFn/**", handler)
 
