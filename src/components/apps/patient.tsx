@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen,
-  Clock, CheckCircle2, ShoppingCart, Filter, Search, Plus, Heart,
+  Clock, CheckCircle2,
   Download, AlertCircle, Camera, Phone, MapPin, Shield, LogOut,
   Stethoscope, FileText, MessageCircle, Loader2, Activity, ShieldAlert, ListChecks,
   Save, X, ChevronRight,
