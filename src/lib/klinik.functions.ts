@@ -766,6 +766,18 @@ export const upsertJadwal = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
     await assertAdmin(sb, context.userId);
+    // Cek overlap: dokter+day sama, jadwal aktif, jam saling tumpang tindih (a.start < b.end && a.end > b.start)
+    const { data: clashRows, error: ce } = await sb
+      .from("klinik_jadwal")
+      .select("id,start_time,end_time,dokter_name,day")
+      .eq("dokter_name", data.dokter_name)
+      .eq("day", data.day)
+      .eq("is_active", true);
+    if (ce) throw ce;
+    const clash = (clashRows ?? []).find((r: { id: string; start_time: string; end_time: string }) =>
+      r.id !== data.id && data.start_time < r.end_time && data.end_time > r.start_time);
+    if (clash) throw new Error(`Bentrok dengan jadwal ${data.dokter_name} hari ${data.day} (${(clash as { start_time: string }).start_time}–${(clash as { end_time: string }).end_time})`);
+    if (data.end_time <= data.start_time) throw new Error("Jam selesai harus lebih besar dari jam mulai");
     const payload = { ...data, updated_at: new Date().toISOString() };
     const { data: row, error } = data.id
       ? await sb.from("klinik_jadwal").update(payload).eq("id", data.id).select("*").single()
@@ -774,6 +786,7 @@ export const upsertJadwal = createServerFn({ method: "POST" })
     await appendAuditRow(sb, { actor_id: context.userId, module: "Jadwal", action: data.id ? "update" : "create", target: row.id });
     return row;
   });
+
 
 export const deleteJadwal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
