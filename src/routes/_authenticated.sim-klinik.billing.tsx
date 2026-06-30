@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling } from "@/lib/klinik.functions";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
 
@@ -31,6 +32,10 @@ function BillingPage() {
   // Visits ready for billing
   const visitsQ = useQuery({ queryKey: ["klinik","visits-billing"], queryFn: () => callVisits({ data: { status: "billing" } }) });
   const invoicesQ = useQuery({ queryKey: ["klinik","invoices",today], queryFn: () => callInv({ data: {} }) });
+  useRealtimeSubscription(
+    ["klinik_visit", "fin_invoice", "fin_pembayaran"],
+    [["klinik", "visits-billing"], ["klinik", "invoices", today]],
+  );
 
   type Visit = { id: string; visit_date: string; chief_complaint: string | null; apps_pasien?: { no_rm: string; nama: string; patient_type: string }; fin_dokter?: { name: string } };
   const visits = (visitsQ.data ?? []) as Visit[];
