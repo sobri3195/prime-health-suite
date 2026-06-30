@@ -39,7 +39,7 @@ function RegistrasiPage() {
   const [form, setForm] = useState({ dokter_id: "", jam_slot: "08:00", keluhan: "", source: "walk_in" as "walk_in"|"phone"|"whatsapp"|"online" });
 
   const pasienQ = useQuery({ queryKey: ["klinik","pasien-search",searchP], queryFn: () => callPasien({ data: { q: searchP } }), enabled: showSearch && searchP.length >= 2 });
-  const dokterQ = useQuery({ queryKey: ["klinik","dokter"], queryFn: () => callDokter() });
+  const dokterQ = useQuery({ queryKey: ["klinik","dokter"], retry: 1, queryFn: async () => { const r = await callDokter(); if (!Array.isArray(r)) throw new Error("Akses ditolak ke daftar dokter"); return r; } });
   const bookQ = useQuery({ queryKey: ["klinik","bookings",date], queryFn: () => callBookings({ data: { date } }) });
 
   const createM = useMutation({
@@ -102,11 +102,16 @@ function RegistrasiPage() {
                 </div>
               </div>
               <div><Label>Dokter</Label>
-                <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })} disabled={dokterQ.isLoading || dokterList.length === 0}>
-                  <SelectTrigger aria-label="Pilih dokter"><SelectValue placeholder={dokterQ.isLoading ? "Memuat dokter…" : dokterList.length === 0 ? "Tidak ada dokter tersedia" : "Pilih dokter"} /></SelectTrigger>
+                <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })} disabled={dokterQ.isLoading || dokterQ.isError || dokterList.length === 0}>
+                  <SelectTrigger aria-label="Pilih dokter"><SelectValue placeholder={dokterQ.isLoading ? "Memuat dokter…" : dokterQ.isError ? "Akses dokter ditolak" : dokterList.length === 0 ? "Tidak ada dokter tersedia" : "Pilih dokter"} /></SelectTrigger>
                   <SelectContent>{dokterList.map((d) => <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi})` : ""}</SelectItem>)}</SelectContent>
                 </Select>
-                {!dokterQ.isLoading && dokterList.length === 0 && (
+                {!dokterQ.isLoading && dokterQ.isError && (
+                  <p role="alert" data-testid="dokter-error" className="mt-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
+                    Akses ditolak: Anda tidak memiliki izin untuk melihat daftar dokter. Pendaftaran dihentikan. Hubungi admin untuk meminta role staf klinik (pendaftaran/admin_klinik/super_admin).
+                  </p>
+                )}
+                {!dokterQ.isLoading && !dokterQ.isError && dokterList.length === 0 && (
                   <p role="alert" className="mt-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-400">
                     Daftar dokter kosong. Periksa koneksi internet atau izin akses (role staf klinik). Hubungi admin bila masalah berlanjut, lalu muat ulang halaman.
                   </p>
@@ -122,7 +127,7 @@ function RegistrasiPage() {
                 </Select>
               </div>
               <div><Label>Keluhan</Label><Input value={form.keluhan} onChange={(e) => setForm({ ...form, keluhan: e.target.value })} placeholder="Keluhan utama" /></div>
-              <Button disabled={!form.dokter_id || createM.isPending} onClick={() => createM.mutate()} className="w-full">Buat Booking</Button>
+              <Button disabled={!form.dokter_id || dokterQ.isError || createM.isPending} onClick={() => createM.mutate()} className="w-full">Buat Booking</Button>
             </div>
           )}
         </Card>
