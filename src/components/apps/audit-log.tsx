@@ -73,6 +73,7 @@ export function AuditLogPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </PageContainer>
