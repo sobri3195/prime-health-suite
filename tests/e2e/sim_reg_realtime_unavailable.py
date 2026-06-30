@@ -59,8 +59,11 @@ async def main():
         await page.route("**/_serverFn/**", handler)
 
         # Trigger refetch tanpa reload halaman via queryClient
+        has_qc = await page.evaluate("!!window.__qc")
         await page.evaluate("window.__qc && window.__qc.invalidateQueries({queryKey:['klinik','dokter']})")
-        await page.wait_for_timeout(2500)
+        await page.wait_for_timeout(3500)
+        state_len = await page.evaluate("(window.__qc && window.__qc.getQueryData(['klinik','dokter']) || []).length")
+        print("has_qc:", has_qc, "state_len:", state_len)
         await page.screenshot(path=str(SHOT/"2_after_realtime.png"))
 
         # Verifikasi: placeholder berubah (tidak lagi memuat nama dokter), tombol disabled
