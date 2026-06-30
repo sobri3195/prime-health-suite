@@ -127,7 +127,12 @@ function RegistrasiPage() {
                 </Select>
               </div>
               <div><Label>Keluhan</Label><Input value={form.keluhan} onChange={(e) => setForm({ ...form, keluhan: e.target.value })} placeholder="Keluhan utama" /></div>
-              <Button disabled={!form.dokter_id || dokterQ.isError || createM.isPending} onClick={() => createM.mutate()} className="w-full">Buat Booking</Button>
+              {(!form.dokter_id || !date) && (
+                <p role="alert" data-testid="form-validation" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-400">
+                  {!date ? "Tanggal wajib diisi." : "Pilih dokter terlebih dahulu."}
+                </p>
+              )}
+              <Button disabled={!form.dokter_id || !date || dokterQ.isError || createM.isPending} onClick={() => createM.mutate()} className="w-full">Buat Booking</Button>
             </div>
           )}
         </Card>
