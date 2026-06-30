@@ -21,6 +21,7 @@ import {
 import { Plus, Trash2, Pencil, ExternalLink, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { listAllDiklat, upsertDiklat, deleteDiklat, listDokterOptions } from "@/lib/diklat.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/diklat")({
   component: DiklatAdminPage,
