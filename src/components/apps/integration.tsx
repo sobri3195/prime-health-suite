@@ -53,10 +53,20 @@ export function IntegrationPage() {
   const [detail, setDetail] = useState<SyncEntry | null>(null);
   const [tick, setTick] = useState(0);
 
-  // Simulated "online" status per system (mock).
-  const [status] = useState<Record<SyncSystem, "online" | "offline">>({
-    "SIM Klinik": "online", "Finance": "online", "Prime Apps": "online",
+  const { data: health = [], refetch: refetchHealth, isFetching: healthLoading } = useQuery({
+    queryKey: ["app_health_check"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_health_check");
+      if (error) throw error;
+      return (data ?? []) as HealthRow[];
+    },
+    refetchInterval: 30000,
   });
+  const statusMap = useMemo(() => {
+    const m = {} as Record<SyncSystem, HealthRow | undefined>;
+    health.forEach((h) => { m[h.system] = h; });
+    return m;
+  }, [health]);
 
   useEffect(() => {
     const t = setInterval(() => setTick((n) => n + 1), 30000);
