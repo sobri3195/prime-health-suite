@@ -46,16 +46,12 @@ function TindakanPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TStatus>("all");
 
+  const callList = useServerFn(listTindakan);
   const { data = [], isLoading, error } = useQuery<ActionRow[]>({
     queryKey: ["sim-tindakan"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("fin_invoice_item")
-        .select("id,layanan_nama,tarif,qty,subtotal,created_at,invoice:fin_invoice!inner(no_invoice,tanggal,patient_name,status)")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
+      const rows = await callList();
+      return (rows ?? []).map((r: any) => ({
         id: r.id,
         no_invoice: r.invoice?.no_invoice ?? "-",
         tanggal: r.invoice?.tanggal ?? r.created_at,
