@@ -98,7 +98,7 @@ export const deactivatePasien = createServerFn({ method: "POST" })
 export const listDokter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as Supa).from("fin_dokter").select("*").order("name");
+    const { data, error } = await (context.supabase as Supa).from("fin_dokter").select("id, code, name, spesialisasi, default_fee_pct, is_ptkp_k0, is_active, schedule_note, created_at, updated_at").order("name");
     if (error) throw error;
     return data ?? [];
   });
@@ -401,7 +401,7 @@ export const getVisitDetail = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(*), fin_dokter(*)").eq("id", data.id).maybeSingle();
+    const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(*), fin_dokter(id, code, name, spesialisasi, default_fee_pct, is_active, schedule_note)").eq("id", data.id).maybeSingle();
     if (error) throw error;
     const { data: medrec } = await sb.from("klinik_medical_record").select("*").eq("visit_id", data.id).maybeSingle();
     const { data: prescriptions } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("visit_id", data.id);
