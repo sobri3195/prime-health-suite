@@ -711,3 +711,74 @@ export const toggleUserActive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const addInvoicePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    invoice_id: z.string().uuid(),
+    amount: z.coerce.number().positive(),
+    method: z.enum(["cash","transfer","qris","debit","credit","insurance"]).default("cash"),
+    bank: z.string().optional().nullable(),
+    no_kartu_last4: z.string().max(4).optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const { data: inv, error: ie } = await sb.from("fin_invoice").select("id,total,dibayar,status").eq("id", data.invoice_id).maybeSingle();
+    if (ie || !inv) throw ie ?? new Error("Invoice tidak ditemukan");
+    const { error: pe } = await sb.from("fin_pembayaran").insert({
+      invoice_id: data.invoice_id,
+      tanggal: new Date().toISOString().slice(0, 10),
+      metode: data.method, bank: data.bank ?? null, no_kartu_last4: data.no_kartu_last4 ?? null,
+      jumlah: data.amount, mdr: 0, netto: data.amount, status: "posted",
+    });
+    if (pe) throw pe;
+    const newPaid = Number(inv.dibayar ?? 0) + Number(data.amount);
+    const total = Number(inv.total ?? 0);
+    const status = newPaid >= total ? "paid" : newPaid > 0 ? "partial" : "unpaid";
+    const { error: ue } = await sb.from("fin_invoice").update({ dibayar: newPaid, status }).eq("id", data.invoice_id);
+    if (ue) throw ue;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "add_payment", target: data.invoice_id, meta: { amount: data.amount, method: data.method, status } });
+    return { ok: true, dibayar: newPaid, status };
+  });
+
+/* =============================================================
+ * JADWAL DOKTER CRUD
+ * ============================================================*/
+const JadwalSchema = z.object({
+  id: z.string().uuid().optional(),
+  dokter_id: z.string().uuid().optional().nullable(),
+  dokter_name: z.string().min(1),
+  poli: z.string().min(1),
+  day: z.enum(["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]),
+  start_time: z.string().regex(/^\d{2}:\d{2}/, "Format HH:MM"),
+  end_time: z.string().regex(/^\d{2}:\d{2}/, "Format HH:MM"),
+  quota: z.coerce.number().int().min(0),
+  is_active: z.boolean().default(true),
+});
+
+export const upsertJadwal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => JadwalSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
+    const payload = { ...data, updated_at: new Date().toISOString() };
+    const { data: row, error } = data.id
+      ? await sb.from("klinik_jadwal").update(payload).eq("id", data.id).select("*").single()
+      : await sb.from("klinik_jadwal").insert({ ...payload, booked: 0 }).select("*").single();
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Jadwal", action: data.id ? "update" : "create", target: row.id });
+    return row;
+  });
+
+export const deleteJadwal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
+    const { error } = await sb.from("klinik_jadwal").delete().eq("id", data.id);
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Jadwal", action: "delete", target: data.id });
+    return { ok: true };
+  });
+
