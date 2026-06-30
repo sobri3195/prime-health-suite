@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -11,98 +11,102 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
-import { toast } from "sonner";
 import { formatIDR } from "@/lib/sync-log";
-import { clinicAudit } from "@/lib/clinic-audit";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/tindakan")({
   component: TindakanPage,
 });
 
 type TStatus = "planned" | "performed" | "cancelled";
-type Payer = "Umum" | "BPJS" | "Asuransi" | "Perusahaan";
 
 interface ActionRow {
-  code: string;
-  name: string;
-  category: "Konsultasi" | "Diagnostik" | "Refraksi" | "Laser" | "Bedah" | "Retina" | "Okuloplasti";
-  doctor: string;
-  tariff: Record<Payer, number>;
+  id: string;
+  no_invoice: string;
+  tanggal: string;
+  patient: string;
+  layanan: string;
+  qty: number;
+  tarif: number;
+  subtotal: number;
   status: TStatus;
-  note: string;
 }
 
-const doctors = ["dr. Rini, Sp.M", "dr. Bagas, Sp.M", "dr. Anisa, Sp.M", "dr. Hadi, Sp.M(K)"];
-
-const SEED: ActionRow[] = [
-  ["KMT-001","Konsultasi Mata","Konsultasi", 175000],
-  ["KMT-002","Pemeriksaan Refraksi","Refraksi", 85000],
-  ["KMT-003","Funduskopi","Diagnostik", 95000],
-  ["KMT-004","Tonometri","Diagnostik", 75000],
-  ["KMT-005","OCT","Diagnostik", 450000],
-  ["KMT-006","Laser YAG","Laser", 1800000],
-  ["KMT-007","Operasi Katarak (Phaco)","Bedah", 12500000],
-  ["KMT-008","Injeksi Intravitreal","Retina", 5500000],
-  ["KMT-009","Tindakan Retina","Retina", 3500000],
-  ["KMT-010","Okuloplasti","Okuloplasti", 4200000],
-].map(([code, name, category, base], i) => ({
-  code: code as string,
-  name: name as string,
-  category: category as ActionRow["category"],
-  doctor: doctors[i % doctors.length],
-  tariff: {
-    Umum: base as number,
-    BPJS: Math.round((base as number) * 0.85),
-    Asuransi: Math.round((base as number) * 1.1),
-    Perusahaan: Math.round((base as number) * 1.05),
-  },
-  status: (["planned","performed","performed","planned","cancelled"] as TStatus[])[i % 5],
-  note: "",
-}));
+function mapStatus(s: string | null): TStatus {
+  if (s === "paid" || s === "posted") return "performed";
+  if (s === "void" || s === "cancelled") return "cancelled";
+  return "planned";
+}
 
 function TindakanPage() {
-  const [rows, setRows] = useState<ActionRow[]>(SEED);
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState("all");
-  const [payer, setPayer] = useState<Payer>("Umum");
+  const [statusFilter, setStatusFilter] = useState<"all" | TStatus>("all");
 
-  const cats = Array.from(new Set(SEED.map((r) => r.category)));
+  const { data = [], isLoading, error } = useQuery<ActionRow[]>({
+    queryKey: ["sim-tindakan"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fin_invoice_item")
+        .select("id,layanan_nama,tarif,qty,subtotal,created_at,invoice:fin_invoice!inner(no_invoice,tanggal,patient_name,status)")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        no_invoice: r.invoice?.no_invoice ?? "-",
+        tanggal: r.invoice?.tanggal ?? r.created_at,
+        patient: r.invoice?.patient_name ?? "-",
+        layanan: r.layanan_nama,
+        qty: r.qty ?? 1,
+        tarif: Number(r.tarif ?? 0),
+        subtotal: Number(r.subtotal ?? 0),
+        status: mapStatus(r.invoice?.status ?? null),
+      }));
+    },
+  });
 
-  const filtered = useMemo(() => rows.filter((r) => {
-    if (cat !== "all" && r.category !== cat) return false;
-    if (q && !`${r.code} ${r.name}`.toLowerCase().includes(q.toLowerCase())) return false;
+  const filtered = useMemo(() => data.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (q && !`${r.no_invoice} ${r.layanan} ${r.patient}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [rows, q, cat]);
+  }), [data, q, statusFilter]);
 
-  const setStatus = (code: string, s: TStatus) => {
-    setRows((rs) => rs.map((r) => r.code === code ? { ...r, status: s } : r));
-    clinicAudit("Tindakan", "update", code, { status: s });
-    toast.success(`Tindakan ${code} → ${s}`);
-  };
+  const totalRevenue = filtered.filter((r) => r.status === "performed").reduce((a, r) => a + r.subtotal, 0);
 
   return (
     <div>
-      <PageHeader title="Tindakan Klinik Mata" desc="Katalog tindakan dengan tarif berdasarkan payer." />
+      <PageHeader
+        title="Tindakan Klinik Mata"
+        desc="Transaksi tindakan/layanan yang tercatat pada invoice klinik."
+      />
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs text-muted-foreground">Total Tindakan</div>
+          <div className="mt-1 text-2xl font-semibold">{filtered.length}</div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs text-muted-foreground">Performed</div>
+          <div className="mt-1 text-2xl font-semibold">{filtered.filter((r) => r.status === "performed").length}</div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs text-muted-foreground">Revenue (Performed)</div>
+          <div className="mt-1 text-2xl font-semibold">{formatIDR(totalRevenue)}</div>
+        </div>
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari kode/nama tindakan…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari invoice / tindakan / pasien…" className="pl-9" />
         </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Kategori" /></SelectTrigger>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua Kategori</SelectItem>
-            {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={payer} onValueChange={(v) => setPayer(v as Payer)}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Umum">Tarif Umum</SelectItem>
-            <SelectItem value="BPJS">Tarif BPJS</SelectItem>
-            <SelectItem value="Asuransi">Tarif Asuransi</SelectItem>
-            <SelectItem value="Perusahaan">Tarif Perusahaan</SelectItem>
+            <SelectItem value="all">Semua Status</SelectItem>
+            <SelectItem value="planned">Planned</SelectItem>
+            <SelectItem value="performed">Performed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -111,33 +115,33 @@ function TindakanPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kode</TableHead>
-              <TableHead>Nama Tindakan</TableHead>
-              <TableHead>Kategori</TableHead>
-              <TableHead>Dokter</TableHead>
-              <TableHead className="text-right">Tarif ({payer})</TableHead>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>No. Invoice</TableHead>
+              <TableHead>Pasien</TableHead>
+              <TableHead>Tindakan</TableHead>
+              <TableHead className="text-right">Qty</TableHead>
+              <TableHead className="text-right">Tarif</TableHead>
+              <TableHead className="text-right">Subtotal</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Tidak ada tindakan.</TableCell></TableRow>
+            {isLoading ? (
+              <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Memuat tindakan…</TableCell></TableRow>
+            ) : error ? (
+              <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-destructive">Gagal memuat data.</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Belum ada tindakan tercatat. Buat invoice di Kasir & Billing.</TableCell></TableRow>
             ) : filtered.map((r) => (
-              <TableRow key={r.code}>
-                <TableCell className="font-mono text-xs">{r.code}</TableCell>
-                <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell><Badge variant="secondary">{r.category}</Badge></TableCell>
-                <TableCell className="text-sm">{r.doctor}</TableCell>
-                <TableCell className="text-right font-mono text-sm">{formatIDR(r.tariff[payer])}</TableCell>
+              <TableRow key={r.id}>
+                <TableCell className="text-sm">{new Date(r.tanggal).toLocaleDateString("id-ID")}</TableCell>
+                <TableCell className="font-mono text-xs">{r.no_invoice}</TableCell>
+                <TableCell className="text-sm">{r.patient}</TableCell>
+                <TableCell className="font-medium">{r.layanan}</TableCell>
+                <TableCell className="text-right">{r.qty}</TableCell>
+                <TableCell className="text-right font-mono text-sm">{formatIDR(r.tarif)}</TableCell>
+                <TableCell className="text-right font-mono text-sm">{formatIDR(r.subtotal)}</TableCell>
                 <TableCell><StatusBadge s={r.status} /></TableCell>
-                <TableCell className="text-right">
-                  <div className="inline-flex gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setStatus(r.code, "planned")}>Plan</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setStatus(r.code, "performed")}>Done</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setStatus(r.code, "cancelled")}>Cancel</Button>
-                  </div>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
