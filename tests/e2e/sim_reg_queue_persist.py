@@ -34,13 +34,24 @@ async def main():
         await page.wait_for_timeout(500)
         await page.locator('[role="option"]').nth(0).click()
         await page.wait_for_timeout(300)
-        await page.get_by_role("button", name="Buat Booking").first.click()
-        await page.wait_for_timeout(3500)
+        async def try_submit():
+            await page.get_by_role("button", name="Buat Booking").first.click()
+            for _ in range(4):
+                await page.wait_for_timeout(2000)
+                if await page.locator(f'[data-testid="booking-row"]:has-text("{NAMA}")').count() > 0:
+                    return True
+            # retry dengan slot lain bila collision
+            jt = page.get_by_role("combobox").nth(0)
+            await jt.click(); await page.wait_for_timeout(300)
+            await page.get_by_role("option", name=random.choice(SLOTS)).click()
+            await page.wait_for_timeout(300)
+            await page.get_by_role("button", name="Buat Booking").first.click()
+            await page.wait_for_timeout(3500)
+            return await page.locator(f'[data-testid="booking-row"]:has-text("{NAMA}")').count() > 0
+        await try_submit()
         await page.screenshot(path=str(SHOT/"1_booked.png"))
-
-        # Cari row booking yang baru dibuat berdasarkan nama pasien
         row = page.locator(f'[data-testid="booking-row"]:has-text("{NAMA}")').first
-        await row.wait_for(state="visible", timeout=8000)
+        await row.wait_for(state="visible", timeout=10000)
         booking_id = await row.get_attribute("data-booking-id")
         # Sebelum check-in, queue belum ada
         before_qno = await row.locator('[data-testid="queue-no"]').count()
