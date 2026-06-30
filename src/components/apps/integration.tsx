@@ -1,5 +1,6 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,9 @@ import {
 import { addAudit, getAudit } from "@/lib/audit-log";
 import { useAuth } from "@/lib/auth";
 import { formatIDR } from "@/lib/finance";
+import { supabase } from "@/integrations/supabase/client";
+
+type HealthRow = { system: SyncSystem; status: "online" | "idle" | "offline"; last_activity: string | null; detail: string | null };
 
 const SYSTEMS: { id: SyncSystem; desc: string }[] = [
   { id: "SIM Klinik", desc: "Operasional klinik mata, pasien, billing." },
