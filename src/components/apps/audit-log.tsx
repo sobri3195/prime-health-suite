@@ -4,12 +4,7 @@ import { getAudit, subscribeAudit } from "@/lib/audit-log";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 
-// Dummy IP per actor for mock display only.
-const ipFor = (actor: string) => {
-  let h = 0;
-  for (const c of actor) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `10.${(h >> 16) & 255}.${(h >> 8) & 255}.${h & 255}`;
-};
+// Note: IP tidak ditangkap pada side ini; kolom IP dihilangkan agar tidak menampilkan data palsu.
 
 const ACT: { value: string; label: string }[] = [
   { value: "all", label: "Semua aksi" },
