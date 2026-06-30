@@ -112,15 +112,17 @@ jobs:
         run: python tests/e2e/run_all.py
 
 
-      - name: Upload screenshots on failure
+      - name: Upload screenshots & logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-screenshots
+          name: e2e-artifacts
           path: |
             /tmp/browser/**/shots/**
             /tmp/dev.log
+            tests/e2e/logs/**
           if-no-files-found: ignore
+
 
       - name: Stop dev server
         if: always()
