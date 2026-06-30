@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { tickets } from "@/data/appsData";
+import { tickets } from "@/data/apps-demo-seed";
 import type { HelpdeskTicket, TicketStatus, TicketPriority, TicketCategory } from "@/types/apps";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";

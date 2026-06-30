@@ -5,7 +5,7 @@ import {
   Stethoscope, Wallet, FileText, LifeBuoy, Plug, Users, ScrollText, Search,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { launcherItems } from "@/data/appsData";
+import { launcherItems } from "@/data/apps-demo-seed";
 import { PageHeader } from "@/components/app-shell";
 import { SearchInput, useFiltered, PageContainer } from "./ui";
 
