@@ -26,6 +26,18 @@ type Pasien = {
 
 function calcAge(dob: string | null) { if (!dob) return "-"; const d = new Date(dob); return String(Math.floor((Date.now() - d.getTime()) / (365.25*864e5))); }
 
+const PasienSchema = z.object({
+  nama: z.string().trim().min(2, "Nama minimal 2 karakter").max(100, "Nama maksimal 100 karakter"),
+  nik: z.string().trim().regex(/^\d{16}$/u, "NIK harus 16 digit angka").optional().or(z.literal("")),
+  jenis_kelamin: z.enum(["L", "P"], { message: "Pilih jenis kelamin" }),
+  telp: z.string().trim().regex(/^[0-9+\-\s]{8,20}$/u, "Nomor HP tidak valid"),
+  patient_type: z.enum(["Umum", "BPJS", "Asuransi", "Corporate"]),
+  tgl_lahir: z.string().optional().or(z.literal("")),
+  alamat: z.string().max(255).optional().or(z.literal("")),
+  alergi: z.string().max(255).optional().or(z.literal("")),
+  kontak_darurat: z.string().max(100).optional().or(z.literal("")),
+});
+
 function PasienPage() {
   const qc = useQueryClient();
   const callList = useServerFn(listPasien);
