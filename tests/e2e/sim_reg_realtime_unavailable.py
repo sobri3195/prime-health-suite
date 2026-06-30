@@ -71,6 +71,8 @@ async def main():
         placeholder_changed = chosen_text.split()[0] not in trigger_text
         disabled_now = await btn.is_disabled()
         validation = await page.locator('[data-testid="form-validation"]').count()
+        any_alert = await page.locator('[role="alert"]').all_inner_texts()
+        print("trigger_text:", repr(trigger_text), "alerts:", any_alert)
 
         # Pilih ulang dari daftar kosong tidak mungkin → tombol tetap disabled
         # Sekarang lepas interceptor & refetch lagi → daftar kembali, pilih ulang
