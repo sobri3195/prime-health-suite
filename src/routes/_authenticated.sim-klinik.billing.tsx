@@ -28,6 +28,7 @@ function BillingPage() {
 
   const today = new Date().toISOString().slice(0, 10);
   const [billVisit, setBillVisit] = useState<string | null>(null);
+  const [payInvoice, setPayInvoice] = useState<{ id: string; no: string; total: number; dibayar: number; name: string | null } | null>(null);
 
   // Visits ready for billing
   const visitsQ = useQuery({ queryKey: ["klinik","visits-billing"], queryFn: () => callVisits({ data: { status: "billing" } }) });
