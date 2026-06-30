@@ -48,7 +48,13 @@ function RegistrasiPage() {
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { pasien_id: selectedP!.id, dokter_id: form.dokter_id, tanggal: date, jam_slot: form.jam_slot, keluhan: form.keluhan, source: form.source } }),
     onSuccess: () => { toast.success("Booking dibuat"); qc.invalidateQueries({ queryKey: ["klinik","bookings"] }); setSelectedP(null); setForm({ dokter_id: "", jam_slot: "08:00", keluhan: "", source: "walk_in" }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      const raw = (e?.message || "").trim();
+      const msg = raw && raw.toLowerCase() !== "error"
+        ? `Booking gagal: ${raw}`
+        : "Booking gagal: slot bentrok atau permintaan ditolak server. Silakan pilih jam/dokter lain lalu coba lagi.";
+      toast.error(msg);
+    },
   });
 
   const checkinM = useMutation({
