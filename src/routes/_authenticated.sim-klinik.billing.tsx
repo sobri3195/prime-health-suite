@@ -155,6 +155,8 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
 }) {
   const detailQ = useQuery({ queryKey: ["klinik","visit-bill",visit_id], queryFn: () => callDetail({ data: { id: visit_id } }) });
   const layananQ = useQuery({ queryKey: ["klinik","layanan"], queryFn: () => callLayanan() });
+  const callSettings = useServerFn(getSettings);
+  const settingsQ = useQuery({ queryKey: ["clinic","settings"], queryFn: () => callSettings(), staleTime: 60_000 });
 
   type Item = { description: string; quantity: number; unit_price: number; layanan_id: string | null };
   const [items, setItems] = useState<Item[]>([]);
