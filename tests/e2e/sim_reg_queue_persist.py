@@ -1,5 +1,5 @@
 """E2E: queue number tampil setelah check-in dan tetap konsisten setelah reload."""
-import asyncio, re, sys, time
+import asyncio, random, re, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 sys.path.insert(0, str(Path(__file__).parent))
@@ -7,7 +7,7 @@ from _helpers import login_demo, open_form_with_new_patient
 
 SHOT = Path("/tmp/browser/sim-reg-queue/shots"); SHOT.mkdir(parents=True, exist_ok=True)
 SLOTS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30"]
-SLOT_PICK = SLOTS[(int(time.time()*1000)+7) % len(SLOTS)]
+SLOT_PICK = random.choice(SLOTS)
 NAMA = f"Q Test {int(time.time())}"
 HP = "0812" + str(int(time.time()))[-7:]
 
