@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
@@ -53,10 +54,15 @@ function PemeriksaanPage() {
   };
   const [form, setForm] = useState<FormType | null>(null);
 
+  // Reset form immediately when switching patient to avoid showing stale data
+  useEffect(() => {
+    setForm(null);
+  }, [selVisit]);
+
   useEffect(() => {
     const v = detailQ.data?.visit;
     const mr = detailQ.data?.medrec;
-    if (v) {
+    if (v && v.id === selVisit) {
       setForm({
         visit_id: v.id, pasien_id: v.pasien_id, dokter_id: v.dokter_id,
         anamnesis: mr?.anamnesis ?? "", visus_od: mr?.visus_od ?? "", visus_os: mr?.visus_os ?? "",
@@ -66,7 +72,7 @@ function PemeriksaanPage() {
         is_final: mr?.is_final ?? false,
       });
     }
-  }, [detailQ.data]);
+  }, [detailQ.data, selVisit]);
 
   const saveM = useMutation({
     mutationFn: (final: boolean) => callSave({ data: { ...form!, is_final: final } as never }),
@@ -107,7 +113,18 @@ function PemeriksaanPage() {
         </Card>
 
         <Card className="p-4">
-          {!form ? <p className="text-sm text-muted-foreground">Pilih pasien di samping untuk mulai pemeriksaan.</p>
+          {selVisit && (detailQ.isLoading || detailQ.isFetching) && !form ? (
+            <div className="space-y-3" aria-busy="true" aria-live="polite">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-9 w-full" />
+              <div className="grid grid-cols-4 gap-2">
+                <Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" />
+              </div>
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-2/3" />
+            </div>
+          ) : !form ? <p className="text-sm text-muted-foreground">Pilih pasien di samping untuk mulai pemeriksaan.</p>
             : (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">

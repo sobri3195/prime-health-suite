@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pill, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({ component: ResepPage });
 
@@ -20,6 +21,7 @@ function ResepPage() {
   const callList = useServerFn(listPrescription);
   const callDispense = useServerFn(dispensePrescription);
   const [status, setStatus] = useState("sent_to_pharmacy");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 10000 });
   const dispM = useMutation({
@@ -58,7 +60,7 @@ function ResepPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant={p.status === "dispensed" ? "default" : "secondary"}>{STATUS_LABEL[p.status]}</Badge>
                   {p.status === "sent_to_pharmacy" && (
-                    <Button size="sm" onClick={() => { if (confirm("Beri obat ini ke pasien? Stok akan berkurang otomatis.")) dispM.mutate(p.id); }}>
+                    <Button size="sm" onClick={() => setConfirmId(p.id)}>
                       <CheckCircle2 className="mr-1 h-3 w-3" />Dispense
                     </Button>
                   )}
@@ -79,6 +81,14 @@ function ResepPage() {
             </Card>
           ))}
       </div>
+      <ConfirmDialog
+        open={!!confirmId}
+        onOpenChange={(o) => !o && setConfirmId(null)}
+        title="Dispense Resep"
+        description="Beri obat ini ke pasien? Stok akan berkurang otomatis."
+        confirmLabel="Ya, Beri Obat"
+        onConfirm={() => { if (confirmId) dispM.mutate(confirmId); setConfirmId(null); }}
+      />
     </div>
   );
 }

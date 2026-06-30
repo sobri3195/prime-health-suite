@@ -21,6 +21,7 @@ import {
 import { Plus, Trash2, Pencil, ExternalLink, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { listAllDiklat, upsertDiklat, deleteDiklat, listDokterOptions } from "@/lib/diklat.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/diklat")({
   component: DiklatAdminPage,
@@ -51,6 +52,7 @@ function DiklatAdminPage() {
 
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Partial<Row & { ringkasan: string; deskripsi: string; pdf_url: string; galeri: string[] }>>({});
+  const [delId, setDelId] = useState<string | null>(null);
 
   const upsert = useServerFn(upsertDiklat);
   type UpsertPayload = {
@@ -185,7 +187,8 @@ function DiklatAdminPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => { if (confirm("Hapus diklat ini?")) delMut.mutate(r.id); }}
+                        aria-label="Hapus diklat"
+                        onClick={() => setDelId(r.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -326,6 +329,15 @@ function DiklatAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!delId}
+        onOpenChange={(o) => !o && setDelId(null)}
+        title="Hapus Diklat"
+        description="Diklat akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => { if (delId) delMut.mutate(delId); setDelId(null); }}
+      />
     </div>
   );
 }
