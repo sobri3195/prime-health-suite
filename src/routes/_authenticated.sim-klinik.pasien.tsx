@@ -198,20 +198,23 @@ function Row({ k, v }: { k: string; v: string }) {
   return <div className="grid grid-cols-3 gap-2 border-b pb-1"><span className="text-muted-foreground">{k}</span><span className="col-span-2">{v}</span></div>;
 }
 
-function PasienForm({ value, onChange }: { value: Partial<Pasien>; onChange: (v: Partial<Pasien>) => void }) {
+function PasienForm({ value, onChange, errors }: { value: Partial<Pasien>; onChange: (v: Partial<Pasien>) => void; errors: Record<string, string> }) {
   const set = (k: keyof Pasien, v: unknown) => onChange({ ...value, [k]: v });
+  const err = (k: string) => errors[k] ? <p className="mt-1 text-xs text-destructive" role="alert">{errors[k]}</p> : null;
+  const cn = (k: string) => errors[k] ? "border-destructive" : "";
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <div><Label>Nama Lengkap *</Label><Input value={value.nama ?? ""} onChange={(e) => set("nama", e.target.value)} /></div>
-      <div><Label>NIK (16 digit)</Label><Input value={value.nik ?? ""} onChange={(e) => set("nik", e.target.value)} /></div>
-      <div><Label>Tgl Lahir</Label><Input type="date" value={value.tgl_lahir ?? ""} onChange={(e) => set("tgl_lahir", e.target.value)} /></div>
+      <div><Label htmlFor="p-nama">Nama Lengkap *</Label><Input id="p-nama" aria-invalid={!!errors.nama} className={cn("nama")} value={value.nama ?? ""} onChange={(e) => set("nama", e.target.value)} />{err("nama")}</div>
+      <div><Label htmlFor="p-nik">NIK (16 digit)</Label><Input id="p-nik" inputMode="numeric" maxLength={16} aria-invalid={!!errors.nik} className={cn("nik")} value={value.nik ?? ""} onChange={(e) => set("nik", e.target.value)} />{err("nik")}</div>
+      <div><Label htmlFor="p-dob">Tgl Lahir</Label><Input id="p-dob" type="date" value={value.tgl_lahir ?? ""} onChange={(e) => set("tgl_lahir", e.target.value)} /></div>
       <div><Label>Jenis Kelamin *</Label>
         <Select value={value.jenis_kelamin ?? "L"} onValueChange={(v) => set("jenis_kelamin", v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-invalid={!!errors.jenis_kelamin} className={cn("jenis_kelamin")}><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="L">Laki-laki</SelectItem><SelectItem value="P">Perempuan</SelectItem></SelectContent>
         </Select>
+        {err("jenis_kelamin")}
       </div>
-      <div><Label>No HP *</Label><Input value={value.telp ?? ""} onChange={(e) => set("telp", e.target.value)} /></div>
+      <div><Label htmlFor="p-telp">No HP *</Label><Input id="p-telp" inputMode="tel" aria-invalid={!!errors.telp} className={cn("telp")} value={value.telp ?? ""} onChange={(e) => set("telp", e.target.value)} />{err("telp")}</div>
       <div><Label>Tipe Pasien *</Label>
         <Select value={value.patient_type ?? "Umum"} onValueChange={(v) => set("patient_type", v)}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -221,9 +224,9 @@ function PasienForm({ value, onChange }: { value: Partial<Pasien>; onChange: (v:
           </SelectContent>
         </Select>
       </div>
-      <div className="md:col-span-2"><Label>Alamat</Label><Input value={value.alamat ?? ""} onChange={(e) => set("alamat", e.target.value)} /></div>
-      <div><Label>Alergi</Label><Input value={value.alergi ?? ""} onChange={(e) => set("alergi", e.target.value)} /></div>
-      <div><Label>Kontak Darurat</Label><Input value={value.kontak_darurat ?? ""} onChange={(e) => set("kontak_darurat", e.target.value)} /></div>
+      <div className="md:col-span-2"><Label htmlFor="p-alamat">Alamat</Label><Input id="p-alamat" maxLength={255} value={value.alamat ?? ""} onChange={(e) => set("alamat", e.target.value)} /></div>
+      <div><Label htmlFor="p-alergi">Alergi</Label><Input id="p-alergi" maxLength={255} value={value.alergi ?? ""} onChange={(e) => set("alergi", e.target.value)} /></div>
+      <div><Label htmlFor="p-kd">Kontak Darurat</Label><Input id="p-kd" maxLength={100} value={value.kontak_darurat ?? ""} onChange={(e) => set("kontak_darurat", e.target.value)} /></div>
     </div>
   );
 }
