@@ -1,7 +1,7 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo } from "react";
 import { Sparkles, AlertTriangle, TrendingUp, Info } from "lucide-react";
-import { notifications, tickets, systemHealth, users, documents } from "@/data/appsData";
+import { notifications, tickets, systemHealth, users, documents } from "@/data/apps-demo-seed";
 
 type Insight = { tone: "warn" | "info" | "ok"; title: string; detail: string };
 

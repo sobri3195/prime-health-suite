@@ -1,6 +1,6 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo, useState } from "react";
-import { notifications as seed } from "@/data/appsData";
+import { notifications as seed } from "@/data/apps-demo-seed";
 import type { NotificationCategory, NotificationStatus } from "@/types/apps";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
