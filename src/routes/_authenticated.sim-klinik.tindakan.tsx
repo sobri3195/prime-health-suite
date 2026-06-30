@@ -2,6 +2,8 @@ import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listTindakan } from "@/lib/klinik.functions";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +15,6 @@ import {
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import { formatIDR } from "@/lib/sync-log";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/tindakan")({
   head: () => pageHead({ title: 'Tindakan & Billing — SIM Klinik', description: 'Daftar tindakan pasien dan status billing live dari Finance.', path: '/sim-klinik/tindakan' }),
@@ -44,16 +45,12 @@ function TindakanPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TStatus>("all");
 
+  const callList = useServerFn(listTindakan);
   const { data = [], isLoading, error } = useQuery<ActionRow[]>({
     queryKey: ["sim-tindakan"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("fin_invoice_item")
-        .select("id,layanan_nama,tarif,qty,subtotal,created_at,invoice:fin_invoice!inner(no_invoice,tanggal,patient_name,status)")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
+      const rows = await callList();
+      return (rows ?? []).map((r: any) => ({
         id: r.id,
         no_invoice: r.invoice?.no_invoice ?? "-",
         tanggal: r.invoice?.tanggal ?? r.created_at,

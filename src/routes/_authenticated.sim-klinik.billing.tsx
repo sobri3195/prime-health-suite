@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -57,6 +57,9 @@ function BillingPage() {
                     <div className="text-sm font-medium">{v.apps_pasien?.nama}</div>
                     <div className="text-xs text-muted-foreground">{v.apps_pasien?.no_rm} • {v.fin_dokter?.name} • <Badge variant="outline" className="text-[10px]">{v.apps_pasien?.patient_type}</Badge></div>
                   </div>
+                  <Button asChild size="sm" variant="ghost" title="Lihat detail kunjungan">
+                    <Link to="/sim-klinik/$section" params={{ section: v.id }}>Detail</Link>
+                  </Button>
                   <Button size="sm" onClick={() => setBillVisit(v.id)}><Receipt className="mr-1 h-3 w-3" />Buat Invoice</Button>
                 </div>
               ))}

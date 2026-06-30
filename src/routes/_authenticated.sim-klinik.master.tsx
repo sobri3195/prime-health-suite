@@ -2,6 +2,8 @@ import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listMaster } from "@/lib/klinik.functions";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +13,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { ExternalLink, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/master")({
   head: () => pageHead({ title: 'Master Data — SIM Klinik', description: 'Master dokter, payer, tarif, dan referensi klinik terintegrasi Finance.', path: '/sim-klinik/master' }),
@@ -106,15 +107,12 @@ function MasterPage() {
   const [q, setQ] = useState("");
   const tab = TABS.find((t) => t.key === tabKey)!;
 
+  const callList = useServerFn(listMaster);
   const { data = [], isLoading, error } = useQuery<Row[]>({
     queryKey: ["sim-master", tab.key],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(tab.table as any)
-        .select(tab.select)
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []).map(tab.map);
+      const rows = await callList({ data: { key: tab.key as "dokter"|"payer"|"layanan"|"kategori_layanan"|"obat"|"jadwal" } });
+      return (rows ?? []).map(tab.map);
     },
   });
 

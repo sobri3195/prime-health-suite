@@ -23,8 +23,7 @@ import {
 } from "recharts";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { upsertJadwal, deleteJadwal } from "@/lib/klinik.functions";
+import { upsertJadwal, deleteJadwal, listJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
   head: () => pageHead({ title: 'Jadwal Dokter — SIM Klinik', description: 'Jadwal praktik dokter, slot, dan kepadatan kunjungan harian.', path: '/sim-klinik/jadwal' }),
@@ -54,16 +53,10 @@ function JadwalPage() {
   const [editing, setEditing] = useState<Jadwal | null>(null);
   const [openForm, setOpenForm] = useState(false);
 
+  const callList = useServerFn(listJadwal);
   const { data: schedules = [], isLoading, error } = useQuery<Jadwal[]>({
     queryKey: ["klinik_jadwal"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("klinik_jadwal")
-        .select("id,dokter_id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
-        .order("dokter_name");
-      if (error) throw error;
-      return (data ?? []) as Jadwal[];
-    },
+    queryFn: async () => (await callList()) as unknown as Jadwal[],
   });
 
   const callDel = useServerFn(deleteJadwal);
