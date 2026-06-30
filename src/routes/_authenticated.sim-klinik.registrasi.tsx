@@ -155,12 +155,15 @@ function RegistrasiPage() {
           <div className="space-y-2">
             {bookings.length === 0 ? <p className="text-sm text-muted-foreground">Belum ada booking.</p>
               : bookings.map((b) => (
-                <div key={b.id} className="flex items-center gap-2 rounded-md border p-2">
+                <div key={b.id} data-testid="booking-row" data-booking-id={b.id} className="flex items-center gap-2 rounded-md border p-2">
                   <div className="w-14 text-center font-mono text-sm font-bold">{b.jam_slot}</div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{b.apps_pasien?.nama ?? "-"}</div>
                     <div className="text-xs text-muted-foreground">{b.apps_pasien?.no_rm} • {b.fin_dokter?.name}</div>
                   </div>
+                  {(() => { const qno = b.klinik_visit?.[0]?.klinik_queue?.[0]?.queue_no; return qno ? (
+                    <Badge data-testid="queue-no" variant="outline" className="font-mono">#{qno}</Badge>
+                  ) : null; })()}
                   <Badge variant={b.status === "checked_in" ? "default" : b.status === "cancelled" ? "destructive" : "secondary"}>{b.status}</Badge>
                   {b.status !== "checked_in" && b.status !== "cancelled" && (
                     <Button size="sm" onClick={() => checkinM.mutate(b.id)}><CheckCircle2 className="mr-1 h-3 w-3" />Check-in</Button>
