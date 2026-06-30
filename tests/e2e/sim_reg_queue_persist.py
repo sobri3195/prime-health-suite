@@ -21,6 +21,13 @@ async def main():
         await page.wait_for_timeout(1000)
         await open_form_with_new_patient(page, NAMA, HP)
 
+        # Pilih slot unik agar tidak collide dgn data existing
+        jam_trigger = page.get_by_role("combobox").nth(0)
+        await jam_trigger.click()
+        await page.wait_for_timeout(400)
+        await page.get_by_role("option", name=SLOT_PICK).click()
+        await page.wait_for_timeout(200)
+
         trigger = page.get_by_label("Pilih dokter").first
         await trigger.wait_for(state="visible", timeout=10000)
         await trigger.click()
@@ -28,7 +35,7 @@ async def main():
         await page.locator('[role="option"]').nth(0).click()
         await page.wait_for_timeout(300)
         await page.get_by_role("button", name="Buat Booking").first.click()
-        await page.wait_for_timeout(2500)
+        await page.wait_for_timeout(3500)
         await page.screenshot(path=str(SHOT/"1_booked.png"))
 
         # Cari row booking yang baru dibuat berdasarkan nama pasien
