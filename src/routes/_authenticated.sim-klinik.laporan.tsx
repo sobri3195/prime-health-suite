@@ -133,9 +133,22 @@ function LaporanPage() {
               </Table>
             )
         ) : (
-          <EmptyState title="Distribusi penjamin" hint="Data agregat ditampilkan setelah ada invoice." />
+          payers.length === 0
+            ? <EmptyState title="Belum ada distribusi penjamin" hint="Buat invoice terlebih dahulu." />
+            : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={payers}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="name" /><YAxis yAxisId="left" /><YAxis yAxisId="right" orientation="right" />
+                  <Tooltip formatter={(v: number, k: string) => k === "revenue" ? formatIDR(v) : String(v)} />
+                  <Bar yAxisId="left" dataKey="count" fill="hsl(var(--primary))" radius={[6,6,0,0]} name="Invoice" />
+                  <Bar yAxisId="right" dataKey="revenue" fill="hsl(var(--muted-foreground))" radius={[6,6,0,0]} name="Pendapatan" />
+                </BarChart>
+              </ResponsiveContainer>
+            )
         )}
       </div>
+
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-4">
