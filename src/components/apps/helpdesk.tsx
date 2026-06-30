@@ -166,20 +166,33 @@ function NewTicketModal({ onClose, onSubmit, tr }: { onClose: () => void; onSubm
     <>
       <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
       <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
-        <h2 className="text-lg font-semibold">{tr("help.modal.title")}</h2>
+        <h2 id="new-ticket-title" className="text-lg font-semibold">{tr("help.modal.title")}</h2>
         <form
+          aria-labelledby="new-ticket-title"
           className="mt-4 space-y-3"
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
         >
-          <input required placeholder={tr("help.modal.subject")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <textarea required placeholder={tr("help.modal.desc")} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <div>
+            <label htmlFor="nt-subject" className="mb-1 block text-xs font-medium text-muted-foreground">{tr("help.modal.subject")}</label>
+            <input id="nt-subject" name="subject" required placeholder={tr("help.modal.subject")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label htmlFor="nt-desc" className="mb-1 block text-xs font-medium text-muted-foreground">{tr("help.modal.desc")}</label>
+            <textarea id="nt-desc" name="description" required placeholder={tr("help.modal.desc")} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <select className="rounded-md border border-input bg-background px-2 py-2 text-sm">
-              {CAT.slice(1).map((c) => <option key={c.value}>{c.label}</option>)}
-            </select>
-            <select className="rounded-md border border-input bg-background px-2 py-2 text-sm">
-              {PR.slice(1).map((p) => <option key={p.value}>{p.label}</option>)}
-            </select>
+            <div>
+              <label htmlFor="nt-cat" className="mb-1 block text-xs font-medium text-muted-foreground">{tr("help.col.category")}</label>
+              <select id="nt-cat" name="category" className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm">
+                {CAT.slice(1).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="nt-pri" className="mb-1 block text-xs font-medium text-muted-foreground">{tr("help.col.priority")}</label>
+              <select id="nt-pri" name="priority" className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm">
+                {PR.slice(1).map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="rounded-md border border-border px-3 py-1.5 text-sm">{tr("common.cancel")}</button>
