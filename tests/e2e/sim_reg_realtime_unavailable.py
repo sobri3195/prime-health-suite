@@ -72,7 +72,7 @@ async def main():
         # Pilih ulang dari daftar kosong tidak mungkin → tombol tetap disabled
         # Sekarang lepas interceptor & refetch lagi → daftar kembali, pilih ulang
         await page.unroute("**/_serverFn/**", handler)
-        await page.evaluate("window.dispatchEvent(new Event('focus'))")
+        await page.evaluate("window.__qc && window.__qc.invalidateQueries({queryKey:['klinik','dokter']})")
         await page.wait_for_timeout(2000)
         await trigger.click()
         await page.wait_for_timeout(500)
