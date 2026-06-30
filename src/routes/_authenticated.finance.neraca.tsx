@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,7 +13,8 @@ import { Download, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
 import { exportCsv, exportReportPdf } from "@/lib/exporter";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 
-export const Route = createFileRoute("/_authenticated/finance/neraca")({ component: NeracaSaldo });
+export const Route = createFileRoute("/_authenticated/finance/neraca")({
+  head: () => pageHead({ title: 'Neraca — Finance', description: 'Posisi aset, kewajiban, dan ekuitas klinik per tanggal cut-off.', path: '/finance/neraca' }), component: NeracaSaldo });
 
 const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
 

@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,7 +12,8 @@ import { Download, FileText } from "lucide-react";
 import { exportCsv, exportReportPdf } from "@/lib/exporter";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 
-export const Route = createFileRoute("/_authenticated/finance/arus-kas")({ component: ArusKas });
+export const Route = createFileRoute("/_authenticated/finance/arus-kas")({
+  head: () => pageHead({ title: 'Arus Kas — Finance', description: 'Aliran kas operasi, investasi, dan pendanaan klinik.', path: '/finance/arus-kas' }), component: ArusKas });
 
 const fmt = (n: number) => (Number(n) || 0).toLocaleString("id-ID");
 

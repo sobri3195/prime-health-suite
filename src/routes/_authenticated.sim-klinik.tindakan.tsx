@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { formatIDR } from "@/lib/sync-log";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/tindakan")({
+  head: () => pageHead({ title: 'Tindakan & Billing — SIM Klinik', description: 'Daftar tindakan pasien dan status billing live dari Finance.', path: '/sim-klinik/tindakan' }),
   component: TindakanPage,
 });
 

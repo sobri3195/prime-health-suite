@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
+  head: () => pageHead({ title: 'Jadwal Dokter — SIM Klinik', description: 'Jadwal praktik dokter, slot, dan kepadatan kunjungan harian.', path: '/sim-klinik/jadwal' }),
   component: JadwalPage,
 });
 

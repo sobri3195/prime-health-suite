@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ import { ExternalLink, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/master")({
+  head: () => pageHead({ title: 'Master Data — SIM Klinik', description: 'Master dokter, payer, tarif, dan referensi klinik terintegrasi Finance.', path: '/sim-klinik/master' }),
   component: MasterPage,
 });
 
