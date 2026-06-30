@@ -60,7 +60,7 @@ function ResepPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant={p.status === "dispensed" ? "default" : "secondary"}>{STATUS_LABEL[p.status]}</Badge>
                   {p.status === "sent_to_pharmacy" && (
-                    <Button size="sm" onClick={() => { if (confirm("Beri obat ini ke pasien? Stok akan berkurang otomatis.")) dispM.mutate(p.id); }}>
+                    <Button size="sm" onClick={() => setConfirmId(p.id)}>
                       <CheckCircle2 className="mr-1 h-3 w-3" />Dispense
                     </Button>
                   )}
