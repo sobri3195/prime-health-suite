@@ -329,6 +329,15 @@ function DiklatAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={!!delId}
+        onOpenChange={(o) => !o && setDelId(null)}
+        title="Hapus Diklat"
+        description="Diklat akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => { if (delId) delMut.mutate(delId); setDelId(null); }}
+      />
     </div>
   );
 }
