@@ -47,12 +47,12 @@ export function AuditLogPage() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-surface-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Waktu</th><th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Aksi</th><th className="px-4 py-3">Modul/Target</th>
-                <th className="px-4 py-3">IP</th><th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -62,7 +62,6 @@ export function AuditLogPage() {
                   <td className="px-4 py-2">{a.actor}</td>
                   <td className="px-4 py-2"><StatusBadge tone="info">{a.action}</StatusBadge></td>
                   <td className="px-4 py-2 font-mono text-xs">{a.target}</td>
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{ipFor(a.actor)}</td>
                   <td className="px-4 py-2"><StatusBadge tone="ok">success</StatusBadge></td>
                 </tr>
               ))}
