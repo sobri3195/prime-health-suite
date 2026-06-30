@@ -45,36 +45,34 @@ async def main():
         await page.screenshot(path=str(SHOT/"1_no_dokter.png"))
         print("no_dokter btn_disabled:", disabled_no_dokter, "create_called:", create_called["n"])
 
-        # 2) Kosongkan tanggal — input type=date diset ""; tombol harus tetap tak bisa kirim request invalid
-        date_input = page.locator('input[type="date"]').first
-        await date_input.fill("")
-        await page.wait_for_timeout(300)
-        # Pick a dokter so only date is missing
+        # 2) Kosongkan tanggal SETELAH pilih dokter — tombol harus disabled & banner muncul
         trigger = page.get_by_label("Pilih dokter").first
         await trigger.click()
         await page.wait_for_timeout(500)
         opts = page.locator('[role="option"]')
         if await opts.count() > 0:
             await opts.nth(0).click()
-        await page.wait_for_timeout(400)
-        # Coba submit
+        await page.wait_for_timeout(300)
+        # Pastikan tombol enabled saat tanggal default ada
+        btn_with_date = await btn.is_disabled()
+        # Bersihkan tanggal
+        date_input = page.locator('input[type="date"]').first
+        await date_input.evaluate("(el) => { const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set; setter.call(el, ''); el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }")
+        await page.wait_for_timeout(500)
+        date_value_now = await date_input.input_value()
+        btn_no_date_disabled = await btn.is_disabled()
+        validation_banner = await page.locator('[data-testid="form-validation"]:has-text("Tanggal wajib")').count()
         before = create_called["n"]
         try:
-            await btn.click(timeout=2000)
+            await btn.click(timeout=1500)
         except Exception:
             pass
-        await page.wait_for_timeout(1500)
-        # Browser native validation should block submit OR server validation rejects.
-        # We assert no booking row appears for "E2E Valid".
-        # Re-fill date with a valid value so the test cleans up state without saving.
-        date_value_now = await date_input.input_value()
-        no_request_on_empty_date = (create_called["n"] == before) or date_value_now != ""
+        await page.wait_for_timeout(1200)
+        no_request_on_empty_date = create_called["n"] == before
         await page.screenshot(path=str(SHOT/"2_no_date.png"))
-        print("date_value_now:", repr(date_value_now), "new_create_calls:", create_called["n"] - before)
+        print("date_value_now:", repr(date_value_now), "btn_with_date:", btn_with_date, "btn_no_date_disabled:", btn_no_date_disabled, "validation_banner:", validation_banner, "new_calls:", create_called["n"] - before)
 
-        ok = disabled_no_dokter and create_called["n"] == 0 or (disabled_no_dokter and no_request_on_empty_date)
-        # Strict: dokter validation must hold (0 createBooking calls before picking dokter)
-        strict_ok = disabled_no_dokter and (create_called["n"] == 0 or no_request_on_empty_date)
+        strict_ok = disabled_no_dokter and (not btn_with_date) and btn_no_date_disabled and validation_banner >= 1 and no_request_on_empty_date
         print("RESULT:", "PASS" if strict_ok else "FAIL")
         await b.close()
         return 0 if strict_ok else 1
