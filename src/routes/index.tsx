@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
 import { useAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const SITE = "https://prime-health-suite.lovable.app";
 
@@ -65,9 +66,12 @@ function Landing() {
             <a href="#workflow" className="hover:text-white">Alur</a>
             <a href="#security" className="hover:text-white">Keamanan</a>
           </nav>
-          <Link to="/apps/login" className="rounded-md bg-amber-400 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-amber-300">
-            Masuk
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/apps/login" className="rounded-md bg-amber-400 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-amber-300">
+              Masuk
+            </Link>
+          </div>
         </div>
       </header>
 
