@@ -4,7 +4,16 @@ import subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
-SCRIPTS = ["sim_reg_happy.py", "sim_reg_empty.py", "sim_reg_denied.py", "sim_reg_persist.py"]
+SCRIPTS = [
+    "sim_reg_happy.py",
+    "sim_reg_with_data.py",
+    "sim_reg_empty.py",
+    "sim_reg_denied.py",
+    "sim_reg_500.py",
+    "sim_reg_validate.py",
+    "sim_reg_persist.py",
+    "sim_reg_dynamic.py",
+]
 
 failed = []
 for s in SCRIPTS:
