@@ -1,9 +1,17 @@
 import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -13,17 +21,22 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { upsertJadwal, deleteJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
   head: () => pageHead({ title: 'Jadwal Dokter — SIM Klinik', description: 'Jadwal praktik dokter, slot, dan kepadatan kunjungan harian.', path: '/sim-klinik/jadwal' }),
   component: JadwalPage,
 });
 
-const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"] as const;
+type Day = typeof DAYS[number];
 
 type Jadwal = {
   id: string;
+  dokter_id: string | null;
   dokter_name: string;
   poli: string;
   day: string;
@@ -35,19 +48,29 @@ type Jadwal = {
 };
 
 function JadwalPage() {
+  const qc = useQueryClient();
   const [day, setDay] = useState("all");
   const [doc, setDoc] = useState("all");
+  const [editing, setEditing] = useState<Jadwal | null>(null);
+  const [openForm, setOpenForm] = useState(false);
 
   const { data: schedules = [], isLoading, error } = useQuery<Jadwal[]>({
     queryKey: ["klinik_jadwal"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("klinik_jadwal")
-        .select("id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
+        .select("id,dokter_id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
         .order("dokter_name");
       if (error) throw error;
       return (data ?? []) as Jadwal[];
     },
+  });
+
+  const callDel = useServerFn(deleteJadwal);
+  const delM = useMutation({
+    mutationFn: (id: string) => callDel({ data: { id } }),
+    onSuccess: () => { toast.success("Jadwal dihapus"); qc.invalidateQueries({ queryKey: ["klinik_jadwal"] }); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const doctors = useMemo(
@@ -89,6 +112,9 @@ function JadwalPage() {
             {doctors.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button className="ml-auto gap-1" onClick={() => { setEditing(null); setOpenForm(true); }}>
+          <Plus className="h-4 w-4" /> Tambah Jadwal
+        </Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -103,15 +129,16 @@ function JadwalPage() {
                 <TableHead>Kuota</TableHead>
                 <TableHead>Booked</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Memuat jadwal…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Memuat jadwal…</TableCell></TableRow>
               ) : error ? (
-                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-destructive">Gagal memuat jadwal.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-destructive">Gagal memuat jadwal.</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Tidak ada jadwal.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Tidak ada jadwal.</TableCell></TableRow>
               ) : filtered.map((s) => {
                 const pct = s.quota > 0 ? Math.round((s.booked / s.quota) * 100) : 0;
                 return (
@@ -133,6 +160,16 @@ function JadwalPage() {
                       {s.is_active
                         ? <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20">Aktif</Badge>
                         : <Badge variant="secondary">Nonaktif</Badge>}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { setEditing(s); setOpenForm(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" aria-label="Hapus" onClick={() => {
+                        if (confirm(`Hapus jadwal ${s.dokter_name} ${s.day}?`)) delM.mutate(s.id);
+                      }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -157,6 +194,69 @@ function JadwalPage() {
           </div>
         </div>
       </div>
+
+      {openForm && (
+        <JadwalForm initial={editing} onClose={() => setOpenForm(false)} onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["klinik_jadwal"] }); setOpenForm(false);
+        }} />
+      )}
     </div>
+  );
+}
+
+function JadwalForm({ initial, onClose, onSaved }: { initial: Jadwal | null; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    id: initial?.id,
+    dokter_id: initial?.dokter_id ?? null,
+    dokter_name: initial?.dokter_name ?? "",
+    poli: initial?.poli ?? "Poli Umum Mata",
+    day: (initial?.day ?? "Senin") as Day,
+    start_time: initial?.start_time ?? "08:00",
+    end_time: initial?.end_time ?? "12:00",
+    quota: initial?.quota ?? 20,
+    is_active: initial?.is_active ?? true,
+  });
+
+  const callUpsert = useServerFn(upsertJadwal);
+  const m = useMutation({
+    mutationFn: () => callUpsert({ data: form }),
+    onSuccess: () => { toast.success("Jadwal tersimpan"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{initial ? "Edit Jadwal" : "Tambah Jadwal"}</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5"><Label htmlFor="jd-doc">Nama Dokter</Label>
+            <Input id="jd-doc" value={form.dokter_name} onChange={(e) => setForm({ ...form, dokter_name: e.target.value })} /></div>
+          <div className="grid gap-1.5"><Label htmlFor="jd-poli">Poli</Label>
+            <Input id="jd-poli" value={form.poli} onChange={(e) => setForm({ ...form, poli: e.target.value })} /></div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="grid gap-1.5"><Label>Hari</Label>
+              <Select value={form.day} onValueChange={(v) => setForm({ ...form, day: v as Day })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div className="grid gap-1.5"><Label htmlFor="jd-start">Mulai</Label>
+              <Input id="jd-start" type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
+            <div className="grid gap-1.5"><Label htmlFor="jd-end">Selesai</Label>
+              <Input id="jd-end" type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1.5"><Label htmlFor="jd-q">Kuota</Label>
+              <Input id="jd-q" type="number" min={0} value={form.quota} onChange={(e) => setForm({ ...form, quota: Number(e.target.value) })} /></div>
+            <div className="flex items-end gap-2"><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /><Label>Aktif</Label></div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button disabled={m.isPending || !form.dokter_name || !form.poli} onClick={() => m.mutate()}>
+            {m.isPending ? "Menyimpan…" : "Simpan"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
