@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -42,6 +42,9 @@ function RegistrasiPage() {
   const dokterQ = useQuery({ queryKey: ["klinik","dokter"], retry: 1, queryFn: async () => { const r = await callDokter(); if (!Array.isArray(r)) throw new Error("Akses ditolak ke daftar dokter"); return r; } });
   const bookQ = useQuery({ queryKey: ["klinik","bookings",date], queryFn: () => callBookings({ data: { date } }) });
 
+  // Test hook: expose queryClient untuk simulasi realtime invalidation pada E2E.
+  useEffect(() => { (window as unknown as { __qc?: unknown }).__qc = qc; }, [qc]);
+
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { pasien_id: selectedP!.id, dokter_id: form.dokter_id, tanggal: date, jam_slot: form.jam_slot, keluhan: form.keluhan, source: form.source } }),
     onSuccess: () => { toast.success("Booking dibuat"); qc.invalidateQueries({ queryKey: ["klinik","bookings"] }); setSelectedP(null); setForm({ dokter_id: "", jam_slot: "08:00", keluhan: "", source: "walk_in" }); },
@@ -66,7 +69,17 @@ function RegistrasiPage() {
   });
 
   const dokterList = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
-  const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string } }>, [bookQ.data]);
+  const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string }; klinik_visit?: Array<{ klinik_queue?: Array<{ queue_no: string; status: string }> }> }>, [bookQ.data]);
+
+  // Real-time: jika dokter yang dipilih hilang dari daftar (mis. dinonaktifkan via realtime/refetch),
+  // reset pilihan & beri tahu user — tombol Buat Booking otomatis kembali disabled.
+  const selectedDokterMissing = !!form.dokter_id && !dokterQ.isLoading && !dokterQ.isError && !dokterList.some((d) => d.id === form.dokter_id);
+  useEffect(() => {
+    if (selectedDokterMissing) {
+      setForm((f) => ({ ...f, dokter_id: "" }));
+      toast.warning("Dokter yang dipilih sudah tidak tersedia. Silakan pilih ulang.");
+    }
+  }, [selectedDokterMissing]);
 
   return (
     <div>
@@ -145,12 +158,15 @@ function RegistrasiPage() {
           <div className="space-y-2">
             {bookings.length === 0 ? <p className="text-sm text-muted-foreground">Belum ada booking.</p>
               : bookings.map((b) => (
-                <div key={b.id} className="flex items-center gap-2 rounded-md border p-2">
+                <div key={b.id} data-testid="booking-row" data-booking-id={b.id} className="flex items-center gap-2 rounded-md border p-2">
                   <div className="w-14 text-center font-mono text-sm font-bold">{b.jam_slot}</div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{b.apps_pasien?.nama ?? "-"}</div>
                     <div className="text-xs text-muted-foreground">{b.apps_pasien?.no_rm} • {b.fin_dokter?.name}</div>
                   </div>
+                  {(() => { const qno = b.klinik_visit?.[0]?.klinik_queue?.[0]?.queue_no; return qno ? (
+                    <Badge data-testid="queue-no" variant="outline" className="font-mono">#{qno}</Badge>
+                  ) : null; })()}
                   <Badge variant={b.status === "checked_in" ? "default" : b.status === "cancelled" ? "destructive" : "secondary"}>{b.status}</Badge>
                   {b.status !== "checked_in" && b.status !== "cancelled" && (
                     <Button size="sm" onClick={() => checkinM.mutate(b.id)}><CheckCircle2 className="mr-1 h-3 w-3" />Check-in</Button>

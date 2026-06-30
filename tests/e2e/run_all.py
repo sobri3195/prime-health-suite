@@ -13,6 +13,10 @@ SCRIPTS = [
     "sim_reg_validate.py",
     "sim_reg_persist.py",
     "sim_reg_dynamic.py",
+    "sim_reg_realtime_unavailable.py",
+    "sim_reg_queue_persist.py",
+    "sim_reg_reload_validate.py",
+    "sim_reg_slot_persist.py",
 ]
 
 failed = []
