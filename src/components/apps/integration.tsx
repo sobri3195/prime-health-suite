@@ -32,10 +32,15 @@ const SYSTEMS: { id: SyncSystem; desc: string }[] = [
   { id: "Prime Apps", desc: "Portal & workspace internal." },
 ];
 
-const STATUS_CLS: Record<HealthRow["status"], string> = {
-  online: "bg-emerald-500/15 text-emerald-600",
-  idle:   "bg-amber-500/15 text-amber-600",
-  offline:"bg-rose-500/15 text-rose-600",
+const STATUS_CLS: Record<SyncEntry["status"], string> = {
+  success: "bg-emerald-500/15 text-emerald-600",
+  pending: "bg-amber-500/15 text-amber-600",
+  failed:  "bg-rose-500/15 text-rose-600",
+};
+const HEALTH_CLS: Record<HealthRow["status"], string> = {
+  online:  "bg-emerald-500/15 text-emerald-600",
+  idle:    "bg-amber-500/15 text-amber-600",
+  offline: "bg-rose-500/15 text-rose-600",
 };
 
 function useSyncLog() {
