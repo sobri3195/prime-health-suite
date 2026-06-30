@@ -43,6 +43,11 @@ export function AuthShell({
         } as React.CSSProperties
       }
     >
+      <div className="pointer-events-none fixed right-4 top-4 z-50">
+        <div className="pointer-events-auto">
+          <ThemeToggle />
+        </div>
+      </div>
       <main
         className="flex items-center justify-center px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] py-12"
         aria-labelledby={headingId}
