@@ -2,6 +2,8 @@ import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listMaster } from "@/lib/klinik.functions";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
