@@ -23,8 +23,7 @@ export function useRealtimeSubscription(
     const channel = supabase.channel(channelName);
 
     for (const table of tables) {
-      channel.on(
-        // @ts-expect-error postgres_changes is valid at runtime
+      (channel as unknown as { on: (...args: unknown[]) => typeof channel }).on(
         "postgres_changes",
         { event: "*", schema, table },
         () => {
