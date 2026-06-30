@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { addAudit } from "@/lib/audit-log";
 import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -153,7 +154,8 @@ export function AppShell({ system, children }: { system: System; children: React
             <ProfileMenu
               name={user?.name ?? "User"}
               role={user ? ROLE_LABEL[user.role] : ""}
-              onLogout={() => {
+              onLogout={async () => {
+                try { await supabase.auth.signOut(); } catch { /* ignore */ }
                 logout(system);
                 navigate({ to: `/${system}/login`, replace: true });
               }}
