@@ -130,16 +130,46 @@ function PasienPage() {
       </div>
       <div className="mt-2 text-xs text-muted-foreground">Total {data.length} pasien</div>
 
-      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o) { setEdit(null); setErrors({}); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>{edit?.id ? "Edit Pasien" : "Pasien Baru"}</DialogTitle></DialogHeader>
-          {edit && <PasienForm value={edit} onChange={setEdit} />}
+          {edit && <PasienForm value={edit} onChange={setEdit} errors={errors} />}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEdit(null)}>Batal</Button>
-            <Button disabled={upsertM.isPending} onClick={() => edit && upsertM.mutate(edit)}>{upsertM.isPending ? "Menyimpan…" : "Simpan"}</Button>
+            <Button variant="outline" onClick={() => { setEdit(null); setErrors({}); }}>Batal</Button>
+            <Button
+              disabled={upsertM.isPending}
+              onClick={() => {
+                if (!edit) return;
+                const parsed = PasienSchema.safeParse(edit);
+                if (!parsed.success) {
+                  const flat: Record<string, string> = {};
+                  for (const issue of parsed.error.issues) {
+                    const key = issue.path[0];
+                    if (typeof key === "string" && !flat[key]) flat[key] = issue.message;
+                  }
+                  setErrors(flat);
+                  toast.error("Periksa kembali isian form");
+                  return;
+                }
+                setErrors({});
+                upsertM.mutate(edit);
+              }}
+            >
+              {upsertM.isPending ? "Menyimpan…" : "Simpan"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDeact}
+        onOpenChange={(o) => !o && setConfirmDeact(null)}
+        title={confirmDeact?.is_active ? "Nonaktifkan Pasien" : "Aktifkan Pasien"}
+        description={confirmDeact ? `${confirmDeact.is_active ? "Nonaktifkan" : "Aktifkan"} pasien ${confirmDeact.nama}?` : undefined}
+        confirmLabel={confirmDeact?.is_active ? "Nonaktifkan" : "Aktifkan"}
+        destructive={!!confirmDeact?.is_active}
+        onConfirm={() => { if (confirmDeact) deactM.mutate(confirmDeact); setConfirmDeact(null); }}
+      />
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-lg">
