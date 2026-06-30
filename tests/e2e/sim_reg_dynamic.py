@@ -29,18 +29,19 @@ async def main():
         await page.screenshot(path=str(SHOT/"1_empty.png"))
         print("PHASE1 empty_banner:", empty_banner, "trigger_disabled:", disabled_before, "btn_disabled:", btn_disabled_before)
 
-        # PHASE 2: remove intercept → trigger refetch via window focus
+        # PHASE 2: remove intercept → unmount/remount to refetch
         await page.unroute("**/_serverFn/**", handler)
-        # React Query's refetchOnWindowFocus default = true
-        await page.evaluate("window.dispatchEvent(new Event('focus'))")
-        # Also nudge via visibility change
-        await page.evaluate("Object.defineProperty(document,'visibilityState',{value:'visible',configurable:true});document.dispatchEvent(new Event('visibilitychange'))")
-        # Wait for the new request + render
+        await page.goto("http://localhost:8080/sim-klinik", wait_until="domcontentloaded")
+        await page.wait_for_timeout(400)
+        await page.goto("http://localhost:8080/sim-klinik/registrasi", wait_until="networkidle")
+        await page.wait_for_timeout(1500)
+        # Re-open form (selectedP reset by unmount)
+        await open_form_with_new_patient(page, f"E2E Dyn2 {int(time.time())}", "0818" + str(int(time.time()))[-7:])
         try:
             await page.wait_for_response(lambda r: is_list_dokter(r.url) and r.status == 200, timeout=8000)
         except Exception:
             pass
-        await page.wait_for_timeout(1500)
+        await page.wait_for_timeout(1200)
 
         empty_banner_after = await page.locator('[role="alert"]:has-text("Daftar dokter kosong")').count()
         # Open the trigger to read options
