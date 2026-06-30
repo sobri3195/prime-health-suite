@@ -107,15 +107,12 @@ function MasterPage() {
   const [q, setQ] = useState("");
   const tab = TABS.find((t) => t.key === tabKey)!;
 
+  const callList = useServerFn(listMaster);
   const { data = [], isLoading, error } = useQuery<Row[]>({
     queryKey: ["sim-master", tab.key],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(tab.table as any)
-        .select(tab.select)
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []).map(tab.map);
+      const rows = await callList({ data: { key: tab.key as "dokter"|"payer"|"layanan"|"kategori_layanan"|"obat"|"jadwal" } });
+      return (rows ?? []).map(tab.map);
     },
   });
 
