@@ -90,9 +90,60 @@ function BillingPage() {
       {billVisit && <BillingDialog visit_id={billVisit} onClose={() => setBillVisit(null)}
         callDetail={callDetail} callLayanan={callLayanan} callGen={callGen}
         onCreated={() => { qc.invalidateQueries({ queryKey: ["klinik"] }); setBillVisit(null); }} />}
+      {payInvoice && <AddPaymentDialog invoice={payInvoice} onClose={() => setPayInvoice(null)}
+        onSaved={() => { qc.invalidateQueries({ queryKey: ["klinik"] }); setPayInvoice(null); }} />}
     </div>
   );
 }
+
+function AddPaymentDialog({ invoice, onClose, onSaved }: {
+  invoice: { id: string; no: string; total: number; dibayar: number; name: string | null };
+  onClose: () => void; onSaved: () => void;
+}) {
+  const sisa = Math.max(0, invoice.total - invoice.dibayar);
+  const [amount, setAmount] = useState<number>(sisa);
+  const [method, setMethod] = useState<"cash"|"transfer"|"qris"|"debit"|"credit"|"insurance">("cash");
+  const call = useServerFn(addInvoicePayment);
+  const m = useMutation({
+    mutationFn: () => call({ data: { invoice_id: invoice.id, amount, method } }),
+    onSuccess: () => { toast.success("Pembayaran tercatat"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Tambah Bayar — {invoice.no}</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2 text-sm">
+          <div>Pasien: <b>{invoice.name ?? "—"}</b></div>
+          <div className="grid grid-cols-3 gap-2 rounded border p-2 text-xs">
+            <div>Total<br /><b>Rp {invoice.total.toLocaleString("id-ID")}</b></div>
+            <div>Dibayar<br /><b>Rp {invoice.dibayar.toLocaleString("id-ID")}</b></div>
+            <div>Sisa<br /><b>Rp {sisa.toLocaleString("id-ID")}</b></div>
+          </div>
+          <div className="grid gap-1.5"><Label htmlFor="pay-amt">Jumlah Bayar</Label>
+            <Input id="pay-amt" type="number" min={1} max={sisa} value={amount} onChange={(e) => setAmount(Number(e.target.value))} /></div>
+          <div className="grid gap-1.5"><Label>Metode</Label>
+            <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Tunai</SelectItem><SelectItem value="transfer">Transfer</SelectItem>
+                <SelectItem value="qris">QRIS</SelectItem><SelectItem value="debit">Debit</SelectItem>
+                <SelectItem value="credit">Kredit</SelectItem><SelectItem value="insurance">Asuransi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button disabled={m.isPending || amount <= 0 || amount > sisa} onClick={() => m.mutate()}>
+            {m.isPending ? "Menyimpan…" : "Simpan Pembayaran"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, onCreated }: {
   visit_id: string; onClose: () => void;
