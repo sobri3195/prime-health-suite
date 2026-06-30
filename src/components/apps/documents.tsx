@@ -39,13 +39,26 @@ function formatBytes(n: number) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+const ALLOWED_MIME = [
+  "application/pdf",
+  "image/jpeg", "image/png", "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain", "text/csv",
+];
+
 export function DocumentsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
+
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["clinic_document"],
