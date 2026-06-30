@@ -26,13 +26,24 @@ async def main():
                 resp = await ctx.request.fetch(route.request)
                 body = await resp.text()
                 # TSS may wrap as {"result": [...]} or return raw array. Replace either.
+                def empty_arrays(node):
+                    # TSS encodes arrays as {"t":9,"i":N,"p":[...]} — empty them in-place.
+                    if isinstance(node, dict):
+                        if node.get("t") == 9 and isinstance(node.get("p"), list):
+                            node["p"] = []
+                        for v in node.values():
+                            empty_arrays(v)
+                    elif isinstance(node, list):
+                        for v in node:
+                            empty_arrays(v)
                 try:
                     parsed = json.loads(body)
-                    if isinstance(parsed, dict) and "result" in parsed:
+                    if isinstance(parsed, dict) and "result" in parsed and isinstance(parsed["result"], list):
                         parsed["result"] = []
                         new_body = json.dumps(parsed)
                     else:
-                        new_body = "[]"
+                        empty_arrays(parsed)
+                        new_body = json.dumps(parsed)
                 except Exception:
                     new_body = "[]"
                 return await route.fulfill(
