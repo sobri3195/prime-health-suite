@@ -262,7 +262,7 @@ export const listBookingByDate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const d = data.date ?? new Date().toISOString().slice(0, 10);
     let q = (context.supabase as Supa).from("apps_booking")
-      .select("*, apps_pasien(no_rm,nama,telp,patient_type), fin_dokter(name,spesialisasi)")
+      .select("*, apps_pasien(no_rm,nama,telp,patient_type), fin_dokter(name,spesialisasi), klinik_visit!klinik_visit_booking_id_fkey(klinik_queue(queue_no,status))")
       .eq("tanggal", d).order("jam_slot");
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
