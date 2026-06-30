@@ -1,6 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/app-shell";
-import { findNav } from "@/lib/nav-config";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { LauncherPage } from "@/components/apps/launcher";
 import { NotificationsPage } from "@/components/apps/notifications";
 import { HelpdeskPage } from "@/components/apps/helpdesk";
@@ -8,11 +6,6 @@ import { DocumentsPage } from "@/components/apps/documents";
 import { UsersPage } from "@/components/apps/users";
 import { AuditLogPage } from "@/components/apps/audit-log";
 import { IntegrationPage } from "@/components/apps/integration";
-
-export const Route = createFileRoute("/_authenticated/apps/$section")({
-  component: Section,
-});
-
 import { PatientAI, PatientProfil, PatientLaporan } from "@/components/apps/patient";
 import { PatientBelanjaReal, PatientCart, PatientCheckout, PatientOrders } from "@/components/apps/belanja-real";
 import { PatientEdukasi } from "@/components/apps/edukasi";
@@ -20,6 +13,20 @@ import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
 import { PatientPrivasi } from "@/components/apps/privacy";
 
+const KNOWN_SECTIONS = new Set([
+  "ai", "belanja", "cart", "checkout", "orders", "edukasi", "wins", "chat",
+  "profil", "privasi", "laporan", "launcher", "notifications", "helpdesk",
+  "documents", "users", "integration", "audit-log",
+]);
+
+export const Route = createFileRoute("/_authenticated/apps/$section")({
+  beforeLoad: ({ params }) => {
+    if (!KNOWN_SECTIONS.has(params.section)) {
+      throw notFound({ data: { section: params.section } });
+    }
+  },
+  component: Section,
+});
 
 function Section() {
   const { section } = Route.useParams();
@@ -34,7 +41,6 @@ function Section() {
     case "chat": return <PatientChat />;
     case "profil": return <PatientProfil />;
     case "privasi": return <PatientPrivasi />;
-
     case "laporan": return <PatientLaporan />;
     case "launcher": return <LauncherPage />;
     case "notifications": return <NotificationsPage />;
@@ -43,9 +49,6 @@ function Section() {
     case "users": return <UsersPage />;
     case "integration": return <IntegrationPage />;
     case "audit-log": return <AuditLogPage />;
-    default: {
-      const meta = findNav("apps", section);
-      return <PlaceholderPage title={meta?.label ?? section} />;
-    }
+    default: return null;
   }
 }
