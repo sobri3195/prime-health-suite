@@ -52,6 +52,7 @@ function DiklatAdminPage() {
 
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Partial<Row & { ringkasan: string; deskripsi: string; pdf_url: string; galeri: string[] }>>({});
+  const [delId, setDelId] = useState<string | null>(null);
 
   const upsert = useServerFn(upsertDiklat);
   type UpsertPayload = {
