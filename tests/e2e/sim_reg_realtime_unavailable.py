@@ -58,8 +58,8 @@ async def main():
 
         await page.route("**/_serverFn/**", handler)
 
-        # Trigger refetch tanpa reload halaman: dispatch focus event
-        await page.evaluate("window.dispatchEvent(new Event('focus'))")
+        # Trigger refetch tanpa reload halaman via queryClient
+        await page.evaluate("window.__qc && window.__qc.invalidateQueries({queryKey:['klinik','dokter']})")
         await page.wait_for_timeout(2500)
         await page.screenshot(path=str(SHOT/"2_after_realtime.png"))
 
