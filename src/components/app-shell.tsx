@@ -154,7 +154,8 @@ export function AppShell({ system, children }: { system: System; children: React
             <ProfileMenu
               name={user?.name ?? "User"}
               role={user ? ROLE_LABEL[user.role] : ""}
-              onLogout={() => {
+              onLogout={async () => {
+                try { await supabase.auth.signOut(); } catch { /* ignore */ }
                 logout(system);
                 navigate({ to: `/${system}/login`, replace: true });
               }}
