@@ -215,8 +215,14 @@ export function DocumentsPage() {
               onClick={() => upload.mutate()}
               className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground disabled:opacity-60"
             >
-              <Upload className="h-4 w-4" /> {upload.isPending ? "Mengupload…" : "Upload"}
+              <Upload className="h-4 w-4" /> {upload.isPending ? `Mengupload… ${progress}%` : "Upload"}
             </button>
+          {upload.isPending && (
+            <div className="h-2 w-full overflow-hidden rounded bg-muted">
+              <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          )}
+
             <button
               onClick={() => {
                 setPendingFile(null);
