@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +10,7 @@ import { listJournal } from "@/lib/finance-tx.functions";
 import { useFinanceDate } from "@/context/finance-date";
 
 export const Route = createFileRoute("/_authenticated/finance/jurnal")({
+  head: () => pageHead({ title: 'Jurnal Umum — Finance', description: 'Pencatatan jurnal transaksional dengan auto-posting dan audit trail.', path: '/finance/jurnal' }),
   component: JurnalPage,
 });
 

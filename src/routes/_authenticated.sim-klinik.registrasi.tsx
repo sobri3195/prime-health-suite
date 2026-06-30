@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +16,8 @@ import { Search, UserPlus, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/registrasi")({ component: RegistrasiPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/registrasi")({
+  head: () => pageHead({ title: 'Registrasi Pasien — SIM Klinik', description: 'Pendaftaran pasien, pemilihan dokter, dan pembuatan booking antrian.', path: '/sim-klinik/registrasi' }), component: RegistrasiPage });
 
 const SLOTS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30"];
 

@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +15,8 @@ import { useFinanceDate } from "@/context/finance-date";
 import { getBukuBesar } from "@/lib/finance-dashboard.functions";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 
-export const Route = createFileRoute("/_authenticated/finance/buku-besar")({ component: BukuBesarPage });
+export const Route = createFileRoute("/_authenticated/finance/buku-besar")({
+  head: () => pageHead({ title: 'Buku Besar — Finance', description: 'Mutasi per akun lengkap dengan saldo berjalan dan filter periode.', path: '/finance/buku-besar' }), component: BukuBesarPage });
 
 function BukuBesarPage() {
   const { from, to, label } = useFinanceDate();

@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -26,6 +27,7 @@ import { ReconWidget } from "@/components/recon-widget";
 
 
 export const Route = createFileRoute("/_authenticated/finance/")({
+  head: () => pageHead({ title: 'Dashboard Finance — Prime Health', description: 'Ringkasan kas, piutang, hutang, dan laba klinik secara real-time.', path: '/finance' }),
   component: FinanceDashboard,
 });
 
