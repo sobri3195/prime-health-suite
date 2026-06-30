@@ -1,13 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/app-shell";
-import { findNav } from "@/lib/nav-config";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/finance/$section")({
-  component: Section,
+  loader: ({ params }) => {
+    throw notFound({ data: { section: params.section } });
+  },
+  component: () => null,
 });
-
-function Section() {
-  const { section } = Route.useParams();
-  const meta = findNav("finance", section);
-  return <PlaceholderPage title={meta?.label ?? section} />;
-}

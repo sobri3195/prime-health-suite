@@ -1,25 +1,27 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { PageHeader, PlaceholderPage } from "@/components/app-shell";
-import { findNav } from "@/lib/nav-config";
+import { PageHeader } from "@/components/app-shell";
 import { getVisitDetail } from "@/lib/klinik.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Stethoscope } from "lucide-react";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const Route = createFileRoute("/_authenticated/sim-klinik/$section")({
+  beforeLoad: ({ params }) => {
+    if (!UUID_RE.test(params.section)) {
+      throw notFound({ data: { section: params.section } });
+    }
+  },
   component: Section,
 });
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function Section() {
   const { section } = Route.useParams();
-  if (UUID_RE.test(section)) return <VisitDetail visitId={section} />;
-  const meta = findNav("sim-klinik", section);
-  return <PlaceholderPage title={meta?.label ?? section} />;
+  return <VisitDetail visitId={section} />;
 }
 
 function VisitDetail({ visitId }: { visitId: string }) {
