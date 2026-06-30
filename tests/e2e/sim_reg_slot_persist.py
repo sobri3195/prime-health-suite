@@ -45,9 +45,12 @@ async def main():
         await page.wait_for_timeout(300)
 
         await page.get_by_role("button", name="Buat Booking").first.click()
-        await page.wait_for_timeout(2500)
+        # Tunggu sampai booking baru muncul di list (retry slot kalau collision)
+        for _ in range(3):
+            await page.wait_for_timeout(2500)
+            if await page.locator(f'[data-testid="booking-row"]:has-text("{NAMA}")').count() > 0:
+                break
         await page.screenshot(path=str(SHOT/"1_submitted.png"))
-
         row_count = await page.locator(f'[data-testid="booking-row"]:has-text("{NAMA}")').count()
 
         # Refresh halaman
