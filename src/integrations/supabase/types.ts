@@ -2632,6 +2632,59 @@ export type Database = {
           },
         ]
       }
+      klinik_jadwal: {
+        Row: {
+          booked: number
+          created_at: string
+          day: string
+          dokter_id: string | null
+          dokter_name: string
+          end_time: string
+          id: string
+          is_active: boolean
+          poli: string
+          quota: number
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          booked?: number
+          created_at?: string
+          day: string
+          dokter_id?: string | null
+          dokter_name: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          poli?: string
+          quota?: number
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          booked?: number
+          created_at?: string
+          day?: string
+          dokter_id?: string | null
+          dokter_name?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          poli?: string
+          quota?: number
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klinik_jadwal_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       klinik_medical_record: {
         Row: {
           alergi: string | null

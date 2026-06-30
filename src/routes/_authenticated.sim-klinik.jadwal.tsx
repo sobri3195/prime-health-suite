@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,25 +12,55 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { schedules } from "@/data/clinicData";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
   component: JadwalPage,
 });
 
-const DAYS = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+
+type Jadwal = {
+  id: string;
+  dokter_name: string;
+  poli: string;
+  day: string;
+  start_time: string;
+  end_time: string;
+  quota: number;
+  booked: number;
+  is_active: boolean;
+};
 
 function JadwalPage() {
   const [day, setDay] = useState("all");
   const [doc, setDoc] = useState("all");
 
-  const doctors = Array.from(new Set(schedules.map((s) => s.doctor)));
+  const { data: schedules = [], isLoading, error } = useQuery<Jadwal[]>({
+    queryKey: ["klinik_jadwal"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("klinik_jadwal")
+        .select("id,dokter_name,poli,day,start_time,end_time,quota,booked,is_active")
+        .order("dokter_name");
+      if (error) throw error;
+      return (data ?? []) as Jadwal[];
+    },
+  });
 
-  const filtered = useMemo(() => schedules.filter((s) => {
-    if (day !== "all" && s.day !== day) return false;
-    if (doc !== "all" && s.doctor !== doc) return false;
-    return true;
-  }), [day, doc]);
+  const doctors = useMemo(
+    () => Array.from(new Set(schedules.map((s) => s.dokter_name))),
+    [schedules],
+  );
+
+  const filtered = useMemo(
+    () => schedules.filter((s) => {
+      if (day !== "all" && s.day !== day) return false;
+      if (doc !== "all" && s.dokter_name !== doc) return false;
+      return true;
+    }),
+    [schedules, day, doc],
+  );
 
   const density = DAYS.map((d) => ({
     day: d.slice(0, 3),
@@ -73,16 +104,20 @@ function JadwalPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Memuat jadwal…</TableCell></TableRow>
+              ) : error ? (
+                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-destructive">Gagal memuat jadwal.</TableCell></TableRow>
+              ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Tidak ada jadwal.</TableCell></TableRow>
               ) : filtered.map((s) => {
-                const pct = Math.round((s.booked / s.quota) * 100);
+                const pct = s.quota > 0 ? Math.round((s.booked / s.quota) * 100) : 0;
                 return (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.doctor}</TableCell>
+                    <TableCell className="font-medium">{s.dokter_name}</TableCell>
                     <TableCell>{s.poli}</TableCell>
                     <TableCell>{s.day}</TableCell>
-                    <TableCell className="font-mono text-xs">{s.start}–{s.end}</TableCell>
+                    <TableCell className="font-mono text-xs">{s.start_time}–{s.end_time}</TableCell>
                     <TableCell>{s.quota}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -93,7 +128,7 @@ function JadwalPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {s.active
+                      {s.is_active
                         ? <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20">Aktif</Badge>
                         : <Badge variant="secondary">Nonaktif</Badge>}
                     </TableCell>
