@@ -132,8 +132,13 @@ function RegistrasiPage() {
               <div><Label>Dokter</Label>
                 <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })} disabled={dokterQ.isLoading || dokterQ.isError || dokterList.length === 0}>
                   <SelectTrigger aria-label="Pilih dokter"><SelectValue placeholder={dokterQ.isLoading ? "Memuat dokter…" : dokterQ.isError ? "Akses dokter ditolak" : dokterList.length === 0 ? "Tidak ada dokter tersedia" : "Pilih dokter"} /></SelectTrigger>
-                  <SelectContent>{dokterList.map((d) => <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi})` : ""}</SelectItem>)}</SelectContent>
+                  <SelectContent>{dokterList.map((d) => {
+                    const jm = jadwalRows.filter((j) => j.dokter_id === d.id && j.is_active && String(j.day).toLowerCase() === selectedDay);
+                    const hint = jm.length ? jm.map((j) => `${(j.start_time ?? "").slice(0,5)}–${(j.end_time ?? "").slice(0,5)}`).join(", ") : "tidak ada jadwal hari ini";
+                    return <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi}) ` : ""}· {hint}</SelectItem>;
+                  })}</SelectContent>
                 </Select>
+                <p className="mt-1 text-[11px] text-muted-foreground">Hanya dokter yang praktik hari <b className="capitalize">{selectedDay}</b> yang ditampilkan.</p>
                 {!dokterQ.isLoading && dokterQ.isError && (
                   <p role="alert" data-testid="dokter-error" className="mt-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
                     Akses ditolak: Anda tidak memiliki izin untuk melihat daftar dokter. Pendaftaran dihentikan. Hubungi admin untuk meminta role staf klinik (pendaftaran/admin_klinik/super_admin).
