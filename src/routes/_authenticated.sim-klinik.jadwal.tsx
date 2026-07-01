@@ -220,7 +220,7 @@ function JadwalPage() {
                       </div>
                     );
                   })}
-                </>
+                </div>
               ))}
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground">Blok merah bergaris = overlap. Warna: hijau &lt;70%, kuning 70–90%, merah &gt;90% kuota terpakai. Klik untuk edit.</p>
