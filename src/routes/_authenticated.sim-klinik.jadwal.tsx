@@ -200,7 +200,7 @@ function JadwalPage() {
               <div className="border-b border-border p-2 text-xs font-medium text-muted-foreground">Jam</div>
               {DAYS.map((d) => <div key={d} className="border-b border-l border-border p-2 text-center text-xs font-semibold">{d}</div>)}
               {Array.from({ length: 12 }, (_, i) => 8 + i).map((h) => (
-                <>
+                <div key={`row-${h}`} className="contents">
                   <div key={`h-${h}`} className="border-b border-border p-2 text-right text-[11px] text-muted-foreground">{String(h).padStart(2,"0")}:00</div>
                   {DAYS.map((d) => {
                     const hits = filtered.filter((s) => s.day === d && Number(s.start_time.slice(0,2)) <= h && Number(s.end_time.slice(0,2)) > h);
