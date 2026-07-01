@@ -145,7 +145,7 @@ function PemeriksaanPage() {
                   <span className="text-sm font-semibold">Template Cepat:</span>
                   {Object.keys(TEMPLATES).map((k) => <Button key={k} size="sm" variant="outline" onClick={() => applyTpl(k)}>{k}</Button>)}
                 </div>
-                <div><Label>Anamnesis / Keluhan</Label><Input value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
+                <div><Label>Anamnesis / Keluhan</Label><AutoTextarea value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
                 <div className="grid grid-cols-4 gap-2">
                   <div><Label>Visus OD</Label><Input value={form.visus_od} onChange={(e) => setForm({ ...form, visus_od: e.target.value })} placeholder="6/6" /></div>
                   <div><Label>Visus OS</Label><Input value={form.visus_os} onChange={(e) => setForm({ ...form, visus_os: e.target.value })} placeholder="6/6" /></div>
