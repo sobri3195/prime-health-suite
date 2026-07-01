@@ -15,7 +15,7 @@ import { SkeletonList, EmptyState } from "@/components/apps/ui";
 import { ExportBar, defaultRange, type DateRange } from "@/components/export-bar";
 import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
 import {
-  listPayrollRuns, createPayrollRun, getPayrollDetail, finalizePayrollRun,
+  listPayrollRuns, createPayrollRun, getPayrollDetail, finalizePayrollRun, payPayrollRun,
 } from "@/lib/payroll.functions";
 import { clinicAudit } from "@/lib/clinic-audit";
 import { toast } from "sonner";
@@ -70,6 +70,18 @@ function PayrollPage() {
       clinicAudit("Payroll", "finalize", id);
       qc.invalidateQueries({ queryKey: ["hr.runs"] });
       qc.invalidateQueries({ queryKey: ["hr.run.detail", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mPay = useMutation({
+    mutationFn: (id: string) => payPayrollRun({ data: { id, metode: "transfer" } }),
+    onSuccess: (d, id) => {
+      toast.success(`Payroll dibayar → voucher ${d?.expense?.no_voucher ?? ""}`);
+      clinicAudit("Payroll", "pay", id, { expense_id: d?.expense?.id });
+      qc.invalidateQueries({ queryKey: ["hr.runs"] });
+      qc.invalidateQueries({ queryKey: ["hr.run.detail", id] });
+      qc.invalidateQueries({ queryKey: ["fin-expenses"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -180,6 +192,15 @@ function PayrollPage() {
                   onClick={() => mFinal.mutate(selectedRun)}>
                   <Lock className="h-4 w-4" /> Finalize
                 </Button>
+              )}
+              {detail.data?.run?.status === "final" && (
+                <Button size="sm" className="gap-1" disabled={mPay.isPending}
+                  onClick={() => mPay.mutate(selectedRun)}>
+                  <Wallet className="h-4 w-4" /> Bayar & Post ke Expense
+                </Button>
+              )}
+              {detail.data?.run?.status === "paid" && (
+                <Badge>Sudah Dibayar</Badge>
               )}
               <Button size="sm" variant="outline"
                 onClick={() => exportCsv("payroll-detail.csv", itemCols, (detail.data?.items ?? []) as ItemRow[])}>
