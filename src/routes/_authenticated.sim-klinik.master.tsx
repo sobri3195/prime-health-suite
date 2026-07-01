@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink, Search, Database } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/master")({
   head: () => pageHead({ title: 'Master Data — SIM Klinik', description: 'Master dokter, payer, tarif, dan referensi klinik terintegrasi Finance.', path: '/sim-klinik/master' }),
@@ -167,7 +168,12 @@ function MasterPage() {
                   ) : error ? (
                     <TableRow><TableCell colSpan={4} className="py-12 text-center text-sm text-destructive">Gagal memuat data.</TableCell></TableRow>
                   ) : rows.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+                    <EmptyState
+                      inTableColSpan={4}
+                      icon={Database}
+                      title={`Tidak ada data ${t.label.toLowerCase()}`}
+                      description={q ? "Coba ubah kata kunci pencarian." : "Data akan muncul setelah ditambahkan pada modul terkait."}
+                    />
                   ) : rows.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{r.code}</TableCell>

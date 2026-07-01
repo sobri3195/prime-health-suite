@@ -158,7 +158,7 @@ function Page() {
             type="button"
             variant="destructive"
             disabled={!canSubmit}
-            onClick={onReset}
+            onClick={() => setConfirmOpen(true)}
             className="w-full"
           >
             {busy ? (
@@ -167,6 +167,16 @@ function Page() {
               <>Reset Data Transaksional</>
             )}
           </Button>
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            destructive
+            title="Konfirmasi Akhir: Reset Data Transaksional?"
+            description="Klik lanjut untuk menghapus permanen seluruh data transaksional finance. Tindakan ini tidak dapat diurungkan dari UI."
+            confirmLabel="Ya, hapus permanen"
+            cancelLabel="Batal"
+            onConfirm={onReset}
+          />
         </div>
       </Card>
 
