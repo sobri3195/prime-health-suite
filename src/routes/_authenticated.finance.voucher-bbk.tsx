@@ -49,8 +49,8 @@ function Page() {
                   <TableCell className="text-right font-mono">{fmt(r.jumlah)}</TableCell>
                   <TableCell>{r.status}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
-                      const doc = generateVoucherPDF({
+                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
+                      const doc = await generateVoucherPDF({
                         jenis: "BBK",
                         no_voucher: r.no_bukti,
                         tanggal: r.tanggal,
