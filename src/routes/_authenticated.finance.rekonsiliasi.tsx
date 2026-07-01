@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,6 +19,8 @@ import { listBankStatement, importBankStatement, autoMatchStatement, unmatchStat
 import { parseBankCsv } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/finance/rekonsiliasi")({
+  
+  head: () => pageHead({ title: "Rekonsiliasi Kas/Bank — Finance", description: "Rekonsiliasi Kas/Bank pada modul keuangan klinik.", path: "/finance/rekonsiliasi" }),
   component: RekonsiliasiPage,
 });
 

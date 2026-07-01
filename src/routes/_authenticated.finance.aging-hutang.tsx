@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finance/aging-hutang")({
+  
+  head: () => pageHead({ title: "Aging Hutang — Finance", description: "Aging Hutang pada modul keuangan klinik.", path: "/finance/aging-hutang" }),
   component: Page,
 });
 

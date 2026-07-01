@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,6 +11,8 @@ import { generateVoucherPDF, downloadPDF } from "@/lib/pdf-templates";
 
 
 export const Route = createFileRoute("/_authenticated/finance/voucher-kas-kecil")({
+  
+  head: () => pageHead({ title: "Voucher Kas Kecil — Finance", description: "Voucher Kas Kecil pada modul keuangan klinik.", path: "/finance/voucher-kas-kecil" }),
   component: Page,
 });
 

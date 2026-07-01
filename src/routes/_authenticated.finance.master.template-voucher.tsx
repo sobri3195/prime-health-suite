@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,6 +18,8 @@ import { listTplVoucher, upsertTplVoucher, deleteTplVoucher } from "@/lib/financ
 import { useFinanceAccess } from "@/lib/finance-access";
 
 export const Route = createFileRoute("/_authenticated/finance/master/template-voucher")({
+  
+  head: () => pageHead({ title: "Template Voucher — Finance", description: "Template Voucher pada modul keuangan klinik.", path: "/finance/master/template-voucher" }),
   component: TplVoucherPage,
 });
 

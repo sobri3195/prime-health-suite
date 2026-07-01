@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -36,6 +37,8 @@ const PRESERVED = [
 ];
 
 export const Route = createFileRoute("/_authenticated/finance/reset-data")({
+  
+  head: () => pageHead({ title: "Reset Data — Finance", description: "Reset Data pada modul keuangan klinik.", path: "/finance/reset-data" }),
   component: Page,
 });
 

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,8 @@ import { useFinanceAccess } from "@/lib/finance-access";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/finance/pendapatan")({
+  
+  head: () => pageHead({ title: "Detail Pendapatan — Finance", description: "Detail Pendapatan pada modul keuangan klinik.", path: "/finance/pendapatan" }),
   component: PendapatanPage,
 });
 

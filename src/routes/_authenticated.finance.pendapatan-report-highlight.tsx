@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,6 +9,8 @@ import { useFinanceDate } from "@/context/finance-date";
 import { getReportHighlight } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/pendapatan-report-highlight")({
+  
+  head: () => pageHead({ title: "Report Highlight — Finance", description: "Report Highlight pada modul keuangan klinik.", path: "/finance/pendapatan-report-highlight" }),
   component: Page,
 });
 

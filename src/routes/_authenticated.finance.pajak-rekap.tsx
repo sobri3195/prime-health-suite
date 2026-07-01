@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finance/pajak-rekap")({
+  
+  head: () => pageHead({ title: "Rekap Pajak Bulanan — Finance", description: "Rekap Pajak Bulanan pada modul keuangan klinik.", path: "/finance/pajak-rekap" }),
   component: Page,
 });
 

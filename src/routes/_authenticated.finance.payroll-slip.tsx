@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,8 @@ import { generatePayslipPDF, downloadPDF } from "@/lib/pdf-templates";
 const search = z.object({ run: z.string().optional() });
 
 export const Route = createFileRoute("/_authenticated/finance/payroll-slip")({
+  
+  head: () => pageHead({ title: "Slip Gaji — Finance", description: "Slip Gaji pada modul keuangan klinik.", path: "/finance/payroll-slip" }),
   validateSearch: search,
   component: Page,
 });

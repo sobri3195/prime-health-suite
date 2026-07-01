@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +17,8 @@ import { listTplInvoice, upsertTplInvoice, deleteTplInvoice } from "@/lib/financ
 import { useFinanceAccess } from "@/lib/finance-access";
 
 export const Route = createFileRoute("/_authenticated/finance/master/template-invoice")({
+  
+  head: () => pageHead({ title: "Template Invoice — Finance", description: "Template Invoice pada modul keuangan klinik.", path: "/finance/master/template-invoice" }),
   component: TplInvoicePage,
 });
 

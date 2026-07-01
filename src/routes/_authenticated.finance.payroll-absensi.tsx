@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { downloadCSV, toCSV } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/finance/payroll-absensi")({
+  
+  head: () => pageHead({ title: "Absensi — Finance", description: "Absensi pada modul keuangan klinik.", path: "/finance/payroll-absensi" }),
   component: Page,
 });
 

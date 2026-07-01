@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +16,8 @@ import { createInvoice } from "@/lib/finance-pendapatan.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/finance/pendapatan-input-harian")({
+  
+  head: () => pageHead({ title: "Input Pendapatan Harian — Finance", description: "Input Pendapatan Harian pada modul keuangan klinik.", path: "/finance/pendapatan-input-harian" }),
   component: Page,
 });
 

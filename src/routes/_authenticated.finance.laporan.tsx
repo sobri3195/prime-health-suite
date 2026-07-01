@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,7 +15,9 @@ import { useFinanceDate } from "@/context/finance-date";
 import { getProfitLoss, getCashFlow, getTrialBalance, getBalanceSheet } from "@/lib/finance-report.functions";
 import { getFinanceDashboard, getBukuBesar, getPajakRekap } from "@/lib/finance-dashboard.functions";
 
-export const Route = createFileRoute("/_authenticated/finance/laporan")({ component: LaporanPage });
+export const Route = createFileRoute("/_authenticated/finance/laporan")({ 
+  head: () => pageHead({ title: "Laporan Manajemen — Finance", description: "Laporan Manajemen pada modul keuangan klinik.", path: "/finance/laporan" }),
+  component: LaporanPage });
 
 function LaporanPage() {
   const { from, to, label } = useFinanceDate();

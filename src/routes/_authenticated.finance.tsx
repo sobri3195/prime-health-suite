@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+
 import { useEffect } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { useAuth, canAccess } from "@/lib/auth";

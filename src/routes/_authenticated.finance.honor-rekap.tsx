@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,6 +14,8 @@ import { useFinanceDate } from "@/context/finance-date";
 import { getHonorRekap } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/honor-rekap")({
+  
+  head: () => pageHead({ title: "Rekap Jasa Dokter — Finance", description: "Rekap Jasa Dokter pada modul keuangan klinik.", path: "/finance/honor-rekap" }),
   component: Page,
 });
 

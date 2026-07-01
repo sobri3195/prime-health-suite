@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { MasterCrudPage } from "@/components/master-crud";
 
 export const Route = createFileRoute("/_authenticated/finance/persediaan")({
+  
+  head: () => pageHead({ title: "Master Persediaan — Finance", description: "Master Persediaan pada modul keuangan klinik.", path: "/finance/persediaan" }),
   component: () => (
     <MasterCrudPage
       title="Master Persediaan"

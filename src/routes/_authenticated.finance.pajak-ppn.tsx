@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { PageHeader } from "@/components/app-shell";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,6 +13,8 @@ import { Loader2, Download } from "lucide-react";
 import { exportCsv } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/finance/pajak-ppn")({
+  
+  head: () => pageHead({ title: "PPN Prepopulated — Finance", description: "PPN Prepopulated pada modul keuangan klinik.", path: "/finance/pajak-ppn" }),
   component: Page,
 });
 

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { useFinanceAccess } from "@/lib/finance-access";
 
-export const Route = createFileRoute("/_authenticated/finance/audit")({ component: AuditPage });
+export const Route = createFileRoute("/_authenticated/finance/audit")({ 
+  head: () => pageHead({ title: "Audit Log Finance — Finance", description: "Audit Log Finance pada modul keuangan klinik.", path: "/finance/audit" }),
+  component: AuditPage });
 
 const ACTION_TONE: Record<string, string> = {
   create: "bg-emerald-500/15 text-emerald-700",

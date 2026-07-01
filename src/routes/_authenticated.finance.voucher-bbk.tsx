@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,8 @@ import { generateVoucherPDF, downloadPDF } from "@/lib/pdf-templates";
 
 
 export const Route = createFileRoute("/_authenticated/finance/voucher-bbk")({
+  
+  head: () => pageHead({ title: "Voucher BBK (Penerimaan) — Finance", description: "Voucher BBK (Penerimaan) pada modul keuangan klinik.", path: "/finance/voucher-bbk" }),
   component: Page,
 });
 
