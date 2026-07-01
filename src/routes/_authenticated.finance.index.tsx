@@ -319,13 +319,31 @@ function Empty({ text }: { text: string }) {
 
 function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/types/finance").Invoice[]; outstanding: number; hutang: number }) {
   const ar = aging(rows);
-  // mock AP aging
-  const ap = [
-    { bucket: "0-30", amount: Math.round(hutang * 0.55), count: 2 },
-    { bucket: "31-60", amount: Math.round(hutang * 0.30), count: 1 },
-    { bucket: "61-90", amount: Math.round(hutang * 0.10), count: 0 },
-    { bucket: ">90", amount: Math.round(hutang * 0.05), count: 0 },
-  ];
+  const apQ = useQuery({
+    queryKey: ["fin","ap-aging"],
+    queryFn: async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase
+        .from("fin_expense")
+        .select("tanggal,total,status")
+        .not("status", "in", "(void,cancelled,draft)")
+        .gte("tanggal", new Date(Date.now() - 1000*60*60*24*180).toISOString().slice(0,10));
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+  const ap = useMemo(() => {
+    const buckets = { "0-30": { amount: 0, count: 0 }, "31-60": { amount: 0, count: 0 }, "61-90": { amount: 0, count: 0 }, ">90": { amount: 0, count: 0 } } as Record<string, { amount: number; count: number }>;
+    const today = Date.now();
+    for (const r of apQ.data ?? []) {
+      const age = Math.floor((today - new Date(r.tanggal as string).getTime()) / (1000*60*60*24));
+      const b = age <= 30 ? "0-30" : age <= 60 ? "31-60" : age <= 90 ? "61-90" : ">90";
+      buckets[b].amount += Number(r.total) || 0;
+      buckets[b].count += 1;
+    }
+    return (["0-30","31-60","61-90",">90"] as const).map((bucket) => ({ bucket, ...buckets[bucket] }));
+  }, [apQ.data]);
   const recent = rows.slice(0, 5);
   const alertCount = ar.find((a) => a.bucket === ">90")?.count ?? 0;
 
