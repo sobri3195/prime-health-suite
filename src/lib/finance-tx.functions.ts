@@ -528,3 +528,13 @@ export const listLookups = createServerFn({ method: "POST" })
       coa: coa.data ?? [],
     };
   });
+
+export const listTarifPajak = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.from("fin_tarif_pajak")
+      .select("id, code, name, jenis, tarif_pct, is_active")
+      .eq("is_active", true).order("jenis").order("code");
+    if (error) throw error;
+    return data ?? [];
+  });

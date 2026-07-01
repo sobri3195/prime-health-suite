@@ -143,3 +143,53 @@ export const finalizePayrollRun = createServerFn({ method: "POST" })
     if (error) throw error;
     return row;
   });
+
+/**
+ * Bayar payroll: buat 1 voucher fin_expense (Beban Gaji + Lembur), tandai payroll_run.status='paid'.
+ * Ini menghubungkan payroll ↔ fin_expense/pembayaran (dianggap kas keluar via voucher expense posted).
+ */
+export const payPayrollRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid(),
+    metode: z.enum(["cash", "transfer"]).default("transfer"),
+    bank: z.string().optional(),
+    tanggal: z.string().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: run, error: rErr } = await supabase.from("hr_payroll_run")
+      .select("*").eq("id", data.id).single();
+    if (rErr) throw rErr;
+    if (!run) throw new Error("Payroll tidak ditemukan");
+    if (run.status !== "final") throw new Error("Finalisasi payroll dahulu sebelum dibayar");
+
+    const tanggal = data.tanggal ?? new Date().toISOString().slice(0, 10);
+    const totalGaji = Number(run.total_gaji ?? 0);
+    const totalLembur = Number(run.total_lembur ?? 0);
+    const totalTH = Number(run.total_take_home ?? (totalGaji + totalLembur));
+    const noVoucher = `PAY-${run.periode_tahun}${String(run.periode_bulan).padStart(2, "0")}-${String(run.id).slice(0, 8)}`;
+
+    const { data: exp, error: eErr } = await supabase.from("fin_expense").insert({
+      no_voucher: noVoucher,
+      tanggal,
+      vendor_nama: `Payroll ${String(run.periode_bulan).padStart(2, "0")}/${run.periode_tahun}`,
+      coa_code: "6-1000",
+      keterangan: `Pembayaran payroll periode ${run.periode_bulan}/${run.periode_tahun}`,
+      subtotal: totalTH, pajak: 0, total: totalTH,
+      metode: data.metode, bank: data.bank ?? null,
+      status: "posted", posted_at: new Date().toISOString(), created_by: userId,
+    }).select("*").single();
+    if (eErr) throw eErr;
+
+    const itemsPayload = [
+      { expense_id: exp.id, deskripsi: "Gaji Pokok", coa_code: "6-1000", qty: 1, harga: totalGaji, subtotal: totalGaji },
+      ...(totalLembur > 0 ? [{ expense_id: exp.id, deskripsi: "Lembur", coa_code: "6-1010", qty: 1, harga: totalLembur, subtotal: totalLembur }] : []),
+    ];
+    await supabase.from("fin_expense_item").insert(itemsPayload);
+
+    const { error: uErr } = await supabase.from("hr_payroll_run")
+      .update({ status: "paid" }).eq("id", data.id);
+    if (uErr) throw uErr;
+    return { run: { ...run, status: "paid" }, expense: exp };
+  });
