@@ -37,6 +37,7 @@ export function UsersPage() {
   const callList = useServerFn(listUsers);
   const callSet = useServerFn(setUserRole);
   const callToggle = useServerFn(toggleUserActive);
+  const callReset = useServerFn(resetUserPassword);
 
   const listQ = useQuery({ queryKey: ["apps", "users"], queryFn: () => callList() as Promise<ApiUser[]> });
 
@@ -51,6 +52,11 @@ export function UsersPage() {
       toast.success(v.active ? "User diaktifkan" : "User dinonaktifkan");
       qc.invalidateQueries({ queryKey: ["apps", "users"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const resetM = useMutation({
+    mutationFn: (v: { user_id: string; new_password: string }) => callReset({ data: v }),
+    onSuccess: () => { toast.success("Password berhasil di-reset"); setResetUser(null); setNewPwd(""); },
     onError: (e: Error) => toast.error(e.message),
   });
 
