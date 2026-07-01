@@ -197,8 +197,9 @@ export function terbilang(n: number): string {
   return terbilang(Math.floor(n / 1_000_000_000)) + " miliar" + (n % 1_000_000_000 ? " " + terbilang(n % 1_000_000_000) : "");
 }
 
-export function generateVoucherPDF(v: VoucherDoc): jsPDF {
-  const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "landscape" });
+export async function generateVoucherPDF(v: VoucherDoc): Promise<jsPDF> {
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF({ unit: "mm", format: "a5", orientation: "landscape" });
   const W = doc.internal.pageSize.getWidth();
   header(doc, `VOUCHER ${v.jenis}`, `No. ${v.no_voucher}  •  ${fmtDate(v.tanggal)}`, v.klinik);
 
