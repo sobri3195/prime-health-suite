@@ -116,6 +116,49 @@ function LaporanPage() {
                 </BarChart>
               </ResponsiveContainer>
             )
+        ) : kind === "top_tindakan" ? (
+          topTindakan.length === 0
+            ? <EmptyState title="Belum ada tindakan tercatat" />
+            : (
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={topTindakan} layout="vertical" margin={{ left: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis type="number" /><YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number, k: string) => k === "revenue" ? formatIDR(v) : String(v)} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} name="Jumlah" />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "doctor_monthly" ? (
+          doctorMonthly.length === 0
+            ? <EmptyState title="Belum ada data" hint="Coba perluas rentang tanggal." />
+            : (
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={doctorMonthly}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="month" /><YAxis /><Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Kunjungan" />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "occupancy" ? (
+          occupancy.length === 0
+            ? <EmptyState title="Belum ada jadwal aktif" hint="Buat jadwal dokter terlebih dahulu." />
+            : (
+              <div className="space-y-2">
+                {occupancy.map((o) => (
+                  <div key={o.doctor} className="rounded-md border border-border p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{o.doctor}</span>
+                      <span className="text-xs text-muted-foreground">{o.booked}/{o.quota} slot • <b className={o.rate > 85 ? "text-amber-600" : "text-foreground"}>{o.rate}%</b></span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full ${o.rate > 85 ? "bg-amber-500" : "bg-primary"}`} style={{ width: `${Math.min(o.rate, 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
         ) : kind === "pendapatan" ? (
           invoices.length === 0
             ? <EmptyState title="Tidak ada invoice di rentang ini" />
