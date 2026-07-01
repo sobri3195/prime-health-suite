@@ -9,7 +9,7 @@ import {
 } from "@/lib/apps-patient.functions";
 import { useI18n } from "@/lib/i18n";
 
-type Doctor = { id: string; code: string; name: string; spesialisasi: string | null };
+type Doctor = { id: string; code: string | null; name: string; spesialisasi: string | null };
 
 function dateLabel(d: Date, lang: string) {
   return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short" });

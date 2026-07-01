@@ -197,13 +197,12 @@ export const listDoctorsForBooking = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const { data, error } = await supabase
-      .from("fin_dokter")
-      .select("id, code, name, spesialisasi")
-      .eq("is_active", true)
-      .order("name", { ascending: true });
+    // Uses SECURITY DEFINER RPC that exposes only safe directory columns
+    // (id, code, name, spesialisasi, schedule_note). Sensitive columns like
+    // npwp / phone / sip_number / is_ptkp_k0 are not readable by patients.
+    const { data, error } = await supabase.rpc("apps_list_doctors");
     if (error) throw new Error(error.message);
-    return { doctors: data ?? [] };
+    return { doctors: (data ?? []) as Array<{ id: string; code: string | null; name: string; spesialisasi: string | null; schedule_note: string | null }> };
   });
 
 const SlotInput = z.object({

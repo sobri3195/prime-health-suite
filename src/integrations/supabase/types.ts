@@ -3358,6 +3358,16 @@ export type Database = {
           total_poin: number
         }[]
       }
+      apps_list_doctors: {
+        Args: never
+        Returns: {
+          code: string
+          id: string
+          name: string
+          schedule_note: string
+          spesialisasi: string
+        }[]
+      }
       apps_log_self_access: {
         Args: { _meta?: Json; _resource: string }
         Returns: undefined
