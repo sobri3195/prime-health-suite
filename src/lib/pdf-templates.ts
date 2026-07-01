@@ -1,7 +1,7 @@
 // Reusable PDF document templates (payslip, voucher, bukti setor, kwitansi).
-// All templates share the same header/footer style and use the jsPDF instance
-// already in the project (see src/lib/exporter.ts for tabular reports).
-import jsPDF from "jspdf";
+// jsPDF is dynamically imported inside each generator to keep the ~476 kB
+// bundle out of the main chunk.
+import type jsPDF from "jspdf";
 
 const fmtIDR = (n: number) => "Rp " + (Number(n) || 0).toLocaleString("id-ID");
 const fmtDate = (s?: string | null) =>
