@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Card } from "@/components/ui/card";
 import { Search, UserPlus, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
-import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien } from "@/lib/klinik.functions";
+import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien, listJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/registrasi")({
   head: () => pageHead({ title: 'Registrasi Pasien — SIM Klinik', description: 'Pendaftaran pasien, pemilihan dokter, dan pembuatan booking antrian.', path: '/sim-klinik/registrasi' }), component: RegistrasiPage });
@@ -76,7 +76,14 @@ function RegistrasiPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const dokterList = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
+  const callJadwal = useServerFn(listJadwal);
+  const jadwalQ = useQuery({ queryKey: ["klinik","jadwal-all"], queryFn: () => callJadwal(), staleTime: 60_000 });
+  const DAY_NAMES = ["minggu","senin","selasa","rabu","kamis","jumat","sabtu"];
+  const selectedDay = DAY_NAMES[new Date(date + "T00:00:00").getDay()];
+  const jadwalRows = (jadwalQ.data ?? []) as Array<{ dokter_id: string; day: string; is_active: boolean; start_time?: string; end_time?: string }>;
+  const praktikDokterIds = new Set(jadwalRows.filter((j) => j.is_active && String(j.day).toLowerCase() === selectedDay).map((j) => j.dokter_id));
+  const dokterAll = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
+  const dokterList = useMemo(() => dokterAll.filter((d) => praktikDokterIds.size === 0 || praktikDokterIds.has(d.id)), [dokterAll, praktikDokterIds]);
   const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string }; klinik_visit?: Array<{ klinik_queue?: Array<{ queue_no: string; status: string }> }> }>, [bookQ.data]);
 
   // Real-time: jika dokter yang dipilih hilang dari daftar (mis. dinonaktifkan via realtime/refetch),
@@ -125,8 +132,13 @@ function RegistrasiPage() {
               <div><Label>Dokter</Label>
                 <Select value={form.dokter_id} onValueChange={(v) => setForm({ ...form, dokter_id: v })} disabled={dokterQ.isLoading || dokterQ.isError || dokterList.length === 0}>
                   <SelectTrigger aria-label="Pilih dokter"><SelectValue placeholder={dokterQ.isLoading ? "Memuat dokter…" : dokterQ.isError ? "Akses dokter ditolak" : dokterList.length === 0 ? "Tidak ada dokter tersedia" : "Pilih dokter"} /></SelectTrigger>
-                  <SelectContent>{dokterList.map((d) => <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi})` : ""}</SelectItem>)}</SelectContent>
+                  <SelectContent>{dokterList.map((d) => {
+                    const jm = jadwalRows.filter((j) => j.dokter_id === d.id && j.is_active && String(j.day).toLowerCase() === selectedDay);
+                    const hint = jm.length ? jm.map((j) => `${(j.start_time ?? "").slice(0,5)}–${(j.end_time ?? "").slice(0,5)}`).join(", ") : "tidak ada jadwal hari ini";
+                    return <SelectItem key={d.id} value={d.id}>{d.name} {d.spesialisasi ? `(${d.spesialisasi}) ` : ""}· {hint}</SelectItem>;
+                  })}</SelectContent>
                 </Select>
+                <p className="mt-1 text-[11px] text-muted-foreground">Hanya dokter yang praktik hari <b className="capitalize">{selectedDay}</b> yang ditampilkan.</p>
                 {!dokterQ.isLoading && dokterQ.isError && (
                   <p role="alert" data-testid="dokter-error" className="mt-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
                     Akses ditolak: Anda tidak memiliki izin untuk melihat daftar dokter. Pendaftaran dihentikan. Hubungi admin untuk meminta role staf klinik (pendaftaran/admin_klinik/super_admin).

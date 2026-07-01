@@ -171,11 +171,18 @@ export function DocumentsPage() {
 
   const onDelete = async (row: DocRow) => {
     if (!confirm(`Hapus "${row.title}"?`)) return;
-    if (row.storage_path) await supabase.storage.from(BUCKET).remove([row.storage_path]);
-    const { error } = await supabase.from("clinic_document").delete().eq("id", row.id);
-    if (error) return toast.error(error.message);
-    toast.success("Dokumen dihapus");
-    qc.invalidateQueries({ queryKey: ["clinic_document"] });
+    try {
+      if (row.storage_path) {
+        const { error: rmErr } = await supabase.storage.from(BUCKET).remove([row.storage_path]);
+        if (rmErr) toast.warning(`File di storage gagal dihapus: ${rmErr.message}. Metadata tetap dihapus.`);
+      }
+      const { error } = await supabase.from("clinic_document").delete().eq("id", row.id);
+      if (error) { toast.error(`Gagal menghapus: ${error.message}`); return; }
+      toast.success("Dokumen dihapus");
+      qc.invalidateQueries({ queryKey: ["clinic_document"] });
+    } catch (e) {
+      toast.error(`Gagal menghapus dokumen: ${(e as Error).message}`);
+    }
   };
 
   return (

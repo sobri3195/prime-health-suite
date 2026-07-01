@@ -1,5 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
+function AutoTextarea({ value, onChange, className, ...rest }: React.ComponentProps<"textarea">) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current; if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 400) + "px";
+  }, [value]);
+  return <Textarea ref={ref} value={value} onChange={onChange} rows={2} className={cn("resize-none overflow-hidden min-h-[38px]", className)} {...rest} />;
+}
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -132,7 +145,7 @@ function PemeriksaanPage() {
                   <span className="text-sm font-semibold">Template Cepat:</span>
                   {Object.keys(TEMPLATES).map((k) => <Button key={k} size="sm" variant="outline" onClick={() => applyTpl(k)}>{k}</Button>)}
                 </div>
-                <div><Label>Anamnesis / Keluhan</Label><Input value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
+                <div><Label>Anamnesis / Keluhan</Label><AutoTextarea value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
                 <div className="grid grid-cols-4 gap-2">
                   <div><Label>Visus OD</Label><Input value={form.visus_od} onChange={(e) => setForm({ ...form, visus_od: e.target.value })} placeholder="6/6" /></div>
                   <div><Label>Visus OS</Label><Input value={form.visus_os} onChange={(e) => setForm({ ...form, visus_os: e.target.value })} placeholder="6/6" /></div>
@@ -145,9 +158,9 @@ function PemeriksaanPage() {
                   <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} /></div>
                   <div><Label>ICD-10</Label><Input value={form.icd10_code} onChange={(e) => setForm({ ...form, icd10_code: e.target.value })} /></div>
                 </div>
-                <div><Label>Rencana Terapi</Label><Input value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} /></div>
-                <div><Label>Tindakan</Label><Input value={form.tindakan} onChange={(e) => setForm({ ...form, tindakan: e.target.value })} /></div>
-                <div><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label>Rencana Terapi</Label><AutoTextarea value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} /></div>
+                <div><Label>Tindakan</Label><AutoTextarea value={form.tindakan} onChange={(e) => setForm({ ...form, tindakan: e.target.value })} /></div>
+                <div><Label>Catatan</Label><AutoTextarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => saveM.mutate(false)} variant="outline" disabled={saveM.isPending}><Save className="mr-1 h-4 w-4" />Simpan Draft</Button>
                   <Button onClick={() => saveM.mutate(true)} disabled={saveM.isPending || !form.diagnosis}><Save className="mr-1 h-4 w-4" />Finalisasi & Kirim ke Kasir</Button>

@@ -104,22 +104,30 @@ function ObatPage() {
               <TableBody>
                 {data.length === 0 ? <TableRow><TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">{listQ.isLoading ? "Memuat…" : "Belum ada obat."}</TableCell></TableRow>
                   : data.map((o) => {
-                    const isLow = Number(o.stock) <= Number(o.min_stock);
+                    const min = Number(o.min_stock);
+                    const stk = Number(o.stock);
+                    const isEmpty = stk <= 0;
+                    const isLow = stk <= min;
+                    const isNear = !isLow && stk <= min * 1.5;
+                    const stockCls = isEmpty ? "font-bold text-red-600 dark:text-red-400"
+                      : isLow ? "font-bold text-red-600 dark:text-red-400"
+                      : isNear ? "font-semibold text-amber-600 dark:text-amber-400"
+                      : "text-foreground";
                     const isExp = o.expired_date && new Date(o.expired_date).getTime() < Date.now() + 60*864e5;
                     return (
-                      <TableRow key={o.id}>
+                      <TableRow key={o.id} className={isEmpty ? "bg-red-500/5" : isLow ? "bg-red-500/[0.03]" : ""}>
                         <TableCell className="font-mono text-xs">{o.code}</TableCell>
                         <TableCell className="font-medium">{o.name}</TableCell>
                         <TableCell><Badge variant="outline">{o.category ?? "-"}</Badge></TableCell>
                         <TableCell className="text-right">
-                          <span className={isLow ? "font-bold text-amber-600" : ""}>{Number(o.stock).toLocaleString("id-ID")} {o.unit}</span>
+                          <span className={stockCls} title={`Min: ${min}`}>{stk.toLocaleString("id-ID")} {o.unit}</span>
                         </TableCell>
                         <TableCell className="text-right">Rp {Number(o.price).toLocaleString("id-ID")}</TableCell>
                         <TableCell className={isExp ? "text-red-600 text-xs" : "text-xs"}>{o.expired_date ?? "-"}</TableCell>
-                        <TableCell>{isLow ? <Badge variant="destructive">Rendah</Badge> : <Badge className="bg-emerald-500/15 text-emerald-600">Cukup</Badge>}</TableCell>
+                        <TableCell>{isEmpty ? <Badge variant="destructive">Kosong</Badge> : isLow ? <Badge variant="destructive">Rendah</Badge> : isNear ? <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400">Hampir habis</Badge> : <Badge className="bg-emerald-500/15 text-emerald-600">Cukup</Badge>}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="icon" variant="ghost" onClick={() => setEdit(o)}><Pencil className="h-4 w-4" /></Button>
-                          <Button size="icon" variant="ghost" onClick={() => { setMoveFor(o); setMoveType("in"); }}><ArrowDownUp className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" aria-label={`Edit ${o.name}`} onClick={() => setEdit(o)}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" aria-label={`Stok masuk/keluar ${o.name}`} onClick={() => { setMoveFor(o); setMoveType("in"); }}><ArrowDownUp className="h-4 w-4" /></Button>
                         </TableCell>
                       </TableRow>
                     );
