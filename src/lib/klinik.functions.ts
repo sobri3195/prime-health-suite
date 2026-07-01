@@ -254,7 +254,7 @@ export const checkinBooking = createServerFn({ method: "POST" })
     const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: "A" });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
-      visit_id: visit.id, pasien_id: bk.pasien_id, dokter_id: bk.dokter_id,
+      visit_id: visit.id, pasien_id: pasienId, dokter_id: bk.dokter_id,
       queue_no: qn, queue_date: bk.tanggal, counter: "A", status: "waiting",
     }).select("*").single();
     if (qe) throw qe;
