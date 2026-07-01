@@ -1,5 +1,5 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
