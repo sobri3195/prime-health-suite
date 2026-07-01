@@ -131,7 +131,7 @@ export async function exportReportPdf(opts: {
       headStyles: { fillColor: [31, 29, 25], textColor: 255 },
       alternateRowStyles: { fillColor: [248, 248, 248] },
       columnStyles: Object.fromEntries(sec.columns.map((c, i) => [i, { halign: c.align ?? "left" }])),
-      didDrawPage: (d) => { y = d.cursor?.y ?? y; },
+      didDrawPage: (d: { cursor?: { y?: number } | null }) => { y = d.cursor?.y ?? y; },
     });
     // @ts-expect-error jspdf-autotable injects lastAutoTable
     y = (doc.lastAutoTable?.finalY ?? y) + 18;
