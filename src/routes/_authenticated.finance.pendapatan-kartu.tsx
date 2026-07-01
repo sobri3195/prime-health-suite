@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,8 @@ import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/finance/pendapatan-kartu")({
+  
+  head: () => pageHead({ title: "Kartu Debit/Kredit — Finance", description: "Kartu Debit/Kredit pada modul keuangan klinik.", path: "/finance/pendapatan-kartu" }),
   component: Page,
 });
 

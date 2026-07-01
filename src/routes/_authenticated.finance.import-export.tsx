@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Download, Upload, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finance/import-export")({
+  
+  head: () => pageHead({ title: "Import / Export — Finance", description: "Import / Export pada modul keuangan klinik.", path: "/finance/import-export" }),
   component: Page,
 });
 

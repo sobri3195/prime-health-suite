@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
@@ -21,6 +22,8 @@ import { clinicAudit } from "@/lib/clinic-audit";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/finance/payroll")({
+  
+  head: () => pageHead({ title: "Payroll (Umum) — Finance", description: "Payroll (Umum) pada modul keuangan klinik.", path: "/finance/payroll" }),
   component: PayrollPage,
 });
 

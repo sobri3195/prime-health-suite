@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +15,8 @@ import { exportCsv, exportPdf, exportReportPdf, type Column } from "@/lib/export
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/finance/konsistensi-jurnal")({
+  
+  head: () => pageHead({ title: "Konsistensi Jurnal — Finance", description: "Konsistensi Jurnal pada modul keuangan klinik.", path: "/finance/konsistensi-jurnal" }),
   component: Page,
 });
 

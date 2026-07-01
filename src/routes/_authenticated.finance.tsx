@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { useAuth, canAccess } from "@/lib/auth";
@@ -57,6 +58,8 @@ function Layout() {
 }
 
 export const Route = createFileRoute("/_authenticated/finance")({
+  
+  head: () => pageHead({ title: "Tsx — Finance", description: "Tsx pada modul keuangan klinik.", path: "/finance/tsx" }),
   head: () => brandHead("finance"),
   component: Layout,
 });

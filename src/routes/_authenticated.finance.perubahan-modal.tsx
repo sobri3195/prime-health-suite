@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finance/perubahan-modal")({
+  
+  head: () => pageHead({ title: "Perubahan Modal — Finance", description: "Perubahan Modal pada modul keuangan klinik.", path: "/finance/perubahan-modal" }),
   component: Page,
 });
 

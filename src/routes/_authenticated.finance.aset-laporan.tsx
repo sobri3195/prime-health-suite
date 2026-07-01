@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +8,8 @@ import { listFinMaster } from "@/lib/finance-master.functions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/finance/aset-laporan")({
+  
+  head: () => pageHead({ title: "Laporan Aset by Cost Center — Finance", description: "Laporan Aset by Cost Center pada modul keuangan klinik.", path: "/finance/aset-laporan" }),
   component: Page,
 });
 

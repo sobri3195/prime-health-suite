@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +9,8 @@ import { Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/finance/payroll-rekap")({
+  
+  head: () => pageHead({ title: "Rekap Gaji — Finance", description: "Rekap Gaji pada modul keuangan klinik.", path: "/finance/payroll-rekap" }),
   component: Page,
 });
 

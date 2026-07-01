@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
@@ -10,6 +11,8 @@ import { Download } from "lucide-react";
 import { downloadCSV, toCSV } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/finance/pajak-pph-honor")({
+  
+  head: () => pageHead({ title: "PPh Honor Dokter — Finance", description: "PPh Honor Dokter pada modul keuangan klinik.", path: "/finance/pajak-pph-honor" }),
   component: Page,
 });
 

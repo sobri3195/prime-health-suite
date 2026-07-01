@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +10,8 @@ import { Loader2 } from "lucide-react";
 import { useFinanceDate } from "@/context/finance-date";
 
 export const Route = createFileRoute("/_authenticated/finance/laba-rugi-payer")({
+  
+  head: () => pageHead({ title: "Laba Rugi by Payer — Finance", description: "Laba Rugi by Payer pada modul keuangan klinik.", path: "/finance/laba-rugi-payer" }),
   component: Page,
 });
 

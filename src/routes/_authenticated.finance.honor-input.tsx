@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
@@ -12,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/finance/honor-input")({
+  
+  head: () => pageHead({ title: "Input Jasa Medis — Finance", description: "Input Jasa Medis pada modul keuangan klinik.", path: "/finance/honor-input" }),
   component: Page,
 });
 

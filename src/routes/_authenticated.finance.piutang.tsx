@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,6 +11,8 @@ import { listInvoices } from "@/lib/finance-tx.functions";
 import { useFinanceDate } from "@/context/finance-date";
 
 export const Route = createFileRoute("/_authenticated/finance/piutang")({
+  
+  head: () => pageHead({ title: "Piutang & Klaim — Finance", description: "Piutang & Klaim pada modul keuangan klinik.", path: "/finance/piutang" }),
   component: PiutangPage,
 });
 

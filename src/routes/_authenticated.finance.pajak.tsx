@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,9 @@ import { expenseSources } from "@/data/financeSources";
 import { formatIDR } from "@/lib/finance";
 import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
 
-export const Route = createFileRoute("/_authenticated/finance/pajak")({ component: PajakPage });
+export const Route = createFileRoute("/_authenticated/finance/pajak")({ 
+  head: () => pageHead({ title: "Pajak (Umum) — Finance", description: "Pajak (Umum) pada modul keuangan klinik.", path: "/finance/pajak" }),
+  component: PajakPage });
 
 type TaxStatus = "draft" | "calculated" | "reviewed" | "paid";
 const STATUS_LABEL: Record<TaxStatus, string> = { draft: "Draft", calculated: "Calculated", reviewed: "Reviewed", paid: "Paid" };
