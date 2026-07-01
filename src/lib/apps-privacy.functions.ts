@@ -47,14 +47,11 @@ export const logSelfAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { resource: string; meta?: Record<string, unknown> }) => d)
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await supabase.from("apps_audit_log").insert({
-      user_id: userId,
-      actor_id: userId,
-      actor_label: "self",
-      action: "view",
-      resource: data.resource,
-      meta: (data.meta ?? null) as never,
+    const { supabase } = context;
+    const { error } = await supabase.rpc("apps_log_self_access", {
+      _resource: data.resource,
+      _meta: (data.meta ?? null) as never,
     });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
