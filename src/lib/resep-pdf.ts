@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-
 export type ResepData = {
   no_invoice: string;
   tanggal: string;
@@ -10,7 +8,8 @@ export type ResepData = {
   klinik?: string;
 };
 
-export function generateResepPDF(d: ResepData) {
+export async function generateResepPDF(d: ResepData) {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a5" });
   const W = doc.internal.pageSize.getWidth();
   let y = 14;
