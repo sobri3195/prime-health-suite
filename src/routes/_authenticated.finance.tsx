@@ -58,8 +58,6 @@ function Layout() {
 }
 
 export const Route = createFileRoute("/_authenticated/finance")({
-  
-  head: () => pageHead({ title: "Tsx — Finance", description: "Tsx pada modul keuangan klinik.", path: "/finance/tsx" }),
   head: () => brandHead("finance"),
   component: Layout,
 });
