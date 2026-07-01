@@ -57,6 +57,8 @@ export function DocumentsPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
+  const abortRef = useRef<{ canceled: boolean; path: string | null }>({ canceled: false, path: null });
+  const [timedOut, setTimedOut] = useState(false);
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
 
 
