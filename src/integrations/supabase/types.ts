@@ -198,6 +198,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "apps_booking_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "apps_booking_pasien_id_fkey"
             columns: ["pasien_id"]
             isOneToOne: false
@@ -1372,6 +1379,13 @@ export type Database = {
             columns: ["dokter_id"]
             isOneToOne: false
             referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_invoice_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
             referencedColumns: ["id"]
           },
           {
@@ -2710,6 +2724,13 @@ export type Database = {
             referencedRelation: "fin_dokter"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "klinik_diklat_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       klinik_jadwal: {
@@ -2761,6 +2782,13 @@ export type Database = {
             columns: ["dokter_id"]
             isOneToOne: false
             referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_jadwal_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -2844,6 +2872,13 @@ export type Database = {
             columns: ["dokter_id"]
             isOneToOne: false
             referencedRelation: "fin_dokter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klinik_medical_record_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
             referencedColumns: ["id"]
           },
           {
@@ -2989,6 +3024,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "klinik_prescription_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "klinik_prescription_pasien_id_fkey"
             columns: ["pasien_id"]
             isOneToOne: false
@@ -3116,6 +3158,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "klinik_queue_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "klinik_queue_pasien_id_fkey"
             columns: ["pasien_id"]
             isOneToOne: false
@@ -3237,6 +3286,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "klinik_visit_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "klinik_visit_pasien_id_fkey"
             columns: ["pasien_id"]
             isOneToOne: false
@@ -3292,7 +3348,41 @@ export type Database = {
             referencedRelation: "fin_dokter"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "apps_booking_dokter_id_fkey"
+            columns: ["dokter_id"]
+            isOneToOne: false
+            referencedRelation: "fin_dokter_directory"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      fin_dokter_directory: {
+        Row: {
+          code: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          schedule_note: string | null
+          spesialisasi: string | null
+        }
+        Insert: {
+          code?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          schedule_note?: string | null
+          spesialisasi?: string | null
+        }
+        Update: {
+          code?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          schedule_note?: string | null
+          spesialisasi?: string | null
+        }
+        Relationships: []
       }
       fin_posting_audit: {
         Row: {
