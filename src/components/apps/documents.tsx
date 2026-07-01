@@ -3,7 +3,7 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
-import { Upload, Download, Trash2 } from "lucide-react";
+import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
