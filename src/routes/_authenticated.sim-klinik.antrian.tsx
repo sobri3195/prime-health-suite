@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,7 +14,10 @@ import { toast } from "sonner";
 import { listQueueToday, updateQueueStatus } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/antrian")({ component: AntrianPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/antrian")({
+  head: () => pageHead({ title: 'Antrian Pasien — SIM Klinik', description: 'Monitoring antrian pasien harian dan waktu tunggu.', path: '/sim-klinik/antrian' }),
+  component: AntrianPage,
+});
 
 const STATUS_LABEL: Record<string, string> = { waiting: "Menunggu", called: "Dipanggil", in_service: "Dilayani", done: "Selesai", cancelled: "Batal" };
 

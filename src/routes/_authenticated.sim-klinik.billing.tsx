@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,7 +19,10 @@ import { getSettings } from "@/lib/clinic.functions";
 import { terbilangRupiah } from "@/lib/terbilang";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({ component: BillingPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({
+  head: () => pageHead({ title: 'Billing & Kasir — SIM Klinik', description: 'Kelola invoice pasien, pembayaran, dan cetak kwitansi.', path: '/sim-klinik/billing' }),
+  component: BillingPage,
+});
 
 function BillingPage() {
   const qc = useQueryClient();

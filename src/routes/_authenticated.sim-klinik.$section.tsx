@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -11,6 +12,7 @@ import { FileText, Stethoscope } from "lucide-react";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/$section")({
+  head: () => pageHead({ title: 'Detail — SIM Klinik', description: 'Halaman detail kunjungan dan rekam medis pasien.', path: '/sim-klinik/$section' }),
   beforeLoad: ({ params }) => {
     if (!UUID_RE.test(params.section)) {
       throw notFound({ data: { section: params.section } });

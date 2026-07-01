@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,7 +13,10 @@ import { toast } from "sonner";
 import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({ component: ResepPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({
+  head: () => pageHead({ title: 'Resep Elektronik — SIM Klinik', description: 'Peresepan obat, cek stok, dan interaksi obat.', path: '/sim-klinik/resep' }),
+  component: ResepPage,
+});
 
 const STATUS_LABEL: Record<string, string> = { draft: "Draft", sent_to_pharmacy: "Menunggu Farmasi", dispensed: "Sudah Diberikan", cancelled: "Batal" };
 

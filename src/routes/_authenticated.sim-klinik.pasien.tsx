@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,7 +17,10 @@ import { z } from "zod";
 import { listPasien, upsertPasien, deactivatePasien, getPasien } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({ component: PasienPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({
+  head: () => pageHead({ title: 'Data Pasien — SIM Klinik', description: 'Direktori rekam medis pasien dan riwayat kunjungan.', path: '/sim-klinik/pasien' }),
+  component: PasienPage,
+});
 
 type Pasien = {
   id: string; no_rm: string | null; nama: string; nik: string | null; tgl_lahir: string | null;

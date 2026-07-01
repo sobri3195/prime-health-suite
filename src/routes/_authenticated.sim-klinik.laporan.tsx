@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -20,6 +21,7 @@ import { getLaporan } from "@/lib/clinic.functions";
 import { formatIDR } from "@/lib/sync-log";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/laporan")({
+  head: () => pageHead({ title: 'Laporan Klinik — SIM Klinik', description: 'Laporan kunjungan, top tindakan, dan occupancy rate.', path: '/sim-klinik/laporan' }),
   component: LaporanPage,
 });
 

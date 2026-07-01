@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,6 +19,7 @@ import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
 import { listAudit } from "@/lib/clinic.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/audit")({
+  head: () => pageHead({ title: 'Audit Log — SIM Klinik', description: 'Jejak audit aktivitas pengguna dan perubahan data klinis.', path: '/sim-klinik/audit' }),
   component: AuditPage,
 });
 

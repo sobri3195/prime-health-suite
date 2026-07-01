@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
@@ -18,6 +19,7 @@ import { clinicAudit } from "@/lib/clinic-audit";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/absensi")({
+  head: () => pageHead({ title: 'Absensi Karyawan — SIM Klinik', description: 'Rekap kehadiran, shift, dan jam kerja karyawan klinik.', path: '/sim-klinik/absensi' }),
   component: AbsensiPage,
 });
 

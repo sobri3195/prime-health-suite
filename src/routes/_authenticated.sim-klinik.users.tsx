@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,7 +13,10 @@ import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { listUsers, setUserRole } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/users")({ component: UsersPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/users")({
+  head: () => pageHead({ title: 'Manajemen User — SIM Klinik', description: 'Kelola akun staf klinik, role, dan reset password.', path: '/sim-klinik/users' }),
+  component: UsersPage,
+});
 
 const ROLES = ["super_admin","admin_klinik","dokter","perawat","perawat_optometri","pendaftaran","kasir","farmasi","manajemen","pasien"] as const;
 type RoleT = typeof ROLES[number];
