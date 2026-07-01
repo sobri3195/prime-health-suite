@@ -21,7 +21,8 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, LayoutGrid, List as ListIcon } from "lucide-react";
 import { toast } from "sonner";
 import { upsertJadwal, deleteJadwal, listJadwal } from "@/lib/klinik.functions";
 
