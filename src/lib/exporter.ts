@@ -43,14 +43,18 @@ export function exportCsv<T>(filename: string, columns: Column<T>[], rows: T[], 
   URL.revokeObjectURL(url);
 }
 
-export function exportPdf<T>(
+export async function exportPdf<T>(
   filename: string,
   title: string,
   columns: Column<T>[],
   rows: T[],
   range?: Range,
 ) {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+  const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  const doc = new JsPDF({ orientation: "landscape", unit: "pt" });
   doc.setFontSize(14);
   doc.text(title, 40, 40);
   doc.setFontSize(9);
