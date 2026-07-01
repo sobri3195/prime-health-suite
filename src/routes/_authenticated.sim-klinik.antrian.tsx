@@ -110,10 +110,20 @@ function AntrianPage() {
                 {r.klinik_visit?.chief_complaint && <div className="mt-1 text-xs italic">"{r.klinik_visit.chief_complaint}"</div>}
               </div>
               <Badge variant={r.status === "in_service" ? "default" : r.status === "done" ? "outline" : "secondary"}>{STATUS_LABEL[r.status]}</Badge>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {r.status === "waiting" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "called" })}><PhoneCall className="mr-1 h-3 w-3" />Panggil</Button>}
-                {r.status === "called" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "in_service" })}><PlayCircle className="mr-1 h-3 w-3" />Mulai</Button>}
+                {r.status === "called" && <>
+                  <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "in_service" })}><PlayCircle className="mr-1 h-3 w-3" />Mulai</Button>
+                  <Button size="sm" variant="outline" onClick={() => updM.mutate({ id: r.id, status: "called" })} title="Panggil ulang"><RefreshCw className="h-3 w-3" /></Button>
+                </>}
                 {r.status === "in_service" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "done" })}><CheckCircle2 className="mr-1 h-3 w-3" />Selesai</Button>}
+                {(r.status === "waiting" || r.status === "called") && (
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
+                    if (confirm(`Skip antrian ${r.queue_no} (${r.apps_pasien?.nama ?? "-"})? Antrian ini akan dibatalkan.`)) {
+                      updM.mutate({ id: r.id, status: "cancelled" });
+                    }
+                  }} title="Skip / batalkan"><SkipForward className="h-3 w-3" /></Button>
+                )}
               </div>
             </Card>
           ))}
