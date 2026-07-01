@@ -3325,6 +3325,10 @@ export type Database = {
           total_poin: number
         }[]
       }
+      apps_log_self_access: {
+        Args: { _meta?: Json; _resource: string }
+        Returns: undefined
+      }
       apps_my_poin_total: { Args: never; Returns: number }
       apps_queue_position: {
         Args: { _booking_id: string }
