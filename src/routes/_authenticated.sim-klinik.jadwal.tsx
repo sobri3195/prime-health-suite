@@ -111,7 +111,12 @@ function JadwalPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="mb-3">
+          <TabsTrigger value="list"><ListIcon className="mr-1 h-3 w-3" />List</TabsTrigger>
+          <TabsTrigger value="cal"><LayoutGrid className="mr-1 h-3 w-3" />Kalender</TabsTrigger>
+        </TabsList>
+        <TabsContent value="list" className="grid gap-4 lg:grid-cols-3">
         <div className="overflow-hidden rounded-xl border border-border bg-card lg:col-span-2">
           <Table>
             <TableHeader>
