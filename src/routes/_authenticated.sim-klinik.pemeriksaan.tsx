@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription } from "@/lib/klinik.functions";
+import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
