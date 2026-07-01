@@ -241,28 +241,55 @@ export function DocumentsPage() {
               onChange={(e) => setMeta({ ...meta, patient_name: e.target.value })}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {!upload.isPending && !upload.isError && (
+              <button
+                onClick={() => upload.mutate()}
+                className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground"
+              >
+                <Upload className="h-4 w-4" /> Upload
+              </button>
+            )}
+            {upload.isPending && (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-navy/70 px-3 py-1.5 text-sm font-medium text-navy-foreground">
+                  <Upload className="h-4 w-4 animate-pulse" /> Mengupload… {progress}%
+                </span>
+                <button
+                  onClick={onCancelUpload}
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-destructive hover:bg-muted"
+                >
+                  <X className="h-4 w-4" /> Batalkan
+                </button>
+                <div className="h-2 min-w-32 flex-1 overflow-hidden rounded bg-muted" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                {timedOut && <span className="text-xs text-amber-600">Lebih dari 60 detik — koneksi lambat. Anda bisa membatalkan lalu coba lagi.</span>}
+              </>
+            )}
+            {upload.isError && (
+              <>
+                <button
+                  onClick={onRetryUpload}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground"
+                >
+                  <RotateCw className="h-4 w-4" /> Coba lagi
+                </button>
+                <span className="text-xs text-destructive">Upload sebelumnya gagal. Silakan coba lagi atau batalkan.</span>
+              </>
+            )}
             <button
               disabled={upload.isPending}
-              onClick={() => upload.mutate()}
-              className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground disabled:opacity-60"
-            >
-              <Upload className="h-4 w-4" /> {upload.isPending ? `Mengupload… ${progress}%` : "Upload"}
-            </button>
-          {upload.isPending && (
-            <div className="h-2 w-full overflow-hidden rounded bg-muted">
-              <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
-            </div>
-          )}
-
-            <button
               onClick={() => {
                 setPendingFile(null);
+                upload.reset();
+                setProgress(0);
+                setTimedOut(false);
                 if (fileRef.current) fileRef.current.value = "";
               }}
-              className="rounded-md border border-border px-3 py-1.5 text-sm"
+              className="rounded-md border border-border px-3 py-1.5 text-sm disabled:opacity-50"
             >
-              Batal
+              Bersihkan
             </button>
           </div>
         </div>
