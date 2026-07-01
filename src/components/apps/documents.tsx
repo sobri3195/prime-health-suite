@@ -96,40 +96,70 @@ export function DocumentsPage() {
       const uid = auth.user?.id;
       if (!uid) throw new Error("Tidak ada sesi");
       const path = `${uid}/${Date.now()}-${pendingFile.name.replace(/[^\w.\-]/g, "_")}`;
+      abortRef.current = { canceled: false, path };
+      setTimedOut(false);
       setProgress(10);
-      const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, {
-        contentType: mime,
-        upsert: false,
-      });
-      if (up.error) throw up.error;
-      setProgress(75);
-      const { error } = await supabase.from("clinic_document").insert({
-        patient_code: meta.patient_code || "-",
-        patient_name: meta.patient_name || "Internal",
-        doc_type: meta.doc_type,
-        title: meta.title.trim(),
-        mime,
-        size_bytes: pendingFile.size,
-        storage_path: path,
-        uploaded_by: uid,
-        uploaded_by_email: auth.user?.email ?? null,
-      });
-      if (error) {
-        await supabase.storage.from(BUCKET).remove([path]);
-        throw error;
+      // Timeout 60s: mark UI, tapi upload tetap berjalan hingga user retry/cancel.
+      const timeoutId = window.setTimeout(() => setTimedOut(true), 60_000);
+      try {
+        const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, { contentType: mime, upsert: false });
+        if (abortRef.current.canceled) {
+          await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+          throw new Error("Upload dibatalkan");
+        }
+        if (up.error) throw up.error;
+        setProgress(75);
+        const { error } = await supabase.from("clinic_document").insert({
+          patient_code: meta.patient_code || "-",
+          patient_name: meta.patient_name || "Internal",
+          doc_type: meta.doc_type,
+          title: meta.title.trim(),
+          mime,
+          size_bytes: pendingFile.size,
+          storage_path: path,
+          uploaded_by: uid,
+          uploaded_by_email: auth.user?.email ?? null,
+        });
+        if (error) {
+          await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+          throw error;
+        }
+        setProgress(100);
+      } finally {
+        window.clearTimeout(timeoutId);
       }
-      setProgress(100);
     },
     onSuccess: () => {
       toast.success("Dokumen terupload");
       setPendingFile(null);
       setProgress(0);
+      setTimedOut(false);
       setMeta({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     },
-    onError: (e: any) => { setProgress(0); toast.error(e?.message ?? "Gagal upload"); },
+    onError: (e: any) => {
+      setProgress(0);
+      setTimedOut(false);
+      toast.error(e?.message ?? "Gagal upload — coba lagi");
+    },
   });
+
+  const onCancelUpload = () => {
+    abortRef.current.canceled = true;
+    // Tandai selesai secara UI; hasil upload akan dibersihkan di mutationFn.
+    setProgress(0);
+    setTimedOut(false);
+    toast.message("Membatalkan upload…");
+  };
+
+  const onRetryUpload = () => {
+    if (!pendingFile) return;
+    upload.reset();
+    upload.mutate();
+  };
+
+  useEffect(() => () => { abortRef.current.canceled = true; }, []);
 
 
   const onDownload = async (row: DocRow) => {
