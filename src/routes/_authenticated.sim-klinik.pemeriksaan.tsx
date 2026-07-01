@@ -176,6 +176,7 @@ function PemeriksaanPage() {
                     {(detailQ.data.prescriptions as Array<{ id: string; status: string; klinik_prescription_item?: unknown[] }>).map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
                   </div>
                 )}
+                <RmHistoryPanel visitId={selVisit!} current={form} />
               </div>
             )}
         </Card>
