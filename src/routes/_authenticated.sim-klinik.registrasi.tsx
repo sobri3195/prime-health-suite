@@ -76,7 +76,14 @@ function RegistrasiPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const dokterList = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
+  const callJadwal = useServerFn(listJadwal);
+  const jadwalQ = useQuery({ queryKey: ["klinik","jadwal-all"], queryFn: () => callJadwal(), staleTime: 60_000 });
+  const DAY_NAMES = ["minggu","senin","selasa","rabu","kamis","jumat","sabtu"];
+  const selectedDay = DAY_NAMES[new Date(date + "T00:00:00").getDay()];
+  const jadwalRows = (jadwalQ.data ?? []) as Array<{ dokter_id: string; day: string; is_active: boolean; start_time?: string; end_time?: string }>;
+  const praktikDokterIds = new Set(jadwalRows.filter((j) => j.is_active && String(j.day).toLowerCase() === selectedDay).map((j) => j.dokter_id));
+  const dokterAll = useMemo(() => (dokterQ.data ?? []) as Array<{ id: string; name: string; spesialisasi: string | null }>, [dokterQ.data]);
+  const dokterList = useMemo(() => dokterAll.filter((d) => praktikDokterIds.size === 0 || praktikDokterIds.has(d.id)), [dokterAll, praktikDokterIds]);
   const bookings = useMemo(() => (bookQ.data ?? []) as Array<{ id: string; jam_slot: string; status: string; keluhan: string | null; apps_pasien?: { no_rm: string; nama: string; telp: string }; fin_dokter?: { name: string }; klinik_visit?: Array<{ klinik_queue?: Array<{ queue_no: string; status: string }> }> }>, [bookQ.data]);
 
   // Real-time: jika dokter yang dipilih hilang dari daftar (mis. dinonaktifkan via realtime/refetch),
