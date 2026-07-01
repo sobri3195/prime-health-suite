@@ -192,7 +192,41 @@ function JadwalPage() {
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="cal">
+          <div className="overflow-x-auto rounded-xl border border-border bg-card p-3">
+            <div className="grid min-w-[860px]" style={{ gridTemplateColumns: `80px repeat(${DAYS.length}, minmax(0, 1fr))` }}>
+              <div className="border-b border-border p-2 text-xs font-medium text-muted-foreground">Jam</div>
+              {DAYS.map((d) => <div key={d} className="border-b border-l border-border p-2 text-center text-xs font-semibold">{d}</div>)}
+              {Array.from({ length: 12 }, (_, i) => 8 + i).map((h) => (
+                <>
+                  <div key={`h-${h}`} className="border-b border-border p-2 text-right text-[11px] text-muted-foreground">{String(h).padStart(2,"0")}:00</div>
+                  {DAYS.map((d) => {
+                    const hits = filtered.filter((s) => s.day === d && Number(s.start_time.slice(0,2)) <= h && Number(s.end_time.slice(0,2)) > h);
+                    return (
+                      <div key={`${d}-${h}`} className="relative min-h-14 border-b border-l border-border p-1">
+                        {hits.map((s) => {
+                          const pct = s.quota > 0 ? Math.round((s.booked/s.quota)*100) : 0;
+                          const overlap = hits.length > 1;
+                          return (
+                            <button key={s.id} onClick={() => { setEditing(s); setOpenForm(true); }}
+                              title={`${s.dokter_name} · ${s.start_time}–${s.end_time} · ${s.booked}/${s.quota} (${pct}%)${overlap ? " · OVERLAP" : ""}`}
+                              className={`mb-1 block w-full truncate rounded px-1 py-0.5 text-left text-[10px] leading-tight ${overlap ? "ring-1 ring-destructive" : ""} ${!s.is_active ? "bg-muted text-muted-foreground line-through" : pct > 90 ? "bg-rose-500/20 text-rose-700 dark:text-rose-300" : pct > 70 ? "bg-amber-500/20 text-amber-700 dark:text-amber-300" : "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"}`}>
+                              {s.dokter_name.replace(/^dr\.?\s*/i,"")} · {s.booked}/{s.quota}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </>
+              ))}
+            </div>
+            <p className="mt-3 text-[11px] text-muted-foreground">Blok merah bergaris = overlap. Warna: hijau &lt;70%, kuning 70–90%, merah &gt;90% kuota terpakai. Klik untuk edit.</p>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {openForm && (
         <JadwalForm initial={editing} onClose={() => setOpenForm(false)} onSaved={() => {
