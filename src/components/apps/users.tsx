@@ -65,6 +65,8 @@ export function UsersPage() {
   const [role, setRole] = useState<"all" | Role>("all");
   const [viewUser, setViewUser] = useState<ApiUser | null>(null);
   const [editUser, setEditUser] = useState<ApiUser | null>(null);
+  const [resetUser, setResetUser] = useState<ApiUser | null>(null);
+  const [newPwd, setNewPwd] = useState("");
   const [addRole, setAddRole] = useState<Role>("kasir");
 
   const items = useMemo(() => {
