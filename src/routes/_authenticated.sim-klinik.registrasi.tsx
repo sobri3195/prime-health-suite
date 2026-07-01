@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Card } from "@/components/ui/card";
 import { Search, UserPlus, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
-import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien } from "@/lib/klinik.functions";
+import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien, listJadwal } from "@/lib/klinik.functions";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/registrasi")({
   head: () => pageHead({ title: 'Registrasi Pasien — SIM Klinik', description: 'Pendaftaran pasien, pemilihan dokter, dan pembuatan booking antrian.', path: '/sim-klinik/registrasi' }), component: RegistrasiPage });
