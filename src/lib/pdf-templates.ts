@@ -78,8 +78,9 @@ export type Payslip = {
   klinik?: string;
 };
 
-export function generatePayslipPDF(p: Payslip): jsPDF {
-  const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
+export async function generatePayslipPDF(p: Payslip): Promise<jsPDF> {
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
   const W = doc.internal.pageSize.getWidth();
   header(doc, "SLIP GAJI", `Periode ${p.periode_label}`, p.klinik);
 
