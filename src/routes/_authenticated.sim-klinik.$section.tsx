@@ -17,6 +17,21 @@ export const Route = createFileRoute("/_authenticated/sim-klinik/$section")({
     }
   },
   component: Section,
+  notFoundComponent: () => {
+    const { section } = Route.useParams();
+    return (
+      <div className="p-6">
+        <PageHeader title="Kunjungan tidak ditemukan" desc={`ID: ${section}`} />
+        <Button asChild variant="outline"><Link to="/sim-klinik/pemeriksaan">← Kembali ke Pemeriksaan</Link></Button>
+      </div>
+    );
+  },
+  errorComponent: ({ error }) => (
+    <div className="p-6">
+      <PageHeader title="Gagal memuat kunjungan" desc={error.message} />
+      <Button asChild variant="outline"><Link to="/sim-klinik/pemeriksaan">← Kembali ke Pemeriksaan</Link></Button>
+    </div>
+  ),
 });
 
 function Section() {
@@ -28,7 +43,12 @@ function VisitDetail({ visitId }: { visitId: string }) {
   const call = useServerFn(getVisitDetail);
   const q = useQuery({
     queryKey: ["klinik", "visit-detail", visitId],
-    queryFn: () => call({ data: { id: visitId } }),
+    queryFn: async () => {
+      const res = await call({ data: { id: visitId } });
+      if (!res?.visit) throw notFound({ data: { section: visitId } });
+      return res;
+    },
+    retry: false,
   });
 
   if (q.isLoading) return <p className="p-6 text-sm text-muted-foreground">Memuat detail kunjungan…</p>;
