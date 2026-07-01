@@ -11,6 +11,7 @@ import { AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 import { resetFinanceTransactional } from "@/lib/finance-reset.functions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const CONFIRM_PHRASE = "RESET DATA FINANCE";
 
@@ -47,6 +48,7 @@ function Page() {
   const [ack1, setAck1] = useState(false);
   const [ack2, setAck2] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [result, setResult] = useState<{ table: string; deleted: number | null; error: string | null }[] | null>(null);
 
   const phraseOk = typed === CONFIRM_PHRASE;
