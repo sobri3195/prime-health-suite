@@ -6,13 +6,14 @@ import { ROLE_LABEL, type Role } from "@/lib/auth";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 import { toast } from "sonner";
-import { listUsers, setUserRole, toggleUserActive } from "@/lib/klinik.functions";
+import { listUsers, setUserRole, toggleUserActive, resetUserPassword } from "@/lib/klinik.functions";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, Plus } from "lucide-react";
+import { Loader2, Trash2, Plus, KeyRound } from "lucide-react";
 
 type ApiUser = {
   id: string; email: string; name: string;
