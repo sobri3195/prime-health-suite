@@ -1,9 +1,9 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
-import { Upload, Download, Trash2 } from "lucide-react";
+import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,6 +57,8 @@ export function DocumentsPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
+  const abortRef = useRef<{ canceled: boolean; path: string | null }>({ canceled: false, path: null });
+  const [timedOut, setTimedOut] = useState(false);
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
 
 
@@ -94,40 +96,70 @@ export function DocumentsPage() {
       const uid = auth.user?.id;
       if (!uid) throw new Error("Tidak ada sesi");
       const path = `${uid}/${Date.now()}-${pendingFile.name.replace(/[^\w.\-]/g, "_")}`;
+      abortRef.current = { canceled: false, path };
+      setTimedOut(false);
       setProgress(10);
-      const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, {
-        contentType: mime,
-        upsert: false,
-      });
-      if (up.error) throw up.error;
-      setProgress(75);
-      const { error } = await supabase.from("clinic_document").insert({
-        patient_code: meta.patient_code || "-",
-        patient_name: meta.patient_name || "Internal",
-        doc_type: meta.doc_type,
-        title: meta.title.trim(),
-        mime,
-        size_bytes: pendingFile.size,
-        storage_path: path,
-        uploaded_by: uid,
-        uploaded_by_email: auth.user?.email ?? null,
-      });
-      if (error) {
-        await supabase.storage.from(BUCKET).remove([path]);
-        throw error;
+      // Timeout 60s: mark UI, tapi upload tetap berjalan hingga user retry/cancel.
+      const timeoutId = window.setTimeout(() => setTimedOut(true), 60_000);
+      try {
+        const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, { contentType: mime, upsert: false });
+        if (abortRef.current.canceled) {
+          await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+          throw new Error("Upload dibatalkan");
+        }
+        if (up.error) throw up.error;
+        setProgress(75);
+        const { error } = await supabase.from("clinic_document").insert({
+          patient_code: meta.patient_code || "-",
+          patient_name: meta.patient_name || "Internal",
+          doc_type: meta.doc_type,
+          title: meta.title.trim(),
+          mime,
+          size_bytes: pendingFile.size,
+          storage_path: path,
+          uploaded_by: uid,
+          uploaded_by_email: auth.user?.email ?? null,
+        });
+        if (error) {
+          await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+          throw error;
+        }
+        setProgress(100);
+      } finally {
+        window.clearTimeout(timeoutId);
       }
-      setProgress(100);
     },
     onSuccess: () => {
       toast.success("Dokumen terupload");
       setPendingFile(null);
       setProgress(0);
+      setTimedOut(false);
       setMeta({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     },
-    onError: (e: any) => { setProgress(0); toast.error(e?.message ?? "Gagal upload"); },
+    onError: (e: any) => {
+      setProgress(0);
+      setTimedOut(false);
+      toast.error(e?.message ?? "Gagal upload — coba lagi");
+    },
   });
+
+  const onCancelUpload = () => {
+    abortRef.current.canceled = true;
+    // Tandai selesai secara UI; hasil upload akan dibersihkan di mutationFn.
+    setProgress(0);
+    setTimedOut(false);
+    toast.message("Membatalkan upload…");
+  };
+
+  const onRetryUpload = () => {
+    if (!pendingFile) return;
+    upload.reset();
+    upload.mutate();
+  };
+
+  useEffect(() => () => { abortRef.current.canceled = true; }, []);
 
 
   const onDownload = async (row: DocRow) => {
@@ -209,28 +241,55 @@ export function DocumentsPage() {
               onChange={(e) => setMeta({ ...meta, patient_name: e.target.value })}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {!upload.isPending && !upload.isError && (
+              <button
+                onClick={() => upload.mutate()}
+                className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground"
+              >
+                <Upload className="h-4 w-4" /> Upload
+              </button>
+            )}
+            {upload.isPending && (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-navy/70 px-3 py-1.5 text-sm font-medium text-navy-foreground">
+                  <Upload className="h-4 w-4 animate-pulse" /> Mengupload… {progress}%
+                </span>
+                <button
+                  onClick={onCancelUpload}
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-destructive hover:bg-muted"
+                >
+                  <X className="h-4 w-4" /> Batalkan
+                </button>
+                <div className="h-2 min-w-32 flex-1 overflow-hidden rounded bg-muted" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                {timedOut && <span className="text-xs text-amber-600">Lebih dari 60 detik — koneksi lambat. Anda bisa membatalkan lalu coba lagi.</span>}
+              </>
+            )}
+            {upload.isError && (
+              <>
+                <button
+                  onClick={onRetryUpload}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground"
+                >
+                  <RotateCw className="h-4 w-4" /> Coba lagi
+                </button>
+                <span className="text-xs text-destructive">Upload sebelumnya gagal. Silakan coba lagi atau batalkan.</span>
+              </>
+            )}
             <button
               disabled={upload.isPending}
-              onClick={() => upload.mutate()}
-              className="inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground disabled:opacity-60"
-            >
-              <Upload className="h-4 w-4" /> {upload.isPending ? `Mengupload… ${progress}%` : "Upload"}
-            </button>
-          {upload.isPending && (
-            <div className="h-2 w-full overflow-hidden rounded bg-muted">
-              <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }} />
-            </div>
-          )}
-
-            <button
               onClick={() => {
                 setPendingFile(null);
+                upload.reset();
+                setProgress(0);
+                setTimedOut(false);
                 if (fileRef.current) fileRef.current.value = "";
               }}
-              className="rounded-md border border-border px-3 py-1.5 text-sm"
+              className="rounded-md border border-border px-3 py-1.5 text-sm disabled:opacity-50"
             >
-              Batal
+              Bersihkan
             </button>
           </div>
         </div>

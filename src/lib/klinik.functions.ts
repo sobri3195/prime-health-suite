@@ -724,11 +724,8 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: inv, error: ie } = await sb.from("fin_invoice").select("id,total,dibayar,status").eq("id", data.invoice_id).maybeSingle();
     if (ie || !inv) throw ie ?? new Error("Invoice tidak ditemukan");
-    const total = Number(inv.total ?? 0);
-    const dibayar = Number(inv.dibayar ?? 0);
-    const sisa = Math.max(0, total - dibayar);
-    if (sisa <= 0) throw new Error("Invoice sudah lunas");
-    if (Number(data.amount) > sisa) throw new Error(`Jumlah melebihi sisa tagihan (Rp ${sisa.toLocaleString("id-ID")})`);
+    const { computePaymentStatus } = await import("./klinik-invariants");
+    const { newPaid, status } = computePaymentStatus(Number(inv.total ?? 0), Number(inv.dibayar ?? 0), Number(data.amount));
     const { error: pe } = await sb.from("fin_pembayaran").insert({
       invoice_id: data.invoice_id,
       tanggal: new Date().toISOString().slice(0, 10),
@@ -736,8 +733,6 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
       jumlah: data.amount, mdr: 0, netto: data.amount, status: "posted",
     });
     if (pe) throw pe;
-    const newPaid = dibayar + Number(data.amount);
-    const status = newPaid >= total ? "paid" : newPaid > 0 ? "partial" : "unpaid";
     const { error: ue } = await sb.from("fin_invoice").update({ dibayar: newPaid, status }).eq("id", data.invoice_id);
     if (ue) throw ue;
     await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "add_payment", target: data.invoice_id, meta: { amount: data.amount, method: data.method, status } });
@@ -766,18 +761,16 @@ export const upsertJadwal = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
     await assertAdmin(sb, context.userId);
-    // Cek overlap: dokter+day sama, jadwal aktif, jam saling tumpang tindih (a.start < b.end && a.end > b.start)
+    // Cek overlap via helper murni (boundary a.end==b.start dianggap tidak overlap).
+    const { findScheduleOverlap } = await import("./klinik-invariants");
     const { data: clashRows, error: ce } = await sb
       .from("klinik_jadwal")
-      .select("id,start_time,end_time,dokter_name,day")
+      .select("id,start_time,end_time,dokter_name,day,is_active")
       .eq("dokter_name", data.dokter_name)
-      .eq("day", data.day)
-      .eq("is_active", true);
+      .eq("day", data.day);
     if (ce) throw ce;
-    const clash = (clashRows ?? []).find((r: { id: string; start_time: string; end_time: string }) =>
-      r.id !== data.id && data.start_time < r.end_time && data.end_time > r.start_time);
-    if (clash) throw new Error(`Bentrok dengan jadwal ${data.dokter_name} hari ${data.day} (${(clash as { start_time: string }).start_time}–${(clash as { end_time: string }).end_time})`);
-    if (data.end_time <= data.start_time) throw new Error("Jam selesai harus lebih besar dari jam mulai");
+    const clash = findScheduleOverlap(data, (clashRows ?? []) as never);
+    if (clash) throw new Error(`Bentrok dengan jadwal ${data.dokter_name} hari ${data.day} (${clash.start_time}–${clash.end_time})`);
     const payload = { ...data, updated_at: new Date().toISOString() };
     const { data: row, error } = data.id
       ? await sb.from("klinik_jadwal").update(payload).eq("id", data.id).select("*").single()
