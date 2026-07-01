@@ -870,3 +870,44 @@ export const listMaster = createServerFn({ method: "POST" })
     if (error) throw error;
     return (rows ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
   });
+
+/* =============================================================
+ * REKAM MEDIS — AUDIT/VERSIONING
+ * ============================================================*/
+export const listMedicalRecordHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    visit_id: z.string().uuid().optional(),
+    medical_record_id: z.string().uuid().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("klinik_medical_record_history")
+      .select("id, medical_record_id, visit_id, changed_by, changed_at, action, snapshot")
+      .order("changed_at", { ascending: false }).limit(50);
+    if (data.visit_id) q = q.eq("visit_id", data.visit_id);
+    if (data.medical_record_id) q = q.eq("medical_record_id", data.medical_record_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+/* =============================================================
+ * USER — RESET PASSWORD (admin only)
+ * ============================================================*/
+export const resetUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    user_id: z.string().uuid(),
+    new_password: z.string().min(8, "Password minimal 8 karakter"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
+    if (data.user_id === context.userId) throw new Error("Gunakan menu profil untuk mengubah password sendiri");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.new_password });
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: "reset_password", target: data.user_id });
+    return { ok: true };
+  });
