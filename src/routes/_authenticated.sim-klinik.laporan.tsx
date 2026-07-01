@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/sim-klinik/laporan")({
   component: LaporanPage,
 });
 
-type Kind = "kunjungan" | "tindakan" | "payer" | "pendapatan";
+type Kind = "kunjungan" | "tindakan" | "payer" | "pendapatan" | "top_tindakan" | "doctor_monthly" | "occupancy";
 
 function LaporanPage() {
   const [kind, setKind] = useState<Kind>("kunjungan");
@@ -39,7 +39,11 @@ function LaporanPage() {
   const doctors = data?.doctors ?? [];
   const invoices = data?.invoices ?? [];
   const payers = (data as { payers?: Array<{ name: string; count: number; revenue: number }> } | undefined)?.payers ?? [];
-  const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0 };
+  const topTindakan = (data as { topTindakan?: Array<{ name: string; count: number; revenue: number }> } | undefined)?.topTindakan ?? [];
+  const doctorMonthly = (data as { doctorMonthly?: Array<{ month: string; doctor: string; count: number }> } | undefined)?.doctorMonthly ?? [];
+  const occupancy = (data as { occupancy?: Array<{ doctor: string; quota: number; booked: number; rate: number }> } | undefined)?.occupancy ?? [];
+  const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0, occupancyOverall: 0 };
+  const occupancyOverall = (totals as { occupancyOverall?: number }).occupancyOverall ?? 0;
 
 
   const invoiceCols: Column<{ tanggal: string; patient_code: string; patient_name: string | null; total: number }>[] = useMemo(() => [
