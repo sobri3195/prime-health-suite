@@ -209,6 +209,34 @@ export function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!resetUser} onOpenChange={(o) => !o && setResetUser(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset password — {resetUser?.name}</DialogTitle></DialogHeader>
+          {resetUser && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                Password baru akan langsung berlaku. Sampaikan ke pengguna dan minta ganti segera.
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Password baru (min. 8 karakter)</label>
+                <Input type="text" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="Masukkan password baru" />
+              </div>
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setNewPwd(Math.random().toString(36).slice(2, 6) + Math.random().toString(36).slice(2, 6).toUpperCase() + "!")}
+              >Generate acak</Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUser(null)}>Batal</Button>
+            <Button
+              disabled={!resetUser || newPwd.length < 8 || resetM.isPending}
+              onClick={() => resetUser && resetM.mutate({ user_id: resetUser.id, new_password: newPwd })}
+            >{resetM.isPending ? "Menyimpan…" : "Reset"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
