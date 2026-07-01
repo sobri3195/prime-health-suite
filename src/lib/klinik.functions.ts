@@ -724,11 +724,8 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: inv, error: ie } = await sb.from("fin_invoice").select("id,total,dibayar,status").eq("id", data.invoice_id).maybeSingle();
     if (ie || !inv) throw ie ?? new Error("Invoice tidak ditemukan");
-    const total = Number(inv.total ?? 0);
-    const dibayar = Number(inv.dibayar ?? 0);
-    const sisa = Math.max(0, total - dibayar);
-    if (sisa <= 0) throw new Error("Invoice sudah lunas");
-    if (Number(data.amount) > sisa) throw new Error(`Jumlah melebihi sisa tagihan (Rp ${sisa.toLocaleString("id-ID")})`);
+    const { computePaymentStatus } = await import("./klinik-invariants");
+    const { newPaid, status } = computePaymentStatus(Number(inv.total ?? 0), Number(inv.dibayar ?? 0), Number(data.amount));
     const { error: pe } = await sb.from("fin_pembayaran").insert({
       invoice_id: data.invoice_id,
       tanggal: new Date().toISOString().slice(0, 10),
@@ -736,8 +733,6 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
       jumlah: data.amount, mdr: 0, netto: data.amount, status: "posted",
     });
     if (pe) throw pe;
-    const newPaid = dibayar + Number(data.amount);
-    const status = newPaid >= total ? "paid" : newPaid > 0 ? "partial" : "unpaid";
     const { error: ue } = await sb.from("fin_invoice").update({ dibayar: newPaid, status }).eq("id", data.invoice_id);
     if (ue) throw ue;
     await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "add_payment", target: data.invoice_id, meta: { amount: data.amount, method: data.method, status } });
