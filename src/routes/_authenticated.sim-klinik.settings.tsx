@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,6 +23,7 @@ import { getSettings, saveSetting } from "@/lib/clinic.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/settings")({
+  head: () => pageHead({ title: 'Pengaturan Klinik — SIM Klinik', description: 'Profil klinik, tarif, dan konfigurasi sistem.', path: '/sim-klinik/settings' }),
   component: SettingsPage,
 });
 

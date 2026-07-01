@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,10 @@ import { toast } from "sonner";
 import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({ component: PemeriksaanPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
+  head: () => pageHead({ title: 'Pemeriksaan & Rekam Medis — SIM Klinik', description: 'Input pemeriksaan pasien, diagnosa, dan rencana terapi.', path: '/sim-klinik/pemeriksaan' }),
+  component: PemeriksaanPage,
+});
 
 const TEMPLATES: Record<string, { diagnosis: string; icd: string; treatment: string }> = {
   katarak: { diagnosis: "Katarak Senilis", icd: "H25.9", treatment: "Edukasi pasien, rencanakan operasi katarak phacoemulsifikasi" },

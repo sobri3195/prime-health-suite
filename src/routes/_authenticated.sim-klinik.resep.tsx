@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,8 +12,12 @@ import { Pill, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({ component: ResepPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({
+  head: () => pageHead({ title: 'Resep Elektronik — SIM Klinik', description: 'Peresepan obat, cek stok, dan interaksi obat.', path: '/sim-klinik/resep' }),
+  component: ResepPage,
+});
 
 const STATUS_LABEL: Record<string, string> = { draft: "Draft", sent_to_pharmacy: "Menunggu Farmasi", dispensed: "Sudah Diberikan", cancelled: "Batal" };
 
@@ -23,7 +28,8 @@ function ResepPage() {
   const [status, setStatus] = useState("sent_to_pharmacy");
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 10000 });
+  const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 30000 });
+  useRealtimeSubscription(["klinik_prescription","klinik_prescription_item"], [["klinik","prescriptions",status]]);
   const dispM = useMutation({
     mutationFn: (id: string) => callDispense({ data: { id } }),
     onSuccess: () => { toast.success("Resep diberikan, stok berkurang"); qc.invalidateQueries({ queryKey: ["klinik"] }); },

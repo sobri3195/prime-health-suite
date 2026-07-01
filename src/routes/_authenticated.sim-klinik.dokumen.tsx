@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,6 +23,7 @@ import { listDocuments, uploadDocument, deleteDocument } from "@/lib/clinic.func
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/dokumen")({
+  head: () => pageHead({ title: 'Dokumen & SOP — SIM Klinik', description: 'Pustaka SOP, kebijakan, dan dokumen operasional klinik.', path: '/sim-klinik/dokumen' }),
   component: DokumenPage,
 });
 

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -24,6 +25,7 @@ import { listAllDiklat, upsertDiklat, deleteDiklat, listDokterOptions } from "@/
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/diklat")({
+  head: () => pageHead({ title: 'Diklat & Sertifikasi — SIM Klinik', description: 'Pelatihan, sertifikasi, dan progres tenaga medis.', path: '/sim-klinik/diklat' }),
   component: DiklatAdminPage,
 });
 

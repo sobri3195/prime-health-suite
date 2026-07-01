@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -15,7 +16,10 @@ import { Search, Plus, Pencil, Download, ArrowDownUp, AlertTriangle } from "luci
 import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({ component: ObatPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
+  head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
+  component: ObatPage,
+});
 
 type Obat = {
   id: string; code: string; name: string; category: string | null; unit: string;

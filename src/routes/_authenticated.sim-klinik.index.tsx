@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -10,7 +11,10 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 import { getDashboardStats } from "@/lib/klinik.functions";
 
-export const Route = createFileRoute("/_authenticated/sim-klinik/")({ component: DashboardKlinikPage });
+export const Route = createFileRoute("/_authenticated/sim-klinik/")({
+  head: () => pageHead({ title: 'Dashboard SIM Klinik', description: 'Ringkasan operasional klinik: kunjungan, antrian, dan pendapatan hari ini.', path: '/sim-klinik' }),
+  component: DashboardKlinikPage,
+});
 
 const COLORS = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#ef4444", "#6366f1"];
 

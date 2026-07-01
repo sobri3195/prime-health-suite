@@ -1,4 +1,5 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
@@ -30,6 +31,7 @@ type LemburSearch = {
 };
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/lembur")({
+  head: () => pageHead({ title: 'Lembur Karyawan — SIM Klinik', description: 'Pengajuan lembur, persetujuan, dan integrasi payroll.', path: '/sim-klinik/lembur' }),
   validateSearch: (s: Record<string, unknown>): LemburSearch => ({
     prefill: typeof s.prefill === "string" ? s.prefill : undefined,
     tanggal: typeof s.tanggal === "string" ? s.tanggal : undefined,
