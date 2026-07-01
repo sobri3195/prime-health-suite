@@ -28,7 +28,9 @@ function ResepPage() {
   const [status, setStatus] = useState("sent_to_pharmacy");
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 10000 });
+  const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 30000 });
+  useRealtimeSubscription({ table: "klinik_prescription", queryKeys: [["klinik","prescriptions",status]] });
+  useRealtimeSubscription({ table: "klinik_prescription_item", queryKeys: [["klinik","prescriptions",status]] });
   const dispM = useMutation({
     mutationFn: (id: string) => callDispense({ data: { id } }),
     onSuccess: () => { toast.success("Resep diberikan, stok berkurang"); qc.invalidateQueries({ queryKey: ["klinik"] }); },
