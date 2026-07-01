@@ -254,7 +254,7 @@ export const checkinBooking = createServerFn({ method: "POST" })
     const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: "A" });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
-      visit_id: visit.id, pasien_id: bk.pasien_id, dokter_id: bk.dokter_id,
+      visit_id: visit.id, pasien_id: pasienId, dokter_id: bk.dokter_id,
       queue_no: qn, queue_date: bk.tanggal, counter: "A", status: "waiting",
     }).select("*").single();
     if (qe) throw qe;
@@ -440,6 +440,16 @@ export const createPrescription = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // Pre-validate stock BEFORE insert to prevent zombie prescriptions
+    // (dispense fallback exists, but we want to fail fast at creation time).
+    for (const it of data.items) {
+      if (!it.obat_id) continue;
+      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
+      if (!ob) continue;
+      if (Number(ob.stock) < Number(it.quantity)) {
+        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+      }
+    }
     const { data: pres, error } = await sb.from("klinik_prescription").insert({
       visit_id: data.visit_id, pasien_id: data.pasien_id, dokter_id: data.dokter_id, notes: data.notes, status: "sent_to_pharmacy",
     }).select("*").single();
