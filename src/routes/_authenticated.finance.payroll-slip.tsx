@@ -87,9 +87,9 @@ function Page() {
                   <TableCell className="text-right font-mono text-rose-600">{fmt(it.potongan)}</TableCell>
                   <TableCell className="text-right font-mono font-semibold text-emerald-600">{fmt(it.take_home)}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
+                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
                       if (!curRun) return;
-                      const doc = generatePayslipPDF({
+                      const doc = await generatePayslipPDF({
                         nama: it.nama_snapshot,
                         nip: it.nip_snapshot,
                         jabatan: it.jabatan_snapshot,
