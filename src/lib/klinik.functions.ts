@@ -440,6 +440,14 @@ export const createPrescription = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // Drug-interaction check (whitelist sederhana). Interaksi 'danger' menolak,
+    // 'warning' hanya dicatat pada audit meta.
+    const { checkInteractions } = await import("./drug-interactions");
+    const hits = checkInteractions(data.items.map((it) => it.obat_name));
+    const danger = hits.find((h) => h.severity === "danger");
+    if (danger) {
+      throw new Error(`Interaksi obat berbahaya: ${danger.drugs.join(" + ")} — ${danger.reason}`);
+    }
     // Pre-validate stock BEFORE insert to prevent zombie prescriptions
     // (dispense fallback exists, but we want to fail fast at creation time).
     for (const it of data.items) {
@@ -457,8 +465,17 @@ export const createPrescription = createServerFn({ method: "POST" })
     const items = data.items.map((it) => ({ ...it, prescription_id: pres.id }));
     const { error: ie } = await sb.from("klinik_prescription_item").insert(items);
     if (ie) throw ie;
-    await appendAuditRow(sb, { actor_id: context.userId, module: "Resep", action: "create", target: pres.id, meta: { items: items.length } });
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Resep", action: "create", target: pres.id, meta: { items: items.length, warnings: hits.filter((h) => h.severity === "warning") } });
     return pres;
+  });
+
+/** Periksa interaksi obat tanpa menyimpan — untuk UI preview sebelum submit. */
+export const previewInteractions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ names: z.array(z.string()).min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const { checkInteractions } = await import("./drug-interactions");
+    return checkInteractions(data.names);
   });
 
 export const listPrescription = createServerFn({ method: "POST" })
@@ -852,4 +869,45 @@ export const listMaster = createServerFn({ method: "POST" })
     const { data: rows, error } = await sb.from(table).select(cols).limit(500);
     if (error) throw error;
     return (rows ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
+  });
+
+/* =============================================================
+ * REKAM MEDIS — AUDIT/VERSIONING
+ * ============================================================*/
+export const listMedicalRecordHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    visit_id: z.string().uuid().optional(),
+    medical_record_id: z.string().uuid().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("klinik_medical_record_history")
+      .select("id, medical_record_id, visit_id, changed_by, changed_at, action, snapshot")
+      .order("changed_at", { ascending: false }).limit(50);
+    if (data.visit_id) q = q.eq("visit_id", data.visit_id);
+    if (data.medical_record_id) q = q.eq("medical_record_id", data.medical_record_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+/* =============================================================
+ * USER — RESET PASSWORD (admin only)
+ * ============================================================*/
+export const resetUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    user_id: z.string().uuid(),
+    new_password: z.string().min(8, "Password minimal 8 karakter"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    await assertAdmin(sb, context.userId);
+    if (data.user_id === context.userId) throw new Error("Gunakan menu profil untuk mengubah password sendiri");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.new_password });
+    if (error) throw error;
+    await appendAuditRow(sb, { actor_id: context.userId, module: "User", action: "reset_password", target: data.user_id });
+    return { ok: true };
   });

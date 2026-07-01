@@ -60,9 +60,28 @@ function ObatPage() {
     a.href = URL.createObjectURL(blob); a.download = `obat-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   }
 
+  const lowStockCount = data.filter((o) => Number(o.stock) <= Number(o.min_stock) && o.is_active).length;
+  const expSoonCount = data.filter((o) => o.expired_date && new Date(o.expired_date).getTime() < Date.now() + 60 * 864e5).length;
+
   return (
     <div>
       <PageHeader title="Stok Obat" desc="Master obat & farmasi klinik mata. Catat stok masuk/keluar." />
+      {(lowStockCount > 0 || expSoonCount > 0) && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {lowStockCount > 0 && (
+            <button onClick={() => setLow(true)} className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">
+              <AlertTriangle className="h-4 w-4" />
+              <span><b>{lowStockCount}</b> obat di bawah stok minimum — klik untuk filter.</span>
+            </button>
+          )}
+          {expSoonCount > 0 && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+              <AlertTriangle className="h-4 w-4" />
+              <span><b>{expSoonCount}</b> obat kadaluarsa &lt; 60 hari.</span>
+            </div>
+          )}
+        </div>
+      )}
       <Tabs defaultValue="list">
         <TabsList><TabsTrigger value="list">Daftar Obat</TabsTrigger><TabsTrigger value="mvmt">Riwayat Stok</TabsTrigger></TabsList>
         <TabsContent value="list" className="space-y-3">

@@ -201,7 +201,7 @@ export const deleteDocument = createServerFn({ method: "POST" })
 
 // ===== Laporan aggregates =====
 const LaporanSchema = z.object({
-  kind: z.enum(["kunjungan", "tindakan", "payer", "pendapatan"]),
+  kind: z.enum(["kunjungan", "tindakan", "payer", "pendapatan", "top_tindakan", "doctor_monthly", "occupancy"]),
   from: z.string().optional(),
   to: z.string().optional(),
 });
@@ -214,54 +214,96 @@ export const getLaporan = createServerFn({ method: "POST" })
     const from = data.from ?? new Date(Date.now() - 30 * 864e5).toISOString();
     const to = data.to ?? new Date().toISOString();
 
-    if (data.kind === "kunjungan" || data.kind === "tindakan" || data.kind === "payer" || data.kind === "pendapatan") {
-      const { data: invoices, error } = await supabase
-        .from("fin_invoice").select("id, tanggal, total, patient_code, patient_name, payer_id")
-        .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
-      if (error) throw error;
-      const { data: bookings } = await supabase
-        .from("apps_booking").select("id, tanggal, dokter_nama, status")
-        .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
+    const { data: invoices, error } = await supabase
+      .from("fin_invoice").select("id, tanggal, total, patient_code, patient_name, payer_id")
+      .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
+    if (error) throw error;
+    const { data: bookings } = await supabase
+      .from("apps_booking").select("id, tanggal, dokter_nama, status")
+      .gte("tanggal", from.slice(0, 10)).lte("tanggal", to.slice(0, 10));
 
-      const trendMap = new Map<string, number>();
-      (bookings ?? []).forEach((b) => {
-        const m = (b.tanggal as string).slice(0, 7);
-        trendMap.set(m, (trendMap.get(m) ?? 0) + 1);
-      });
-      const trend = Array.from(trendMap.entries()).sort().map(([month, visits]) => ({ month, visits }));
+    // Kunjungan bulanan (dari klinik_visit lebih akurat, fallback ke bookings)
+    const trendMap = new Map<string, number>();
+    (bookings ?? []).forEach((b) => {
+      const m = (b.tanggal as string).slice(0, 7);
+      trendMap.set(m, (trendMap.get(m) ?? 0) + 1);
+    });
+    const trend = Array.from(trendMap.entries()).sort().map(([month, visits]) => ({ month, visits }));
 
-      const docMap = new Map<string, number>();
-      (bookings ?? []).forEach((b) => docMap.set(b.dokter_nama as string, (docMap.get(b.dokter_nama as string) ?? 0) + 1));
-      const doctors = Array.from(docMap.entries()).map(([doctor, count]) => ({ doctor, count }));
+    // Beban dokter (total)
+    const docMap = new Map<string, number>();
+    (bookings ?? []).forEach((b) => docMap.set(b.dokter_nama as string, (docMap.get(b.dokter_nama as string) ?? 0) + 1));
+    const doctors = Array.from(docMap.entries()).map(([doctor, count]) => ({ doctor, count }));
 
-      const payerIds = Array.from(new Set((invoices ?? []).map((i: { payer_id: string | null }) => i.payer_id).filter(Boolean) as string[]));
-      const payerNames = new Map<string, string>();
-      if (payerIds.length) {
-        const { data: payersRows } = await supabase.from("fin_payer").select("id,name").in("id", payerIds);
-        (payersRows ?? []).forEach((p: { id: string; name: string }) => payerNames.set(p.id, p.name));
-      }
-      const payerAgg = new Map<string, { count: number; revenue: number }>();
-      (invoices ?? []).forEach((i: { payer_id: string | null; total: number }) => {
-        const name = i.payer_id ? (payerNames.get(i.payer_id) ?? "Lainnya") : "Umum";
-        const cur = payerAgg.get(name) ?? { count: 0, revenue: 0 };
-        cur.count += 1; cur.revenue += Number(i.total ?? 0);
-        payerAgg.set(name, cur);
-      });
-      const payers = Array.from(payerAgg.entries()).map(([name, v]) => ({ name, count: v.count, revenue: v.revenue }));
-
-      const totalRevenue = (invoices ?? []).reduce((a, b) => a + Number(b.total ?? 0), 0);
-      return {
-        kind: data.kind,
-        from, to,
-        totals: {
-          visits: (bookings ?? []).length,
-          invoices: (invoices ?? []).length,
-          revenue: totalRevenue,
-        },
-        trend, doctors, payers,
-        invoices: invoices ?? [],
-      };
+    // Distribusi penjamin
+    const payerIds = Array.from(new Set((invoices ?? []).map((i: { payer_id: string | null }) => i.payer_id).filter(Boolean) as string[]));
+    const payerNames = new Map<string, string>();
+    if (payerIds.length) {
+      const { data: payersRows } = await supabase.from("fin_payer").select("id,name").in("id", payerIds);
+      (payersRows ?? []).forEach((p: { id: string; name: string }) => payerNames.set(p.id, p.name));
     }
-    return { kind: data.kind, from, to, totals: { visits: 0, invoices: 0, revenue: 0 }, trend: [], doctors: [], payers: [], invoices: [] };
+    const payerAgg = new Map<string, { count: number; revenue: number }>();
+    (invoices ?? []).forEach((i: { payer_id: string | null; total: number }) => {
+      const name = i.payer_id ? (payerNames.get(i.payer_id) ?? "Lainnya") : "Umum";
+      const cur = payerAgg.get(name) ?? { count: 0, revenue: 0 };
+      cur.count += 1; cur.revenue += Number(i.total ?? 0);
+      payerAgg.set(name, cur);
+    });
+    const payers = Array.from(payerAgg.entries()).map(([name, v]) => ({ name, count: v.count, revenue: v.revenue }));
+
+    // Top 10 tindakan
+    const { data: items } = await supabase
+      .from("fin_invoice_item").select("layanan_nama, qty, subtotal, created_at")
+      .gte("created_at", from.slice(0, 10)).lte("created_at", to.slice(0, 10) + "T23:59:59")
+      .limit(2000);
+    const tindakanMap = new Map<string, { count: number; revenue: number }>();
+    (items ?? []).forEach((it: { layanan_nama: string | null; qty: number; subtotal: number }) => {
+      const name = it.layanan_nama ?? "Lainnya";
+      const cur = tindakanMap.get(name) ?? { count: 0, revenue: 0 };
+      cur.count += Number(it.qty ?? 0); cur.revenue += Number(it.subtotal ?? 0);
+      tindakanMap.set(name, cur);
+    });
+    const topTindakan = Array.from(tindakanMap.entries())
+      .map(([name, v]) => ({ name, count: v.count, revenue: v.revenue }))
+      .sort((a, b) => b.count - a.count).slice(0, 10);
+
+    // Kunjungan per dokter per bulan
+    const dmMap = new Map<string, number>();
+    (bookings ?? []).forEach((b) => {
+      const key = `${(b.tanggal as string).slice(0, 7)}|${b.dokter_nama}`;
+      dmMap.set(key, (dmMap.get(key) ?? 0) + 1);
+    });
+    const doctorMonthly = Array.from(dmMap.entries()).map(([k, v]) => {
+      const [month, doctor] = k.split("|");
+      return { month, doctor, count: v };
+    }).sort((a, b) => a.month.localeCompare(b.month));
+
+    // Occupancy rate: booked / quota dari klinik_jadwal aktif
+    const { data: jadwal } = await supabase.from("klinik_jadwal")
+      .select("dokter_name, day, quota, booked, is_active").eq("is_active", true);
+    const quotaSum = (jadwal ?? []).reduce((a, j: { quota: number }) => a + Number(j.quota ?? 0), 0);
+    const bookedSum = (jadwal ?? []).reduce((a, j: { booked: number }) => a + Number(j.booked ?? 0), 0);
+    const occupancyByDoctor = Array.from(
+      (jadwal ?? []).reduce((m: Map<string, { quota: number; booked: number }>, j: { dokter_name: string; quota: number; booked: number }) => {
+        const cur = m.get(j.dokter_name) ?? { quota: 0, booked: 0 };
+        cur.quota += Number(j.quota ?? 0); cur.booked += Number(j.booked ?? 0);
+        m.set(j.dokter_name, cur); return m;
+      }, new Map()).entries()
+    ).map(([doctor, v]) => ({ doctor, quota: v.quota, booked: v.booked, rate: v.quota > 0 ? Math.round((v.booked / v.quota) * 100) : 0 }));
+
+    const totalRevenue = (invoices ?? []).reduce((a, b) => a + Number(b.total ?? 0), 0);
+    return {
+      kind: data.kind,
+      from, to,
+      totals: {
+        visits: (bookings ?? []).length,
+        invoices: (invoices ?? []).length,
+        revenue: totalRevenue,
+        occupancyOverall: quotaSum > 0 ? Math.round((bookedSum / quotaSum) * 100) : 0,
+      },
+      trend, doctors, payers,
+      topTindakan, doctorMonthly, occupancy: occupancyByDoctor,
+      invoices: invoices ?? [],
+    };
   });
 

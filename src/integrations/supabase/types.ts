@@ -2862,6 +2862,39 @@ export type Database = {
           },
         ]
       }
+      klinik_medical_record_history: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          medical_record_id: string
+          pasien_id: string | null
+          snapshot: Json
+          visit_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          medical_record_id: string
+          pasien_id?: string | null
+          snapshot: Json
+          visit_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          medical_record_id?: string
+          pasien_id?: string | null
+          snapshot?: Json
+          visit_id?: string | null
+        }
+        Relationships: []
+      }
       klinik_obat: {
         Row: {
           category: string | null

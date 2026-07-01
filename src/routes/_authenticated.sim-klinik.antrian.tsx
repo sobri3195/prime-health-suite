@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PhoneCall, PlayCircle, CheckCircle2 } from "lucide-react";
+import { PhoneCall, PlayCircle, CheckCircle2, RefreshCw, SkipForward, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { listQueueToday, updateQueueStatus } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
@@ -40,11 +40,18 @@ function AntrianPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };
+  type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; served_at: string | null; done_at: string | null; created_at: string; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };
   const rows = (listQ.data ?? []) as Row[];
 
   const waiting = rows.filter((r) => r.status === "waiting");
   const now = rows.find((r) => r.status === "in_service" || r.status === "called");
+
+  // Rata-rata waktu tunggu: selisih created_at → called_at untuk antrian yang sudah dipanggil hari ini.
+  const waitDurations = rows
+    .filter((r) => r.called_at)
+    .map((r) => (new Date(r.called_at!).getTime() - new Date(r.created_at).getTime()) / 60000)
+    .filter((m) => m >= 0 && m < 600);
+  const avgWait = waitDurations.length ? Math.round(waitDurations.reduce((a, b) => a + b, 0) / waitDurations.length) : null;
 
   if (display) {
     return (
@@ -82,7 +89,11 @@ function AntrianPage() {
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={() => setDisplay(true)}>Mode Display</Button>
-        <div className="ml-auto text-xs text-muted-foreground">Total {rows.length} antrian</div>
+        <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5" />Rata-rata tunggu: <span className="font-semibold text-foreground">{avgWait !== null ? `${avgWait} mnt` : "—"}</span></span>
+          <span>Menunggu: <span className="font-semibold text-foreground">{waiting.length}</span></span>
+          <span>Total {rows.length}</span>
+        </div>
       </div>
 
       <div className="grid gap-3">
@@ -99,10 +110,20 @@ function AntrianPage() {
                 {r.klinik_visit?.chief_complaint && <div className="mt-1 text-xs italic">"{r.klinik_visit.chief_complaint}"</div>}
               </div>
               <Badge variant={r.status === "in_service" ? "default" : r.status === "done" ? "outline" : "secondary"}>{STATUS_LABEL[r.status]}</Badge>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {r.status === "waiting" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "called" })}><PhoneCall className="mr-1 h-3 w-3" />Panggil</Button>}
-                {r.status === "called" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "in_service" })}><PlayCircle className="mr-1 h-3 w-3" />Mulai</Button>}
+                {r.status === "called" && <>
+                  <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "in_service" })}><PlayCircle className="mr-1 h-3 w-3" />Mulai</Button>
+                  <Button size="sm" variant="outline" onClick={() => updM.mutate({ id: r.id, status: "called" })} title="Panggil ulang"><RefreshCw className="h-3 w-3" /></Button>
+                </>}
                 {r.status === "in_service" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "done" })}><CheckCircle2 className="mr-1 h-3 w-3" />Selesai</Button>}
+                {(r.status === "waiting" || r.status === "called") && (
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
+                    if (confirm(`Skip antrian ${r.queue_no} (${r.apps_pasien?.nama ?? "-"})? Antrian ini akan dibatalkan.`)) {
+                      updM.mutate({ id: r.id, status: "cancelled" });
+                    }
+                  }} title="Skip / batalkan"><SkipForward className="h-3 w-3" /></Button>
+                )}
               </div>
             </Card>
           ))}

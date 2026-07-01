@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/sim-klinik/laporan")({
   component: LaporanPage,
 });
 
-type Kind = "kunjungan" | "tindakan" | "payer" | "pendapatan";
+type Kind = "kunjungan" | "tindakan" | "payer" | "pendapatan" | "top_tindakan" | "doctor_monthly" | "occupancy";
 
 function LaporanPage() {
   const [kind, setKind] = useState<Kind>("kunjungan");
@@ -39,7 +39,11 @@ function LaporanPage() {
   const doctors = data?.doctors ?? [];
   const invoices = data?.invoices ?? [];
   const payers = (data as { payers?: Array<{ name: string; count: number; revenue: number }> } | undefined)?.payers ?? [];
-  const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0 };
+  const topTindakan = (data as { topTindakan?: Array<{ name: string; count: number; revenue: number }> } | undefined)?.topTindakan ?? [];
+  const doctorMonthly = (data as { doctorMonthly?: Array<{ month: string; doctor: string; count: number }> } | undefined)?.doctorMonthly ?? [];
+  const occupancy = (data as { occupancy?: Array<{ doctor: string; quota: number; booked: number; rate: number }> } | undefined)?.occupancy ?? [];
+  const totals = data?.totals ?? { visits: 0, invoices: 0, revenue: 0, occupancyOverall: 0 };
+  const occupancyOverall = (totals as { occupancyOverall?: number }).occupancyOverall ?? 0;
 
 
   const invoiceCols: Column<{ tanggal: string; patient_code: string; patient_name: string | null; total: number }>[] = useMemo(() => [
@@ -66,7 +70,10 @@ function LaporanPage() {
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="kunjungan">Tren Kunjungan</SelectItem>
+              <SelectItem value="doctor_monthly">Kunjungan per Dokter/Bulan</SelectItem>
               <SelectItem value="tindakan">Beban Dokter</SelectItem>
+              <SelectItem value="top_tindakan">Top 10 Tindakan</SelectItem>
+              <SelectItem value="occupancy">Occupancy Rate Dokter</SelectItem>
               <SelectItem value="payer">Distribusi Penjamin</SelectItem>
               <SelectItem value="pendapatan">Pendapatan</SelectItem>
             </SelectContent>
@@ -79,7 +86,7 @@ function LaporanPage() {
         <Kpi label="Kunjungan" value={totals.visits.toLocaleString("id-ID")} />
         <Kpi label="Invoice terbit" value={totals.invoices.toLocaleString("id-ID")} />
         <Kpi label="Pendapatan" value={formatIDR(totals.revenue)} />
-        <Kpi label="Periode (hari)" value={String(Math.max(1, Math.round((+new Date(range.to) - +new Date(range.from)) / 864e5) + 1))} />
+        <Kpi label="Occupancy" value={`${occupancyOverall}%`} />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">
@@ -108,6 +115,49 @@ function LaporanPage() {
                   <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            )
+        ) : kind === "top_tindakan" ? (
+          topTindakan.length === 0
+            ? <EmptyState title="Belum ada tindakan tercatat" />
+            : (
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={topTindakan} layout="vertical" margin={{ left: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis type="number" /><YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number, k: string) => k === "revenue" ? formatIDR(v) : String(v)} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} name="Jumlah" />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "doctor_monthly" ? (
+          doctorMonthly.length === 0
+            ? <EmptyState title="Belum ada data" hint="Coba perluas rentang tanggal." />
+            : (
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={doctorMonthly}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="month" /><YAxis /><Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Kunjungan" />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+        ) : kind === "occupancy" ? (
+          occupancy.length === 0
+            ? <EmptyState title="Belum ada jadwal aktif" hint="Buat jadwal dokter terlebih dahulu." />
+            : (
+              <div className="space-y-2">
+                {occupancy.map((o) => (
+                  <div key={o.doctor} className="rounded-md border border-border p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{o.doctor}</span>
+                      <span className="text-xs text-muted-foreground">{o.booked}/{o.quota} slot • <b className={o.rate > 85 ? "text-amber-600" : "text-foreground"}>{o.rate}%</b></span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full ${o.rate > 85 ? "bg-amber-500" : "bg-primary"}`} style={{ width: `${Math.min(o.rate, 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             )
         ) : kind === "pendapatan" ? (
           invoices.length === 0

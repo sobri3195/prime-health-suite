@@ -6,13 +6,14 @@ import { ROLE_LABEL, type Role } from "@/lib/auth";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 import { toast } from "sonner";
-import { listUsers, setUserRole, toggleUserActive } from "@/lib/klinik.functions";
+import { listUsers, setUserRole, toggleUserActive, resetUserPassword } from "@/lib/klinik.functions";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, Plus } from "lucide-react";
+import { Loader2, Trash2, Plus, KeyRound } from "lucide-react";
 
 type ApiUser = {
   id: string; email: string; name: string;
@@ -36,6 +37,7 @@ export function UsersPage() {
   const callList = useServerFn(listUsers);
   const callSet = useServerFn(setUserRole);
   const callToggle = useServerFn(toggleUserActive);
+  const callReset = useServerFn(resetUserPassword);
 
   const listQ = useQuery({ queryKey: ["apps", "users"], queryFn: () => callList() as Promise<ApiUser[]> });
 
@@ -52,12 +54,19 @@ export function UsersPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const resetM = useMutation({
+    mutationFn: (v: { user_id: string; new_password: string }) => callReset({ data: v }),
+    onSuccess: () => { toast.success("Password berhasil di-reset"); setResetUser(null); setNewPwd(""); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const [q, setQ] = useState("");
   const [st, setSt] = useState<"all" | "active" | "inactive">("all");
   const [role, setRole] = useState<"all" | Role>("all");
   const [viewUser, setViewUser] = useState<ApiUser | null>(null);
   const [editUser, setEditUser] = useState<ApiUser | null>(null);
+  const [resetUser, setResetUser] = useState<ApiUser | null>(null);
+  const [newPwd, setNewPwd] = useState("");
   const [addRole, setAddRole] = useState<Role>("kasir");
 
   const items = useMemo(() => {
@@ -116,6 +125,8 @@ export function UsersPage() {
                     <button onClick={() => setViewUser(u)} className="text-cyan-accent hover:underline">View</button>
                     {" · "}
                     <button onClick={() => { setEditUser(u); setAddRole("kasir"); }} className="text-cyan-accent hover:underline">Edit role</button>
+                    {" · "}
+                    <button onClick={() => { setResetUser(u); setNewPwd(""); }} className="text-cyan-accent hover:underline">Reset password</button>
                     {" · "}
                     <button
                       disabled={toggleM.isPending}
@@ -195,6 +206,34 @@ export function UsersPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!resetUser} onOpenChange={(o) => !o && setResetUser(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset password — {resetUser?.name}</DialogTitle></DialogHeader>
+          {resetUser && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                Password baru akan langsung berlaku. Sampaikan ke pengguna dan minta ganti segera.
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Password baru (min. 8 karakter)</label>
+                <Input type="text" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="Masukkan password baru" />
+              </div>
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setNewPwd(Math.random().toString(36).slice(2, 6) + Math.random().toString(36).slice(2, 6).toUpperCase() + "!")}
+              >Generate acak</Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUser(null)}>Batal</Button>
+            <Button
+              disabled={!resetUser || newPwd.length < 8 || resetM.isPending}
+              onClick={() => resetUser && resetM.mutate({ user_id: resetUser.id, new_password: newPwd })}
+            >{resetM.isPending ? "Menyimpan…" : "Reset"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
