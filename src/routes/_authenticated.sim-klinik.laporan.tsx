@@ -70,7 +70,10 @@ function LaporanPage() {
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="kunjungan">Tren Kunjungan</SelectItem>
+              <SelectItem value="doctor_monthly">Kunjungan per Dokter/Bulan</SelectItem>
               <SelectItem value="tindakan">Beban Dokter</SelectItem>
+              <SelectItem value="top_tindakan">Top 10 Tindakan</SelectItem>
+              <SelectItem value="occupancy">Occupancy Rate Dokter</SelectItem>
               <SelectItem value="payer">Distribusi Penjamin</SelectItem>
               <SelectItem value="pendapatan">Pendapatan</SelectItem>
             </SelectContent>
@@ -83,7 +86,7 @@ function LaporanPage() {
         <Kpi label="Kunjungan" value={totals.visits.toLocaleString("id-ID")} />
         <Kpi label="Invoice terbit" value={totals.invoices.toLocaleString("id-ID")} />
         <Kpi label="Pendapatan" value={formatIDR(totals.revenue)} />
-        <Kpi label="Periode (hari)" value={String(Math.max(1, Math.round((+new Date(range.to) - +new Date(range.from)) / 864e5) + 1))} />
+        <Kpi label="Occupancy" value={`${occupancyOverall}%`} />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">
