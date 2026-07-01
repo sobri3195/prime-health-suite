@@ -1,7 +1,7 @@
 // CSV + PDF exporters with consistent column schemas and date-range header.
 // jsPDF + jspdf-autotable are dynamically imported inside PDF functions to
 // keep them out of the main bundle (~476 kB saved on first paint).
-import type jsPDF from "jspdf";
+
 
 export type Column<T> = {
   key: keyof T | string;
