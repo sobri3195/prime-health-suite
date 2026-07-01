@@ -40,11 +40,18 @@ function AntrianPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };
+  type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; served_at: string | null; done_at: string | null; created_at: string; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };
   const rows = (listQ.data ?? []) as Row[];
 
   const waiting = rows.filter((r) => r.status === "waiting");
   const now = rows.find((r) => r.status === "in_service" || r.status === "called");
+
+  // Rata-rata waktu tunggu: selisih created_at → called_at untuk antrian yang sudah dipanggil hari ini.
+  const waitDurations = rows
+    .filter((r) => r.called_at)
+    .map((r) => (new Date(r.called_at!).getTime() - new Date(r.created_at).getTime()) / 60000)
+    .filter((m) => m >= 0 && m < 600);
+  const avgWait = waitDurations.length ? Math.round(waitDurations.reduce((a, b) => a + b, 0) / waitDurations.length) : null;
 
   if (display) {
     return (
