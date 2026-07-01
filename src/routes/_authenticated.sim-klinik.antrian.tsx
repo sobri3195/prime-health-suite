@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PhoneCall, PlayCircle, CheckCircle2 } from "lucide-react";
+import { PhoneCall, PlayCircle, CheckCircle2, RefreshCw, SkipForward, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { listQueueToday, updateQueueStatus } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
