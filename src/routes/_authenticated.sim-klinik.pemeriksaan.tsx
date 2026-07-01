@@ -187,6 +187,66 @@ function PemeriksaanPage() {
   );
 }
 
+/* -------- RM History (versioning) with diff viewer -------- */
+const DIFF_FIELDS: Array<{ k: string; label: string }> = [
+  { k: "anamnesis", label: "Anamnesis" },
+  { k: "visus_od", label: "Visus OD" }, { k: "visus_os", label: "Visus OS" },
+  { k: "tio_od", label: "TIO OD" }, { k: "tio_os", label: "TIO OS" },
+  { k: "slit_lamp", label: "Slit Lamp" }, { k: "fundus", label: "Fundus" },
+  { k: "diagnosis", label: "Diagnosis" }, { k: "icd10_code", label: "ICD-10" },
+  { k: "treatment_plan", label: "Rencana Terapi" }, { k: "tindakan", label: "Tindakan" }, { k: "notes", label: "Catatan" },
+];
+
+function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record<string, unknown> | null }) {
+  const call = useServerFn(listMedicalRecordHistory);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const q = useQuery({
+    queryKey: ["klinik", "rm-history", visitId],
+    queryFn: () => call({ data: { visit_id: visitId } }),
+    enabled: !!visitId,
+  });
+  const rows = (q.data ?? []) as Array<{ id: string; changed_at: string; changed_by: string | null; action: string; snapshot: Record<string, unknown> }>;
+  if (q.isLoading) return <div className="text-xs text-muted-foreground">Memuat riwayat RM…</div>;
+  if (!rows.length) return <div className="text-xs text-muted-foreground">Belum ada riwayat versi RM.</div>;
+
+  return (
+    <div className="rounded-md border">
+      <div className="border-b bg-muted/30 px-3 py-2 text-xs font-semibold">Riwayat Versi Rekam Medis ({rows.length})</div>
+      <ul className="divide-y">
+        {rows.map((h, idx) => {
+          const prev = rows[idx + 1]?.snapshot ?? {};
+          const next = idx === 0 && current ? current : h.snapshot;
+          const diffs = DIFF_FIELDS.filter((f) => String(prev?.[f.k] ?? "") !== String(next?.[f.k] ?? ""));
+          const open = openIdx === idx;
+          return (
+            <li key={h.id} className="p-2 text-xs">
+              <button className="flex w-full items-center justify-between text-left" onClick={() => setOpenIdx(open ? null : idx)}>
+                <span>
+                  <b>{new Date(h.changed_at).toLocaleString("id-ID")}</b> · <span className="text-muted-foreground">{h.action}</span>
+                  {h.changed_by && <span className="text-muted-foreground"> · oleh {String(h.changed_by).slice(0, 8)}</span>}
+                </span>
+                <span className="text-muted-foreground">{diffs.length} perubahan</span>
+              </button>
+              {open && diffs.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {diffs.map((f) => (
+                    <div key={f.k} className="grid grid-cols-[110px_1fr_1fr] gap-2 rounded border p-1">
+                      <div className="text-muted-foreground">{f.label}</div>
+                      <div className="text-red-600 line-through break-words">{String(prev?.[f.k] ?? "—")}</div>
+                      <div className="text-emerald-700 break-words">{String(next?.[f.k] ?? "—")}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {open && diffs.length === 0 && <div className="mt-2 text-muted-foreground">Tidak ada perubahan.</div>}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; onCreated: () => void }) {
   const callObat = useServerFn(listObat);
   const callCreate = useServerFn(createPrescription);
