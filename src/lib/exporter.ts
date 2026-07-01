@@ -82,7 +82,7 @@ export type ReportSection = {
   totalRow?: Record<string, string | number>;
 };
 
-export function exportReportPdf(opts: {
+export async function exportReportPdf(opts: {
   filename: string;
   title: string;
   subtitle?: string;
@@ -90,7 +90,11 @@ export function exportReportPdf(opts: {
   summary?: { label: string; value: string }[];
   sections: ReportSection[];
 }) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+  const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  const doc = new JsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
 
   doc.setFontSize(16); doc.setTextColor(20);
