@@ -126,6 +126,8 @@ export function UsersPage() {
                     {" · "}
                     <button onClick={() => { setEditUser(u); setAddRole("kasir"); }} className="text-cyan-accent hover:underline">Edit role</button>
                     {" · "}
+                    <button onClick={() => { setResetUser(u); setNewPwd(""); }} className="text-cyan-accent hover:underline">Reset password</button>
+                    {" · "}
                     <button
                       disabled={toggleM.isPending}
                       onClick={() => {
