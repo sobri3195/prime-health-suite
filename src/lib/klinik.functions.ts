@@ -440,6 +440,16 @@ export const createPrescription = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // Pre-validate stock BEFORE insert to prevent zombie prescriptions
+    // (dispense fallback exists, but we want to fail fast at creation time).
+    for (const it of data.items) {
+      if (!it.obat_id) continue;
+      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
+      if (!ob) continue;
+      if (Number(ob.stock) < Number(it.quantity)) {
+        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+      }
+    }
     const { data: pres, error } = await sb.from("klinik_prescription").insert({
       visit_id: data.visit_id, pasien_id: data.pasien_id, dokter_id: data.dokter_id, notes: data.notes, status: "sent_to_pharmacy",
     }).select("*").single();
