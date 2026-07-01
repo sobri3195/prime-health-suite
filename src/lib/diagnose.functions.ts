@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type DiagnoseInput = {
   keluhan: string;
@@ -29,6 +30,7 @@ Aturan:
 - Selalu balas memanggil tool "diagnose_eye" dengan struktur yang diminta.`;
 
 export const diagnoseEye = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: DiagnoseInput) => d)
   .handler(async ({ data }): Promise<DiagnoseResult> => {
     const apiKey = process.env.LOVABLE_API_KEY;

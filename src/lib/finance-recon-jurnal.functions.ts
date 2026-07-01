@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function adminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -6,6 +7,7 @@ async function adminClient() {
 }
 
 export const reconJurnal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from: string; to: string }) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -15,6 +17,7 @@ export const reconJurnal = createServerFn({ method: "POST" })
   });
 
 export const reconUnposted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from: string; to: string }) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -24,6 +27,7 @@ export const reconUnposted = createServerFn({ method: "POST" })
   });
 
 export const postingAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from: string; to: string; limit?: number; sumber?: string } = { from: "", to: "" }) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -38,6 +42,7 @@ export const postingAudit = createServerFn({ method: "POST" })
 
 // Compact widget data: current period totals + previous-period trend for the Finance dashboard.
 export const reconWidget = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from: string; to: string }) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -79,7 +84,7 @@ export const reconWidget = createServerFn({ method: "POST" })
     };
   });
 
-export const slaConfig = createServerFn({ method: "GET" }).handler(async () => ({
+export const slaConfig = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async () => ({
   slaHours: Number(process.env.FINANCE_UNPOSTED_SLA_HOURS) || 24,
   source: process.env.FINANCE_UNPOSTED_SLA_HOURS ? "env" : "default",
 }));

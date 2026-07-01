@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -77,6 +78,7 @@ async function fetchInvoices(from?: string, to?: string): Promise<LiveInvoice[]>
 
 // ============ DASHBOARD (live) ============
 export const getFinanceDashboard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -169,6 +171,7 @@ export const getFinanceDashboard = createServerFn({ method: "POST" })
 
 // ============ HONOR REKAP (per dokter) ============
 export const getHonorRekap = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const invoices = await fetchInvoices(data.from, data.to);
@@ -191,6 +194,7 @@ export const getHonorRekap = createServerFn({ method: "POST" })
 
 // ============ REPORT HIGHLIGHT ============
 export const getReportHighlight = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const invoices = await fetchInvoices(data.from, data.to);
@@ -223,6 +227,7 @@ export const getReportHighlight = createServerFn({ method: "POST" })
 
 // ============ BUKU BESAR (per akun: opening, debit, credit, closing) ============
 export const getBukuBesar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -279,6 +284,7 @@ export const getBukuBesar = createServerFn({ method: "POST" })
 
 // ============ Master snapshot (all reference tables) ============
 export const getMasterSnapshot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const s = await sb();
     const [payers, vendors, coa, taxes, costCenters, kategori] = await Promise.all([
@@ -301,6 +307,7 @@ export const getMasterSnapshot = createServerFn({ method: "POST" })
 
 // ============ PAJAK rekap bulanan (PPN out/in + PPh 21 dokter, 1 tahun) ============
 export const getPajakRekap = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { year: number }) => d)
   .handler(async ({ data }) => {
     const s = await sb();

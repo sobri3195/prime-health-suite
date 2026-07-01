@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { writeFinAudit } from "./finance-audit.helper";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 
 // ---------- helpers ----------
@@ -102,6 +103,7 @@ const invoiceItemSchema = z.object({
 });
 
 export const listInvoices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string; q?: string } = {}) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -115,6 +117,7 @@ export const listInvoices = createServerFn({ method: "POST" })
   });
 
 export const getInvoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -125,6 +128,7 @@ export const getInvoice = createServerFn({ method: "POST" })
   });
 
 export const upsertInvoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: {
     id?: string;
     tanggal: string;
@@ -223,6 +227,7 @@ export const upsertInvoice = createServerFn({ method: "POST" })
   });
 
 export const voidInvoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; reason: string; kind?: "void" | "refunded" }) => ({
     id: z.string().uuid().parse(d.id),
     reason: z.string().min(3).parse(d.reason),
@@ -240,6 +245,7 @@ export const voidInvoice = createServerFn({ method: "POST" })
 
 // ---------- PAYMENT ----------
 export const listPayments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -252,6 +258,7 @@ export const listPayments = createServerFn({ method: "POST" })
   });
 
 export const createPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: {
     invoice_id: string;
     tanggal: string;
@@ -322,6 +329,7 @@ export const createPayment = createServerFn({ method: "POST" })
   });
 
 export const deletePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; reason?: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), reason: d.reason, actor: d.actor }))
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -349,6 +357,7 @@ const expenseItemSchema = z.object({
 });
 
 export const listExpenses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string; q?: string } = {}) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -362,6 +371,7 @@ export const listExpenses = createServerFn({ method: "POST" })
   });
 
 export const getExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -371,6 +381,7 @@ export const getExpense = createServerFn({ method: "POST" })
   });
 
 export const upsertExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: {
     id?: string;
     tanggal: string;
@@ -468,6 +479,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
   });
 
 export const voidExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; reason: string; actor?: string }) => ({
     id: z.string().uuid().parse(d.id),
     reason: z.string().min(3).parse(d.reason),
@@ -484,6 +496,7 @@ export const voidExpense = createServerFn({ method: "POST" })
 
 // ---------- JOURNAL ----------
 export const listJournal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const sb = await adminClient();
@@ -497,6 +510,7 @@ export const listJournal = createServerFn({ method: "POST" })
 
 // Master lookups used by forms
 export const listLookups = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const sb = await adminClient();
     const [dokter, payer, vendor, layanan, coa] = await Promise.all([

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -27,6 +28,7 @@ async function aggregateLines(from?: string, to?: string): Promise<Aggregate> {
 
 // ============ PROFIT & LOSS ============
 export const getProfitLoss = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const agg = await aggregateLines(data.from, data.to);
@@ -46,6 +48,7 @@ export const getProfitLoss = createServerFn({ method: "POST" })
 
 // ============ TRIAL BALANCE ============
 export const getTrialBalance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const agg = await aggregateLines(data.from, data.to);
@@ -67,6 +70,7 @@ export const getTrialBalance = createServerFn({ method: "POST" })
 
 // ============ CASH FLOW (direct method, via journal entries that touch cash/bank) ============
 export const getCashFlow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -102,6 +106,7 @@ export const getCashFlow = createServerFn({ method: "POST" })
 
 // ============ BALANCE SHEET (snapshot) ============
 export const getBalanceSheet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const agg = await aggregateLines(undefined, data.to);
@@ -118,6 +123,7 @@ export const getBalanceSheet = createServerFn({ method: "POST" })
 
 // ============ DRILL-DOWN: journal lines per COA / per entry ============
 export const drillCoa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { coa_code?: string; entry_id?: string; from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -151,6 +157,7 @@ export const drillCoa = createServerFn({ method: "POST" })
 
 // ============ AUDIT LOG QUERY ============
 export const listFinAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string; entity?: string; action?: string; q?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
