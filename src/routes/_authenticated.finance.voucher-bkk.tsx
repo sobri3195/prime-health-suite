@@ -53,8 +53,8 @@ function Page() {
                     <TableCell className="text-right font-mono">{fmt(sisa)}</TableCell>
                     <TableCell><Badge variant="secondary" className={r.status === "posted" || r.status === "paid" ? "bg-emerald-500/15 text-emerald-700" : "bg-muted text-muted-foreground"}>{r.status}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
-                        const doc = generateVoucherPDF({
+                      <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
+                        const doc = await generateVoucherPDF({
                           jenis: "BKK",
                           no_voucher: r.no_voucher,
                           tanggal: r.tanggal,

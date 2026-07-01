@@ -1,7 +1,7 @@
 // Reusable PDF document templates (payslip, voucher, bukti setor, kwitansi).
-// All templates share the same header/footer style and use the jsPDF instance
-// already in the project (see src/lib/exporter.ts for tabular reports).
-import jsPDF from "jspdf";
+// jsPDF is dynamically imported inside each generator to keep the ~476 kB
+// bundle out of the main chunk.
+import type jsPDF from "jspdf";
 
 const fmtIDR = (n: number) => "Rp " + (Number(n) || 0).toLocaleString("id-ID");
 const fmtDate = (s?: string | null) =>
@@ -78,8 +78,9 @@ export type Payslip = {
   klinik?: string;
 };
 
-export function generatePayslipPDF(p: Payslip): jsPDF {
-  const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
+export async function generatePayslipPDF(p: Payslip): Promise<jsPDF> {
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
   const W = doc.internal.pageSize.getWidth();
   header(doc, "SLIP GAJI", `Periode ${p.periode_label}`, p.klinik);
 
@@ -196,8 +197,9 @@ export function terbilang(n: number): string {
   return terbilang(Math.floor(n / 1_000_000_000)) + " miliar" + (n % 1_000_000_000 ? " " + terbilang(n % 1_000_000_000) : "");
 }
 
-export function generateVoucherPDF(v: VoucherDoc): jsPDF {
-  const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "landscape" });
+export async function generateVoucherPDF(v: VoucherDoc): Promise<jsPDF> {
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF({ unit: "mm", format: "a5", orientation: "landscape" });
   const W = doc.internal.pageSize.getWidth();
   header(doc, `VOUCHER ${v.jenis}`, `No. ${v.no_voucher}  •  ${fmtDate(v.tanggal)}`, v.klinik);
 

@@ -68,9 +68,9 @@ function Page() {
                   <TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell>
                   <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => {
+                    <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
                       const isIn = r.tipe === "penerimaan" || r.tipe === "replenish";
-                      const doc = generateVoucherPDF({
+                      const doc = await generateVoucherPDF({
                         jenis: "KAS KECIL",
                         no_voucher: r.no_voucher,
                         tanggal: r.tanggal,

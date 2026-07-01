@@ -1,6 +1,7 @@
 // CSV + PDF exporters with consistent column schemas and date-range header.
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// jsPDF + jspdf-autotable are dynamically imported inside PDF functions to
+// keep them out of the main bundle (~476 kB saved on first paint).
+
 
 export type Column<T> = {
   key: keyof T | string;
@@ -42,14 +43,18 @@ export function exportCsv<T>(filename: string, columns: Column<T>[], rows: T[], 
   URL.revokeObjectURL(url);
 }
 
-export function exportPdf<T>(
+export async function exportPdf<T>(
   filename: string,
   title: string,
   columns: Column<T>[],
   rows: T[],
   range?: Range,
 ) {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+  const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  const doc = new JsPDF({ orientation: "landscape", unit: "pt" });
   doc.setFontSize(14);
   doc.text(title, 40, 40);
   doc.setFontSize(9);
@@ -77,7 +82,7 @@ export type ReportSection = {
   totalRow?: Record<string, string | number>;
 };
 
-export function exportReportPdf(opts: {
+export async function exportReportPdf(opts: {
   filename: string;
   title: string;
   subtitle?: string;
@@ -85,7 +90,11 @@ export function exportReportPdf(opts: {
   summary?: { label: string; value: string }[];
   sections: ReportSection[];
 }) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+  const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  const doc = new JsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
 
   doc.setFontSize(16); doc.setTextColor(20);
@@ -122,7 +131,7 @@ export function exportReportPdf(opts: {
       headStyles: { fillColor: [31, 29, 25], textColor: 255 },
       alternateRowStyles: { fillColor: [248, 248, 248] },
       columnStyles: Object.fromEntries(sec.columns.map((c, i) => [i, { halign: c.align ?? "left" }])),
-      didDrawPage: (d) => { y = d.cursor?.y ?? y; },
+      didDrawPage: (d: { cursor?: { y?: number } | null }) => { y = d.cursor?.y ?? y; },
     });
     // @ts-expect-error jspdf-autotable injects lastAutoTable
     y = (doc.lastAutoTable?.finalY ?? y) + 18;
