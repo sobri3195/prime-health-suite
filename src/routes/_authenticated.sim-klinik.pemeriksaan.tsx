@@ -158,9 +158,9 @@ function PemeriksaanPage() {
                   <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} /></div>
                   <div><Label>ICD-10</Label><Input value={form.icd10_code} onChange={(e) => setForm({ ...form, icd10_code: e.target.value })} /></div>
                 </div>
-                <div><Label>Rencana Terapi</Label><Input value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} /></div>
-                <div><Label>Tindakan</Label><Input value={form.tindakan} onChange={(e) => setForm({ ...form, tindakan: e.target.value })} /></div>
-                <div><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label>Rencana Terapi</Label><AutoTextarea value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} /></div>
+                <div><Label>Tindakan</Label><AutoTextarea value={form.tindakan} onChange={(e) => setForm({ ...form, tindakan: e.target.value })} /></div>
+                <div><Label>Catatan</Label><AutoTextarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => saveM.mutate(false)} variant="outline" disabled={saveM.isPending}><Save className="mr-1 h-4 w-4" />Simpan Draft</Button>
                   <Button onClick={() => saveM.mutate(true)} disabled={saveM.isPending || !form.diagnosis}><Save className="mr-1 h-4 w-4" />Finalisasi & Kirim ke Kasir</Button>
