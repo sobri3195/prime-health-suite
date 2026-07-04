@@ -67,7 +67,8 @@ function RegistrasiPage() {
 
   const updateM = useMutation({
     mutationFn: (v: { id: string; status: "pending"|"confirmed"|"checked_in"|"done"|"cancelled" }) => callUpdate({ data: v }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["klinik"] }),
+    onSuccess: () => { toast.success("Booking dibatalkan."); qc.invalidateQueries({ queryKey: ["klinik"] }); },
+    onError: (e: Error) => toast.error(e.message || "Gagal membatalkan booking."),
   });
 
   const newPatientM = useMutation({
