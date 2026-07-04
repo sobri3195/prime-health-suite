@@ -8,12 +8,17 @@ async function sb() {
 
 type Aggregate = Record<string, { code: string; name: string; type: string; debit: number; kredit: number; cash_flow_section?: string | null }>;
 
+const AGG_LIMIT = 50000;
 async function aggregateLines(from?: string, to?: string): Promise<Aggregate> {
   const s = await sb();
   let q = s.from("fin_journal_line").select("coa_code, debit, kredit, fin_journal_entry!inner(tanggal, status)").eq("fin_journal_entry.status", "posted");
   if (from) q = q.gte("fin_journal_entry.tanggal", from);
   if (to) q = q.lte("fin_journal_entry.tanggal", to);
-  const { data: lines } = await q;
+  const { data: lines, error } = await q.limit(AGG_LIMIT);
+  if (error) throw error;
+  if ((lines?.length ?? 0) >= AGG_LIMIT) {
+    throw new Error(`Data jurnal periode ini melebihi ${AGG_LIMIT.toLocaleString("id-ID")} baris. Persempit rentang tanggal.`);
+  }
   const { data: coa } = await s.from("fin_coa").select("code, name, type, cash_flow_section");
   const map: Aggregate = {};
   for (const c of coa ?? []) map[c.code] = { code: c.code, name: c.name, type: c.type, debit: 0, kredit: 0, cash_flow_section: c.cash_flow_section };
