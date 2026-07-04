@@ -252,8 +252,8 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                 {items.map((it, idx) => (
                   <TableRow key={idx}>
                     <TableCell><Input value={it.description} onChange={(e) => { const c=[...items]; c[idx].description=e.target.value; setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" value={it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity=Number(e.target.value); setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" value={it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price=Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.quantity === 0 ? "" : it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.unit_price === 0 ? "" : it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
                     <TableCell><Button size="icon" variant="ghost" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
                   </TableRow>
                 ))}
