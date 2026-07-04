@@ -32,6 +32,18 @@ export const Route = createFileRoute("/diklat")({
     links: [{ rel: "canonical", href: `${SITE}/diklat` }],
   }),
   component: DiklatIndex,
+  errorComponent: ({ error, reset }) => (
+    <div className="max-w-2xl mx-auto p-6 space-y-3">
+      <h1 className="text-xl font-semibold">Gagal memuat diklat</h1>
+      <p className="text-sm text-muted-foreground">{error.message}</p>
+      <button className="text-sm underline" onClick={() => reset()}>Coba lagi</button>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="max-w-2xl mx-auto p-6">
+      <h1 className="text-xl font-semibold">Belum ada diklat</h1>
+    </div>
+  ),
 });
 
 function youtubeThumb(url?: string | null): string | null {
