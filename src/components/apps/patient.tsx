@@ -22,6 +22,7 @@ import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
 import { generateResepPDF } from "@/lib/resep-pdf";
 import { GoldButton, OutlineButton, EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 /* ------------------------------ shared ui ------------------------------ */
 
