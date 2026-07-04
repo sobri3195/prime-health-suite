@@ -115,8 +115,9 @@ export const createPayrollRun = createServerFn({ method: "POST" })
     // tag overtime to this run
     const allIds = (ots ?? []).map((o) => o.id);
     if (allIds.length) {
-      await supabase.from("hr_overtime")
+      const { error: tagErr } = await supabase.from("hr_overtime")
         .update({ payroll_run_id: run.id }).in("id", allIds);
+      if (tagErr) throw tagErr;
     }
 
     // update totals

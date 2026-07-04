@@ -72,12 +72,23 @@ export const getCashFlow = createServerFn({ method: "POST" })
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
-    // entries that touch kas/bank (1100/1110/1120)
-    let q = s.from("fin_journal_entry").select("id, no_jurnal, tanggal, sumber, keterangan, fin_journal_line(coa_code, debit, kredit)").eq("status", "posted");
+    const cashCodes = ["1100", "1110", "1120"];
+    // Narrow to entries that actually touch cash via inner join on lines (SQL EXISTS-like).
+    let q = s.from("fin_journal_entry")
+      .select("id, no_jurnal, tanggal, sumber, keterangan, fin_journal_line!inner(coa_code, debit, kredit)")
+      .eq("status", "posted")
+      .in("fin_journal_line.coa_code", cashCodes);
     if (data.from) q = q.gte("tanggal", data.from);
     if (data.to) q = q.lte("tanggal", data.to);
-    const { data: entries } = await q.limit(5000);
-    const cashCodes = new Set(["1100", "1110", "1120"]);
+    const { data: cashEntries } = await q.limit(5000);
+    // Re-fetch full lines (inner join above filtered them) for counter accounts.
+    const ids = (cashEntries ?? []).map((e: any) => e.id);
+    const { data: entries } = ids.length
+      ? await s.from("fin_journal_entry")
+          .select("id, no_jurnal, tanggal, sumber, keterangan, fin_journal_line(coa_code, debit, kredit)")
+          .in("id", ids)
+      : { data: [] as any[] };
+    const cashSet = new Set(cashCodes);
     const { data: coa } = await s.from("fin_coa").select("code, type, cash_flow_section");
     const coaMap = new Map((coa ?? []).map((c: any) => [c.code, c]));
 
@@ -86,10 +97,10 @@ export const getCashFlow = createServerFn({ method: "POST" })
     let opening = 0, closing = 0;
 
     for (const e of entries ?? []) {
-      const cashLines = (e.fin_journal_line ?? []).filter((l: any) => cashCodes.has(l.coa_code));
+      const cashLines = (e.fin_journal_line ?? []).filter((l: any) => cashSet.has(l.coa_code));
       if (!cashLines.length) continue;
       const cashDelta = cashLines.reduce((a: number, l: any) => a + (Number(l.debit) - Number(l.kredit)), 0);
-      const counter = (e.fin_journal_line ?? []).find((l: any) => !cashCodes.has(l.coa_code));
+      const counter = (e.fin_journal_line ?? []).find((l: any) => !cashSet.has(l.coa_code));
       const section = (counter ? (coaMap.get(counter.coa_code) as any)?.cash_flow_section : null) || "operating";
       (sections as any)[section] += cashDelta;
       closing += cashDelta;
