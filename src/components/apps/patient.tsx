@@ -27,7 +27,7 @@ import { useI18n } from "@/lib/i18n";
 
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm ${className}`}>
+    <div className={cn("rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm", className)}>
       {children}
     </div>
   );
