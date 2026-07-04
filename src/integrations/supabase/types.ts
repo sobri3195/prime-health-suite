@@ -3439,6 +3439,17 @@ export type Database = {
           tanggal: string
         }[]
       }
+      fin_report_aggregate_lines: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          cash_flow_section: string
+          code: string
+          debit: number
+          kredit: number
+          name: string
+          type: string
+        }[]
+      }
       fin_resolve_cash_bank_coa: {
         Args: { _bank: string; _metode: string }
         Returns: string
