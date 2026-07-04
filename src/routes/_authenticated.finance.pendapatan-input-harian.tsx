@@ -192,7 +192,7 @@ function Page() {
             <Row k="Subtotal" v={formatIDR(subtotal)} />
             <div className="flex items-center justify-between py-1 text-sm">
               <span className="text-muted-foreground">Pajak (%)</span>
-              <Input className="h-7 w-20 text-right" type="number" value={pajakPersen} onChange={(e) => setPajakPersen(Number(e.target.value) || 0)} />
+              <Input className="h-7 w-20 text-right" type="number" placeholder="0" value={pajakPersen === 0 ? "" : pajakPersen} onChange={(e) => setPajakPersen(e.target.value === "" ? 0 : Number(e.target.value) || 0)} />
             </div>
             <Row k="Nilai Pajak" v={formatIDR(pajak)} />
             <div className="my-2 border-t border-border" />
