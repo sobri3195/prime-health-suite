@@ -54,7 +54,7 @@ function DokumenPage() {
     onError: (e: Error) => toast.error(e.message ?? "Gagal hapus"),
   });
 
-  const rows = data ?? [];
+  const rows = Array.isArray(data) ? data : (data?.rows ?? []);
 
   return (
     <div>
