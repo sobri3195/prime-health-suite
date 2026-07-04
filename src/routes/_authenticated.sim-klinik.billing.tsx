@@ -276,7 +276,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-2"><Label>Dibayar</Label><Input type="number" value={paid} onChange={(e) => setPaid(Number(e.target.value))} /></div>
+              <div className="mt-2"><Label>Dibayar</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={paid === 0 ? "" : paid} onChange={(e) => setPaid(e.target.value === "" ? 0 : Number(e.target.value))} /></div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {paid >= total ? "Lunas" : paid > 0 ? `Sisa Rp ${(total-paid).toLocaleString("id-ID")}` : "Belum bayar"}
               </div>
