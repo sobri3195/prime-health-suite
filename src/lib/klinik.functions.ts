@@ -283,8 +283,16 @@ export const updateBookingStatus = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending","confirmed","checked_in","done","cancelled"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { error } = await sb.from("apps_booking").update({ status: data.status }).eq("id", data.id);
+    // Guard illegal transitions: cancel hanya boleh dari pending/confirmed.
+    // Setelah check-in / dipanggil / selesai, booking terkunci — batal harus
+    // via alur poli (no-show / selesai), bukan tombol cancel.
+    let q = sb.from("apps_booking").update({ status: data.status }).eq("id", data.id);
+    if (data.status === "cancelled") q = q.in("status", ["pending", "confirmed"]);
+    const { data: rows, error } = await q.select("id");
     if (error) throw error;
+    if (!rows || rows.length === 0) {
+      throw new Error("Booking tidak bisa diubah: sudah check-in / dipanggil / selesai.");
+    }
     await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: data.status, target: data.id });
     return { ok: true };
   });
