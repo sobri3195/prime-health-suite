@@ -264,7 +264,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
           <div className="space-y-2">
             <div className="rounded border p-3 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>Rp {subtotal.toLocaleString("id-ID")}</span></div>
-              <div className="mt-2"><Label>Diskon</Label><Input type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} /></div>
+              <div className="mt-2"><Label>Diskon</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={discount === 0 ? "" : discount} onChange={(e) => setDiscount(e.target.value === "" ? 0 : Number(e.target.value))} /></div>
               <div className="mt-2 flex justify-between font-bold"><span>TOTAL</span><span>Rp {total.toLocaleString("id-ID")}</span></div>
               <div className="mt-2"><Label>Metode Bayar</Label>
                 <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
