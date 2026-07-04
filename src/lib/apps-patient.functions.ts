@@ -56,16 +56,23 @@ export const updateMyProfile = createServerFn({ method: "POST" })
 
 export const listMyBookings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: { limit?: number; offset?: number } = {}) => ({
+    limit: Math.min(Math.max(Number(d.limit ?? 50), 1), 200),
+    offset: Math.max(Number(d.offset ?? 0), 0),
+  }))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const from = data.offset;
+    const to = data.offset + data.limit - 1;
+    const { data: rows, error, count } = await supabase
       .from("apps_booking")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("user_id", userId)
       .order("tanggal", { ascending: false })
-      .order("jam_slot", { ascending: false });
+      .order("jam_slot", { ascending: false })
+      .range(from, to);
     if (error) throw new Error(error.message);
-    return { bookings: data ?? [] };
+    return { bookings: rows ?? [], total: count ?? 0, limit: data.limit, offset: data.offset };
   });
 
 const CreateBookingInput = z.object({

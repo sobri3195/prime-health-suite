@@ -50,7 +50,7 @@ function DiklatAdminPage() {
   const dokterFn = useServerFn(listDokterOptions);
 
   const { data: rows = [], isLoading } = useQuery({ queryKey: ["diklat-admin"], queryFn: () => listFn() });
-  const { data: dokters = [] } = useQuery({ queryKey: ["dokter-opts"], queryFn: () => dokterFn() });
+  const { data: dokters = [] } = useQuery({ queryKey: ["fin", "dokter", "active"], queryFn: () => dokterFn() });
 
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Partial<Row & { ringkasan: string; deskripsi: string; pdf_url: string; galeri: string[] }>>({});

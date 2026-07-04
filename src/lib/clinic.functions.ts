@@ -145,14 +145,18 @@ export const listDocuments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ListDocSchema.parse(d ?? {}))
   .handler(async ({ data, context }) => {
-    let q = context.supabase.from("clinic_document").select("*").order("uploaded_at", { ascending: false }).limit(500);
+    const pageSize = Math.min(Math.max(Number((data as any).pageSize ?? 50), 1), 200);
+    const page = Math.max(Number((data as any).page ?? 0), 0);
+    const fromIdx = page * pageSize;
+    const toIdx = fromIdx + pageSize - 1;
+    let q = context.supabase.from("clinic_document").select("*", { count: "exact" }).order("uploaded_at", { ascending: false }).range(fromIdx, toIdx);
     if (data.type) q = q.eq("doc_type", data.type);
     if (data.from) q = q.gte("uploaded_at", data.from);
     if (data.to) q = q.lte("uploaded_at", data.to);
     if (data.q) q = q.or(`title.ilike.%${data.q}%,patient_code.ilike.%${data.q}%,patient_name.ilike.%${data.q}%`);
-    const { data: rows, error } = await q;
+    const { data: rows, error, count } = await q;
     if (error) throw error;
-    return rows ?? [];
+    return { rows: rows ?? [], total: count ?? 0, page, pageSize };
   });
 
 const UploadDocSchema = z.object({

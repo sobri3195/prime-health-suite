@@ -41,7 +41,7 @@ function RegistrasiPage() {
   const [form, setForm] = useState({ dokter_id: "", jam_slot: "08:00", keluhan: "", source: "walk_in" as "walk_in"|"phone"|"whatsapp"|"online" });
 
   const pasienQ = useQuery({ queryKey: ["klinik","pasien-search",searchP], queryFn: () => callPasien({ data: { q: searchP } }), enabled: showSearch && searchP.length >= 2 });
-  const dokterQ = useQuery({ queryKey: ["klinik","dokter"], retry: 1, queryFn: async () => { const r = await callDokter(); if (!Array.isArray(r)) throw new Error("Akses ditolak ke daftar dokter"); return r; } });
+  const dokterQ = useQuery({ queryKey: ["fin", "dokter", "active"], retry: 1, queryFn: async () => { const r = await callDokter(); if (!Array.isArray(r)) throw new Error("Akses ditolak ke daftar dokter"); return r; } });
   const bookQ = useQuery({ queryKey: ["klinik","bookings",date], queryFn: () => callBookings({ data: { date } }) });
 
   // Test hook: expose queryClient untuk simulasi realtime invalidation pada E2E.
