@@ -278,22 +278,32 @@ export const listBookingByDate = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+// Status yang mengunci booking — batal / reschedule tidak boleh lagi.
+// Setelah check-in / dipanggil (arrived) / dilayani (in_service) / selesai,
+// pembatalan harus lewat alur poli (no-show / selesai), bukan tombol cancel.
+const BOOKING_LOCKED_STATUSES = ["checked_in", "arrived", "in_service", "done", "cancelled"] as const;
+const BOOKING_CANCELLABLE_STATUSES = ["pending", "confirmed"] as const;
+
 export const updateBookingStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["pending","confirmed","checked_in","done","cancelled"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    // Guard illegal transitions: cancel hanya boleh dari pending/confirmed.
-    // Setelah check-in / dipanggil / selesai, booking terkunci — batal harus
-    // via alur poli (no-show / selesai), bukan tombol cancel.
-    let q = sb.from("apps_booking").update({ status: data.status }).eq("id", data.id);
-    if (data.status === "cancelled") q = q.in("status", ["pending", "confirmed"]);
-    const { data: rows, error } = await q.select("id");
-    if (error) throw error;
-    if (!rows || rows.length === 0) {
-      throw new Error("Booking tidak bisa diubah: sudah check-in / dipanggil / selesai.");
+    // Cek status saat ini secara eksplisit sebelum update.
+    const { data: cur, error: curErr } = await sb.from("apps_booking").select("status").eq("id", data.id).maybeSingle();
+    if (curErr) throw curErr;
+    if (!cur) throw new Error("Booking tidak ditemukan.");
+    const curStatus = cur.status as string;
+    if (data.status === "cancelled" && !BOOKING_CANCELLABLE_STATUSES.includes(curStatus as typeof BOOKING_CANCELLABLE_STATUSES[number])) {
+      throw new Error("Booking tidak bisa dibatalkan: status saat ini '" + curStatus + "' sudah terkunci (check-in / dipanggil / dilayani / selesai).");
     }
-    await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: data.status, target: data.id });
+    if (data.status !== "cancelled" && BOOKING_LOCKED_STATUSES.includes(curStatus as typeof BOOKING_LOCKED_STATUSES[number]) && curStatus !== data.status) {
+      throw new Error("Transisi status tidak diizinkan dari '" + curStatus + "' ke '" + data.status + "'.");
+    }
+    const { data: rows, error } = await sb.from("apps_booking").update({ status: data.status }).eq("id", data.id).select("id");
+    if (error) throw error;
+    if (!rows || rows.length === 0) throw new Error("Booking tidak bisa diubah.");
+    await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: data.status, target: data.id, meta: { from: curStatus } });
     return { ok: true };
   });
 
