@@ -148,8 +148,8 @@ function Page() {
                           {layananRows.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       </TableCell>
-                      <TableCell className="text-right"><Input type="number" className="h-8 text-right" value={it.tarif} onChange={(e) => updateItem(i, { tarif: Number(e.target.value) || 0 })} /></TableCell>
-                      <TableCell className="text-right"><Input type="number" className="h-8 text-right" value={it.qty} onChange={(e) => updateItem(i, { qty: Math.max(1, Number(e.target.value) || 1) })} /></TableCell>
+                      <TableCell className="text-right"><Input type="number" placeholder="0" className="h-8 text-right" value={it.tarif === 0 ? "" : it.tarif} onChange={(e) => updateItem(i, { tarif: e.target.value === "" ? 0 : Number(e.target.value) || 0 })} /></TableCell>
+                      <TableCell className="text-right"><Input type="number" placeholder="1" className="h-8 text-right" value={it.qty === 0 ? "" : it.qty} onChange={(e) => updateItem(i, { qty: e.target.value === "" ? 1 : Math.max(1, Number(e.target.value) || 1) })} /></TableCell>
                       <TableCell className="text-right font-mono text-sm">{formatIDR(it.tarif * it.qty)}</TableCell>
                       <TableCell><Button size="icon" variant="ghost" onClick={() => setItems((a) => a.filter((_, x) => x !== i))}><Trash2 className="h-4 w-4 text-rose-500" /></Button></TableCell>
                     </TableRow>
@@ -175,10 +175,10 @@ function Page() {
                   </select>
                   <Input className="col-span-3" placeholder="Bank / catatan" value={p.bank}
                     onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, bank: e.target.value } : x))} />
-                  <Input className="col-span-3 text-right" type="number" placeholder="Jumlah" value={p.jumlah}
-                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, jumlah: Number(e.target.value) || 0 } : x))} />
-                  <Input className="col-span-2 text-right" type="number" placeholder="MDR" value={p.mdr}
-                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, mdr: Number(e.target.value) || 0 } : x))} />
+                  <Input className="col-span-3 text-right" type="number" placeholder="Jumlah" value={p.jumlah === 0 ? "" : p.jumlah}
+                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, jumlah: e.target.value === "" ? 0 : Number(e.target.value) || 0 } : x))} />
+                  <Input className="col-span-2 text-right" type="number" placeholder="MDR" value={p.mdr === 0 ? "" : p.mdr}
+                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, mdr: e.target.value === "" ? 0 : Number(e.target.value) || 0 } : x))} />
                   <Button size="icon" variant="ghost" className="col-span-1" onClick={() => setPays((a) => a.filter((_, k) => k !== i))}><Trash2 className="h-4 w-4 text-rose-500" /></Button>
                 </div>
               ))}
@@ -192,7 +192,7 @@ function Page() {
             <Row k="Subtotal" v={formatIDR(subtotal)} />
             <div className="flex items-center justify-between py-1 text-sm">
               <span className="text-muted-foreground">Pajak (%)</span>
-              <Input className="h-7 w-20 text-right" type="number" value={pajakPersen} onChange={(e) => setPajakPersen(Number(e.target.value) || 0)} />
+              <Input className="h-7 w-20 text-right" type="number" placeholder="0" value={pajakPersen === 0 ? "" : pajakPersen} onChange={(e) => setPajakPersen(e.target.value === "" ? 0 : Number(e.target.value) || 0)} />
             </div>
             <Row k="Nilai Pajak" v={formatIDR(pajak)} />
             <div className="my-2 border-t border-border" />

@@ -197,7 +197,12 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
                   ) : (
                     <Input
                       type={f.type === "number" ? "number" : "text"}
-                      value={String(editing[f.key] ?? "")}
+                      placeholder={f.type === "number" ? "0" : undefined}
+                      value={
+                        f.type === "number"
+                          ? (editing[f.key] === 0 || editing[f.key] == null ? "" : String(editing[f.key]))
+                          : String(editing[f.key] ?? "")
+                      }
                       onChange={(e) => setEditing({
                         ...editing,
                         [f.key]: f.type === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value,

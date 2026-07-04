@@ -88,7 +88,7 @@ function Page() {
           </div>
           <div className="grid gap-1.5"><Label className="text-xs" htmlFor="hi-pt">Patient Code</Label><Input id="hi-pt" value={patient} onChange={(e) => setPatient(e.target.value.toUpperCase())} placeholder="PT-001" /></div>
           <div className="grid gap-1.5"><Label className="text-xs" htmlFor="hi-tind">Tindakan</Label><Input id="hi-tind" value={tindakan} onChange={(e) => setTindakan(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label className="text-xs" htmlFor="hi-tarif">Tarif (Rp)</Label><Input id="hi-tarif" type="number" value={tarif} onChange={(e) => setTarif(Number(e.target.value) || 0)} /></div>
+          <div className="grid gap-1.5"><Label className="text-xs" htmlFor="hi-tarif">Tarif (Rp)</Label><Input id="hi-tarif" type="number" placeholder="0" value={tarif === 0 ? "" : tarif} onChange={(e) => setTarif(e.target.value === "" ? 0 : Number(e.target.value) || 0)} /></div>
           <div className="grid gap-1.5"><Label className="text-xs">% Jasa Medis</Label><Input value={`${pct}%`} disabled /></div>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">

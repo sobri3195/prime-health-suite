@@ -207,7 +207,7 @@ function PengeluaranPage() {
                   </select>
                 </Field>
                 {editing.metode !== "cash" && <Field label="Bank"><Input value={editing.bank} onChange={(e) => setEditing({ ...editing, bank: e.target.value })} /></Field>}
-                <Field label="PPN Masukan (%)"><Input type="number" value={editing.pajak_pct} onChange={(e) => setEditing({ ...editing, pajak_pct: Number(e.target.value) })} /></Field>
+                <Field label="PPN Masukan (%)"><Input type="number" placeholder="0" value={editing.pajak_pct === 0 ? "" : editing.pajak_pct} onChange={(e) => setEditing({ ...editing, pajak_pct: e.target.value === "" ? 0 : Number(e.target.value) })} /></Field>
               </div>
               <Field label="Keterangan"><Input value={editing.keterangan} onChange={(e) => setEditing({ ...editing, keterangan: e.target.value })} /></Field>
 
@@ -228,8 +228,8 @@ function PengeluaranPage() {
                             {beban.map((c: any) => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
                           </select>
                         </TableCell>
-                        <TableCell><Input type="number" className="h-8 text-right" value={it.qty} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, qty: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
-                        <TableCell><Input type="number" className="h-8 text-right" value={it.harga} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, harga: Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
+                        <TableCell><Input type="number" placeholder="0" className="h-8 text-right" value={it.qty === 0 ? "" : it.qty} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, qty: e.target.value === "" ? 0 : Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
+                        <TableCell><Input type="number" placeholder="0" className="h-8 text-right" value={it.harga === 0 ? "" : it.harga} onChange={(e) => { const items = [...editing.items]; items[i] = { ...it, harga: e.target.value === "" ? 0 : Number(e.target.value) }; setEditing({ ...editing, items }); }} /></TableCell>
                         <TableCell className="text-right font-mono text-xs">{fmt(it.qty * it.harga)}</TableCell>
                         <TableCell><Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setEditing({ ...editing, items: editing.items.filter((_: any, idx: number) => idx !== i) })}><Trash2 className="h-3 w-3" /></Button></TableCell>
                       </TableRow>
