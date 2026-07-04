@@ -175,10 +175,10 @@ function Page() {
                   </select>
                   <Input className="col-span-3" placeholder="Bank / catatan" value={p.bank}
                     onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, bank: e.target.value } : x))} />
-                  <Input className="col-span-3 text-right" type="number" placeholder="Jumlah" value={p.jumlah}
-                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, jumlah: Number(e.target.value) || 0 } : x))} />
-                  <Input className="col-span-2 text-right" type="number" placeholder="MDR" value={p.mdr}
-                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, mdr: Number(e.target.value) || 0 } : x))} />
+                  <Input className="col-span-3 text-right" type="number" placeholder="Jumlah" value={p.jumlah === 0 ? "" : p.jumlah}
+                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, jumlah: e.target.value === "" ? 0 : Number(e.target.value) || 0 } : x))} />
+                  <Input className="col-span-2 text-right" type="number" placeholder="MDR" value={p.mdr === 0 ? "" : p.mdr}
+                    onChange={(e) => setPays((a) => a.map((x, k) => k === i ? { ...x, mdr: e.target.value === "" ? 0 : Number(e.target.value) || 0 } : x))} />
                   <Button size="icon" variant="ghost" className="col-span-1" onClick={() => setPays((a) => a.filter((_, k) => k !== i))}><Trash2 className="h-4 w-4 text-rose-500" /></Button>
                 </div>
               ))}
