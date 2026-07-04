@@ -158,6 +158,12 @@ export const payPayrollRun = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Only admin/manajemen may pay payroll — verify caller role before
+    // using the admin client to bypass RLS on fin_expense/fin_expense_item.
+    const { data: canEdit, error: rcErr } = await supabase.rpc("fin_can_edit", { _uid: userId });
+    if (rcErr) throw rcErr;
+    if (!canEdit) throw new Error("Anda tidak berhak membayar payroll");
+
     const { data: run, error: rErr } = await supabase.from("hr_payroll_run")
       .select("*").eq("id", data.id).single();
     if (rErr) throw rErr;
@@ -170,7 +176,10 @@ export const payPayrollRun = createServerFn({ method: "POST" })
     const totalTH = Number(run.total_take_home ?? (totalGaji + totalLembur));
     const noVoucher = `PAY-${run.periode_tahun}${String(run.periode_bulan).padStart(2, "0")}-${String(run.id).slice(0, 8)}`;
 
-    const { data: exp, error: eErr } = await supabase.from("fin_expense").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adm = supabaseAdmin as unknown as typeof supabase;
+
+    const { data: exp, error: eErr } = await adm.from("fin_expense").insert({
       no_voucher: noVoucher,
       tanggal,
       vendor_nama: `Payroll ${String(run.periode_bulan).padStart(2, "0")}/${run.periode_tahun}`,
@@ -186,9 +195,14 @@ export const payPayrollRun = createServerFn({ method: "POST" })
       { expense_id: exp.id, deskripsi: "Gaji Pokok", coa_code: "6-1000", qty: 1, harga: totalGaji, subtotal: totalGaji },
       ...(totalLembur > 0 ? [{ expense_id: exp.id, deskripsi: "Lembur", coa_code: "6-1010", qty: 1, harga: totalLembur, subtotal: totalLembur }] : []),
     ];
-    await supabase.from("fin_expense_item").insert(itemsPayload);
+    const { error: itErr } = await adm.from("fin_expense_item").insert(itemsPayload);
+    if (itErr) {
+      // Roll back the header so we don't leave a posted voucher without lines.
+      await adm.from("fin_expense").delete().eq("id", exp.id);
+      throw itErr;
+    }
 
-    const { error: uErr } = await supabase.from("hr_payroll_run")
+    const { error: uErr } = await adm.from("hr_payroll_run")
       .update({ status: "paid" }).eq("id", data.id);
     if (uErr) throw uErr;
     return { run: { ...run, status: "paid" }, expense: exp };

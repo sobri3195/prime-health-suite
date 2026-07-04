@@ -222,7 +222,13 @@ export const createBooking = createServerFn({ method: "POST" })
       tanggal: data.tanggal, jam_slot: data.jam_slot, keluhan: data.keluhan,
       source: data.source, status: "confirmed",
     }).select("*").single();
-    if (error) throw error;
+    if (error) {
+      const code = (error as { code?: string }).code;
+      if (code === "23505") {
+        throw new Error("Slot ini sudah terisi. Silakan pilih jam atau dokter lain.");
+      }
+      throw error;
+    }
     await appendAuditRow(sb, { actor_id: context.userId, module: "Booking", action: "create", target: row.id });
     return row;
   });

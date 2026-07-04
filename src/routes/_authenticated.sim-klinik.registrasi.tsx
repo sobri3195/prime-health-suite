@@ -67,7 +67,8 @@ function RegistrasiPage() {
 
   const updateM = useMutation({
     mutationFn: (v: { id: string; status: "pending"|"confirmed"|"checked_in"|"done"|"cancelled" }) => callUpdate({ data: v }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["klinik"] }),
+    onSuccess: () => { toast.success("Booking dibatalkan."); qc.invalidateQueries({ queryKey: ["klinik"] }); },
+    onError: (e: Error) => toast.error(e.message || "Gagal membatalkan booking."),
   });
 
   const newPatientM = useMutation({
@@ -192,7 +193,7 @@ function RegistrasiPage() {
                     <Button size="sm" onClick={() => checkinM.mutate(b.id)}><CheckCircle2 className="mr-1 h-3 w-3" />Check-in</Button>
                   )}
                   {(b.status === "pending" || b.status === "confirmed") && (
-                    <Button size="icon" aria-label="Batalkan booking" variant="ghost" onClick={() => updateM.mutate({ id: b.id, status: "cancelled" })}><X className="h-4 w-4" /></Button>
+                    <Button size="icon" aria-label="Batalkan booking" variant="ghost" disabled={updateM.isPending} onClick={() => updateM.mutate({ id: b.id, status: "cancelled" })}><X className="h-4 w-4" /></Button>
                   )}
                 </div>
               ))}
