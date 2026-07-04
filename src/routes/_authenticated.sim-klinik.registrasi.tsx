@@ -191,8 +191,8 @@ function RegistrasiPage() {
                   {b.status !== "checked_in" && b.status !== "cancelled" && (
                     <Button size="sm" onClick={() => checkinM.mutate(b.id)}><CheckCircle2 className="mr-1 h-3 w-3" />Check-in</Button>
                   )}
-                  {b.status !== "cancelled" && (
-                    <Button size="icon" aria-label="Tutup" variant="ghost" onClick={() => updateM.mutate({ id: b.id, status: "cancelled" })}><X className="h-4 w-4" /></Button>
+                  {(b.status === "pending" || b.status === "confirmed") && (
+                    <Button size="icon" aria-label="Batalkan booking" variant="ghost" onClick={() => updateM.mutate({ id: b.id, status: "cancelled" })}><X className="h-4 w-4" /></Button>
                   )}
                 </div>
               ))}
