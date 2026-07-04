@@ -130,7 +130,7 @@ function AddPaymentDialog({ invoice, onClose, onSaved }: {
             <div>Sisa<br /><b>Rp {sisa.toLocaleString("id-ID")}</b></div>
           </div>
           <div className="grid gap-1.5"><Label htmlFor="pay-amt">Jumlah Bayar</Label>
-            <Input id="pay-amt" type="number" min={1} max={sisa} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            <Input id="pay-amt" type="number" inputMode="numeric" min={1} max={sisa} placeholder="0" value={amount === 0 ? "" : amount} onChange={(e) => setAmount(e.target.value === "" ? 0 : Number(e.target.value))} />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex gap-1">
                 <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setAmount(sisa)}>Lunas ({`Rp ${sisa.toLocaleString("id-ID")}`})</Button>
@@ -252,8 +252,8 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                 {items.map((it, idx) => (
                   <TableRow key={idx}>
                     <TableCell><Input value={it.description} onChange={(e) => { const c=[...items]; c[idx].description=e.target.value; setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" value={it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity=Number(e.target.value); setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" value={it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price=Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.quantity === 0 ? "" : it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
+                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.unit_price === 0 ? "" : it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
                     <TableCell><Button size="icon" variant="ghost" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
                   </TableRow>
                 ))}
@@ -264,7 +264,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
           <div className="space-y-2">
             <div className="rounded border p-3 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>Rp {subtotal.toLocaleString("id-ID")}</span></div>
-              <div className="mt-2"><Label>Diskon</Label><Input type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} /></div>
+              <div className="mt-2"><Label>Diskon</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={discount === 0 ? "" : discount} onChange={(e) => setDiscount(e.target.value === "" ? 0 : Number(e.target.value))} /></div>
               <div className="mt-2 flex justify-between font-bold"><span>TOTAL</span><span>Rp {total.toLocaleString("id-ID")}</span></div>
               <div className="mt-2"><Label>Metode Bayar</Label>
                 <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
@@ -276,7 +276,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-2"><Label>Dibayar</Label><Input type="number" value={paid} onChange={(e) => setPaid(Number(e.target.value))} /></div>
+              <div className="mt-2"><Label>Dibayar</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={paid === 0 ? "" : paid} onChange={(e) => setPaid(e.target.value === "" ? 0 : Number(e.target.value))} /></div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {paid >= total ? "Lunas" : paid > 0 ? `Sisa Rp ${(total-paid).toLocaleString("id-ID")}` : "Belum bayar"}
               </div>
