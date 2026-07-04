@@ -22,12 +22,13 @@ import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
 import { generateResepPDF } from "@/lib/resep-pdf";
 import { GoldButton, OutlineButton, EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 /* ------------------------------ shared ui ------------------------------ */
 
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm ${className}`}>
+    <div className={cn("rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm", className)}>
       {children}
     </div>
   );
