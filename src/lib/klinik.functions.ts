@@ -647,7 +647,7 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     const nearExp = (obat.data ?? []).filter((o: { expired_date: string | null }) => o.expired_date && new Date(o.expired_date).getTime() < Date.now() + 60 * 86400000).length;
 
     // trend visits 30 days
-    const { data: visitRows } = await sb.from("klinik_visit").select("visit_date").gte("visit_date", from + "T00:00:00").lte("visit_date", to + "T23:59:59");
+    const { data: visitRows } = await sb.from("klinik_visit").select("visit_date").gte("visit_date", from + "T00:00:00").lte("visit_date", to + "T23:59:59").limit(10000);
     const trendMap = new Map<string, number>();
     (visitRows ?? []).forEach((r: { visit_date: string }) => {
       const d = String(r.visit_date).slice(0, 10);

@@ -98,7 +98,7 @@ const invoiceItemSchema = z.object({
   id: z.string().optional(),
   layanan_id: z.string().uuid().nullable().optional(),
   layanan_nama: z.string().min(1),
-  tarif: z.number(),
+  tarif: z.number().min(0),
   qty: z.number().int().min(1),
 });
 
