@@ -1501,6 +1501,7 @@ export type Database = {
           id: string
           keterangan: string | null
           kredit: number
+          updated_at: string
         }
         Insert: {
           coa_code: string
@@ -1512,6 +1513,7 @@ export type Database = {
           id?: string
           keterangan?: string | null
           kredit?: number
+          updated_at?: string
         }
         Update: {
           coa_code?: string
@@ -1523,6 +1525,7 @@ export type Database = {
           id?: string
           keterangan?: string | null
           kredit?: number
+          updated_at?: string
         }
         Relationships: [
           {
