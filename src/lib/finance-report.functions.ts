@@ -8,8 +8,7 @@ async function sb() {
 
 type Aggregate = Record<string, { code: string; name: string; type: string; debit: number; kredit: number; cash_flow_section?: string | null }>;
 
-async function aggregateLines(from?: string, to?: string): Promise<Aggregate> {
-  const s = await sb();
+async function aggregateLines(s: any, from?: string, to?: string): Promise<Aggregate> {
   const { data: lines, error } = await s.rpc("fin_report_aggregate_lines", {
     _from: from ?? null,
     _to: to ?? null,
@@ -29,8 +28,8 @@ async function aggregateLines(from?: string, to?: string): Promise<Aggregate> {
 export const getProfitLoss = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
-  .handler(async ({ data }) => {
-    const agg = await aggregateLines(data.from, data.to);
+  .handler(async ({ data, context }) => {
+    const agg = await aggregateLines(context.supabase, data.from, data.to);
     const revenue: any[] = [], expense: any[] = [];
     let totalRev = 0, totalExp = 0;
     for (const a of Object.values(agg)) {
@@ -49,8 +48,8 @@ export const getProfitLoss = createServerFn({ method: "POST" })
 export const getTrialBalance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
-  .handler(async ({ data }) => {
-    const agg = await aggregateLines(data.from, data.to);
+  .handler(async ({ data, context }) => {
+    const agg = await aggregateLines(context.supabase, data.from, data.to);
     const rows = Object.values(agg)
       .filter((a) => a.debit !== 0 || a.kredit !== 0)
       .map((a) => {
@@ -107,8 +106,8 @@ export const getCashFlow = createServerFn({ method: "POST" })
 export const getBalanceSheet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { to?: string } = {}) => d)
-  .handler(async ({ data }) => {
-    const agg = await aggregateLines(undefined, data.to);
+  .handler(async ({ data, context }) => {
+    const agg = await aggregateLines(context.supabase, undefined, data.to);
     const asset: any[] = [], liability: any[] = [], equity: any[] = [];
     let totalAsset = 0, totalLiab = 0, totalEquity = 0;
     for (const a of Object.values(agg)) {
