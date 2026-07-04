@@ -207,7 +207,7 @@ function PengeluaranPage() {
                   </select>
                 </Field>
                 {editing.metode !== "cash" && <Field label="Bank"><Input value={editing.bank} onChange={(e) => setEditing({ ...editing, bank: e.target.value })} /></Field>}
-                <Field label="PPN Masukan (%)"><Input type="number" value={editing.pajak_pct} onChange={(e) => setEditing({ ...editing, pajak_pct: Number(e.target.value) })} /></Field>
+                <Field label="PPN Masukan (%)"><Input type="number" placeholder="0" value={editing.pajak_pct === 0 ? "" : editing.pajak_pct} onChange={(e) => setEditing({ ...editing, pajak_pct: e.target.value === "" ? 0 : Number(e.target.value) })} /></Field>
               </div>
               <Field label="Keterangan"><Input value={editing.keterangan} onChange={(e) => setEditing({ ...editing, keterangan: e.target.value })} /></Field>
 
