@@ -148,8 +148,8 @@ function Page() {
                           {layananRows.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       </TableCell>
-                      <TableCell className="text-right"><Input type="number" className="h-8 text-right" value={it.tarif} onChange={(e) => updateItem(i, { tarif: Number(e.target.value) || 0 })} /></TableCell>
-                      <TableCell className="text-right"><Input type="number" className="h-8 text-right" value={it.qty} onChange={(e) => updateItem(i, { qty: Math.max(1, Number(e.target.value) || 1) })} /></TableCell>
+                      <TableCell className="text-right"><Input type="number" placeholder="0" className="h-8 text-right" value={it.tarif === 0 ? "" : it.tarif} onChange={(e) => updateItem(i, { tarif: e.target.value === "" ? 0 : Number(e.target.value) || 0 })} /></TableCell>
+                      <TableCell className="text-right"><Input type="number" placeholder="1" className="h-8 text-right" value={it.qty === 0 ? "" : it.qty} onChange={(e) => updateItem(i, { qty: e.target.value === "" ? 1 : Math.max(1, Number(e.target.value) || 1) })} /></TableCell>
                       <TableCell className="text-right font-mono text-sm">{formatIDR(it.tarif * it.qty)}</TableCell>
                       <TableCell><Button size="icon" variant="ghost" onClick={() => setItems((a) => a.filter((_, x) => x !== i))}><Trash2 className="h-4 w-4 text-rose-500" /></Button></TableCell>
                     </TableRow>
