@@ -142,12 +142,17 @@ export const cancelBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { error } = await supabase
+    const { data: rows, error } = await supabase
       .from("apps_booking")
       .update({ status: "cancelled" })
       .eq("id", data.id)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .in("status", ["pending", "confirmed"])
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!rows || rows.length === 0) {
+      throw new Error("Booking tidak bisa dibatalkan karena sudah check-in / dipanggil / selesai.");
+    }
     return { ok: true };
   });
 
