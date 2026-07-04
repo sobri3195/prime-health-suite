@@ -130,7 +130,7 @@ function AddPaymentDialog({ invoice, onClose, onSaved }: {
             <div>Sisa<br /><b>Rp {sisa.toLocaleString("id-ID")}</b></div>
           </div>
           <div className="grid gap-1.5"><Label htmlFor="pay-amt">Jumlah Bayar</Label>
-            <Input id="pay-amt" type="number" min={1} max={sisa} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+            <Input id="pay-amt" type="number" inputMode="numeric" min={1} max={sisa} placeholder="0" value={amount === 0 ? "" : amount} onChange={(e) => setAmount(e.target.value === "" ? 0 : Number(e.target.value))} />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex gap-1">
                 <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setAmount(sisa)}>Lunas ({`Rp ${sisa.toLocaleString("id-ID")}`})</Button>
