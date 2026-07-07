@@ -23,7 +23,9 @@ import { generateResepPDF } from "@/lib/resep-pdf";
 import { GoldButton, OutlineButton, EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { waLink } from "@/lib/brand";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 
 /* ------------------------------ shared ui ------------------------------ */
@@ -993,7 +995,7 @@ export function PatientLaporan() {
               <Download className="h-3.5 w-3.5" /> {t("history.download_resep")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`${t("history.title")} - ${inv.no_invoice}`)}`}
+              href={waLink(`${t("history.title")} - ${inv.no_invoice}`)}
               target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs font-semibold text-[#5a4a14]"
             >
@@ -1009,7 +1011,7 @@ export function PatientLaporan() {
           {t("history.empty.hint")}
         </p>
         <div className="mt-3">
-          <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
+          <a href={waLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
             <MessageCircle className="h-4 w-4" /> {t("history.contact_clinic")}
           </a>
         </div>

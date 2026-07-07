@@ -68,3 +68,13 @@ export function brandHead(system: System, pageTitle?: string, opts?: { noindex?:
   };
 }
 
+/** Clinic contact info (overridable via Vite env). */
+export const CLINIC_CONTACT = {
+  whatsapp: import.meta.env.VITE_CLINIC_WHATSAPP || "6281234567890",
+  siteUrl: import.meta.env.VITE_SITE_URL || "https://prime-health-suite.lovable.app",
+} as const;
+
+export const waLink = (text?: string) =>
+  `https://wa.me/${CLINIC_CONTACT.whatsapp}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+
+

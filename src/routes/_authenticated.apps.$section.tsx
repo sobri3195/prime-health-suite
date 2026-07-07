@@ -12,6 +12,8 @@ import { PatientEdukasi } from "@/components/apps/edukasi";
 import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
 import { PatientPrivasi } from "@/components/apps/privacy";
+import { CLINIC_CONTACT } from "@/lib/brand";
+
 
 const KNOWN_SECTIONS = new Set([
   "ai", "belanja", "cart", "checkout", "orders", "edukasi", "wins", "chat",
@@ -49,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/apps/$section")({
   head: ({ params }) => {
     const m = SECTION_META[params.section];
     if (!m) return {};
-    const url = `https://prime-health-suite.lovable.app/apps/${params.section}`;
+    const url = `${CLINIC_CONTACT.siteUrl}/apps/${params.section}`;
     return {
       meta: [
         { title: m.title },

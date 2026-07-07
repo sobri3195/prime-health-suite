@@ -188,12 +188,12 @@ function TicketDrawer({ ticket, onClose, onStatus }: { ticket: Ticket; onClose: 
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-background shadow-[var(--shadow-elegant)]">
+      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} aria-hidden="true" />
+      <aside role="dialog" aria-modal="true" aria-labelledby="ticket-detail-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-background shadow-[var(--shadow-elegant)]">
         <div className="flex items-start justify-between border-b border-border p-6">
           <div>
             <div className="font-mono text-xs text-muted-foreground">{ticket.ticket_no}</div>
-            <h2 className="mt-1 text-lg font-semibold">{ticket.subject}</h2>
+            <h2 id="ticket-detail-title" className="mt-1 text-lg font-semibold">{ticket.subject}</h2>
             <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge tone={statusTone[ticket.status] ?? "muted"}>{ticket.status}</StatusBadge>
               <StatusBadge tone={priorityTone[ticket.priority] ?? "muted"}>{ticket.priority}</StatusBadge>
@@ -273,8 +273,8 @@ function NewTicketModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
+      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="new-ticket-title" className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
         <h2 id="new-ticket-title" className="text-lg font-semibold">Tiket Baru</h2>
         <form
           aria-labelledby="new-ticket-title"
