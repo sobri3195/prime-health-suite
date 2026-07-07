@@ -134,9 +134,9 @@ export function UsersPage() {
                     {" · "}
                     <button
                       disabled={toggleM.isPending}
-                      onClick={() => {
+                      onClick={async () => {
                         const next = u.status !== "active";
-                        if (!confirm(`${next ? "Aktifkan" : "Nonaktifkan"} ${u.name}?`)) return;
+                        if (!(await confirm({ description: `${next ? "Aktifkan" : "Nonaktifkan"} ${u.name}?`, confirmText: next ? "Aktifkan" : "Nonaktifkan", destructive: !next }))) return;
                         toggleM.mutate({ user_id: u.id, active: next });
                       }}
                       className="text-destructive hover:underline disabled:opacity-50"
