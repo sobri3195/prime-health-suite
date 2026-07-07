@@ -23,6 +23,8 @@ import { generateResepPDF } from "@/lib/resep-pdf";
 import { GoldButton, OutlineButton, EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 /* ------------------------------ shared ui ------------------------------ */
 
@@ -536,6 +538,8 @@ export function PatientProfil() {
   const { logout } = useAuth();
   const { t } = useI18n();
   const callProfile = useServerFn(getMyProfile);
+  const confirm = useConfirm();
+
   const callUpdate = useServerFn(updateMyProfile);
   const callBookings = useServerFn(listMyBookings);
   const callCancel = useServerFn(cancelBooking);
@@ -781,7 +785,7 @@ export function PatientProfil() {
                     {t("patient.reschedule")}
                   </button>
                   <button
-                    onClick={() => { if (confirm(t("patient.cancel_confirm"))) cancelM.mutate(b.id); }}
+                    onClick={async () => { if (await confirm({ description: t("patient.cancel_confirm"), destructive: true, confirmText: t("patient.cancel") })) cancelM.mutate(b.id); }}
                     disabled={cancelM.isPending}
                     className="rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700"
                   >

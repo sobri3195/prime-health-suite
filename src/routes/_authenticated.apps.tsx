@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { brandHead } from "@/lib/brand";
 import { LoginSkeleton } from "@/components/auth/login-skeleton";
+import { ConfirmProvider } from "@/components/apps/confirm-dialog";
+
 
 function Layout() {
   const navigate = useNavigate();
@@ -51,8 +53,11 @@ function Layout() {
 
   return (
     <AppShell system="apps">
-      <Outlet />
+      <ConfirmProvider>
+        <Outlet />
+      </ConfirmProvider>
     </AppShell>
+
   );
 }
 

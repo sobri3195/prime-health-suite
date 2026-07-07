@@ -10,6 +10,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
+import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 /** Realtime subscription untuk notif & queue refresh */
 export function useAppsRealtime(userId: string | undefined) {
@@ -53,6 +55,8 @@ export function NotifBellBadge() {
 export function NotificationsPagePatient() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const confirm = useConfirm();
+
   const callList = useServerFn(listMyNotifications);
   const callRead = useServerFn(markNotifRead);
   const callReadAll = useServerFn(markAllNotifRead);
@@ -142,7 +146,7 @@ export function NotificationsPagePatient() {
                     <Check className="h-4 w-4" />
                   </button>
                 )}
-                <button onClick={() => { if (confirm("Hapus notifikasi?")) delM.mutate(n.id); }} className="rounded-full p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Hapus">
+                <button onClick={async () => { if (await confirm({ description: "Hapus notifikasi?", destructive: true, confirmText: "Hapus" })) delM.mutate(n.id); }} className="rounded-full p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Hapus">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

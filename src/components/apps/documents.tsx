@@ -6,6 +6,8 @@ import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./u
 import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 const BUCKET = "clinic-documents";
 
@@ -52,7 +54,9 @@ const ALLOWED_MIME = [
 
 export function DocumentsPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [q, setQ] = useState("");
+
   const [type, setType] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -170,7 +174,7 @@ export function DocumentsPage() {
   };
 
   const onDelete = async (row: DocRow) => {
-    if (!confirm(`Hapus "${row.title}"?`)) return;
+    if (!(await confirm({ description: `Hapus "${row.title}"?`, destructive: true, confirmText: "Hapus" }))) return;
     try {
       if (row.storage_path) {
         const { error: rmErr } = await supabase.storage.from(BUCKET).remove([row.storage_path]);

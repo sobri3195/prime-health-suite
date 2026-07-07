@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2, Plus, KeyRound } from "lucide-react";
+import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 type ApiUser = {
   id: string; email: string; name: string;
@@ -34,6 +36,8 @@ const ROLE_OPTS: { value: "all" | Role; label: string }[] = [
 
 export function UsersPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
+
   const callList = useServerFn(listUsers);
   const callSet = useServerFn(setUserRole);
   const callToggle = useServerFn(toggleUserActive);
@@ -130,9 +134,9 @@ export function UsersPage() {
                     {" · "}
                     <button
                       disabled={toggleM.isPending}
-                      onClick={() => {
+                      onClick={async () => {
                         const next = u.status !== "active";
-                        if (!confirm(`${next ? "Aktifkan" : "Nonaktifkan"} ${u.name}?`)) return;
+                        if (!(await confirm({ description: `${next ? "Aktifkan" : "Nonaktifkan"} ${u.name}?`, confirmText: next ? "Aktifkan" : "Nonaktifkan", destructive: !next }))) return;
                         toggleM.mutate({ user_id: u.id, active: next });
                       }}
                       className="text-destructive hover:underline disabled:opacity-50"
