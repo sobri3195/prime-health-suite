@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer, Receipt, Plus, Trash2 } from "lucide-react";
+import { Printer, Receipt, Trash2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, listInvoiceForBilling, addInvoicePayment } from "@/lib/klinik.functions";
 import { getSettings } from "@/lib/clinic.functions";
@@ -197,7 +197,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
     setItems(pres);
   }, [detail]);
 
-  const layanan = (layananQ.data ?? []) as Array<{ id: string; name: string; tarif: number }>;
+  void layananQ; // layanan master reserved for future structured tindakan pull
   const subtotal = items.reduce((a, b) => a + b.quantity * b.unit_price, 0);
   const total = Math.max(0, subtotal - discount);
 
@@ -234,7 +234,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
       <script>window.print()</script></body></html>`);
   }
 
-  const addLayanan = (l: { id: string; name: string; tarif: number }) => setItems([...items, { description: l.name, quantity: 1, unit_price: Number(l.tarif), layanan_id: l.id }]);
+  
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -242,24 +242,26 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
         <DialogHeader><DialogTitle>Generate Invoice — {detail?.visit?.apps_pasien?.nama}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-[1fr_280px] gap-4">
           <div>
-            <Label className="text-xs">Pilih Tindakan/Layanan</Label>
-            <div className="mb-3 max-h-32 overflow-y-auto rounded border p-1">
-              {layanan.map((l) => <button key={l.id} onClick={() => addLayanan(l)} className="block w-full px-2 py-1 text-left text-xs hover:bg-muted/40">{l.name} <span className="float-right">Rp {Number(l.tarif).toLocaleString("id-ID")}</span></button>)}
+            <div className="mb-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>Tindakan/Layanan & Obat ditarik otomatis dari input Perawat/Dokter. Kasir hanya memverifikasi, mencatat diskon, dan menerima pembayaran.</span>
             </div>
+            <Label className="text-xs">Rincian dari Kunjungan</Label>
             <Table>
               <TableHeader><TableRow><TableHead>Deskripsi</TableHead><TableHead className="w-16">Qty</TableHead><TableHead>Harga</TableHead><TableHead></TableHead></TableRow></TableHeader>
               <TableBody>
-                {items.map((it, idx) => (
+                {items.length === 0 ? (
+                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-xs text-muted-foreground">Belum ada tindakan/obat dari Perawat/Dokter.</TableCell></TableRow>
+                ) : items.map((it, idx) => (
                   <TableRow key={idx}>
-                    <TableCell><Input value={it.description} onChange={(e) => { const c=[...items]; c[idx].description=e.target.value; setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.quantity === 0 ? "" : it.quantity} onChange={(e) => { const c=[...items]; c[idx].quantity = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
-                    <TableCell><Input type="number" inputMode="numeric" min={0} placeholder="0" value={it.unit_price === 0 ? "" : it.unit_price} onChange={(e) => { const c=[...items]; c[idx].unit_price = e.target.value === "" ? 0 : Number(e.target.value); setItems(c); }} /></TableCell>
-                    <TableCell><Button size="icon" variant="ghost" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
+                    <TableCell className="text-sm">{it.description}</TableCell>
+                    <TableCell className="text-sm">{it.quantity}</TableCell>
+                    <TableCell className="text-sm">Rp {Number(it.unit_price).toLocaleString("id-ID")}</TableCell>
+                    <TableCell><Button size="icon" variant="ghost" title="Hapus baris (koreksi)" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <Button variant="outline" size="sm" onClick={() => setItems([...items, { description: "", quantity: 1, unit_price: 0, layanan_id: null }])}><Plus className="mr-1 h-3 w-3" />Item manual</Button>
           </div>
           <div className="space-y-2">
             <div className="rounded border p-3 text-sm">
