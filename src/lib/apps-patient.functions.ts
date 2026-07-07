@@ -234,17 +234,41 @@ export const listAvailableSlots = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const takenSet = new Set((taken ?? []).map((r: { jam_slot: string }) => r.jam_slot));
 
-    const slots: string[] = [];
-    for (let h = 9; h < 17; h++) {
-      for (const m of [0, 30]) {
-        if (h === 12) continue;
-        slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-      }
+    // Read the doctor's schedule for the requested weekday. klinik_jadwal is
+    // staff-RLS, so use the admin client to expose only start/end windows.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const [y, mo, d] = data.tanggal.split("-").map(Number);
+    const weekday = DAYS[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()];
+
+    const { data: jadwal, error: jErr } = await supabaseAdmin
+      .from("klinik_jadwal")
+      .select("start_time, end_time, is_active")
+      .eq("dokter_id", data.dokter_id)
+      .eq("day", weekday)
+      .eq("is_active", true);
+    if (jErr) throw new Error(jErr.message);
+
+    const toMin = (t: string) => {
+      const [hh, mm] = t.split(":").map(Number);
+      return hh * 60 + mm;
+    };
+    const fmt = (m: number) =>
+      `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+    const slotSet = new Set<string>();
+    for (const j of jadwal ?? []) {
+      const start = toMin(j.start_time);
+      const end = toMin(j.end_time);
+      for (let t = start; t + 30 <= end; t += 30) slotSet.add(fmt(t));
     }
+    const slots = Array.from(slotSet).sort();
+
     return {
       slots: slots.map((s) => ({ jam: s, available: !takenSet.has(s) })),
     };
   });
+
 
 /* ------------ Notifikasi ------------ */
 
