@@ -3351,6 +3351,10 @@ export type Database = {
         Args: { _marketing?: boolean }
         Returns: undefined
       }
+      apps_checkout_cart: {
+        Args: { _alamat_kirim: string; _catatan: string; _metode_bayar: string }
+        Returns: Json
+      }
       apps_export_my_data: { Args: never; Returns: Json }
       apps_leaderboard_mingguan: {
         Args: never

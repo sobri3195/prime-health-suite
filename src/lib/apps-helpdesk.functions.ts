@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const VALID_STATUS = ["open", "in_progress", "resolved", "closed"] as const;
@@ -7,11 +8,18 @@ const VALID_PRIORITY = ["low", "medium", "high", "critical"] as const;
 export const listTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabase, userId } = context;
+    // Defense-in-depth: filter own tickets unless caller is staff.
+    // RLS already enforces this, but explicit filter avoids leaking staff-visible
+    // rows to a compromised session and keeps the query index-friendly.
+    const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    let q = supabase
       .from("apps_ticket")
       .select("id, ticket_no, user_id, reporter, subject, description, category, priority, status, pic, created_at, updated_at")
       .order("updated_at", { ascending: false })
       .limit(200);
+    if (!isStaff) q = q.eq("user_id", userId);
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     return { items: data ?? [] };
   });
@@ -60,15 +68,23 @@ export const createTicket = createServerFn({ method: "POST" })
 
 export const updateTicketStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; status: string; pic?: string }) => {
-    if (!VALID_STATUS.includes(d.status as any)) throw new Error("Status tidak valid");
-    return d;
-  })
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(VALID_STATUS),
+      pic: z.string().max(200).optional(),
+    }).parse(d),
+  )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Only staff may change status; a reporter closing their own ticket
+    // is a separate action (not implemented). RLS also enforces this.
+    const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
     const patch = data.pic !== undefined
       ? { status: data.status, pic: data.pic }
       : { status: data.status };
-    const { error } = await context.supabase.from("apps_ticket").update(patch).eq("id", data.id);
+    const { error } = await supabase.from("apps_ticket").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
