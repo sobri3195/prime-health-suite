@@ -538,6 +538,8 @@ export function PatientProfil() {
   const { logout } = useAuth();
   const { t } = useI18n();
   const callProfile = useServerFn(getMyProfile);
+  const confirm = useConfirm();
+
   const callUpdate = useServerFn(updateMyProfile);
   const callBookings = useServerFn(listMyBookings);
   const callCancel = useServerFn(cancelBooking);
