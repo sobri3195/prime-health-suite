@@ -193,7 +193,7 @@ function TicketDrawer({ ticket, onClose, onStatus }: { ticket: Ticket; onClose: 
         <div className="flex items-start justify-between border-b border-border p-6">
           <div>
             <div className="font-mono text-xs text-muted-foreground">{ticket.ticket_no}</div>
-            <h2 className="mt-1 text-lg font-semibold">{ticket.subject}</h2>
+            <h2 id="ticket-detail-title" className="mt-1 text-lg font-semibold">{ticket.subject}</h2>
             <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge tone={statusTone[ticket.status] ?? "muted"}>{ticket.status}</StatusBadge>
               <StatusBadge tone={priorityTone[ticket.priority] ?? "muted"}>{ticket.priority}</StatusBadge>
