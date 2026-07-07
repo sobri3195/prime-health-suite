@@ -904,7 +904,7 @@ export function PatientLaporan() {
   const { t } = useI18n();
   const callInvoices = useServerFn(listMyInvoices);
   const callProfile = useServerFn(getMyProfile);
-  const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices() });
+  const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices({ data: { page: 1, pageSize: 20 } }) });
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const invoices = invoicesQ.data?.invoices ?? [];
   const profile = profileQ.data?.profile;
