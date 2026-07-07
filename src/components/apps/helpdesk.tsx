@@ -188,8 +188,8 @@ function TicketDrawer({ ticket, onClose, onStatus }: { ticket: Ticket; onClose: 
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-background shadow-[var(--shadow-elegant)]">
+      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} aria-hidden="true" />
+      <aside role="dialog" aria-modal="true" aria-labelledby="ticket-detail-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-background shadow-[var(--shadow-elegant)]">
         <div className="flex items-start justify-between border-b border-border p-6">
           <div>
             <div className="font-mono text-xs text-muted-foreground">{ticket.ticket_no}</div>
