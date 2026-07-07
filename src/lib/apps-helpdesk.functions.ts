@@ -5,24 +5,32 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const VALID_STATUS = ["open", "in_progress", "resolved", "closed"] as const;
 const VALID_PRIORITY = ["low", "medium", "high", "critical"] as const;
 
+const TicketListInput = z.object({
+  page: z.number().int().min(1).max(1000).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+});
+
 export const listTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => TicketListInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Defense-in-depth: filter own tickets unless caller is staff.
-    // RLS already enforces this, but explicit filter avoids leaking staff-visible
-    // rows to a compromised session and keeps the query index-friendly.
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    // Defense-in-depth: filter own tickets unless caller is staff. RLS also
+    // enforces this; explicit filter keeps queries index-friendly.
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     let q = supabase
       .from("apps_ticket")
-      .select("id, ticket_no, user_id, reporter, subject, description, category, priority, status, pic, created_at, updated_at")
+      .select("id, ticket_no, user_id, reporter, subject, description, category, priority, status, pic, created_at, updated_at", { count: "exact" })
       .order("updated_at", { ascending: false })
-      .limit(200);
+      .range(from, to);
     if (!isStaff) q = q.eq("user_id", userId);
-    const { data, error } = await q;
+    const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
-    return { items: data ?? [] };
+    return { items: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
+
 
 export const listTicketReplies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
