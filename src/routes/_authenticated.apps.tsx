@@ -53,8 +53,11 @@ function Layout() {
 
   return (
     <AppShell system="apps">
-      <Outlet />
+      <ConfirmProvider>
+        <Outlet />
+      </ConfirmProvider>
     </AppShell>
+
   );
 }
 
