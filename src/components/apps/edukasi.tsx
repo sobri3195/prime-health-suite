@@ -9,7 +9,7 @@ import { SkeletonList, EmptyState } from "@/components/apps/ui";
 export function PatientEdukasi() {
   const { t, lang } = useI18n();
   const call = useServerFn(listArtikel);
-  const q = useQuery({ queryKey: ["apps", "artikel"], queryFn: () => call() });
+  const q = useQuery({ queryKey: ["apps", "artikel"], queryFn: () => call({ data: { page: 1, pageSize: 20 } }) });
   const items = q.data?.artikel ?? [];
   return (
     <div className="mx-auto max-w-2xl space-y-4">
