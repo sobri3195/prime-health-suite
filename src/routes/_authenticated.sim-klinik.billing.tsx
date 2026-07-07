@@ -228,7 +228,8 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
       <div class="b"><table><tr><td>Subtotal</td><td class="r">${subtotal.toLocaleString("id-ID")}</td></tr>
       <tr><td>Diskon</td><td class="r">${discount.toLocaleString("id-ID")}</td></tr>
       <tr><td><b>TOTAL</b></td><td class="r"><b>${total.toLocaleString("id-ID")}</b></td></tr>
-      <tr><td>Dibayar (${escapeHtml(method)})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr></table></div>
+      <tr><td>Dibayar (${escapeHtml(method)})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr>
+      ${paid > total ? `<tr><td><b>Kembalian</b></td><td class="r"><b>${(paid-total).toLocaleString("id-ID")}</b></td></tr>` : ""}</table></div>
       <div class="b"><i>Terbilang: ${escapeHtml(terbilangRupiah(total))}</i></div>
       <div class="b" style="text-align:center">Terima kasih</div>
       <script>window.print()</script></body></html>`);
@@ -278,10 +279,24 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-2"><Label>Dibayar</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={paid === 0 ? "" : paid} onChange={(e) => setPaid(e.target.value === "" ? 0 : Number(e.target.value))} /></div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {paid >= total ? "Lunas" : paid > 0 ? `Sisa Rp ${(total-paid).toLocaleString("id-ID")}` : "Belum bayar"}
+              <div className="mt-2"><Label>Dibayar</Label><Input type="number" inputMode="numeric" min={0} placeholder="0" value={paid === 0 ? "" : paid} onChange={(e) => setPaid(e.target.value === "" ? 0 : Number(e.target.value))} />
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {[total, 50000, 100000, 200000].filter((v, i, a) => v > 0 && a.indexOf(v) === i).map((v) => (
+                    <Button key={v} type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setPaid(v)}>
+                      {v === total ? "Pas" : `Rp ${v.toLocaleString("id-ID")}`}
+                    </Button>
+                  ))}
+                </div>
               </div>
+              {paid > total ? (
+                <div className="mt-2 flex justify-between rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-sm font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  <span>Kembalian</span><span>Rp {(paid - total).toLocaleString("id-ID")}</span>
+                </div>
+              ) : (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {paid === total && total > 0 ? "Lunas — pas" : paid > 0 ? `Sisa Rp ${(total-paid).toLocaleString("id-ID")}` : "Belum bayar"}
+                </div>
+              )}
             </div>
           </div>
         </div>
