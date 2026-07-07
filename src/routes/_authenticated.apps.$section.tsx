@@ -12,6 +12,8 @@ import { PatientEdukasi } from "@/components/apps/edukasi";
 import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
 import { PatientPrivasi } from "@/components/apps/privacy";
+import { CLINIC_CONTACT } from "@/lib/brand";
+
 
 const KNOWN_SECTIONS = new Set([
   "ai", "belanja", "cart", "checkout", "orders", "edukasi", "wins", "chat",
