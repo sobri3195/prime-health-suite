@@ -56,7 +56,7 @@ export function HelpdeskPage() {
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
 
-  const ticketsQ = useQuery({ queryKey: ["apps", "tickets"], queryFn: () => callList() });
+  const ticketsQ = useQuery({ queryKey: ["apps", "tickets"], queryFn: () => callList({ data: { page: 1, pageSize: 20 } }) });
 
   useEffect(() => {
     const ch = supabase.channel("apps-tickets")
