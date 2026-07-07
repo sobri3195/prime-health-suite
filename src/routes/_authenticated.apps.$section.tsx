@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/apps/$section")({
   head: ({ params }) => {
     const m = SECTION_META[params.section];
     if (!m) return {};
-    const url = `https://prime-health-suite.lovable.app/apps/${params.section}`;
+    const url = `${CLINIC_CONTACT.siteUrl}/apps/${params.section}`;
     return {
       meta: [
         { title: m.title },
