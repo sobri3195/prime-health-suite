@@ -995,7 +995,7 @@ export function PatientLaporan() {
               <Download className="h-3.5 w-3.5" /> {t("history.download_resep")}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`${t("history.title")} - ${inv.no_invoice}`)}`}
+              href={waLink(`${t("history.title")} - ${inv.no_invoice}`)}
               target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs font-semibold text-[#5a4a14]"
             >
