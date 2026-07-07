@@ -191,19 +191,28 @@ export const getMyQueueToday = createServerFn({ method: "GET" })
     return { queue: data, posisi, total };
   });
 
+const PageInput = z.object({
+  page: z.number().int().min(1).max(1000).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+});
+
 export const listMyInvoices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => PageInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, error, count } = await supabase
       .from("fin_invoice")
-      .select("id, no_invoice, tanggal, total, status, catatan, fin_invoice_item(layanan_nama, qty, tarif, subtotal)")
+      .select("id, no_invoice, tanggal, total, status, catatan, fin_invoice_item(layanan_nama, qty, tarif, subtotal)", { count: "exact" })
       .eq("apps_user_id", userId)
       .order("tanggal", { ascending: false })
-      .limit(50);
+      .range(from, to);
     if (error) throw new Error(error.message);
-    return { invoices: data ?? [] };
+    return { invoices: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
+
 
 export const listDoctorsForBooking = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
