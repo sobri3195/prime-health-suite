@@ -68,15 +68,23 @@ export const createTicket = createServerFn({ method: "POST" })
 
 export const updateTicketStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; status: string; pic?: string }) => {
-    if (!VALID_STATUS.includes(d.status as any)) throw new Error("Status tidak valid");
-    return d;
-  })
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(VALID_STATUS),
+      pic: z.string().max(200).optional(),
+    }).parse(d),
+  )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Only staff may change status; a reporter closing their own ticket
+    // is a separate action (not implemented). RLS also enforces this.
+    const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
     const patch = data.pic !== undefined
       ? { status: data.status, pic: data.pic }
       : { status: data.status };
-    const { error } = await context.supabase.from("apps_ticket").update(patch).eq("id", data.id);
+    const { error } = await supabase.from("apps_ticket").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
