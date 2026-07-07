@@ -228,7 +228,8 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
       <div class="b"><table><tr><td>Subtotal</td><td class="r">${subtotal.toLocaleString("id-ID")}</td></tr>
       <tr><td>Diskon</td><td class="r">${discount.toLocaleString("id-ID")}</td></tr>
       <tr><td><b>TOTAL</b></td><td class="r"><b>${total.toLocaleString("id-ID")}</b></td></tr>
-      <tr><td>Dibayar (${escapeHtml(method)})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr></table></div>
+      <tr><td>Dibayar (${escapeHtml(method)})</td><td class="r">${paid.toLocaleString("id-ID")}</td></tr>
+      ${paid > total ? `<tr><td><b>Kembalian</b></td><td class="r"><b>${(paid-total).toLocaleString("id-ID")}</b></td></tr>` : ""}</table></div>
       <div class="b"><i>Terbilang: ${escapeHtml(terbilangRupiah(total))}</i></div>
       <div class="b" style="text-align:center">Terima kasih</div>
       <script>window.print()</script></body></html>`);
