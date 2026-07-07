@@ -1011,7 +1011,7 @@ export function PatientLaporan() {
           {t("history.empty.hint")}
         </p>
         <div className="mt-3">
-          <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
+          <a href={waLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#e9dfb8] bg-white px-4 py-2 text-sm font-semibold text-[#7a6010]">
             <MessageCircle className="h-4 w-4" /> {t("history.contact_clinic")}
           </a>
         </div>
