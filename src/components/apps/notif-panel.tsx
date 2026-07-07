@@ -55,6 +55,8 @@ export function NotifBellBadge() {
 export function NotificationsPagePatient() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const confirm = useConfirm();
+
   const callList = useServerFn(listMyNotifications);
   const callRead = useServerFn(markNotifRead);
   const callReadAll = useServerFn(markAllNotifRead);
