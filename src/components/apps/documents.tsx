@@ -6,6 +6,8 @@ import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./u
 import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 const BUCKET = "clinic-documents";
 
