@@ -174,7 +174,7 @@ export function DocumentsPage() {
   };
 
   const onDelete = async (row: DocRow) => {
-    if (!confirm(`Hapus "${row.title}"?`)) return;
+    if (!(await confirm({ description: `Hapus "${row.title}"?`, destructive: true, confirmText: "Hapus" }))) return;
     try {
       if (row.storage_path) {
         const { error: rmErr } = await supabase.storage.from(BUCKET).remove([row.storage_path]);
