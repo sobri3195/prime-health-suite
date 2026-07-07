@@ -234,7 +234,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
       <script>window.print()</script></body></html>`);
   }
 
-  const addLayanan = (l: { id: string; name: string; tarif: number }) => setItems([...items, { description: l.name, quantity: 1, unit_price: Number(l.tarif), layanan_id: l.id }]);
+  
 
   return (
     <Dialog open onOpenChange={onClose}>
