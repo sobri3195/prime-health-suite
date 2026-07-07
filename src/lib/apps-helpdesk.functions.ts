@@ -34,9 +34,17 @@ export const listTickets = createServerFn({ method: "GET" })
 
 export const listTicketReplies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { ticketId: string }) => d)
+  .inputValidator((d: unknown) => z.object({ ticketId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    const { supabase, userId } = context;
+    const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    if (!isStaff) {
+      const { data: t, error: te } = await supabase
+        .from("apps_ticket").select("user_id").eq("id", data.ticketId).maybeSingle();
+      if (te) throw new Error(te.message);
+      if (!t || t.user_id !== userId) throw new Error("Tidak diizinkan");
+    }
+    const { data: rows, error } = await supabase
       .from("apps_ticket_reply")
       .select("id, author_id, author_label, message, created_at")
       .eq("ticket_id", data.ticketId)
@@ -45,13 +53,16 @@ export const listTicketReplies = createServerFn({ method: "GET" })
     return { items: rows ?? [] };
   });
 
+const CreateTicketInput = z.object({
+  subject: z.string().trim().min(1, "Subject wajib diisi").max(200),
+  description: z.string().trim().min(1, "Deskripsi wajib diisi").max(4000),
+  category: z.string().trim().max(50).optional(),
+  priority: z.enum(VALID_PRIORITY).optional(),
+});
+
 export const createTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subject: string; description: string; category?: string; priority?: string }) => {
-    if (!d.subject?.trim()) throw new Error("Subject wajib diisi");
-    if (!d.description?.trim()) throw new Error("Deskripsi wajib diisi");
-    return d;
-  })
+  .inputValidator((d: unknown) => CreateTicketInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     const ticketNo = `TKT-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -62,10 +73,10 @@ export const createTicket = createServerFn({ method: "POST" })
         ticket_no: ticketNo,
         user_id: userId,
         reporter,
-        subject: data.subject.trim(),
-        description: data.description.trim(),
+        subject: data.subject,
+        description: data.description,
         category: data.category ?? "request",
-        priority: VALID_PRIORITY.includes((data.priority as any) ?? "medium") ? data.priority ?? "medium" : "medium",
+        priority: data.priority ?? "medium",
         status: "open",
       })
       .select("id, ticket_no")
@@ -85,8 +96,6 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Only staff may change status; a reporter closing their own ticket
-    // is a separate action (not implemented). RLS also enforces this.
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
     const patch = data.pic !== undefined
@@ -97,21 +106,30 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const ReplyTicketInput = z.object({
+  ticketId: z.string().uuid(),
+  message: z.string().trim().min(1, "Pesan kosong").max(4000),
+});
+
 export const replyTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { ticketId: string; message: string }) => {
-    if (!d.message?.trim()) throw new Error("Pesan kosong");
-    return d;
-  })
+  .inputValidator((d: unknown) => ReplyTicketInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    if (!isStaff) {
+      const { data: t, error: te } = await supabase
+        .from("apps_ticket").select("user_id").eq("id", data.ticketId).maybeSingle();
+      if (te) throw new Error(te.message);
+      if (!t || t.user_id !== userId) throw new Error("Tidak diizinkan");
+    }
     const { error } = await supabase.from("apps_ticket_reply").insert({
       ticket_id: data.ticketId,
       author_id: userId,
       author_label: isStaff ? ((claims as any)?.email ?? "staff") : "reporter",
-      message: data.message.trim(),
+      message: data.message,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
