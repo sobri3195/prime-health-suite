@@ -54,7 +54,9 @@ const ALLOWED_MIME = [
 
 export function DocumentsPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [q, setQ] = useState("");
+
   const [type, setType] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
