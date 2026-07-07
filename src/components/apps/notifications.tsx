@@ -59,7 +59,14 @@ export function NotificationsPage() {
 
   const markM = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("apps_notif").update({ read_at: new Date().toISOString() }).eq("id", id);
+      // Defense-in-depth: scope to signed-in user in addition to RLS.
+      const { data: { user }, error: ue } = await supabase.auth.getUser();
+      if (ue || !user) throw new Error("Sesi berakhir, silakan login ulang");
+      const { error } = await supabase
+        .from("apps_notif")
+        .update({ read_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "notif-operator"] }),

@@ -659,8 +659,12 @@ export function PatientProfil() {
   }
 
   function startReschedule(b: { id: string; dokter_id: string | null; tanggal: string }) {
+    if (!b.dokter_id) {
+      toast.error("Booking ini tidak memiliki dokter terpilih. Silakan buat booking baru.");
+      return;
+    }
     setReschedId(b.id);
-    setReschedDokter(b.dokter_id || "");
+    setReschedDokter(b.dokter_id);
     setReschedDate(b.tanggal);
     setReschedSlot("");
   }

@@ -24,7 +24,7 @@ export function PatientPrivasi() {
   const callProfile = useServerFn(getMyProfile);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
-  const auditQ = useQuery({ queryKey: ["apps", "audit", "me"], queryFn: () => callAudit() });
+  const auditQ = useQuery({ queryKey: ["apps", "audit", "me"], queryFn: () => callAudit({ data: { page: 1, pageSize: 50 } }) });
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [marketing, setMarketing] = useState(false);
