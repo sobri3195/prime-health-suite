@@ -197,7 +197,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
     setItems(pres);
   }, [detail]);
 
-  const layanan = (layananQ.data ?? []) as Array<{ id: string; name: string; tarif: number }>;
+  void layananQ; // layanan master reserved for future structured tindakan pull
   const subtotal = items.reduce((a, b) => a + b.quantity * b.unit_price, 0);
   const total = Math.max(0, subtotal - discount);
 
