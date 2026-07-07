@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen,
+  Sparkles, Bell, Calendar, Brain, ClipboardList, Glasses, ScanEye, BookOpen, Receipt,
   Clock, CheckCircle2,
   Download, AlertCircle, Camera, Phone, MapPin, Shield, LogOut,
   Stethoscope, FileText, MessageCircle, Loader2, Activity, ShieldAlert, ListChecks,
@@ -174,6 +174,7 @@ export function PatientBeranda() {
         <h3 className="mb-2 text-base font-semibold">Menu Cepat</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
+            { l: "Pesanan Saya", i: Receipt, section: "orders" },
             { l: "Riwayat & Resep", i: ClipboardList, section: "laporan" },
             { l: "Resep Kacamata", i: Glasses, section: "laporan" },
             { l: "Hasil AI Mata", i: ScanEye, section: "ai" },
