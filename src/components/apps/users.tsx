@@ -36,6 +36,8 @@ const ROLE_OPTS: { value: "all" | Role; label: string }[] = [
 
 export function UsersPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
+
   const callList = useServerFn(listUsers);
   const callSet = useServerFn(setUserRole);
   const callToggle = useServerFn(toggleUserActive);
