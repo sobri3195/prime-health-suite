@@ -146,7 +146,7 @@ export function NotificationsPagePatient() {
                     <Check className="h-4 w-4" />
                   </button>
                 )}
-                <button onClick={() => { if (confirm("Hapus notifikasi?")) delM.mutate(n.id); }} className="rounded-full p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Hapus">
+                <button onClick={async () => { if (await confirm({ description: "Hapus notifikasi?", destructive: true, confirmText: "Hapus" })) delM.mutate(n.id); }} className="rounded-full p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Hapus">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
