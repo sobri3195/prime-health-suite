@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const VALID_STATUS = ["open", "in_progress", "resolved", "closed"] as const;
@@ -7,11 +8,18 @@ const VALID_PRIORITY = ["low", "medium", "high", "critical"] as const;
 export const listTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabase, userId } = context;
+    // Defense-in-depth: filter own tickets unless caller is staff.
+    // RLS already enforces this, but explicit filter avoids leaking staff-visible
+    // rows to a compromised session and keeps the query index-friendly.
+    const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
+    let q = supabase
       .from("apps_ticket")
       .select("id, ticket_no, user_id, reporter, subject, description, category, priority, status, pic, created_at, updated_at")
       .order("updated_at", { ascending: false })
       .limit(200);
+    if (!isStaff) q = q.eq("user_id", userId);
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     return { items: data ?? [] };
   });
