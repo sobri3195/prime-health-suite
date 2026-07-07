@@ -32,18 +32,26 @@ export const requestAccountDeletion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const AuditListInput = z.object({
+  page: z.number().int().min(1).max(1000).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
+});
+
 export const listMyAuditLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => AuditListInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, error, count } = await supabase
       .from("apps_audit_log")
-      .select("id, actor_label, action, resource, meta, created_at")
+      .select("id, actor_label, action, resource, meta, created_at", { count: "exact" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .range(from, to);
     if (error) throw new Error(error.message);
-    return { items: data ?? [] };
+    return { items: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 
 export const logSelfAccess = createServerFn({ method: "POST" })

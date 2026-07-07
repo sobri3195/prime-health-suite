@@ -105,12 +105,22 @@ export const checkoutCart = createServerFn({ method: "POST" })
     return r;
   });
 
+const OrdersListInput = z.object({
+  page: z.number().int().min(1).max(1000).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+});
+
 export const listMyOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("apps_order").select("*, items:apps_order_item(*)")
-      .eq("user_id", context.userId).order("created_at", { ascending: false });
+  .inputValidator((d: unknown) => OrdersListInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, error, count } = await context.supabase
+      .from("apps_order").select("*, items:apps_order_item(*)", { count: "exact" })
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .range(from, to);
     if (error) throw new Error(error.message);
-    return { orders: data ?? [] };
+    return { orders: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });

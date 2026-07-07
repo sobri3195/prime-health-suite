@@ -157,9 +157,20 @@ export function PatientCart() {
                   <div className="text-xs text-muted-foreground">{fmt(it.produk?.harga ?? 0)}</div>
                   <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#e9dfb8]">
                     <button onClick={() => it.qty > 1 && updM.mutate({ id: it.id, qty: it.qty - 1 })}
-                      className="px-2 py-1" aria-label="-"><Minus className="h-3 w-3" /></button>
+                      disabled={it.qty <= 1}
+                      className="px-2 py-1 disabled:opacity-40" aria-label="-"><Minus className="h-3 w-3" /></button>
                     <span className="text-sm font-semibold">{it.qty}</span>
-                    <button onClick={() => updM.mutate({ id: it.id, qty: it.qty + 1 })} className="px-2 py-1" aria-label="+"><Plus className="h-3 w-3" /></button>
+                    <button
+                      onClick={() => {
+                        const maxQty = Math.min(20, it.produk?.stok ?? 20);
+                        if (it.qty >= maxQty) {
+                          toast.error(`Stok maksimal ${maxQty}`);
+                          return;
+                        }
+                        updM.mutate({ id: it.id, qty: it.qty + 1 });
+                      }}
+                      disabled={it.qty >= Math.min(20, it.produk?.stok ?? 20)}
+                      className="px-2 py-1 disabled:opacity-40" aria-label="+"><Plus className="h-3 w-3" /></button>
                   </div>
                 </div>
                 <div className="text-right">
@@ -278,7 +289,7 @@ export function PatientCheckout() {
 export function PatientOrders() {
   const { t } = useI18n();
   const callOrders = useServerFn(listMyOrders);
-  const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders() });
+  const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
   const orders = q.data?.orders ?? [];
   return (
     <div className="mx-auto max-w-2xl space-y-4">
