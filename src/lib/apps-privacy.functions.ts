@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const acceptConsent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { marketing?: boolean }) => d)
+  .inputValidator((d: unknown) =>
+    z.object({ marketing: z.boolean().default(false) }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { error } = await supabase.rpc("apps_accept_consent", { _marketing: !!data.marketing });
+    const { error } = await supabase.rpc("apps_accept_consent", { _marketing: data.marketing });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -45,7 +48,12 @@ export const listMyAuditLog = createServerFn({ method: "GET" })
 
 export const logSelfAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { resource: string; meta?: Record<string, unknown> }) => d)
+  .inputValidator((d: unknown) =>
+    z.object({
+      resource: z.string().min(1).max(200),
+      meta: z.record(z.string(), z.unknown()).optional(),
+    }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { error } = await supabase.rpc("apps_log_self_access", {
