@@ -273,8 +273,8 @@ function NewTicketModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
+      <div className="fixed inset-0 z-40 bg-foreground/30" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="new-ticket-title" className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
         <h2 id="new-ticket-title" className="text-lg font-semibold">Tiket Baru</h2>
         <form
           aria-labelledby="new-ticket-title"
