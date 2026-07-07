@@ -82,42 +82,16 @@ export const checkoutCart = createServerFn({ method: "POST" })
       metode_bayar: z.enum(["transfer", "cod"]).default("transfer"),
     }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: items, error: e1 } = await context.supabase
-      .from("apps_cart_item")
-      .select("qty, produk:apps_produk(id, nama, harga, stok)")
-      .eq("user_id", context.userId);
-    if (e1) throw new Error(e1.message);
-    if (!items || items.length === 0) throw new Error("Keranjang kosong");
-    const lines = items.map((r: any) => {
-      if (!r.produk) throw new Error("Produk tidak valid");
-      if (r.qty > r.produk.stok) throw new Error(`Stok ${r.produk.nama} kurang`);
-      return {
-        produk_id: r.produk.id, produk_nama: r.produk.nama,
-        harga: r.produk.harga, qty: r.qty, subtotal: r.produk.harga * r.qty,
-      };
+    // Atomic checkout via RPC: locks product rows, validates stock,
+    // creates order+items, decrements stock, clears cart, awards points.
+    const { data: res, error } = await context.supabase.rpc("apps_checkout_cart", {
+      _alamat_kirim: data.alamat_kirim,
+      _catatan: data.catatan ?? "",
+      _metode_bayar: data.metode_bayar,
     });
-    const total = lines.reduce((s, x) => s + x.subtotal, 0);
-    const no_order = "ORD-" + Date.now().toString(36).toUpperCase();
-    const { data: ord, error: e2 } = await context.supabase.from("apps_order")
-      .insert({
-        user_id: context.userId, no_order, total,
-        alamat_kirim: data.alamat_kirim, catatan: data.catatan ?? null,
-        metode_bayar: data.metode_bayar,
-      }).select("id, no_order, total").single();
-    if (e2) throw new Error(e2.message);
-    const { error: e3 } = await context.supabase.from("apps_order_item")
-      .insert(lines.map((l) => ({ ...l, order_id: ord.id })));
-    if (e3) throw new Error(e3.message);
-    await context.supabase.from("apps_cart_item").delete().eq("user_id", context.userId);
-    // Award poin: 1 poin per Rp 10.000
-    const poin = Math.floor(total / 10_000);
-    if (poin > 0) {
-      await context.supabase.from("apps_poin").insert({
-        user_id: context.userId, delta: poin,
-        alasan: `Belanja ${ord.no_order}`, ref_type: "order", ref_id: ord.id,
-      });
-    }
-    return { order_id: ord.id, no_order: ord.no_order, total: ord.total, poin };
+    if (error) throw new Error(error.message);
+    const r = res as { order_id: string; no_order: string; total: number; poin: number };
+    return r;
   });
 
 export const listMyOrders = createServerFn({ method: "GET" })
