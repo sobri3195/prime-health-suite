@@ -319,3 +319,39 @@ export function PatientOrders() {
     </div>
   );
 }
+
+const ORDER_STEPS = [
+  { key: "pending", label: "Diterima" },
+  { key: "packing", label: "Dikemas" },
+  { key: "shipped", label: "Dikirim" },
+  { key: "delivered", label: "Sampai" },
+] as const;
+
+function OrderTimeline({ status }: { status: string }) {
+  const norm = status?.toLowerCase();
+  if (norm === "cancelled" || norm === "canceled") {
+    return <div className="mt-3 text-xs font-semibold text-rose-600">Pesanan dibatalkan</div>;
+  }
+  const idx = Math.max(0, ORDER_STEPS.findIndex((s) => s.key === norm));
+  return (
+    <ol className="mt-3 flex items-center gap-1" aria-label="Status pesanan">
+      {ORDER_STEPS.map((s, i) => {
+        const done = i <= idx;
+        return (
+          <li key={s.key} className="flex flex-1 flex-col items-center gap-1">
+            <div className="flex w-full items-center gap-1">
+              <span
+                aria-current={i === idx ? "step" : undefined}
+                className={`h-2 w-2 rounded-full ${done ? "bg-[#a08a2a]" : "bg-[#e9dfb8]"}`}
+              />
+              {i < ORDER_STEPS.length - 1 && (
+                <span className={`h-0.5 flex-1 ${i < idx ? "bg-[#a08a2a]" : "bg-[#e9dfb8]"}`} />
+              )}
+            </div>
+            <span className={`text-[10px] ${done ? "font-semibold text-[#5a4a14]" : "text-muted-foreground"}`}>{s.label}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
