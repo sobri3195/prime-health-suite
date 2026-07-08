@@ -17,7 +17,7 @@ import { useConfirm } from "@/components/apps/confirm-dialog";
 export function useAppsRealtime(userId: string | undefined) {
   const qc = useQueryClient();
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return; // wait until auth hydrates; avoids ghost user_id=eq.undefined subscribe
     const ch = supabase
       .channel(`apps-rt-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "apps_notif", filter: `user_id=eq.${userId}` }, () => {
@@ -30,6 +30,10 @@ export function useAppsRealtime(userId: string | undefined) {
       .on("postgres_changes", { event: "*", schema: "public", table: "apps_booking" }, () => {
         // Antrean global juga bisa berubah posisi
         qc.invalidateQueries({ queryKey: ["apps", "queue"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "apps_order", filter: `user_id=eq.${userId}` }, () => {
+        // Order status transitions (pending → packing → shipped → delivered) live-update
+        qc.invalidateQueries({ queryKey: ["apps", "orders"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };

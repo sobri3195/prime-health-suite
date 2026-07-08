@@ -34,18 +34,25 @@ export function NotificationsPage() {
   const [typ, setTyp] = useState("all");
   const [st, setSt] = useState("all");
 
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+
   const notifQ = useQuery({
-    queryKey: ["apps", "notif-operator"],
+    queryKey: ["apps", "notif-operator", page],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await supabase
         .from("apps_notif")
-        .select("id,user_id,title,body,type,deep_link,read_at,created_at")
+        .select("id,user_id,title,body,type,deep_link,read_at,created_at", { count: "exact" })
         .order("created_at", { ascending: false })
-        .limit(200);
+        .range(from, to);
       if (error) throw error;
-      return (data ?? []) as NotifRow[];
+      return { rows: (data ?? []) as NotifRow[], total: count ?? 0 };
     },
   });
+  const total = notifQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   // Realtime subscribe
   useEffect(() => {
@@ -75,7 +82,7 @@ export function NotificationsPage() {
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    return (notifQ.data ?? []).filter((n) => {
+    return (notifQ.data?.rows ?? []).filter((n) => {
       const isRead = !!n.read_at;
       return (typ === "all" || n.type === typ) &&
         (st === "all" || (st === "read" ? isRead : !isRead)) &&
@@ -125,6 +132,18 @@ export function NotificationsPage() {
             );
           })}
         </ul>
+      )}
+
+      {total > pageSize && (
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} notifikasi</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
+        </div>
       )}
     </PageContainer>
   );

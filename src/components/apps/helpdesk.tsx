@@ -56,7 +56,11 @@ export function HelpdeskPage() {
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
 
-  const ticketsQ = useQuery({ queryKey: ["apps", "tickets"], queryFn: () => callList({ data: { page: 1, pageSize: 20 } }) });
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const ticketsQ = useQuery({ queryKey: ["apps", "tickets", page], queryFn: () => callList({ data: { page, pageSize } }) });
+  const total = ticketsQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
     const ch = supabase.channel("apps-tickets")
@@ -145,6 +149,18 @@ export function HelpdeskPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {total > pageSize && (
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} tiket</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
         </div>
       )}
 
