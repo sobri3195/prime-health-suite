@@ -152,6 +152,18 @@ export function HelpdeskPage() {
         </div>
       )}
 
+      {total > pageSize && (
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} tiket</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-border px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
+
       {selected && (
         <TicketDrawer
           ticket={selected}
