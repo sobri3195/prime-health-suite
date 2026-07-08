@@ -34,18 +34,25 @@ export function NotificationsPage() {
   const [typ, setTyp] = useState("all");
   const [st, setSt] = useState("all");
 
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+
   const notifQ = useQuery({
-    queryKey: ["apps", "notif-operator"],
+    queryKey: ["apps", "notif-operator", page],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await supabase
         .from("apps_notif")
-        .select("id,user_id,title,body,type,deep_link,read_at,created_at")
+        .select("id,user_id,title,body,type,deep_link,read_at,created_at", { count: "exact" })
         .order("created_at", { ascending: false })
-        .limit(200);
+        .range(from, to);
       if (error) throw error;
-      return (data ?? []) as NotifRow[];
+      return { rows: (data ?? []) as NotifRow[], total: count ?? 0 };
     },
   });
+  const total = notifQ.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   // Realtime subscribe
   useEffect(() => {
