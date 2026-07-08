@@ -309,6 +309,7 @@ export function PatientOrders() {
                 </div>
                 <span className="rounded-full bg-[#fdf2c4] px-2 py-0.5 text-[10px] font-semibold text-[#7a6010]">{o.status}</span>
               </div>
+              <OrderTimeline status={o.status} />
               <div className="mt-2 text-xs text-muted-foreground">{o.items?.length ?? 0} item • {o.metode_bayar}</div>
               <div className="mt-2 text-base font-bold">{fmt(o.total)}</div>
             </div>
