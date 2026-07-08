@@ -82,7 +82,7 @@ export function NotificationsPage() {
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    return (notifQ.data ?? []).filter((n) => {
+    return (notifQ.data?.rows ?? []).filter((n) => {
       const isRead = !!n.read_at;
       return (typ === "all" || n.type === typ) &&
         (st === "all" || (st === "read" ? isRead : !isRead)) &&
