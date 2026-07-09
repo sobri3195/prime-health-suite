@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireFinView, requireFinEdit } from "./finance-guard";
+import { requireFinView } from "./finance-guard";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
