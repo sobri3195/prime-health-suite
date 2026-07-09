@@ -3408,6 +3408,23 @@ export type Database = {
       }
       fin_can_edit: { Args: { _uid: string }; Returns: boolean }
       fin_can_view: { Args: { _uid: string }; Returns: boolean }
+      fin_create_payment_locked: {
+        Args: {
+          _bank: string
+          _invoice_id: string
+          _jumlah: number
+          _mdr: number
+          _metode: string
+          _no_kartu_last4: string
+          _tanggal: string
+        }
+        Returns: {
+          dibayar_baru: number
+          id: string
+          status: string
+          total: number
+        }[]
+      }
       fin_post_journal: {
         Args: {
           _keterangan: string

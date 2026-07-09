@@ -290,24 +290,23 @@ export const createPayment = createServerFn({ method: "POST" })
       }
     }
     const netto = Number(data.jumlah) - mdr;
-    // Insert as 'draft' so the AFTER INSERT trigger skips; server fn posts the
-    // journal (with detailed lines) then flips status to 'posted' on the same row.
-    const { data: pay, error } = await sb.from("fin_pembayaran").insert({
-      invoice_id: data.invoice_id,
-      tanggal: data.tanggal,
-      metode: data.metode,
-      bank: data.bank ?? null,
-      no_kartu_last4: data.no_kartu_last4 ?? null,
-      jumlah: data.jumlah,
-      mdr,
-      netto,
-      status: "draft",
-    }).select().single();
-    if (error) throw new Error(error.message);
-
-    const newPaid = Number(inv.dibayar ?? 0) + Number(data.jumlah);
-    const newStatus = newPaid >= Number(inv.total) ? "paid" : newPaid > 0 ? "partial" : inv.status;
-    await sb.from("fin_invoice").update({ dibayar: newPaid, status: newStatus }).eq("id", data.invoice_id);
+    // Atomic insert + invoice update under advisory lock (mencegah over-payment
+    // saat dua kasir memproses invoice sama bersamaan).
+    const { data: locked, error: le } = await sb.rpc("fin_create_payment_locked", {
+      _invoice_id: data.invoice_id,
+      _tanggal: data.tanggal,
+      _metode: data.metode,
+      _bank: data.bank ?? null,
+      _no_kartu_last4: data.no_kartu_last4 ?? null,
+      _jumlah: data.jumlah,
+      _mdr: mdr,
+    });
+    if (le) throw new Error(le.message);
+    const lockedRow = Array.isArray(locked) ? locked[0] : locked;
+    const payId = (lockedRow as { id: string } | undefined)?.id;
+    if (!payId) throw new Error("Gagal membuat pembayaran");
+    const { data: pay, error } = await sb.from("fin_pembayaran").select("*").eq("id", payId).single();
+    if (error || !pay) throw new Error(error?.message ?? "Gagal memuat pembayaran");
 
     const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
     const payEntry = await postJournal({
