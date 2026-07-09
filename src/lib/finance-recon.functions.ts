@@ -119,9 +119,10 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
     return { matched };
   });
 
+const unmatchSchema = z.object({ statement_id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const unmatchStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { statement_id: string; actor?: string }) => d)
+  .inputValidator((d: unknown) => unmatchSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     await s.from("fin_reconciliation").delete().eq("statement_id", data.statement_id);
@@ -131,16 +132,17 @@ export const unmatchStatement = createServerFn({ method: "POST" })
   });
 
 // Adjustment: create journal entry for selisih (e.g. bank admin fee, interest)
+const adjustSchema = z.object({
+  statement_id: z.string().uuid(),
+  coa_debit: z.string().min(1).max(20),
+  coa_kredit: z.string().min(1).max(20),
+  amount: z.number().positive().finite(),
+  keterangan: z.string().min(1).max(500),
+  actor: z.string().max(200).optional(),
+});
 export const adjustStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    statement_id: string;
-    coa_debit: string;
-    coa_kredit: string;
-    amount: number;
-    keterangan: string;
-    actor?: string;
-  }) => d)
+  .inputValidator((d: unknown) => adjustSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     const { data: st } = await s.from("fin_bank_statement").select("*").eq("id", data.statement_id).single();
