@@ -48,6 +48,7 @@ function PayrollPage() {
   const [tahun, setTahun] = useState(now.getFullYear());
   const [selectedRun, setSelectedRun] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>(() => defaultRange(180));
+  const [payMetode, setPayMetode] = useState<"transfer" | "cash">("transfer");
 
   const runs = useQuery({ queryKey: ["hr.runs"], queryFn: () => listPayrollRuns() });
   const detail = useQuery({
@@ -78,7 +79,7 @@ function PayrollPage() {
   });
 
   const mPay = useMutation({
-    mutationFn: (id: string) => payPayrollRun({ data: { id, metode: "transfer" } }),
+    mutationFn: (id: string) => payPayrollRun({ data: { id, metode: payMetode } }),
     onSuccess: (d, id) => {
       toast.success(`Payroll dibayar → voucher ${d?.expense?.no_voucher ?? ""}`);
       clinicAudit("Payroll", "pay", id, { expense_id: d?.expense?.id });
@@ -197,10 +198,19 @@ function PayrollPage() {
                 </Button>
               )}
               {detail.data?.run?.status === "final" && (
-                <Button size="sm" className="gap-1" disabled={mPay.isPending}
-                  onClick={() => mPay.mutate(selectedRun)}>
-                  <Wallet className="h-4 w-4" /> Bayar & Post ke Expense
-                </Button>
+                <>
+                  <Select value={payMetode} onValueChange={(v) => setPayMetode(v as "transfer" | "cash")}>
+                    <SelectTrigger className="h-9 w-32"><SelectValue placeholder="Metode" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="transfer">Transfer</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="gap-1" disabled={mPay.isPending}
+                    onClick={() => mPay.mutate(selectedRun)}>
+                    <Wallet className="h-4 w-4" /> Bayar & Post ke Expense
+                  </Button>
+                </>
               )}
               {detail.data?.run?.status === "paid" && (
                 <Badge>Sudah Dibayar</Badge>

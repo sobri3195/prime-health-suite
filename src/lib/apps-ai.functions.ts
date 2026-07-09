@@ -26,12 +26,18 @@ export const saveAiHistory = createServerFn({ method: "POST" })
         foto_url: data.foto_url ?? null,
       }).select("id").single();
     if (error) throw new Error(error.message);
-    // Award 10 poin per skrining
-    await context.supabase.from("apps_poin").insert({
+    // Award 10 poin per skrining — jangan gagalkan penyimpanan history bila
+    // insert poin bermasalah (misal RLS/quota). Log ke server, kembalikan poin=0.
+    let poin = 10;
+    const { error: poinErr } = await context.supabase.from("apps_poin").insert({
       user_id: context.userId, delta: 10,
       alasan: "Skrining AI Mata", ref_type: "ai", ref_id: row.id,
     });
-    return { id: row.id, poin: 10 };
+    if (poinErr) {
+      console.error("[apps-ai] gagal award poin:", poinErr.message);
+      poin = 0;
+    }
+    return { id: row.id, poin };
   });
 
 export const listMyAiHistory = createServerFn({ method: "GET" })

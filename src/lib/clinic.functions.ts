@@ -121,13 +121,19 @@ export const listAudit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ListAuditSchema.parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    // Sanitasi input pencarian: buang karakter yang bermakna khusus di PostgREST
+    // (`,` memisah filter, `%`/`*` wildcard, `(` `)` grup, `\\` escape). Ini
+    // menutup celah "or-filter injection" via input pengguna.
+    const clean = (s?: string) => (s ?? "").replace(/[,%*()\\]/g, "").trim().slice(0, 100);
     let q = context.supabase.from("clinic_audit_log").select("*").order("ts", { ascending: false }).limit(data.limit ?? 200);
     if (data.module) q = q.eq("module", data.module);
     if (data.action) q = q.eq("action", data.action);
-    if (data.actor) q = q.ilike("actor_email", `%${data.actor}%`);
+    const actor = clean(data.actor);
+    if (actor) q = q.ilike("actor_email", `%${actor}%`);
     if (data.from) q = q.gte("ts", data.from);
     if (data.to) q = q.lte("ts", data.to);
-    if (data.q) q = q.or(`target.ilike.%${data.q}%,actor_email.ilike.%${data.q}%`);
+    const term = clean(data.q);
+    if (term) q = q.or(`target.ilike.%${term}%,actor_email.ilike.%${term}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
@@ -153,7 +159,8 @@ export const listDocuments = createServerFn({ method: "POST" })
     if (data.type) q = q.eq("doc_type", data.type);
     if (data.from) q = q.gte("uploaded_at", data.from);
     if (data.to) q = q.lte("uploaded_at", data.to);
-    if (data.q) q = q.or(`title.ilike.%${data.q}%,patient_code.ilike.%${data.q}%,patient_name.ilike.%${data.q}%`);
+    const term = (data.q ?? "").replace(/[,%*()\\]/g, "").trim().slice(0, 100);
+    if (term) q = q.or(`title.ilike.%${term}%,patient_code.ilike.%${term}%,patient_name.ilike.%${term}%`);
     const { data: rows, error, count } = await q;
     if (error) throw error;
     return { rows: rows ?? [], total: count ?? 0, page, pageSize };

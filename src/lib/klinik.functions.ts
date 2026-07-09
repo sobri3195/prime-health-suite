@@ -879,9 +879,14 @@ export const listTindakan = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as Supa;
+    // Tindakan medis dirangkum dari baris invoice yang berasal dari visit klinis
+    // (invoice status != void). Ini bukan sumber otoritatif klinis (untuk
+    // itu gunakan klinik_medical_record), tetapi memberi daftar layanan yg
+    // benar-benar dikerjakan & ditagih.
     const { data, error } = await sb
       .from("fin_invoice_item")
       .select("id,layanan_nama,tarif,qty,subtotal,created_at,invoice:fin_invoice!inner(no_invoice,tanggal,patient_name,status)")
+      .neq("invoice.status", "void")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
