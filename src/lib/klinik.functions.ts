@@ -588,7 +588,7 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
         patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
-        subtotal, pajak: 0, total, status,
+        subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
       if (!ie) {
