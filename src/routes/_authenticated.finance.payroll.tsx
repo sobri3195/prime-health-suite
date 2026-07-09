@@ -48,6 +48,7 @@ function PayrollPage() {
   const [tahun, setTahun] = useState(now.getFullYear());
   const [selectedRun, setSelectedRun] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>(() => defaultRange(180));
+  const [payMetode, setPayMetode] = useState<"transfer" | "cash">("transfer");
 
   const runs = useQuery({ queryKey: ["hr.runs"], queryFn: () => listPayrollRuns() });
   const detail = useQuery({
