@@ -168,11 +168,19 @@ export const cancelBooking = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("user_id", userId)
       .in("status", ["pending", "confirmed"])
-      .select("id");
+      .select("id, tanggal, jam_slot");
     if (error) throw new Error(error.message);
     if (!rows || rows.length === 0) {
       throw new Error("Booking tidak bisa dibatalkan karena sudah check-in / dipanggil / selesai.");
     }
+    // Bersihkan notifikasi reminder yang belum dibaca untuk slot ini
+    const b = rows[0] as { tanggal: string; jam_slot: string };
+    await supabase
+      .from("apps_notif")
+      .delete()
+      .eq("user_id", userId)
+      .eq("type", "reminder")
+      .like("body", `%${b.jam_slot}%`);
     return { ok: true };
   });
 
