@@ -523,17 +523,32 @@ export const dispensePrescription = createServerFn({ method: "POST" })
     const { data: pres, error } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("id", data.id).maybeSingle();
     if (error || !pres) throw error ?? new Error("Resep tidak ditemukan");
     if (pres.status === "dispensed") throw new Error("Resep sudah dibagikan");
-    // validate stock
-    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; obat_name: string; quantity: number }>) {
+    const items = (pres.klinik_prescription_item ?? []) as Array<{ obat_id: string | null; obat_name: string; quantity: number }>;
+    // Ambil stok semua obat sekaligus (single round-trip) untuk validasi.
+    const obatIds = Array.from(new Set(items.map((i) => i.obat_id).filter(Boolean))) as string[];
+    const stockMap = new Map<string, { stock: number; name: string }>();
+    if (obatIds.length) {
+      const { data: obats, error: se } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
+      if (se) throw se;
+      (obats ?? []).forEach((o) => stockMap.set(o.id, { stock: Number(o.stock), name: o.name }));
+    }
+    // Agregasi kebutuhan per obat (obat yang sama bisa muncul >1 baris).
+    const need = new Map<string, number>();
+    for (const it of items) {
       if (!it.obat_id) continue;
-      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
-      if (!ob) continue;
-      if (Number(ob.stock) < Number(it.quantity)) {
-        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+      need.set(it.obat_id, (need.get(it.obat_id) ?? 0) + Number(it.quantity));
+    }
+    for (const [obatId, qty] of need) {
+      const s = stockMap.get(obatId);
+      if (!s) continue;
+      if (s.stock < qty) {
+        throw new Error(`Stok ${s.name} tidak cukup (tersedia ${s.stock}, dibutuhkan ${qty})`);
       }
     }
-    // movements
-    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; quantity: number }>) {
+    // Movements — trigger klinik_apply_stock_movement mengurangi stok per baris.
+    // Catatan: race sisa masih mungkin bila dispense paralel; untuk atomisitas penuh
+    // gunakan RPC dengan FOR UPDATE (TODO: migrasi klinik_dispense_prescription).
+    for (const it of items) {
       if (!it.obat_id) continue;
       const { error: me } = await sb.from("klinik_stock_movement").insert({
         obat_id: it.obat_id, movement_type: "out", quantity: it.quantity,
