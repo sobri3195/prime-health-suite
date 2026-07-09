@@ -43,8 +43,14 @@ export const getMyRoles = createServerFn({ method: "GET" })
 
     const email = (context.claims as { email?: string } | null)?.email ?? null;
     const lowerEmail = email?.toLowerCase() ?? null;
+    // Demo role auto-seeding is a development convenience ONLY. Never grant
+    // privileged roles based on hardcoded emails in production — that would
+    // let anyone who registers with a demo email escalate to super_admin.
+    const IS_PROD =
+      process.env.NODE_ENV === "production" &&
+      process.env.LOVABLE_ENV !== "preview";
     let seedRoles: readonly string[] | null = null;
-    if (dbRoles.length === 0 && lowerEmail) {
+    if (!IS_PROD && dbRoles.length === 0 && lowerEmail) {
       if (lowerEmail === DEMO_EMAIL) seedRoles = DEMO_DB_ROLES;
       else if (DEMO_ROLE_MAP[lowerEmail]) seedRoles = DEMO_ROLE_MAP[lowerEmail];
     }
