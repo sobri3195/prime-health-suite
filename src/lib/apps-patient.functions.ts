@@ -90,8 +90,19 @@ export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateBookingInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
     if (data.tanggal < today) throw new Error("Tanggal booking tidak boleh di masa lalu");
+    // Cutoff jam praktik: bila booking untuk hari ini, slot harus setidaknya
+    // 30 menit dari sekarang (waktu lokal WIB, offset +7).
+    if (data.tanggal === today) {
+      const wib = new Date(now.getTime() + 7 * 3600 * 1000);
+      const cutoff = new Date(wib.getTime() + 30 * 60 * 1000);
+      const [h, m] = data.jam_slot.split(":").map(Number);
+      const slotMin = h * 60 + m;
+      const cutoffMin = cutoff.getUTCHours() * 60 + cutoff.getUTCMinutes();
+      if (slotMin < cutoffMin) throw new Error("Slot sudah lewat. Pilih jam berikutnya atau tanggal lain.");
+    }
 
     // Resolve patient row (auto-created by handle_new_apps_user trigger).
     const { data: pas } = await supabase
