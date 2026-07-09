@@ -530,7 +530,7 @@ export const dispensePrescription = createServerFn({ method: "POST" })
     if (obatIds.length) {
       const { data: obats, error: se } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
       if (se) throw se;
-      (obats ?? []).forEach((o) => stockMap.set(o.id, { stock: Number(o.stock), name: o.name }));
+      (obats ?? []).forEach((o: { id: string; stock: number | null; name: string }) => stockMap.set(o.id, { stock: Number(o.stock), name: o.name }));
     }
     // Agregasi kebutuhan per obat (obat yang sama bisa muncul >1 baris).
     const need = new Map<string, number>();
