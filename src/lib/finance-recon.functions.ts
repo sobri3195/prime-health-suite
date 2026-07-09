@@ -61,9 +61,10 @@ export const importBankStatement = createServerFn({ method: "POST" })
     return { count: inserted?.length ?? 0, batch };
   });
 
+const deleteStmtSchema = z.object({ id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const deleteBankStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; actor?: string }) => d)
+  .inputValidator((d: unknown) => deleteStmtSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     await s.from("fin_bank_statement").delete().eq("id", data.id);
