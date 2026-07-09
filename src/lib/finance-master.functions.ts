@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFinView, requireFinEdit } from "./finance-guard";
 
 const TABLES = [
   "fin_coa",
@@ -27,7 +27,7 @@ export type FinTable = (typeof TABLES)[number];
 const tableSchema = z.enum(TABLES);
 
 export const listFinMaster = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { table: FinTable }) => ({ table: tableSchema.parse(d.table) }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -40,7 +40,7 @@ export const listFinMaster = createServerFn({ method: "POST" })
   });
 
 export const upsertFinMaster = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { table: FinTable; row: Record<string, unknown>; id?: string }) => ({
     table: tableSchema.parse(d.table),
     row: z.record(z.string(), z.any()).parse(d.row),
@@ -62,7 +62,7 @@ export const upsertFinMaster = createServerFn({ method: "POST" })
   });
 
 export const deleteFinMaster = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { table: FinTable; id: string }) => ({
     table: tableSchema.parse(d.table),
     id: z.string().uuid().parse(d.id),

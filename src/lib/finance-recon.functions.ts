@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { writeFinAudit } from "./finance-audit.helper";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFinView, requireFinEdit } from "./finance-guard";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -10,7 +10,7 @@ async function sb() {
 
 // ============ BANK STATEMENT ============
 export const listBankStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; bank?: string; matched?: "all" | "true" | "false" } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -35,7 +35,7 @@ const importRowSchema = z.object({
 });
 
 export const importBankStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { bank: string; rows: z.infer<typeof importRowSchema>[]; actor?: string }) => ({
     bank: z.string().min(1).parse(d.bank),
     rows: z.array(importRowSchema).min(1).parse(d.rows),
@@ -63,7 +63,7 @@ export const importBankStatement = createServerFn({ method: "POST" })
 
 const deleteStmtSchema = z.object({ id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const deleteBankStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: unknown) => deleteStmtSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
@@ -76,7 +76,7 @@ export const deleteBankStatement = createServerFn({ method: "POST" })
 // Match each unmatched statement row against existing journal lines that touch
 // kas/bank COA (1100/1110/1120), within ±2 days and same amount.
 export const autoMatchStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { bank?: string; from?: string; to?: string; actor?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -121,7 +121,7 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
 
 const unmatchSchema = z.object({ statement_id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const unmatchStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: unknown) => unmatchSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
@@ -141,7 +141,7 @@ const adjustSchema = z.object({
   actor: z.string().max(200).optional(),
 });
 export const adjustStatement = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: unknown) => adjustSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
@@ -172,7 +172,7 @@ export const adjustStatement = createServerFn({ method: "POST" })
   });
 
 export const reconSummary = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; bank?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
