@@ -79,7 +79,7 @@ function PayrollPage() {
   });
 
   const mPay = useMutation({
-    mutationFn: (id: string) => payPayrollRun({ data: { id, metode: "transfer" } }),
+    mutationFn: (id: string) => payPayrollRun({ data: { id, metode: payMetode } }),
     onSuccess: (d, id) => {
       toast.success(`Payroll dibayar → voucher ${d?.expense?.no_voucher ?? ""}`);
       clinicAudit("Payroll", "pay", id, { expense_id: d?.expense?.id });
