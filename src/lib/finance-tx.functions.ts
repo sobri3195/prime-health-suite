@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { writeFinAudit } from "./finance-audit.helper";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireFinView, requireFinEdit } from "./finance-guard";
 
 
