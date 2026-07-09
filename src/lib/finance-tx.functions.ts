@@ -337,7 +337,6 @@ export const deletePayment = createServerFn({ method: "POST" })
     if (!pay) throw new Error("Pembayaran tidak ditemukan");
     await reverseJournal("payment", data.id, new Date().toISOString().slice(0, 10), data.reason ?? "Hapus pembayaran");
     await sb.from("fin_pembayaran").update({ status: "void", void_reason: data.reason ?? "deleted" }).eq("id", data.id);
-    await sb.from("fin_pembayaran").delete().eq("id", data.id);
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", pay.invoice_id).single();
     if (inv) {
       const newPaid = Math.max(0, Number(inv.dibayar) - Number(pay.jumlah));
