@@ -249,6 +249,9 @@ export const checkinBooking = createServerFn({ method: "POST" })
       if (pasienId) await sb.from("apps_booking").update({ pasien_id: pasienId }).eq("id", bk.id);
     }
     if (!pasienId) throw new Error("Pasien belum terdaftar di master pasien. Lengkapi profil pasien terlebih dulu.");
+    // Counter (loket) diturunkan dari huruf pertama fin_dokter.code (fallback "A").
+    const { data: dok } = await sb.from("fin_dokter").select("code").eq("id", bk.dokter_id).maybeSingle();
+    const counter = (dok?.code?.trim()?.[0] ?? "A").toUpperCase();
     // create visit
     const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
       pasien_id: pasienId, dokter_id: bk.dokter_id, booking_id: bk.id,
@@ -256,12 +259,12 @@ export const checkinBooking = createServerFn({ method: "POST" })
       created_by: context.userId,
     }).select("*").single();
     if (ve) throw ve;
-    // generate queue
-    const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: "A" });
+    // generate queue per-loket
+    const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: counter });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
       visit_id: visit.id, pasien_id: pasienId, dokter_id: bk.dokter_id,
-      queue_no: qn, queue_date: bk.tanggal, counter: "A", status: "waiting",
+      queue_no: qn, queue_date: bk.tanggal, counter, status: "waiting",
     }).select("*").single();
     if (qe) throw qe;
     await sb.from("apps_booking").update({ status: "checked_in" }).eq("id", bk.id);
