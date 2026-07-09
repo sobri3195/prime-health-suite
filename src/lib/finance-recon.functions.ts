@@ -95,16 +95,19 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
       .eq("fin_journal_entry.status", "posted");
 
     let matched = 0;
+    const usedLines = new Set<string>();
     for (const st of stmts) {
       const target = Number(st.kredit) > 0 ? Number(st.kredit) : Number(st.debit);
       const stDate = new Date(st.tanggal).getTime();
       const cand = (lines ?? []).find((l: any) => {
+        if (usedLines.has(l.id)) return false;
         const lineAmt = Number(l.debit) || Number(l.kredit);
         if (Math.abs(lineAmt - target) > 0.5) return false;
         const d = new Date(l.fin_journal_entry.tanggal).getTime();
         return Math.abs(d - stDate) <= 2 * 86400000;
       });
       if (!cand) continue;
+      usedLines.add(cand.id);
       await s.from("fin_reconciliation").insert({
         statement_id: st.id, journal_line_id: cand.id, selisih: 0,
         status: "matched", matched_by: data.actor ?? null,
