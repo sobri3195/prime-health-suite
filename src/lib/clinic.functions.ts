@@ -159,7 +159,8 @@ export const listDocuments = createServerFn({ method: "POST" })
     if (data.type) q = q.eq("doc_type", data.type);
     if (data.from) q = q.gte("uploaded_at", data.from);
     if (data.to) q = q.lte("uploaded_at", data.to);
-    if (data.q) q = q.or(`title.ilike.%${data.q}%,patient_code.ilike.%${data.q}%,patient_name.ilike.%${data.q}%`);
+    const term = (data.q ?? "").replace(/[,%*()\\]/g, "").trim().slice(0, 100);
+    if (term) q = q.or(`title.ilike.%${term}%,patient_code.ilike.%${term}%,patient_name.ilike.%${term}%`);
     const { data: rows, error, count } = await q;
     if (error) throw error;
     return { rows: rows ?? [], total: count ?? 0, page, pageSize };
