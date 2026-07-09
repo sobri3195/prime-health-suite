@@ -216,7 +216,9 @@ export const approveOvertime = createServerFn({ method: "POST" })
     if (getErr) throw getErr;
     if (ot.status !== "pending") throw new Error("Pengajuan sudah diproses.");
     // Cegah self-approval: pengaju tidak boleh menyetujui/menolak pengajuannya sendiri.
-    if (ot.created_by && ot.created_by === userId) {
+    const { data: emp } = await supabase.from("hr_employee")
+      .select("user_id").eq("id", ot.employee_id).maybeSingle();
+    if (emp?.user_id && emp.user_id === userId) {
       throw new Error("Anda tidak dapat menyetujui pengajuan lembur Anda sendiri.");
     }
 
