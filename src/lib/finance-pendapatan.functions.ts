@@ -196,13 +196,21 @@ export const deleteInvoice = createServerFn({ method: "POST" })
     const { data: inv } = await (supabaseAdmin as any).from("fin_invoice").select("*").eq("id", data.id).single();
     if (!inv) throw new Error("Invoice tidak ditemukan");
 
-    // Reverse posted journal entries (mirror finance-tx.voidInvoice logic)
-    const { data: entries } = await (supabaseAdmin as any)
+    // Reverse posted journal entries — invoice piutang/pendapatan AND all
+    // pembayaran postings so buku besar tetap balanced saat invoice divoid.
+    const { data: payRows } = await (supabaseAdmin as any)
+      .from("fin_pembayaran")
+      .select("id, status")
+      .eq("invoice_id", data.id);
+    const payIds = (payRows ?? []).map((p: any) => p.id);
+    const entryQuery = (supabaseAdmin as any)
       .from("fin_journal_entry")
-      .select("id, no_jurnal, tanggal, keterangan")
-      .eq("sumber", "invoice")
-      .eq("ref_id", data.id)
+      .select("id, no_jurnal, tanggal, keterangan, sumber, ref_id")
       .eq("status", "posted");
+    const orFilter = payIds.length
+      ? `and(sumber.eq.invoice,ref_id.eq.${data.id}),and(sumber.eq.pembayaran,ref_id.in.(${payIds.join(",")}))`
+      : `and(sumber.eq.invoice,ref_id.eq.${data.id})`;
+    const { data: entries } = await entryQuery.or(orFilter);
     for (const e of entries ?? []) {
       const { data: lines } = await (supabaseAdmin as any).from("fin_journal_line").select("*").eq("entry_id", e.id);
       const no_jurnal = await nextJournalNo(supabaseAdmin);
@@ -219,8 +227,8 @@ export const deleteInvoice = createServerFn({ method: "POST" })
         .insert({
           no_jurnal,
           tanggal: new Date().toISOString().slice(0, 10),
-          sumber: "invoice",
-          ref_id: data.id,
+          sumber: e.sumber,
+          ref_id: e.ref_id,
           ref_no: `REV-${e.no_jurnal}`,
           keterangan: `Reversal: ${data.reason}`,
           total,
@@ -236,10 +244,19 @@ export const deleteInvoice = createServerFn({ method: "POST" })
       await (supabaseAdmin as any).from("fin_journal_entry").update({ status: "reversed" }).eq("id", e.id);
     }
 
+    // Mark all payments void so rekonsiliasi tidak menghitung mereka lagi.
+    if (payIds.length) {
+      await (supabaseAdmin as any)
+        .from("fin_pembayaran")
+        .update({ status: "void", void_reason: `Invoice void: ${data.reason}` })
+        .in("id", payIds);
+    }
+
     await (supabaseAdmin as any)
       .from("fin_invoice")
-      .update({ status: "void", void_reason: data.reason })
+      .update({ status: "void", void_reason: data.reason, dibayar: 0 })
       .eq("id", data.id);
+
 
     await writeFinAudit({
       actor_id: context.userId,
