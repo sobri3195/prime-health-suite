@@ -61,9 +61,10 @@ export const importBankStatement = createServerFn({ method: "POST" })
     return { count: inserted?.length ?? 0, batch };
   });
 
+const deleteStmtSchema = z.object({ id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const deleteBankStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; actor?: string }) => d)
+  .inputValidator((d: unknown) => deleteStmtSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     await s.from("fin_bank_statement").delete().eq("id", data.id);
@@ -94,16 +95,19 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
       .eq("fin_journal_entry.status", "posted");
 
     let matched = 0;
+    const usedLines = new Set<string>();
     for (const st of stmts) {
       const target = Number(st.kredit) > 0 ? Number(st.kredit) : Number(st.debit);
       const stDate = new Date(st.tanggal).getTime();
       const cand = (lines ?? []).find((l: any) => {
+        if (usedLines.has(l.id)) return false;
         const lineAmt = Number(l.debit) || Number(l.kredit);
         if (Math.abs(lineAmt - target) > 0.5) return false;
         const d = new Date(l.fin_journal_entry.tanggal).getTime();
         return Math.abs(d - stDate) <= 2 * 86400000;
       });
       if (!cand) continue;
+      usedLines.add(cand.id);
       await s.from("fin_reconciliation").insert({
         statement_id: st.id, journal_line_id: cand.id, selisih: 0,
         status: "matched", matched_by: data.actor ?? null,
@@ -115,9 +119,10 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
     return { matched };
   });
 
+const unmatchSchema = z.object({ statement_id: z.string().uuid(), actor: z.string().max(200).optional() });
 export const unmatchStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { statement_id: string; actor?: string }) => d)
+  .inputValidator((d: unknown) => unmatchSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     await s.from("fin_reconciliation").delete().eq("statement_id", data.statement_id);
@@ -127,16 +132,17 @@ export const unmatchStatement = createServerFn({ method: "POST" })
   });
 
 // Adjustment: create journal entry for selisih (e.g. bank admin fee, interest)
+const adjustSchema = z.object({
+  statement_id: z.string().uuid(),
+  coa_debit: z.string().min(1).max(20),
+  coa_kredit: z.string().min(1).max(20),
+  amount: z.number().positive().finite(),
+  keterangan: z.string().min(1).max(500),
+  actor: z.string().max(200).optional(),
+});
 export const adjustStatement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    statement_id: string;
-    coa_debit: string;
-    coa_kredit: string;
-    amount: number;
-    keterangan: string;
-    actor?: string;
-  }) => d)
+  .inputValidator((d: unknown) => adjustSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await sb();
     const { data: st } = await s.from("fin_bank_statement").select("*").eq("id", data.statement_id).single();

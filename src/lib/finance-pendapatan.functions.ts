@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { writeFinAudit } from "./finance-audit.helper";
 
 const itemSchema = z.object({
   layanan_id: z.string().uuid().nullable().optional(),
@@ -30,15 +31,37 @@ const createSchema = z.object({
   pembayaran: z.array(paySchema).min(1).max(10),
 });
 
+async function assertFinanceEditor(context: { supabase: any; userId: string }) {
+  const { data: canEdit, error } = await context.supabase.rpc("fin_can_edit", { _uid: context.userId });
+  if (error) throw error;
+  if (!canEdit) throw new Error("Anda tidak berhak menjalankan aksi keuangan ini");
+}
+
+async function nextJournalNo(sb: any) {
+  const yyyymm = new Date().toISOString().slice(0, 7).replace("-", "");
+  const { data } = await sb
+    .from("fin_journal_entry")
+    .select("no_jurnal")
+    .like("no_jurnal", `JV-${yyyymm}-%`)
+    .order("no_jurnal", { ascending: false })
+    .limit(1);
+  const last = (data?.[0]?.no_jurnal as string | undefined) ?? "";
+  const n = Number(last.split("-").pop() ?? "0") || 0;
+  return `JV-${yyyymm}-${String(n + 1).padStart(4, "0")}`;
+}
+
 export type CreateInvoiceInput = z.input<typeof createSchema>;
 export const createInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: CreateInvoiceInput) => createSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertFinanceEditor(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const subtotal = data.items.reduce((a, i) => a + i.tarif * i.qty, 0);
     const pajak = Math.round((subtotal * data.pajak_persen) / 100);
     const total = subtotal + pajak;
+    const totalBayar = data.pembayaran.reduce((a, p) => a + p.jumlah, 0);
+    const status = totalBayar >= total ? "paid" : totalBayar > 0 ? "partial" : "issued";
     const no = `INV-${data.tanggal.replaceAll("-", "")}-${Date.now().toString().slice(-5)}`;
 
     const { data: inv, error: e1 } = await supabaseAdmin
@@ -53,7 +76,8 @@ export const createInvoice = createServerFn({ method: "POST" })
         kasir: data.kasir ?? null,
         catatan: data.catatan ?? null,
         subtotal, pajak, total,
-        status: "paid",
+        dibayar: totalBayar,
+        status,
       })
       .select()
       .single();
@@ -82,6 +106,52 @@ export const createInvoice = createServerFn({ method: "POST" })
     }));
     const { error: e3 } = await supabaseAdmin.from("fin_pembayaran").insert(pays);
     if (e3) throw new Error(e3.message);
+
+    // Post journal for invoice (Piutang / Pendapatan / PPN)
+    try {
+      const no_jurnal = await nextJournalNo(supabaseAdmin);
+      const { data: entry, error: je } = await (supabaseAdmin as any)
+        .from("fin_journal_entry")
+        .insert({
+          no_jurnal,
+          tanggal: data.tanggal,
+          sumber: "invoice",
+          ref_id: inv.id,
+          ref_no: no,
+          keterangan: `Invoice ${no} - ${data.patient_name ?? data.patient_code}`,
+          total,
+          status: "posted",
+        })
+        .select()
+        .single();
+      if (je) throw je;
+      const lines = [
+        { entry_id: entry.id, coa_code: "1-1300", coa_nama: "Piutang Pasien", debit: total, kredit: 0 },
+        { entry_id: entry.id, coa_code: "4-1000", coa_nama: "Pendapatan Jasa Klinik", debit: 0, kredit: subtotal },
+        ...(pajak > 0 ? [{ entry_id: entry.id, coa_code: "2-2100", coa_nama: "PPN Keluaran", debit: 0, kredit: pajak }] : []),
+      ];
+      await (supabaseAdmin as any).from("fin_journal_line").insert(lines);
+      await (supabaseAdmin as any).from("fin_invoice").update({ posted_journal_id: entry.id, posted_at: new Date().toISOString() }).eq("id", inv.id);
+    } catch (err) {
+      // Best-effort audit; journal failure surfaces on rekonsiliasi widget.
+      await writeFinAudit({
+        actor_id: context.userId,
+        action: "post_failed",
+        entity: "invoice",
+        entity_id: inv.id,
+        entity_no: no,
+        reason: err instanceof Error ? err.message : "post_journal_failed",
+      });
+    }
+
+    await writeFinAudit({
+      actor_id: context.userId,
+      action: "create",
+      entity: "invoice",
+      entity_id: inv.id,
+      entity_no: no,
+      after: { total, status, dibayar: totalBayar },
+    });
 
     return { id: inv.id, no_invoice: no, total };
   });
@@ -113,12 +183,73 @@ export const listInvoices = createServerFn({ method: "POST" })
     return { rows: rows ?? [] };
   });
 
+// Void invoice (reversal via status change + journal reversal). Hard delete is
+// forbidden — use voidInvoice from finance-tx for full reversal.
 export const deleteInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
-  .handler(async ({ data }) => {
+  .inputValidator((d: { id: string; reason?: string }) =>
+    z.object({ id: z.string().uuid(), reason: z.string().min(3).max(500).default("Dihapus dari pendapatan") }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertFinanceEditor(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("fin_invoice").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const { data: inv } = await (supabaseAdmin as any).from("fin_invoice").select("*").eq("id", data.id).single();
+    if (!inv) throw new Error("Invoice tidak ditemukan");
+
+    // Reverse posted journal entries (mirror finance-tx.voidInvoice logic)
+    const { data: entries } = await (supabaseAdmin as any)
+      .from("fin_journal_entry")
+      .select("id, no_jurnal, tanggal, keterangan")
+      .eq("sumber", "invoice")
+      .eq("ref_id", data.id)
+      .eq("status", "posted");
+    for (const e of entries ?? []) {
+      const { data: lines } = await (supabaseAdmin as any).from("fin_journal_line").select("*").eq("entry_id", e.id);
+      const no_jurnal = await nextJournalNo(supabaseAdmin);
+      const rev = (lines ?? []).map((l: any) => ({
+        coa_code: l.coa_code,
+        coa_nama: l.coa_nama,
+        debit: Number(l.kredit),
+        kredit: Number(l.debit),
+        keterangan: `Reversal: ${data.reason}`,
+      }));
+      const total = rev.reduce((a: number, l: any) => a + Number(l.debit ?? 0), 0);
+      const { data: revEntry } = await (supabaseAdmin as any)
+        .from("fin_journal_entry")
+        .insert({
+          no_jurnal,
+          tanggal: new Date().toISOString().slice(0, 10),
+          sumber: "invoice",
+          ref_id: data.id,
+          ref_no: `REV-${e.no_jurnal}`,
+          keterangan: `Reversal: ${data.reason}`,
+          total,
+          status: "posted",
+        })
+        .select()
+        .single();
+      if (revEntry) {
+        await (supabaseAdmin as any)
+          .from("fin_journal_line")
+          .insert(rev.map((r: any) => ({ ...r, entry_id: revEntry.id })));
+      }
+      await (supabaseAdmin as any).from("fin_journal_entry").update({ status: "reversed" }).eq("id", e.id);
+    }
+
+    await (supabaseAdmin as any)
+      .from("fin_invoice")
+      .update({ status: "void", void_reason: data.reason })
+      .eq("id", data.id);
+
+    await writeFinAudit({
+      actor_id: context.userId,
+      action: "void",
+      entity: "invoice",
+      entity_id: data.id,
+      entity_no: inv.no_invoice,
+      reason: data.reason,
+      before: inv,
+    });
+
     return { ok: true };
   });
