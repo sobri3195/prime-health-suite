@@ -33,23 +33,25 @@ export const updateMyProfile = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => ProfileUpdate.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const payload = {
+      user_id: userId,
+      nama: data.nama,
+      nik: data.nik || null,
+      tgl_lahir: data.tgl_lahir || null,
+      jenis_kelamin: data.jenis_kelamin || null,
+      telp: data.telp || null,
+      alamat: data.alamat || null,
+      no_bpjs: data.no_bpjs || null,
+      alergi: data.alergi || null,
+      kontak_darurat: data.kontak_darurat || null,
+      foto_url: data.foto_url || null,
+    };
+    // Upsert so first-time profile save creates the row (avoids PGRST116).
     const { data: row, error } = await supabase
       .from("apps_pasien")
-      .update({
-        nama: data.nama,
-        nik: data.nik || null,
-        tgl_lahir: data.tgl_lahir || null,
-        jenis_kelamin: data.jenis_kelamin || null,
-        telp: data.telp || null,
-        alamat: data.alamat || null,
-        no_bpjs: data.no_bpjs || null,
-        alergi: data.alergi || null,
-        kontak_darurat: data.kontak_darurat || null,
-        foto_url: data.foto_url || null,
-      })
-      .eq("user_id", userId)
+      .upsert(payload, { onConflict: "user_id" })
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw new Error(error.message);
     return { profile: row };
   });
