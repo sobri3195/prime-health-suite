@@ -307,7 +307,6 @@ export const createPayment = createServerFn({ method: "POST" })
     if (!payId) throw new Error("Gagal membuat pembayaran");
     const { data: pay, error } = await sb.from("fin_pembayaran").select("*").eq("id", payId).single();
     if (error || !pay) throw new Error(error?.message ?? "Gagal memuat pembayaran");
-    void netto;
 
     const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
     const payEntry = await postJournal({
