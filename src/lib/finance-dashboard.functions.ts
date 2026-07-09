@@ -233,27 +233,28 @@ export const getBukuBesar = createServerFn({ method: "POST" })
     const s = await sb();
     const { data: coa } = await s.from("fin_coa").select("code, name, type").order("code");
 
-    // opening balances (lines BEFORE `from`)
+    // opening balances (lines BEFORE `from`) — batasi 50k baris untuk mencegah OOM
     const opening = new Map<string, number>();
     if (data.from) {
       const { data: pre } = await s
         .from("fin_journal_line")
         .select("coa_code, debit, kredit, fin_journal_entry!inner(tanggal, status)")
         .eq("fin_journal_entry.status", "posted")
-        .lt("fin_journal_entry.tanggal", data.from);
+        .lt("fin_journal_entry.tanggal", data.from)
+        .limit(50000);
       (pre ?? []).forEach((l: any) => {
         opening.set(l.coa_code, (opening.get(l.coa_code) ?? 0) + (Number(l.debit) - Number(l.kredit)));
       });
     }
 
-    // period activity
+    // period activity — batasi juga
     let q = s
       .from("fin_journal_line")
       .select("coa_code, debit, kredit, fin_journal_entry!inner(tanggal, status)")
       .eq("fin_journal_entry.status", "posted");
     if (data.from) q = q.gte("fin_journal_entry.tanggal", data.from);
     if (data.to) q = q.lte("fin_journal_entry.tanggal", data.to);
-    const { data: lines } = await q;
+    const { data: lines } = await q.limit(50000);
 
     const acc = new Map<string, { debit: number; kredit: number }>();
     (lines ?? []).forEach((l: any) => {
