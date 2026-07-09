@@ -255,11 +255,13 @@ export const getLaporan = createServerFn({ method: "POST" })
     });
     const payers = Array.from(payerAgg.entries()).map(([name, v]) => ({ name, count: v.count, revenue: v.revenue }));
 
-    // Top 10 tindakan
-    const { data: items } = await supabase
-      .from("fin_invoice_item").select("layanan_nama, qty, subtotal, created_at")
-      .gte("created_at", from.slice(0, 10)).lte("created_at", to.slice(0, 10) + "T23:59:59")
-      .limit(2000);
+    // Top 10 tindakan — filter berdasarkan tanggal invoice (bukan created_at item)
+    const invoiceIds = (invoices ?? []).map((i: { id: string }) => i.id);
+    const { data: items } = invoiceIds.length
+      ? await supabase
+          .from("fin_invoice_item").select("layanan_nama, qty, subtotal, invoice_id")
+          .in("invoice_id", invoiceIds).limit(5000)
+      : { data: [] as Array<{ layanan_nama: string | null; qty: number; subtotal: number }> };
     const tindakanMap = new Map<string, { count: number; revenue: number }>();
     (items ?? []).forEach((it: { layanan_nama: string | null; qty: number; subtotal: number }) => {
       const name = it.layanan_nama ?? "Lainnya";
