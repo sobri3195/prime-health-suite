@@ -215,6 +215,12 @@ export const approveOvertime = createServerFn({ method: "POST" })
       .select("*").eq("id", data.id).single();
     if (getErr) throw getErr;
     if (ot.status !== "pending") throw new Error("Pengajuan sudah diproses.");
+    // Cegah self-approval: pengaju tidak boleh menyetujui/menolak pengajuannya sendiri.
+    const { data: emp } = await supabase.from("hr_employee")
+      .select("user_id").eq("id", ot.employee_id).maybeSingle();
+    if (emp?.user_id && emp.user_id === userId) {
+      throw new Error("Anda tidak dapat menyetujui pengajuan lembur Anda sendiri.");
+    }
 
     const { data: updated, error } = await supabase.from("hr_overtime")
       .update({

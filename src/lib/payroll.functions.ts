@@ -135,6 +135,10 @@ export const finalizePayrollRun = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Guard: hanya admin/manajemen yang boleh finalisasi payroll.
+    const { data: canEdit, error: rcErr } = await supabase.rpc("fin_can_edit", { _uid: userId });
+    if (rcErr) throw rcErr;
+    if (!canEdit) throw new Error("Anda tidak berhak memfinalisasi payroll");
     const { data: row, error } = await supabase.from("hr_payroll_run")
       .update({
         status: "final",

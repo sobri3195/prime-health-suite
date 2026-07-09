@@ -249,6 +249,9 @@ export const checkinBooking = createServerFn({ method: "POST" })
       if (pasienId) await sb.from("apps_booking").update({ pasien_id: pasienId }).eq("id", bk.id);
     }
     if (!pasienId) throw new Error("Pasien belum terdaftar di master pasien. Lengkapi profil pasien terlebih dulu.");
+    // Counter (loket) diturunkan dari huruf pertama fin_dokter.code (fallback "A").
+    const { data: dok } = await sb.from("fin_dokter").select("code").eq("id", bk.dokter_id).maybeSingle();
+    const counter = (dok?.code?.trim()?.[0] ?? "A").toUpperCase();
     // create visit
     const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
       pasien_id: pasienId, dokter_id: bk.dokter_id, booking_id: bk.id,
@@ -256,12 +259,12 @@ export const checkinBooking = createServerFn({ method: "POST" })
       created_by: context.userId,
     }).select("*").single();
     if (ve) throw ve;
-    // generate queue
-    const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: "A" });
+    // generate queue per-loket
+    const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: counter });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
       visit_id: visit.id, pasien_id: pasienId, dokter_id: bk.dokter_id,
-      queue_no: qn, queue_date: bk.tanggal, counter: "A", status: "waiting",
+      queue_no: qn, queue_date: bk.tanggal, counter, status: "waiting",
     }).select("*").single();
     if (qe) throw qe;
     await sb.from("apps_booking").update({ status: "checked_in" }).eq("id", bk.id);
@@ -523,17 +526,32 @@ export const dispensePrescription = createServerFn({ method: "POST" })
     const { data: pres, error } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("id", data.id).maybeSingle();
     if (error || !pres) throw error ?? new Error("Resep tidak ditemukan");
     if (pres.status === "dispensed") throw new Error("Resep sudah dibagikan");
-    // validate stock
-    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; obat_name: string; quantity: number }>) {
+    const items = (pres.klinik_prescription_item ?? []) as Array<{ obat_id: string | null; obat_name: string; quantity: number }>;
+    // Ambil stok semua obat sekaligus (single round-trip) untuk validasi.
+    const obatIds = Array.from(new Set(items.map((i) => i.obat_id).filter(Boolean))) as string[];
+    const stockMap = new Map<string, { stock: number; name: string }>();
+    if (obatIds.length) {
+      const { data: obats, error: se } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
+      if (se) throw se;
+      (obats ?? []).forEach((o: { id: string; stock: number | null; name: string }) => stockMap.set(o.id, { stock: Number(o.stock), name: o.name }));
+    }
+    // Agregasi kebutuhan per obat (obat yang sama bisa muncul >1 baris).
+    const need = new Map<string, number>();
+    for (const it of items) {
       if (!it.obat_id) continue;
-      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
-      if (!ob) continue;
-      if (Number(ob.stock) < Number(it.quantity)) {
-        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+      need.set(it.obat_id, (need.get(it.obat_id) ?? 0) + Number(it.quantity));
+    }
+    for (const [obatId, qty] of need) {
+      const s = stockMap.get(obatId);
+      if (!s) continue;
+      if (s.stock < qty) {
+        throw new Error(`Stok ${s.name} tidak cukup (tersedia ${s.stock}, dibutuhkan ${qty})`);
       }
     }
-    // movements
-    for (const it of pres.klinik_prescription_item as Array<{ obat_id: string | null; quantity: number }>) {
+    // Movements — trigger klinik_apply_stock_movement mengurangi stok per baris.
+    // Catatan: race sisa masih mungkin bila dispense paralel; untuk atomisitas penuh
+    // gunakan RPC dengan FOR UPDATE (TODO: migrasi klinik_dispense_prescription).
+    for (const it of items) {
       if (!it.obat_id) continue;
       const { error: me } = await sb.from("klinik_stock_movement").insert({
         obat_id: it.obat_id, movement_type: "out", quantity: it.quantity,
@@ -588,7 +606,7 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
         patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
-        subtotal, pajak: 0, total, status,
+        subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
       if (!ie) {
