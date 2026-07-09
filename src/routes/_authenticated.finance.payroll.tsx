@@ -198,10 +198,19 @@ function PayrollPage() {
                 </Button>
               )}
               {detail.data?.run?.status === "final" && (
-                <Button size="sm" className="gap-1" disabled={mPay.isPending}
-                  onClick={() => mPay.mutate(selectedRun)}>
-                  <Wallet className="h-4 w-4" /> Bayar & Post ke Expense
-                </Button>
+                <>
+                  <Select value={payMetode} onValueChange={(v) => setPayMetode(v as "transfer" | "cash")}>
+                    <SelectTrigger className="h-9 w-32"><SelectValue placeholder="Metode" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="transfer">Transfer</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="gap-1" disabled={mPay.isPending}
+                    onClick={() => mPay.mutate(selectedRun)}>
+                    <Wallet className="h-4 w-4" /> Bayar & Post ke Expense
+                  </Button>
+                </>
               )}
               {detail.data?.run?.status === "paid" && (
                 <Badge>Sudah Dibayar</Badge>
