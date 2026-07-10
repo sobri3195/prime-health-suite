@@ -553,7 +553,7 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
     <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); setCompare([]); }}
+        onReset={() => { url.set({ from: undefined, to: undefined, cmp: undefined }); }}
         extra={
           <div className="relative flex flex-col">
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Bandingkan Periode</label>
