@@ -374,10 +374,13 @@ export type Database = {
           catatan: string | null
           created_at: string
           id: string
+          kurir: string | null
           metode_bayar: string
           no_order: string
+          resi: string | null
           status: string
           total: number
+          tracking_url: string | null
           updated_at: string
           user_id: string
         }
@@ -386,10 +389,13 @@ export type Database = {
           catatan?: string | null
           created_at?: string
           id?: string
+          kurir?: string | null
           metode_bayar?: string
           no_order: string
+          resi?: string | null
           status?: string
           total?: number
+          tracking_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -398,10 +404,13 @@ export type Database = {
           catatan?: string | null
           created_at?: string
           id?: string
+          kurir?: string | null
           metode_bayar?: string
           no_order?: string
+          resi?: string | null
           status?: string
           total?: number
+          tracking_url?: string | null
           updated_at?: string
           user_id?: string
         }
