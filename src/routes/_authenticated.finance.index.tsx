@@ -737,7 +737,7 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
               {monthLabel(mk)} <span className="text-muted-foreground">✕</span>
             </Badge>
           ))}
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setCompare([])}>Clear Comparison</Button>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => url.set({ cmp: undefined })}>Clear Comparison</Button>
         </div>
       )}
       <div className="mb-2 text-[11px] text-muted-foreground">
