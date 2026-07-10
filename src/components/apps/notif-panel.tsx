@@ -133,15 +133,24 @@ export function NotificationsPagePatient() {
                   <span className="text-[11px] text-muted-foreground">
                     {new Date(n.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
                   </span>
-                  {n.deep_link && (
-                    <a
-                      href={n.deep_link}
-                      onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
-                      className="text-xs font-semibold text-[#6b5a16]"
-                    >
-                      {t("notif.open")} →
-                    </a>
-                  )}
+                  {(() => {
+                    // Sanitize: reject javascript:/data:/etc. to prevent XSS via crafted notif payload.
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const safe = require("@/lib/safe-url").sanitizeDeepLink(n.deep_link);
+                    if (!safe) return null;
+                    const isExternal = /^https?:/i.test(safe);
+                    return (
+                      <a
+                        href={safe}
+                        {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
+                        className="inline-flex min-h-11 items-center text-xs font-semibold text-[#6b5a16]"
+                      >
+                        {t("notif.open")} →
+                      </a>
+                    );
+                  })()}
+
                 </div>
               </div>
               <div className="flex flex-col gap-1">
