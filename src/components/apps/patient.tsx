@@ -587,20 +587,26 @@ export function PatientProfil() {
   }
 
   const updateM = useMutation({
-    mutationFn: () => callUpdate({
-      data: {
-        nama: form.nama,
-        nik: form.nik || null,
-        tgl_lahir: form.tgl_lahir || null,
-        jenis_kelamin: form.jenis_kelamin || null,
-        telp: form.telp || null,
-        alamat: form.alamat || null,
-        no_bpjs: form.no_bpjs || null,
-        alergi: form.alergi || null,
-        kontak_darurat: form.kontak_darurat || null,
-        foto_url: form.foto_url || null,
-      },
-    }),
+    mutationFn: () => {
+      if (form.nik && form.nik.length !== 16) throw new Error("NIK harus 16 digit");
+      if (form.no_bpjs && !/^\d{13}$/.test(form.no_bpjs)) throw new Error("No. BPJS harus 13 digit angka");
+      if (form.telp && !/^(\+?62|0)8\d{7,12}$/.test(form.telp.replace(/[\s-]/g, ""))) throw new Error("Nomor HP tidak valid (format 08xxxx / +628xxxx)");
+      return callUpdate({
+        data: {
+          nama: form.nama,
+          nik: form.nik || null,
+          tgl_lahir: form.tgl_lahir || null,
+          jenis_kelamin: form.jenis_kelamin || null,
+          telp: form.telp || null,
+          alamat: form.alamat || null,
+          no_bpjs: form.no_bpjs || null,
+          alergi: form.alergi || null,
+          kontak_darurat: form.kontak_darurat || null,
+          foto_url: form.foto_url || null,
+        },
+      });
+    },
+
     onSuccess: () => {
       toast.success("Profil disimpan");
       qc.invalidateQueries({ queryKey: ["apps", "profile"] });
