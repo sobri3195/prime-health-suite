@@ -266,9 +266,34 @@ export function PatientCheckout() {
                 ))}
               </div>
               {metode === "transfer" && (
-                <p className="mt-2 rounded-xl bg-[#fdf8e8] p-2 text-[11px] text-muted-foreground">
-                  {t("checkout.transfer_hint")}
-                </p>
+                <div className="mt-2 space-y-2">
+                  <p className="rounded-xl bg-[#fdf8e8] p-2 text-[11px] text-muted-foreground">
+                    {t("checkout.transfer_hint")}
+                  </p>
+                  {(banksQ.data?.accounts ?? []).length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">Rekening belum dikonfigurasi.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {(banksQ.data?.accounts ?? []).map((b) => (
+                        <div key={`${b.bank}-${b.no_rek}`} className="flex items-center justify-between rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs">
+                          <div>
+                            <div className="font-semibold">{b.bank} • {b.no_rek}</div>
+                            <div className="text-muted-foreground">a.n. {b.atas_nama}</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] px-2 py-1 hover:bg-[#fdf2c4]"
+                            onClick={async () => {
+                              try { await navigator.clipboard.writeText(b.no_rek); toast.success("No. rek disalin"); } catch { /* ignore */ }
+                            }}
+                          >
+                            <Copy className="h-3 w-3" /> Salin
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
