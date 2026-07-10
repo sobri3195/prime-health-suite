@@ -21,6 +21,7 @@ export function PatientPrivasi() {
   const callExport = useServerFn(exportMyData);
   const callDelete = useServerFn(requestAccountDeletion);
   const callConsent = useServerFn(acceptConsent);
+  const callRevoke = useServerFn(revokeMarketingConsent);
   const callProfile = useServerFn(getMyProfile);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
@@ -31,6 +32,7 @@ export function PatientPrivasi() {
 
   const p = profileQ.data?.profile;
   const consentAt = p?.consent_privacy_at as string | null | undefined;
+  const marketingAt = p?.consent_marketing_at as string | null | undefined;
 
   const actionLabel = (a: string) => {
     const k = `priv.action.${a}`;
