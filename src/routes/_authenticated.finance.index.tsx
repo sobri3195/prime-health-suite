@@ -316,9 +316,22 @@ function FinanceDashboard() {
       {/* AR Aging + AP Aging + Recent Activities + Finance Alerts */}
       <AgingActivitiesAlerts rows={filtered} outstanding={outstanding} hutang={hutang} recentActivities={recentActivities} alerts={alerts} />
 
-
       {/* unused placeholder */}
       <input type="hidden" value={PiggyBank.displayName ?? ""} />
+
+      {/* Scroll-to-top FAB */}
+      {showTop && (
+        <Button
+          size="icon"
+          variant="secondary"
+          aria-label="Kembali ke atas"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="no-print fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full border border-border shadow-lg"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
+
     </div>
   );
 }
