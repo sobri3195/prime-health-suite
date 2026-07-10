@@ -1,6 +1,6 @@
 import { pageHead } from "@/lib/page-head";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -439,6 +439,27 @@ function AgingBars({ data, tone }: { data: { bucket: string; amount: number; cou
 
 /* ------------------ filterable cards (parity with prime-simon) ------------------ */
 
+function useUrlState(prefix: string) {
+  const navigate = useNavigate();
+  const search = useRouterState({ select: (s) => s.location.search as Record<string, string | undefined> });
+  const get = useCallback((k: string) => search[`${prefix}_${k}`] ?? "", [search, prefix]);
+  const set = useCallback((patch: Record<string, string | string[] | undefined>) => {
+    navigate({
+      to: ".", replace: true,
+      search: ((prev: Record<string, unknown> = {}) => {
+        const next = { ...prev } as Record<string, unknown>;
+        for (const [k, v] of Object.entries(patch)) {
+          const key = `${prefix}_${k}`;
+          if (v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) delete next[key];
+          else next[key] = Array.isArray(v) ? v.join(",") : v;
+        }
+        return next;
+      }) as never,
+    });
+  }, [navigate, prefix]);
+  return { get, set };
+}
+
 function dateRange<T extends Invoice>(rows: T[], from: string, to: string): T[] {
   return rows.filter((r) => {
     if (from && r.date < from) return false;
@@ -488,9 +509,12 @@ function monthRange(key: string) {
 }
 
 function PayerCard({ rows }: { rows: Invoice[] }) {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [compare, setCompare] = useState<string[]>([]);
+  const url = useUrlState("pc");
+  const from = url.get("from");
+  const to = url.get("to");
+  const compare = useMemo(() => (url.get("cmp") ? url.get("cmp").split(",").filter(Boolean) : []), [url]);
+  const setFrom = (v: string) => url.set({ from: v });
+  const setTo = (v: string) => url.set({ to: v });
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const availableMonths = useMemo(() => {
@@ -520,7 +544,8 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
   }, [compareData]);
 
   const toggleCompare = (mk: string) => {
-    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    const next = compare.includes(mk) ? compare.filter((x) => x !== mk) : [...compare, mk].sort();
+    url.set({ cmp: next });
     setPickerOpen(false);
   };
 
@@ -528,7 +553,7 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
     <Card title="Pendapatan by Payer" subtitle="Distribusi pendapatan berdasarkan payer/asuransi">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); setCompare([]); }}
+        onReset={() => { url.set({ from: undefined, to: undefined, cmp: undefined }); }}
         extra={
           <div className="relative flex flex-col">
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Bandingkan Periode</label>
@@ -557,7 +582,7 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
               {monthLabel(mk)} <span className="text-muted-foreground">✕</span>
             </Badge>
           ))}
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setCompare([])}>Clear Comparison</Button>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => url.set({ cmp: undefined })}>Clear Comparison</Button>
         </div>
       )}
 
@@ -644,11 +669,15 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
 }
 
 function TopDokterCard({ rows }: { rows: Invoice[] }) {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [payer, setPayer] = useState<Payer | "all">("all");
-  const [compare, setCompare] = useState<string[]>([]);
+  const url = useUrlState("td");
+  const from = url.get("from");
+  const to = url.get("to");
+  const payer = (url.get("payer") || "all") as Payer | "all";
+  const compare = useMemo(() => (url.get("cmp") ? url.get("cmp").split(",").filter(Boolean) : []), [url]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const setFrom = (v: string) => url.set({ from: v });
+  const setTo = (v: string) => url.set({ to: v });
+  const setPayer = (v: Payer | "all") => url.set({ payer: v === "all" ? undefined : v });
 
   const availableMonths = useMemo(() => Array.from(new Set(rows.map((r) => monthKey(r.date)))).sort().reverse(), [rows]);
   const filtered = useMemo(() => dateRange(rows, from, to).filter((r) => payer === "all" || r.payer === payer), [rows, from, to, payer]);
@@ -662,7 +691,8 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
   }), [rows, compare, payer]);
 
   const toggleCompare = (mk: string) => {
-    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    const next = compare.includes(mk) ? compare.filter((x) => x !== mk) : [...compare, mk].sort();
+    url.set({ cmp: next });
     setPickerOpen(false);
   };
 
@@ -670,7 +700,7 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
     <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); setPayer("all"); setCompare([]); }}
+        onReset={() => { url.set({ from: undefined, to: undefined, payer: undefined, cmp: undefined }); }}
         extra={
           <>
             <div className="flex flex-col">
@@ -707,7 +737,7 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
               {monthLabel(mk)} <span className="text-muted-foreground">✕</span>
             </Badge>
           ))}
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setCompare([])}>Clear Comparison</Button>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => url.set({ cmp: undefined })}>Clear Comparison</Button>
         </div>
       )}
       <div className="mb-2 text-[11px] text-muted-foreground">
