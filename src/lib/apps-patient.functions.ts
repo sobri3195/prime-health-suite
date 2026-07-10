@@ -138,33 +138,28 @@ export const rescheduleBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => RescheduleInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const today = new Date().toISOString().slice(0, 10);
-    if (data.tanggal < today) throw new Error("Tanggal baru tidak boleh di masa lalu");
-    const { data: row, error } = await supabase
-      .from("apps_booking")
-      .update({ tanggal: data.tanggal, jam_slot: data.jam_slot, status: "pending" })
-      .eq("id", data.id)
-      .eq("user_id", userId)
-      .in("status", ["pending", "confirmed"])
-      .select()
-      .maybeSingle();
-    if (error) {
-      if (error.code === "23505") throw new Error("Slot baru sudah diambil. Pilih slot lain.");
-      throw new Error(error.message);
-    }
+    const { supabase } = context;
+    const { data: rows, error } = await supabase.rpc("apps_reschedule_booking_locked", {
+      _id: data.id, _tanggal: data.tanggal, _jam_slot: data.jam_slot,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
     if (!row) throw new Error("Booking tidak ditemukan atau sudah selesai");
     return { booking: row };
   });
 
+const CancelInput = z.object({
+  id: z.string().uuid(),
+  alasan: z.string().trim().max(500).optional(),
+});
 export const cancelBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => CancelInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: rows, error } = await supabase
       .from("apps_booking")
-      .update({ status: "cancelled" })
+      .update({ status: "cancelled", cancel_reason: data.alasan ?? null })
       .eq("id", data.id)
       .eq("user_id", userId)
       .in("status", ["pending", "confirmed"])
@@ -173,7 +168,6 @@ export const cancelBooking = createServerFn({ method: "POST" })
     if (!rows || rows.length === 0) {
       throw new Error("Booking tidak bisa dibatalkan karena sudah check-in / dipanggil / selesai.");
     }
-    // Bersihkan notifikasi reminder yang belum dibaca untuk slot ini
     const b = rows[0] as { tanggal: string; jam_slot: string };
     await supabase
       .from("apps_notif")
@@ -183,6 +177,7 @@ export const cancelBooking = createServerFn({ method: "POST" })
       .like("body", `%${b.jam_slot}%`);
     return { ok: true };
   });
+
 
 export const getMyQueueToday = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
