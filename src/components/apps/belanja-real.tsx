@@ -202,7 +202,9 @@ export function PatientCheckout() {
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
   const callCheckout = useServerFn(checkoutCart);
+  const callBanks = useServerFn(listBankAccounts);
   const cartQ = useQuery({ queryKey: ["apps", "cart"], queryFn: () => callCart() });
+  const banksQ = useQuery({ queryKey: ["apps", "bank-accounts"], queryFn: () => callBanks() });
   const [alamat, setAlamat] = useState("");
   const [catatan, setCatatan] = useState("");
   const [metode, setMetode] = useState<"transfer" | "cod">("transfer");
