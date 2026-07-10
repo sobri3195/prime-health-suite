@@ -83,7 +83,7 @@ export const createInvoice = createServerFn({ method: "POST" })
       .single();
     if (e1) throw new Error(e1.message);
 
-    const items = data.items.map((i) => ({
+    const items = data.items.map((i: z.infer<typeof itemSchema>) => ({
       invoice_id: inv.id,
       layanan_id: i.layanan_id ?? null,
       layanan_nama: i.layanan_nama,
