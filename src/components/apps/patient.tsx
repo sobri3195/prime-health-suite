@@ -644,15 +644,25 @@ export function PatientProfil() {
   });
 
   async function changePassword() {
+    if (!pwd.cur) return toast.error("Masukkan password saat ini");
     if (pwd.p1.length < 8) return toast.error("Password minimal 8 karakter");
+    if (!/[A-Za-z]/.test(pwd.p1) || !/\d/.test(pwd.p1)) return toast.error("Password harus mengandung huruf dan angka");
+    if (pwd.p1 === pwd.cur) return toast.error("Password baru harus berbeda dari yang lama");
     if (pwd.p1 !== pwd.p2) return toast.error("Konfirmasi password tidak cocok");
     setPwdLoading(true);
+    // Re-authenticate with current password before allowing change
+    const { data: userData } = await supabase.auth.getUser();
+    const email = userData.user?.email;
+    if (!email) { setPwdLoading(false); return toast.error("Sesi tidak valid, silakan login ulang"); }
+    const { error: reauthErr } = await supabase.auth.signInWithPassword({ email, password: pwd.cur });
+    if (reauthErr) { setPwdLoading(false); return toast.error("Password saat ini salah"); }
     const { error } = await supabase.auth.updateUser({ password: pwd.p1 });
     setPwdLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Password berhasil diubah");
-    setPwd({ p1: "", p2: "" });
+    setPwd({ cur: "", p1: "", p2: "" });
   }
+
 
   async function handleLogout() {
     await qc.cancelQueries();
