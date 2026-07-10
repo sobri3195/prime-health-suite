@@ -171,7 +171,49 @@ export const getFinanceDashboard = createServerFn({ method: "POST" })
       text: `Saldo kas/bank negatif (Rp ${bankBalance.toLocaleString("id-ID")}). Cek jurnal.`,
     });
 
-    return { invoices, monthlyTrend, expenseMTD, expenseAll: expenseMTD + hutang, bankBalance, hutang, anomalies };
+    // ===== Recent activities (mixed feed: pembayaran + invoice terbaru) =====
+    const [{ data: recPay }, { data: recInv }] = await Promise.all([
+      s.from("fin_pembayaran")
+        .select("id, tanggal, jumlah, metode, invoice_id, fin_invoice(no_invoice, patient_name)")
+        .neq("status", "void").order("tanggal", { ascending: false }).limit(5),
+      s.from("fin_invoice")
+        .select("id, no_invoice, tanggal, total, patient_name, dokter_id, fin_dokter(name)")
+        .neq("status", "void").order("tanggal", { ascending: false }).limit(5),
+    ]);
+    const recentActivities = [
+      ...((recPay ?? []) as any[]).map((p: any) => ({
+        id: `pay-${p.id}`,
+        kind: "payment" as const,
+        ref: p.fin_invoice?.no_invoice ?? String(p.id).slice(0, 8),
+        subject: p.fin_invoice?.patient_name ?? "—",
+        note: `Pembayaran ${p.metode ?? ""}`.trim(),
+        amount: Number(p.jumlah) || 0,
+        date: p.tanggal as string,
+      })),
+      ...((recInv ?? []) as any[]).map((i: any) => ({
+        id: `inv-${i.id}`,
+        kind: "invoice" as const,
+        ref: i.no_invoice as string,
+        subject: (i.patient_name ?? "—") as string,
+        note: i.fin_dokter?.name ? `Dokter ${i.fin_dokter.name}` : "Invoice baru",
+        amount: Number(i.total) || 0,
+        date: i.tanggal as string,
+      })),
+    ].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
+
+    // ===== Finance alerts (piutang JT, hutang JT vendor unik, unreconciled) =====
+    const overdueCount = overdue.length;
+    const overdueTotal = overdue.reduce((a, r) => a + (r.total - r.paid), 0);
+    const apDraft = expenses.filter((e: any) => (e.status ?? "") === "draft");
+    const apVendors = new Set(apDraft.map((e: any) => e.vendor_id ?? e.fin_vendor?.name ?? "?")).size;
+    let unreconciledCount = 0;
+    try {
+      const { count } = await s.from("fin_reconciliation").select("id", { count: "exact", head: true }).eq("matched", false);
+      unreconciledCount = count ?? 0;
+    } catch { /* table may not exist */ }
+    const alerts = { overdueCount, overdueTotal, apVendors, apTotal: hutang, unreconciledCount };
+
+    return { invoices, monthlyTrend, expenseMTD, expenseAll: expenseMTD + hutang, bankBalance, hutang, anomalies, recentActivities, alerts };
   });
 
 // ============ HONOR REKAP (per dokter) ============
