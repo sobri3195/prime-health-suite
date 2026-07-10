@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function TooltipProvider({ children }: { children: React.ReactNode }) {
+function TooltipProvider({ children }: { children: React.ReactNode; delayDuration?: number }) {
   return <>{children}</>;
 }
 
