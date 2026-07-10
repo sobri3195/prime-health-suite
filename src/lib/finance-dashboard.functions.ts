@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFinView } from "./finance-guard";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -78,7 +78,7 @@ async function fetchInvoices(from?: string, to?: string): Promise<LiveInvoice[]>
 
 // ============ DASHBOARD (live) ============
 export const getFinanceDashboard = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -139,12 +139,17 @@ export const getFinanceDashboard = createServerFn({ method: "POST" })
       target: Math.round(v.revenue * 1.1) || 50_000_000,
     }));
 
-    // Bank balance = sum of journal lines for cash/bank COA (1100/1110/1120) net debit
-    const { data: bankLines } = await s
-      .from("fin_journal_line")
-      .select("coa_code, debit, kredit, fin_journal_entry!inner(status)")
-      .eq("fin_journal_entry.status", "posted")
-      .in("coa_code", ["1100", "1110", "1120"]);
+    // Bank balance = sum of journal lines for cash/bank COA (resolved dynamically)
+    const { data: cashCoa } = await s.from("fin_coa").select("code, name, type, cash_flow_section");
+    const cashCodes = (cashCoa ?? [])
+      .filter((c: any) => c.type === "Asset" && (/^(kas|bank)/i.test(String(c.name ?? "")) || String(c.cash_flow_section ?? "").toLowerCase() === "cash"))
+      .map((c: any) => c.code as string);
+    const { data: bankLines } = cashCodes.length
+      ? await s.from("fin_journal_line")
+          .select("coa_code, debit, kredit, fin_journal_entry!inner(status)")
+          .eq("fin_journal_entry.status", "posted")
+          .in("coa_code", cashCodes)
+      : { data: [] as any[] };
     const bankBalance = (bankLines ?? []).reduce(
       (a: number, l: any) => a + (Number(l.debit) - Number(l.kredit)), 0,
     );
@@ -171,7 +176,7 @@ export const getFinanceDashboard = createServerFn({ method: "POST" })
 
 // ============ HONOR REKAP (per dokter) ============
 export const getHonorRekap = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const invoices = await fetchInvoices(data.from, data.to);
@@ -194,7 +199,7 @@ export const getHonorRekap = createServerFn({ method: "POST" })
 
 // ============ REPORT HIGHLIGHT ============
 export const getReportHighlight = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const invoices = await fetchInvoices(data.from, data.to);
@@ -227,7 +232,7 @@ export const getReportHighlight = createServerFn({ method: "POST" })
 
 // ============ BUKU BESAR (per akun: opening, debit, credit, closing) ============
 export const getBukuBesar = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
@@ -285,7 +290,7 @@ export const getBukuBesar = createServerFn({ method: "POST" })
 
 // ============ Master snapshot (all reference tables) ============
 export const getMasterSnapshot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .handler(async () => {
     const s = await sb();
     const [payers, vendors, coa, taxes, costCenters, kategori] = await Promise.all([
@@ -308,7 +313,7 @@ export const getMasterSnapshot = createServerFn({ method: "POST" })
 
 // ============ PAJAK rekap bulanan (PPN out/in + PPh 21 dokter, 1 tahun) ============
 export const getPajakRekap = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: { year: number }) => d)
   .handler(async ({ data }) => {
     const s = await sb();
