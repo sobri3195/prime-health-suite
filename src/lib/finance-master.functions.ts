@@ -39,6 +39,39 @@ export const listFinMaster = createServerFn({ method: "POST" })
     return { rows: rows ?? [] };
   });
 
+// Per-table allowlist of writable columns. Anything not listed is stripped
+// before insert/update to prevent clients writing sensitive/system columns
+// (e.g. user_id, created_by, posted_journal_id, saldo, stok komputasi, dsb).
+const ALLOWED_COLS: Record<FinTable, readonly string[]> = {
+  fin_coa: ["code", "name", "type", "parent_code", "cash_flow_section", "is_active", "note"],
+  fin_cost_center: ["code", "name", "description", "is_active"],
+  fin_dokter: ["code", "name", "spesialisasi", "default_fee_pct", "schedule_note", "is_active", "user_id"],
+  fin_karyawan: ["code", "name", "jabatan", "departemen", "gaji_pokok", "is_active"],
+  fin_payer: ["code", "name", "type", "contact", "npwp", "is_active"],
+  fin_vendor: ["code", "name", "npwp", "contact", "alamat", "is_active"],
+  fin_kategori_layanan: ["code", "name", "coa_pendapatan", "is_active"],
+  fin_layanan: ["code", "name", "kategori_id", "harga", "coa_pendapatan", "is_active"],
+  fin_tarif_pajak: ["code", "name", "rate", "coa_hutang", "is_active", "note"],
+  fin_profil_klinik: ["nama", "alamat", "telepon", "email", "npwp", "logo_url", "kop_surat", "tagline"],
+  fin_persediaan: ["kode", "nama", "kategori", "satuan", "harga_beli", "harga_jual", "min_stok", "is_active"],
+  fin_persediaan_mutasi: ["persediaan_id", "tanggal", "tipe", "qty", "harga", "ref_no", "keterangan"],
+  fin_aset: ["kode", "nama", "kategori", "tanggal_perolehan", "harga_perolehan", "umur_ekonomis_bulan", "metode_penyusutan", "nilai_residu", "lokasi", "is_active", "note"],
+  fin_aset_penyusutan: ["aset_id", "periode", "beban_bulan", "akumulasi", "nilai_buku"],
+  fin_kas_kecil: ["tanggal", "no_voucher", "tipe", "amount", "coa_lawan", "penerima", "keterangan", "status"],
+  fin_bukti_setor: ["tanggal", "no_setor", "amount", "bank_coa", "kas_coa", "ref_bank", "keterangan", "status"],
+  fin_surat_tagih: ["tanggal", "no_surat", "invoice_id", "payer_id", "patient_code", "patient_name", "jumlah", "jatuh_tempo", "status", "keterangan"],
+  fin_rab: ["tahun", "kategori", "coa_code", "cost_center_code", "bulan", "anggaran", "note"],
+};
+
+function pickAllowed(table: FinTable, row: Record<string, unknown>) {
+  const cols = new Set(ALLOWED_COLS[table] ?? []);
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (cols.has(k)) out[k] = v;
+  }
+  return out;
+}
+
 export const upsertFinMaster = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { table: FinTable; row: Record<string, unknown>; id?: string }) => ({
@@ -48,8 +81,10 @@ export const upsertFinMaster = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // strip system fields
-    const { id: _i, created_at: _c, updated_at: _u, ...payload } = data.row as Record<string, unknown>;
+    const payload = pickAllowed(data.table, data.row);
+    if (Object.keys(payload).length === 0) {
+      throw new Error("Tidak ada kolom valid untuk disimpan");
+    }
     const tbl = supabaseAdmin.from(data.table) as any;
     if (data.id) {
       const { data: row, error } = await tbl.update(payload).eq("id", data.id).select().single();
