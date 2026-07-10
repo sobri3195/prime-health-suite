@@ -34,12 +34,27 @@ function FinanceDashboard() {
   const navigate = useNavigate();
   const { from, to, label: period } = useFinanceDate();
   const [globalQ, setGlobalQ] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const call = useServerFn(getFinanceDashboard);
   const q = useQuery({
     queryKey: ["fin", "dashboard", from, to],
     queryFn: () => call({ data: { from, to } }),
   });
+
+  // Batch 4 polish: keyboard shortcuts — "/" to focus search, "p" to print
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const editable = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (editable) return;
+      if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key.toLowerCase() === "p" && (e.metaKey || e.ctrlKey)) { /* leave native */ }
+      else if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); window.print(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const invoices = (q.data?.invoices ?? []) as unknown as Invoice[];
   const monthlyTrend = q.data?.monthlyTrend ?? [];
