@@ -104,3 +104,18 @@
   }
   h1, h2, h3, h4 { letter-spacing: -0.02em; }
 }
+
+/* Print-friendly styles for Finance reports (Batch 4 polish) */
+@media print {
+  @page { margin: 12mm; size: A4; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .no-print, aside, [data-sidebar], .sonner-toaster { display: none !important; }
+  a[href]:after { content: "" !important; }
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+  main, [role="main"] { padding: 0 !important; margin: 0 !important; }
+  [class*="bg-gradient"] { background: #fff !important; }
+  .border { border-color: #d4d4d8 !important; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  h1, h2, h3 { page-break-after: avoid; }
+}

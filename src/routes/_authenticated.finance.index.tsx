@@ -1,8 +1,9 @@
 import { pageHead } from "@/lib/page-head";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +34,27 @@ function FinanceDashboard() {
   const navigate = useNavigate();
   const { from, to, label: period } = useFinanceDate();
   const [globalQ, setGlobalQ] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const call = useServerFn(getFinanceDashboard);
   const q = useQuery({
     queryKey: ["fin", "dashboard", from, to],
     queryFn: () => call({ data: { from, to } }),
   });
+
+  // Batch 4 polish: keyboard shortcuts — "/" to focus search, "p" to print
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const editable = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (editable) return;
+      if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key.toLowerCase() === "p" && (e.metaKey || e.ctrlKey)) { /* leave native */ }
+      else if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); window.print(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const invoices = (q.data?.invoices ?? []) as unknown as Invoice[];
   const monthlyTrend = q.data?.monthlyTrend ?? [];
@@ -67,10 +83,29 @@ function FinanceDashboard() {
   const topDokter = topBy(filtered, "doctor", 10);
   const insights = generateInsights(filtered, monthlyTrend);
 
+  if (q.isLoading) {
+    return (
+      <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-9 w-80" />
+        </div>
+        <Skeleton className="mb-6 h-40 w-full rounded-2xl" />
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Skeleton className="h-80 rounded-2xl lg:col-span-2" />
+          <Skeleton className="h-80 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
       {/* Top action bar */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
             <Calendar className="mr-1.5 h-3 w-3" /> Periode aktif: {period}
@@ -83,9 +118,10 @@ function FinanceDashboard() {
           <div className="relative w-full max-w-xs">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
+              ref={searchRef}
               value={globalQ}
               onChange={(e) => setGlobalQ(e.target.value)}
-              placeholder="Cari global..."
+              placeholder='Cari global... (tekan "/")'
               className="h-9 pl-8"
               onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
             />
