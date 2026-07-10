@@ -72,45 +72,70 @@ export const getCashFlow = createServerFn({ method: "POST" })
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
   .handler(async ({ data }) => {
     const s = await sb();
-    const cashCodes = ["1100", "1110", "1120"];
-    // Narrow to entries that actually touch cash via inner join on lines (SQL EXISTS-like).
+    // Resolve cash/bank COA dynamically from chart of accounts (Asset + name like kas/bank).
+    const { data: coa } = await s.from("fin_coa").select("code, name, type, cash_flow_section");
+    const cashCodes = (coa ?? [])
+      .filter((c: any) =>
+        c.type === "Asset" &&
+        (/^(kas|bank)/i.test(String(c.name ?? "")) ||
+         String(c.cash_flow_section ?? "").toLowerCase() === "cash"),
+      )
+      .map((c: any) => c.code as string);
+    if (!cashCodes.length) {
+      return { sections: { operating: 0, investing: 0, financing: 0 }, details: [], opening: 0, closing: 0, net: 0, cashCodes: [] };
+    }
+    const coaMap = new Map((coa ?? []).map((c: any) => [c.code, c]));
+    const cashSet = new Set(cashCodes);
+
+    // Opening balance = net (debit - kredit) on cash accounts BEFORE `from`.
+    let opening = 0;
+    if (data.from) {
+      const { data: pre } = await s
+        .from("fin_journal_line")
+        .select("coa_code, debit, kredit, fin_journal_entry!inner(status, tanggal)")
+        .eq("fin_journal_entry.status", "posted")
+        .lt("fin_journal_entry.tanggal", data.from)
+        .in("coa_code", cashCodes)
+        .limit(50000);
+      opening = (pre ?? []).reduce((a: number, l: any) => a + (Number(l.debit) - Number(l.kredit)), 0);
+    }
+
+    // Entries in period that touch cash — fetch ids first via inner join, then full lines.
     let q = s.from("fin_journal_entry")
-      .select("id, no_jurnal, tanggal, sumber, keterangan, fin_journal_line!inner(coa_code, debit, kredit)")
+      .select("id, fin_journal_line!inner(coa_code)")
       .eq("status", "posted")
       .in("fin_journal_line.coa_code", cashCodes);
     if (data.from) q = q.gte("tanggal", data.from);
     if (data.to) q = q.lte("tanggal", data.to);
     const { data: cashEntries } = await q.limit(5000);
-    // Re-fetch full lines (inner join above filtered them) for counter accounts.
     const ids = (cashEntries ?? []).map((e: any) => e.id);
     const { data: entries } = ids.length
       ? await s.from("fin_journal_entry")
           .select("id, no_jurnal, tanggal, sumber, keterangan, fin_journal_line(coa_code, debit, kredit)")
           .in("id", ids)
       : { data: [] as any[] };
-    const cashSet = new Set(cashCodes);
-    const { data: coa } = await s.from("fin_coa").select("code, type, cash_flow_section");
-    const coaMap = new Map((coa ?? []).map((c: any) => [c.code, c]));
 
     const sections = { operating: 0, investing: 0, financing: 0 };
     const details: any[] = [];
-    let opening = 0, closing = 0;
+    let net = 0;
 
     for (const e of entries ?? []) {
       const cashLines = (e.fin_journal_line ?? []).filter((l: any) => cashSet.has(l.coa_code));
       if (!cashLines.length) continue;
       const cashDelta = cashLines.reduce((a: number, l: any) => a + (Number(l.debit) - Number(l.kredit)), 0);
       const counter = (e.fin_journal_line ?? []).find((l: any) => !cashSet.has(l.coa_code));
-      const section = (counter ? (coaMap.get(counter.coa_code) as any)?.cash_flow_section : null) || "operating";
-      (sections as any)[section] += cashDelta;
-      closing += cashDelta;
+      const rawSection = (counter ? (coaMap.get(counter.coa_code) as any)?.cash_flow_section : null) || "operating";
+      const sec = (["operating","investing","financing"].includes(rawSection) ? rawSection : "operating") as "operating"|"investing"|"financing";
+      sections[sec] += cashDelta;
+      net += cashDelta;
       details.push({
         entry_id: e.id,
         tanggal: e.tanggal, no_jurnal: e.no_jurnal, sumber: e.sumber,
-        keterangan: e.keterangan, section, amount: cashDelta,
+        keterangan: e.keterangan, section: sec, amount: cashDelta,
       });
     }
-    return { sections, details, opening, closing, net: closing - opening };
+    const closing = opening + net;
+    return { sections, details, opening, closing, net, cashCodes };
   });
 
 // ============ BALANCE SHEET (snapshot) ============
