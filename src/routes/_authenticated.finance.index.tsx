@@ -439,6 +439,27 @@ function AgingBars({ data, tone }: { data: { bucket: string; amount: number; cou
 
 /* ------------------ filterable cards (parity with prime-simon) ------------------ */
 
+function useUrlState(prefix: string) {
+  const navigate = useNavigate();
+  const search = useRouterState({ select: (s) => s.location.search as Record<string, string | undefined> });
+  const get = useCallback((k: string) => search[`${prefix}_${k}`] ?? "", [search, prefix]);
+  const set = useCallback((patch: Record<string, string | string[] | undefined>) => {
+    navigate({
+      to: ".", replace: true,
+      search: ((prev: Record<string, unknown> = {}) => {
+        const next = { ...prev } as Record<string, unknown>;
+        for (const [k, v] of Object.entries(patch)) {
+          const key = `${prefix}_${k}`;
+          if (v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) delete next[key];
+          else next[key] = Array.isArray(v) ? v.join(",") : v;
+        }
+        return next;
+      }) as never,
+    });
+  }, [navigate, prefix]);
+  return { get, set };
+}
+
 function dateRange<T extends Invoice>(rows: T[], from: string, to: string): T[] {
   return rows.filter((r) => {
     if (from && r.date < from) return false;
