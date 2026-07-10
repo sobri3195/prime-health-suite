@@ -194,17 +194,23 @@ function FinanceDashboard() {
 
         <Card title="Quick Actions" subtitle="Aksi operasional finance yang paling sering dipakai.">
           <div className="space-y-2">
-            <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate({ to: "/finance/pendapatan" })}>
+            <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate({ to: "/finance/pendapatan-input-harian" })}>
               <Plus className="mr-2 h-4 w-4" /> Input Pendapatan
             </Button>
             <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher-bkk" })}>
-              <FileText className="mr-2 h-4 w-4" /> Buat Voucher
+              <FileText className="mr-2 h-4 w-4" /> Buat Voucher BKK
             </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/master" })}>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher-bbk" })}>
+              <FileText className="mr-2 h-4 w-4" /> Buat Voucher BBK
+            </Button>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/master/vendor" })}>
               <UserPlus className="mr-2 h-4 w-4" /> Tambah Vendor
             </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => toast.success("Export laporan diunduh")}>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/laporan" })}>
               <Download className="mr-2 h-4 w-4" /> Export Laporan
+            </Button>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/rekonsiliasi" })}>
+              <ShieldCheck className="mr-2 h-4 w-4" /> Rekonsiliasi Bank
             </Button>
           </div>
         </Card>
