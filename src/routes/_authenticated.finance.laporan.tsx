@@ -30,8 +30,9 @@ export const Route = createFileRoute("/_authenticated/finance/laporan")({
 function LaporanPage() {
   const { tab, page } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const setTab = (v: string) => navigate({ search: (p) => ({ ...p, tab: v, page: 1 }) });
-  const setPage = (fn: (n: number) => number) => navigate({ search: (p) => ({ ...p, page: Math.max(1, fn(p.page ?? 1)) }) });
+  const setTab = (v: string) => navigate({ search: (p: { tab: string; page: number }) => ({ ...p, tab: v, page: 1 }) });
+  const setPage = (fn: (n: number) => number) => navigate({ search: (p: { tab: string; page: number }) => ({ ...p, page: Math.max(1, fn(p.page ?? 1)) }) });
+
   const { from, to, label } = useFinanceDate();
   const year = new Date(from || new Date().toISOString()).getFullYear();
 
