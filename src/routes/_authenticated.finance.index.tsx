@@ -669,11 +669,15 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
 }
 
 function TopDokterCard({ rows }: { rows: Invoice[] }) {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [payer, setPayer] = useState<Payer | "all">("all");
-  const [compare, setCompare] = useState<string[]>([]);
+  const url = useUrlState("td");
+  const from = url.get("from");
+  const to = url.get("to");
+  const payer = (url.get("payer") || "all") as Payer | "all";
+  const compare = useMemo(() => (url.get("cmp") ? url.get("cmp").split(",").filter(Boolean) : []), [url]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const setFrom = (v: string) => url.set({ from: v });
+  const setTo = (v: string) => url.set({ to: v });
+  const setPayer = (v: Payer | "all") => url.set({ payer: v === "all" ? undefined : v });
 
   const availableMonths = useMemo(() => Array.from(new Set(rows.map((r) => monthKey(r.date)))).sort().reverse(), [rows]);
   const filtered = useMemo(() => dateRange(rows, from, to).filter((r) => payer === "all" || r.payer === payer), [rows, from, to, payer]);
@@ -687,7 +691,8 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
   }), [rows, compare, payer]);
 
   const toggleCompare = (mk: string) => {
-    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    const next = compare.includes(mk) ? compare.filter((x) => x !== mk) : [...compare, mk].sort();
+    url.set({ cmp: next });
     setPickerOpen(false);
   };
 
