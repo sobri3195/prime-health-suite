@@ -3,11 +3,6 @@ import { z } from "zod";
 import { writeFinAudit } from "./finance-audit.helper";
 import { requireFinView, requireFinEdit } from "./finance-guard";
 
-async function sb() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin as any;
-}
-
 // ============ TEMPLATE INVOICE ============
 const invItemSchema = z.object({
   layanan_id: z.string().uuid().nullable().optional(),
@@ -17,7 +12,8 @@ const invItemSchema = z.object({
 });
 
 export const listTplInvoice = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
-  const s = await sb();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const s = supabaseAdmin as any;
   const { data: rows } = await s.from("fin_template_invoice").select("*").order("nama");
   const { data: items } = await s.from("fin_template_invoice_item").select("*");
   return { rows: rows ?? [], items: items ?? [] };
@@ -38,7 +34,8 @@ export const upsertTplInvoice = createServerFn({ method: "POST" })
     actor?: string;
   }) => ({ ...d, items: z.array(invItemSchema).parse(d.items ?? []) }))
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     let row: any;
     if (data.id) {
       const before = (await s.from("fin_template_invoice").select("*").eq("id", data.id).single()).data;
@@ -72,7 +69,8 @@ export const deleteTplInvoice = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     const before = (await s.from("fin_template_invoice").select("*").eq("id", data.id).single()).data;
     await s.from("fin_template_invoice").delete().eq("id", data.id);
     await writeFinAudit({ actor_email: data.actor, action: "delete", entity: "template_invoice", entity_id: data.id, entity_no: before?.nama, before });
@@ -88,7 +86,8 @@ const vchItemSchema = z.object({
 });
 
 export const listTplVoucher = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
-  const s = await sb();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const s = supabaseAdmin as any;
   const { data: rows } = await s.from("fin_template_voucher").select("*").order("nama");
   const { data: items } = await s.from("fin_template_voucher_item").select("*");
   return { rows: rows ?? [], items: items ?? [] };
@@ -110,7 +109,8 @@ export const upsertTplVoucher = createServerFn({ method: "POST" })
     actor?: string;
   }) => ({ ...d, items: z.array(vchItemSchema).parse(d.items ?? []) }))
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     let row: any;
     if (data.id) {
       const before = (await s.from("fin_template_voucher").select("*").eq("id", data.id).single()).data;
@@ -144,7 +144,8 @@ export const deleteTplVoucher = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     const before = (await s.from("fin_template_voucher").select("*").eq("id", data.id).single()).data;
     await s.from("fin_template_voucher").delete().eq("id", data.id);
     await writeFinAudit({ actor_email: data.actor, action: "delete", entity: "template_voucher", entity_id: data.id, entity_no: before?.nama, before });
@@ -153,7 +154,8 @@ export const deleteTplVoucher = createServerFn({ method: "POST" })
 
 // ============ MDR RULE ============
 export const listMdrRule = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
-  const s = await sb();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const s = supabaseAdmin as any;
   const { data } = await s.from("fin_mdr_rule").select("*").order("metode").order("bank");
   return { rows: data ?? [] };
 });
@@ -165,7 +167,8 @@ export const upsertMdrRule = createServerFn({ method: "POST" })
     fixed_fee?: number; coa_code?: string; is_active?: boolean; actor?: string;
   }) => d)
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     const payload = {
       metode: data.metode, bank: data.bank ?? null,
       rate_pct: Number(data.rate_pct) || 0, fixed_fee: Number(data.fixed_fee) || 0,
@@ -191,7 +194,8 @@ export const deleteMdrRule = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
-    const s = await sb();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const s = supabaseAdmin as any;
     await s.from("fin_mdr_rule").delete().eq("id", data.id);
     await writeFinAudit({ actor_email: data.actor, action: "delete", entity: "mdr_rule", entity_id: data.id });
     return { ok: true };

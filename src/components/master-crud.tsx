@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Search, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -102,10 +101,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
   };
 
   const LockedBtn = ({ children }: { children: React.ReactNode }) => (
-    <Tooltip>
-      <TooltipTrigger asChild><span>{children}</span></TooltipTrigger>
-      <TooltipContent>Read-only — hanya admin finance yang dapat mengubah.</TooltipContent>
-    </Tooltip>
+    <span title="Read-only — hanya admin finance yang dapat mengubah.">{children}</span>
   );
 
   const columns: DataTableColumn<MasterRow>[] = fields.map((f) => ({

@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Lock } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { exportCsv, exportPdf, type Column } from "@/lib/exporter";
 import { useFinanceDate } from "@/context/finance-date";
 import { useFinanceAccess } from "@/lib/finance-access";
@@ -55,12 +54,9 @@ export function FinanceExportBar<T>({ resource, title, columns, rows, meta, disa
   return (
     <div className="flex items-center gap-1.5">
       {!user && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex h-8 items-center text-xs text-muted-foreground"><Lock className="mr-1 h-3 w-3" /></span>
-          </TooltipTrigger>
-          <TooltipContent>Login finance untuk export</TooltipContent>
-        </Tooltip>
+        <span className="inline-flex h-8 items-center text-xs text-muted-foreground" title="Login finance untuk export">
+          <Lock className="mr-1 h-3 w-3" />
+        </span>
       )}
       <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleCsv} disabled={isDisabled}>
         <FileSpreadsheet className="h-3.5 w-3.5" /> CSV

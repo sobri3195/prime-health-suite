@@ -1,49 +1,87 @@
-# Audit Modul Finance vs `prime-simon.vercel.app`
+# Roadmap Lanjutan Finance Parity `prime-simon.vercel.app`
 
-Saya sudah membandingkan halaman `prime-simon.vercel.app` (referensi visual + fitur) dengan modul Finance saat ini (66 route file, 40+ tabel `fin_*`, RPC posting, RLS ketat). Struktur data dan sebagian besar route sudah lengkap — gap utamanya ada di **dashboard**, **kartu KPI**, dan beberapa **widget komparasi/quick action** yang belum diseragamkan.
+Masalah yang diselesaikan: alur sebelumnya berhenti karena menunggu pilihan arah. Mulai sekarang arah lanjutan ditetapkan sebagai batch berurutan agar pengguna cukup mengetik `batch 5`, `batch 6`, dst.
 
-## Hasil komparasi cepat
+## Batch 5 — Master Data Parity
 
-Referensi memuat komponen berikut pada `/finance`:
+**Tujuan:** semua master finance siap dipakai sebagai fondasi transaksi dan laporan.
 
-1. 8 kartu KPI (Pendapatan MTD, Pengeluaran, Piutang, Hutang, Kas Masuk, Kas Keluar, Growth vs Bulan Lalu, Laba Bersih) — kita **7 dari 8**, kurang kartu **Growth vs Bulan Lalu** eksplisit dan urutan berbeda.
-2. Chart **Tren Pendapatan & Pengeluaran** 12 bulan — sudah ada (`FinanceTrendChart`).
-3. **Quick Actions** (Input Pendapatan / Buat Voucher / Tambah Vendor / Export Laporan) — kita punya action bar berbeda; belum 1-klik ke 4 aksi tsb.
-4. **Pendapatan by Payer** dengan panel *Bandingkan Periode* multi-select bulan + tabel growth antar periode — kita hanya breakdown single period.
-5. **Top 10 Dokter by Revenue** dengan filter Payer + rentang tanggal internal — kita punya list dokter tapi tanpa filter payer + range internal.
-6. **AR Aging & AP Aging** bar mini di dashboard — kita hanya link ke halaman terpisah.
-7. **Recent Activities** (kas + invoice) — kita belum ada widget aktivitas mixed feed di dashboard.
-8. **Finance Alerts** (piutang JT / hutang JT / rekonsiliasi belum match) — kita belum menampilkan card alert ringkas.
+- Audit dan rapikan CRUD Master: COA, Payer, Vendor, Dokter, Karyawan, Cost Center, Tarif Pajak, Template Invoice, Template Voucher.
+- Tambahkan validasi wajib: kode unik, nama wajib, status aktif, field numerik tidak negatif.
+- Tambahkan empty state, skeleton, pagination, search, dan filter aktif/nonaktif konsisten.
+- Pastikan tombol “Tambah Vendor” dari dashboard mengarah dan membuka workflow yang benar.
+- Tambahkan E2E: master list render, create/edit validation, search/filter, dan akses route.
 
-## Rencana per batch
+## Batch 6 — Laporan Finance Parity
 
-### Batch 1 — P0 (Parity data dashboard)
-- Tambahkan kartu KPI **Growth vs Bulan Lalu** & samakan urutan 8 kartu ke layout referensi.
-- Perluas RPC `getFinanceDashboard` agar mengembalikan: `arAgingBuckets`, `apAgingBuckets`, `recentActivities` (10 item campuran pembayaran + invoice), `alerts` (piutang JT, hutang JT, unreconciled count).
-- Fix bug: label `Growth` saat ini pakai `monthlyTrend.at(-2/-1)` yang bisa `undefined` di bulan berjalan — fallback 0 dan hindari `NaN%`.
+**Tujuan:** laporan utama setara referensi dan bisa ditelusuri.
 
-### Batch 2 — P1 (Quick Actions + Comparator)
-- Buat komponen `<FinanceQuickActions />` dengan 4 tombol deep-link: Input Pendapatan → `/finance/pendapatan-input-harian`, Buat Voucher → `/finance/pengeluaran`, Tambah Vendor → `/finance/master/vendor`, Export Laporan → memicu `FinanceExportBar`.
-- Buat komponen `<PayerCompareCard />`: multi-select bulan (6 opsi), Reset/Clear, tabel growth antar periode. Server function `getPayerBreakdownRange({ periods })`.
-- Buat `<TopDokterCard />` dengan filter payer + date range internal, chart batang horizontal.
+- Rapikan Laporan: Neraca, Laba Rugi, Buku Besar, Arus Kas, Perubahan Modal, Laba Rugi per Payer.
+- Tambahkan drilldown dari angka laporan ke jurnal/transaksi sumber.
+- Tambahkan status balanced/unbalanced dan warning data kosong/tidak lengkap.
+- Tambahkan export CSV/PDF yang mengikuti filter periode.
+- Optimalkan query laporan agar tidak mengambil data berlebihan di browser.
+- Tambahkan E2E: laporan render, filter periode, export, dan drilldown.
 
-### Batch 3 — P2 (Widgets pendukung)
-- `<AgingMiniChart />` dua kartu (AR/AP) menggunakan bucket 0-30/31-60/61-90/>90 dari RPC.
-- `<RecentActivitiesFeed />` daftar 10 aktivitas terakhir (invoice + pembayaran) dengan link ke detail.
-- `<FinanceAlerts />` 3 alert card + link ke halaman aging & rekonsiliasi.
-- Skeleton state semua widget baru mengikuti pola Batch 4 sebelumnya.
+## Batch 7 — Voucher, Expense, dan Kas Kecil
 
-### Batch 4 — Polish
-- Sync copywriting Indonesia (label, tooltip) 1:1 dengan referensi.
-- Print/PDF stylesheet: sembunyikan Quick Actions & Alerts saat print (`no-print`).
-- Keyboard shortcut `1..8` untuk fokus KPI, `q` untuk buka Quick Actions.
-- A11y: aria-label tiap kartu, `role="region"`, `aria-live` untuk perubahan periode.
-- E2E Playwright: dashboard render 8 KPI, quick action click navigasi ke route benar, comparator memuat 2+ periode.
+**Tujuan:** workflow pengeluaran siap operasional.
 
-## Catatan teknis
+- Samakan workflow BKK, BBK, Voucher Kas Kecil, Pengeluaran, dan Vendor Bayar.
+- Tambahkan guard nominal: angka kosong tidak menjadi `0` hardcoded kecuali user memang input 0.
+- Tambahkan validasi status: draft → posted → void, dengan reversal jurnal bila dibatalkan.
+- Tambahkan auto-posting jurnal saat voucher diposting.
+- Tambahkan attachment/bukti bayar bila storage sudah tersedia.
+- Tambahkan E2E: buat voucher draft, validasi nominal, post voucher, void/reversal.
 
-- Semua server function baru pakai `requireFinView` (sudah ada di `src/lib/finance-guard.ts`).
-- Reuse `fin_report_aggregate_lines` untuk aging kalau memungkinkan; kalau tidak, tambah RPC `fin_ar_aging_buckets(_asof)` + `fin_ap_aging_buckets(_asof)` (SECURITY DEFINER + `fin_can_view` check).
-- Tidak menyentuh RLS/GRANT existing; hanya menambah view/RPC baca + widget UI.
+## Batch 8 — Rekonsiliasi & Bank Statement
 
-Konfirmasi lanjut ke **Batch 1** setelah plan disetujui.
+**Tujuan:** rekonsiliasi bank mendekati referensi, bukan sekadar daftar data.
+
+- Rapikan halaman Rekonsiliasi agar punya summary matched/unmatched/pending.
+- Tambahkan import statement CSV dengan mapping kolom aman.
+- Tambahkan auto-match rule berdasarkan tanggal, nominal, dan referensi.
+- Tambahkan manual match/unmatch dengan audit trail.
+- Tampilkan alert dashboard untuk transaksi belum match.
+- Tambahkan E2E: import CSV sample, auto-match, manual match, unmatch.
+
+## Batch 9 — Dashboard Widgets Parity Final
+
+**Tujuan:** dashboard Finance makin mendekati 100% referensi.
+
+- Finalisasi 8 KPI sesuai urutan referensi.
+- Pastikan Growth vs Bulan Lalu stabil dan tidak menghasilkan NaN.
+- Tambahkan/rapikan Recent Activities, Finance Alerts, AR/AP Aging mini chart.
+- Rapikan Payer Comparator dan Top Dokter comparator agar state URL konsisten.
+- Tambahkan skeleton per-widget dan empty state konsisten.
+- Tambahkan E2E: dashboard 8 KPI, quick actions, comparator, aging, alerts.
+
+## Batch 10 — Polish, A11y, Security, dan Regression
+
+**Tujuan:** stabil sebelum dianggap selesai.
+
+- Audit seluruh route Finance untuk error route, blank page, dan metadata.
+- Tambahkan keyboard shortcuts yang tidak mengganggu input form.
+- Tambahkan print stylesheet final untuk laporan dan dashboard.
+- Periksa akses server function Finance memakai guard role yang tepat.
+- Jalankan E2E smoke Finance menyeluruh.
+- Dokumentasikan gap tersisa bila ada yang belum bisa 100% karena referensi tidak memiliki data/API terbuka.
+
+## Urutan Eksekusi
+
+```text
+batch 5 = Master Data
+batch 6 = Laporan
+batch 7 = Voucher / Expense / Kas Kecil
+batch 8 = Rekonsiliasi
+batch 9 = Dashboard Parity Final
+batch 10 = Polish + Security + Regression
+```
+
+## Catatan Teknis
+
+- Tidak menggunakan hash route untuk modul besar; semua route tetap mengikuti TanStack Router file-based routing.
+- Server function Finance wajib memakai guard `requireFinView` atau `requireFinEdit` sesuai aksi.
+- Tidak menyentuh auto-generated backend/client files.
+- E2E Playwright ditambahkan bertahap per batch, bukan satu file besar yang sulit dirawat.
+- Perubahan database hanya dilakukan jika diperlukan untuk workflow batch terkait, dengan RLS dan GRANT lengkap.
