@@ -509,9 +509,12 @@ function monthRange(key: string) {
 }
 
 function PayerCard({ rows }: { rows: Invoice[] }) {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [compare, setCompare] = useState<string[]>([]);
+  const url = useUrlState("pc");
+  const from = url.get("from");
+  const to = url.get("to");
+  const compare = useMemo(() => (url.get("cmp") ? url.get("cmp").split(",").filter(Boolean) : []), [url]);
+  const setFrom = (v: string) => url.set({ from: v });
+  const setTo = (v: string) => url.set({ to: v });
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const availableMonths = useMemo(() => {
