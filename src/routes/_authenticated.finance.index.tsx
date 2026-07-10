@@ -128,27 +128,7 @@ function FinanceDashboard() {
   return (
     <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
       {/* Top action bar */}
-      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
-            <Calendar className="mr-1.5 h-3 w-3" /> Periode aktif: {period}
-          </Badge>
-          <Badge className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300">
-            <BadgeCheck className="mr-1.5 h-3 w-3" /> Tersimpan
-          </Badge>
-        </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              ref={searchRef}
-              value={globalQ}
-              onChange={(e) => setGlobalQ(e.target.value)}
-              placeholder='Cari global... (tekan "/")'
-              className="h-9 pl-8"
-              onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
-            />
-          </div>
+
       <div className="no-print sticky top-0 z-30 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-6 py-3 backdrop-blur md:-mx-8 md:px-8">
         <div className="flex items-center gap-2">
           <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
