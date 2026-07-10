@@ -62,6 +62,8 @@ function FinanceDashboard() {
   const bankBalance = q.data?.bankBalance ?? 0;
   const anomalies = q.data?.anomalies ?? [];
   const hutang = q.data?.hutang ?? 0;
+  const recentActivities = q.data?.recentActivities ?? [];
+  const alerts = q.data?.alerts ?? { overdueCount: 0, overdueTotal: 0, apVendors: 0, apTotal: 0, unreconciledCount: 0 };
 
   const inRange = invoices;
   const filter = useMemo(() => ({ period: "all", doctor: "all", service: "all", payer: "all", status: "all", from, to } as const), [from, to]);
