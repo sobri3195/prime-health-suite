@@ -43,18 +43,40 @@ function FinanceDashboard() {
     queryFn: () => call({ data: { from, to } }),
   });
 
-  // Batch 4 polish: keyboard shortcuts — "/" to focus search, "p" to print
+  // Batch 4 polish: keyboard shortcuts — "/" focus search, "p" print, "?" show help
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const editable = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
       if (editable) return;
       if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        toast.info("Shortcuts: / cari · P print · L copy link · ↑ scroll top", { duration: 4000 });
+      }
+      else if (e.key.toLowerCase() === "l" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); copyShareLink(); }
       else if (e.key.toLowerCase() === "p" && (e.metaKey || e.ctrlKey)) { /* leave native */ }
       else if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); window.print(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Scroll-to-top affordance
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link dashboard (dengan filter) disalin");
+    } catch {
+      toast.error("Gagal menyalin link");
+    }
   }, []);
 
   const invoices = (q.data?.invoices ?? []) as unknown as Invoice[];
