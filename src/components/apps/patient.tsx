@@ -731,7 +731,7 @@ export function PatientProfil() {
             <Select label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
               options={[{ v: "", l: "—" }, { v: "L", l: "Laki-laki" }, { v: "P", l: "Perempuan" }]} />
             <Input label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
-            <Input label="No. BPJS" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v })} />
+            <Input label="No. BPJS (13 digit)" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v.replace(/\D/g, "").slice(0, 13) })} />
             <Input label="Kontak darurat (nama & no HP)" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
             <Input label="Foto profil (URL)" value={form.foto_url} onChange={(v) => setForm({ ...form, foto_url: v })} />
             <div className="sm:col-span-2">
