@@ -16,11 +16,11 @@ export async function generateResepPDF(d: ResepData) {
 
   // ── Watermark klinik (diagonal, tipis) — ditulis lebih dulu supaya konten menimpa ──
   const wmText = (d.klinik || "Klinik Utama Mata Prime").toUpperCase();
-  doc.saveGraphicsState?.();
-  // @ts-expect-error jsPDF opsional GState untuk transparansi
-  const gs = doc.GState?.({ opacity: 0.08 });
-  // @ts-expect-error setGState tersedia di jsPDF terbaru
-  if (gs) doc.setGState(gs);
+  const anyDoc = doc as any;
+  anyDoc.saveGraphicsState?.();
+  const gs = anyDoc.GState?.({ opacity: 0.08 });
+  if (gs) anyDoc.setGState?.(gs);
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(40);
   doc.setTextColor(0, 0, 0);
