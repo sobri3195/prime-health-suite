@@ -40,7 +40,7 @@ const SECTION_META: Record<string, { title: string; description: string }> = {
   profil: { title: "Profil Pasien — Prime Apps", description: "Kelola data profil dan preferensi akun." },
   edukasi: { title: "Edukasi — Prime Apps", description: "Artikel & tips kesehatan mata." },
   chat: { title: "Chat — Prime Apps", description: "Percakapan dengan tim klinik." },
-  notifications: { title: "Notifikasi — Prime Apps", description: "Pusat notifikasi sistem." },
+  
   helpdesk: { title: "Helpdesk — Prime Apps", description: "Tiket dukungan & bantuan." },
   documents: { title: "Dokumen — Prime Apps", description: "Pustaka dokumen internal." },
   users: { title: "Pengguna — Prime Apps", description: "Manajemen pengguna & akses." },
