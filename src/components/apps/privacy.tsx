@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, ShieldCheck, Trash2, History, AlertTriangle, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
-  listMyAuditLog, exportMyData, requestAccountDeletion, acceptConsent,
+  listMyAuditLog, exportMyData, requestAccountDeletion, acceptConsent, revokeMarketingConsent,
 } from "@/lib/apps-privacy.functions";
 import { getMyProfile } from "@/lib/apps-patient.functions";
 import { useI18n } from "@/lib/i18n";
