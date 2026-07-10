@@ -43,24 +43,24 @@ export const listFinMaster = createServerFn({ method: "POST" })
 // before insert/update to prevent clients writing sensitive/system columns
 // (e.g. user_id, created_by, posted_journal_id, saldo, stok komputasi, dsb).
 const ALLOWED_COLS: Record<FinTable, readonly string[]> = {
-  fin_coa: ["code", "name", "type", "parent_code", "cash_flow_section", "is_active", "note"],
-  fin_cost_center: ["code", "name", "description", "is_active"],
-  fin_dokter: ["code", "name", "spesialisasi", "default_fee_pct", "schedule_note", "is_active", "user_id"],
-  fin_karyawan: ["code", "name", "jabatan", "departemen", "gaji_pokok", "is_active"],
-  fin_payer: ["code", "name", "type", "contact", "npwp", "is_active"],
-  fin_vendor: ["code", "name", "npwp", "contact", "alamat", "is_active"],
-  fin_kategori_layanan: ["code", "name", "coa_pendapatan", "is_active"],
-  fin_layanan: ["code", "name", "kategori_id", "harga", "coa_pendapatan", "is_active"],
-  fin_tarif_pajak: ["code", "name", "rate", "coa_hutang", "is_active", "note"],
-  fin_profil_klinik: ["nama", "alamat", "telepon", "email", "npwp", "logo_url", "kop_surat", "tagline"],
-  fin_persediaan: ["kode", "nama", "kategori", "satuan", "harga_beli", "harga_jual", "min_stok", "is_active"],
+  fin_coa: ["code", "name", "type", "parent_code", "cash_flow_section", "is_active"],
+  fin_cost_center: ["code", "name", "pic", "is_active"],
+  fin_dokter: ["code", "name", "spesialisasi", "default_fee_pct", "npwp", "phone", "sip_number", "schedule_note", "is_ptkp_k0", "is_active"],
+  fin_karyawan: ["code", "name", "jabatan", "gaji_pokok", "npwp", "is_active"],
+  fin_payer: ["code", "name", "tipe", "term_hari", "is_active"],
+  fin_vendor: ["code", "name", "kategori", "npwp", "term_hari", "is_active"],
+  fin_kategori_layanan: ["code", "name", "is_active"],
+  fin_layanan: ["code", "name", "kategori_code", "tarif", "is_kena_pajak", "is_active"],
+  fin_tarif_pajak: ["code", "name", "jenis", "tarif_pct", "is_active"],
+  fin_profil_klinik: ["nama", "alamat", "kota", "telp", "email", "npwp", "logo_url"],
+  fin_persediaan: ["kode", "nama", "kategori", "satuan", "harga_beli", "harga_jual", "min_stok", "coa_persediaan", "is_active"],
   fin_persediaan_mutasi: ["persediaan_id", "tanggal", "tipe", "qty", "harga", "ref_no", "keterangan"],
-  fin_aset: ["kode", "nama", "kategori", "tanggal_perolehan", "harga_perolehan", "umur_ekonomis_bulan", "metode_penyusutan", "nilai_residu", "lokasi", "is_active", "note"],
-  fin_aset_penyusutan: ["aset_id", "periode", "beban_bulan", "akumulasi", "nilai_buku"],
+  fin_aset: ["kode", "nama", "kategori", "cost_center_code", "tanggal_perolehan", "harga_perolehan", "nilai_residu", "umur_bulan", "metode", "akumulasi_penyusutan", "nilai_buku", "status", "coa_aset", "coa_akm_penyusutan", "coa_beban_penyusutan"],
+  fin_aset_penyusutan: ["aset_id", "periode", "tanggal", "beban", "akumulasi", "nilai_buku", "posted"],
   fin_kas_kecil: ["tanggal", "no_voucher", "tipe", "amount", "coa_lawan", "penerima", "keterangan", "status"],
   fin_bukti_setor: ["tanggal", "no_setor", "amount", "bank_coa", "kas_coa", "ref_bank", "keterangan", "status"],
-  fin_surat_tagih: ["tanggal", "no_surat", "invoice_id", "payer_id", "patient_code", "patient_name", "jumlah", "jatuh_tempo", "status", "keterangan"],
-  fin_rab: ["tahun", "kategori", "coa_code", "cost_center_code", "bulan", "anggaran", "note"],
+  fin_surat_tagih: ["no_surat", "tanggal", "payer_id", "payer_nama", "periode_dari", "periode_sampai", "invoice_ids", "total", "catatan", "status"],
+  fin_rab: ["periode", "coa_code", "coa_nama", "cost_center_code", "anggaran", "catatan"],
 };
 
 // Reusable primitive types
@@ -71,27 +71,28 @@ const numNN = num.refine((n: number) => n >= 0, "harus ≥ 0");
 const pct = num.refine((n: number) => n >= 0 && n <= 100, "0–100");
 const bool = z.coerce.boolean().optional();
 const uuid = z.string().uuid();
+const jsonish = z.unknown().nullable().optional();
 
 // Per-table shape validators; unknown keys are stripped by pickAllowed first.
 const ROW_SCHEMAS: Record<FinTable, z.ZodTypeAny> = {
-  fin_coa: z.object({ code: nonEmpty, name: nonEmpty, type: z.enum(["Asset","Liability","Equity","Revenue","Expense"]).optional(), parent_code: optStr, cash_flow_section: optStr, is_active: bool, note: optStr }).partial({ type: true }),
-  fin_cost_center: z.object({ code: nonEmpty, name: nonEmpty, description: optStr, is_active: bool }),
-  fin_dokter: z.object({ code: nonEmpty, name: nonEmpty, spesialisasi: optStr, default_fee_pct: pct.optional(), schedule_note: optStr, is_active: bool, user_id: uuid.nullable().optional() }),
-  fin_karyawan: z.object({ code: nonEmpty, name: nonEmpty, jabatan: optStr, departemen: optStr, gaji_pokok: numNN.optional(), is_active: bool }),
-  fin_payer: z.object({ code: nonEmpty, name: nonEmpty, type: optStr, contact: optStr, npwp: optStr, is_active: bool }),
-  fin_vendor: z.object({ code: nonEmpty, name: nonEmpty, npwp: optStr, contact: optStr, alamat: optStr, is_active: bool }),
-  fin_kategori_layanan: z.object({ code: nonEmpty, name: nonEmpty, coa_pendapatan: optStr, is_active: bool }),
-  fin_layanan: z.object({ code: nonEmpty, name: nonEmpty, kategori_id: uuid.nullable().optional(), harga: numNN, coa_pendapatan: optStr, is_active: bool }),
-  fin_tarif_pajak: z.object({ code: nonEmpty, name: nonEmpty, rate: pct, coa_hutang: optStr, is_active: bool, note: optStr }),
-  fin_profil_klinik: z.object({ nama: nonEmpty, alamat: optStr, telepon: optStr, email: optStr, npwp: optStr, logo_url: optStr, kop_surat: optStr, tagline: optStr }),
-  fin_persediaan: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, satuan: optStr, harga_beli: numNN.optional(), harga_jual: numNN.optional(), min_stok: numNN.optional(), is_active: bool }),
+  fin_coa: z.object({ code: nonEmpty, name: nonEmpty, type: z.enum(["Asset", "Liability", "Equity", "Revenue", "Expense"]), parent_code: optStr, cash_flow_section: optStr, is_active: bool }),
+  fin_cost_center: z.object({ code: nonEmpty, name: nonEmpty, pic: optStr, is_active: bool }),
+  fin_dokter: z.object({ code: nonEmpty, name: nonEmpty, spesialisasi: optStr, default_fee_pct: pct.optional(), npwp: optStr, phone: optStr, sip_number: optStr, schedule_note: optStr, is_ptkp_k0: bool, is_active: bool }),
+  fin_karyawan: z.object({ code: nonEmpty, name: nonEmpty, jabatan: optStr, gaji_pokok: numNN.optional(), npwp: optStr, is_active: bool }),
+  fin_payer: z.object({ code: nonEmpty, name: nonEmpty, tipe: nonEmpty, term_hari: numNN.optional(), is_active: bool }),
+  fin_vendor: z.object({ code: nonEmpty, name: nonEmpty, kategori: optStr, npwp: optStr, term_hari: numNN.optional(), is_active: bool }),
+  fin_kategori_layanan: z.object({ code: nonEmpty, name: nonEmpty, is_active: bool }),
+  fin_layanan: z.object({ code: nonEmpty, name: nonEmpty, kategori_code: optStr, tarif: numNN, is_kena_pajak: bool, is_active: bool }),
+  fin_tarif_pajak: z.object({ code: nonEmpty, name: nonEmpty, jenis: nonEmpty, tarif_pct: pct, is_active: bool }),
+  fin_profil_klinik: z.object({ nama: nonEmpty, alamat: optStr, kota: optStr, telp: optStr, email: optStr, npwp: optStr, logo_url: optStr }),
+  fin_persediaan: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, satuan: optStr, harga_beli: numNN.optional(), harga_jual: numNN.optional(), min_stok: numNN.optional(), coa_persediaan: optStr, is_active: bool }),
   fin_persediaan_mutasi: z.object({ persediaan_id: uuid, tanggal: z.string(), tipe: z.enum(["masuk","keluar","penyesuaian"]), qty: num, harga: numNN.optional(), ref_no: optStr, keterangan: optStr }),
-  fin_aset: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, tanggal_perolehan: z.string().optional(), harga_perolehan: numNN.optional(), umur_ekonomis_bulan: numNN.optional(), metode_penyusutan: optStr, nilai_residu: numNN.optional(), lokasi: optStr, is_active: bool, note: optStr }),
-  fin_aset_penyusutan: z.object({ aset_id: uuid, periode: z.string(), beban_bulan: numNN, akumulasi: numNN, nilai_buku: num }),
+  fin_aset: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, cost_center_code: optStr, tanggal_perolehan: z.string().optional(), harga_perolehan: numNN.optional(), nilai_residu: numNN.optional(), umur_bulan: numNN.optional(), metode: optStr, akumulasi_penyusutan: numNN.optional(), nilai_buku: num.optional(), status: optStr, coa_aset: optStr, coa_akm_penyusutan: optStr, coa_beban_penyusutan: optStr }),
+  fin_aset_penyusutan: z.object({ aset_id: uuid, periode: z.string(), tanggal: z.string().optional(), beban: numNN, akumulasi: numNN, nilai_buku: num, posted: bool }),
   fin_kas_kecil: z.object({ tanggal: z.string(), no_voucher: optStr, tipe: z.enum(["masuk","keluar"]), amount: numNN, coa_lawan: optStr, penerima: optStr, keterangan: optStr, status: optStr }),
   fin_bukti_setor: z.object({ tanggal: z.string(), no_setor: optStr, amount: numNN, bank_coa: optStr, kas_coa: optStr, ref_bank: optStr, keterangan: optStr, status: optStr }),
-  fin_surat_tagih: z.object({ tanggal: z.string(), no_surat: optStr, invoice_id: uuid.nullable().optional(), payer_id: uuid.nullable().optional(), patient_code: optStr, patient_name: optStr, jumlah: numNN, jatuh_tempo: z.string().optional(), status: optStr, keterangan: optStr }),
-  fin_rab: z.object({ tahun: num, kategori: optStr, coa_code: optStr, cost_center_code: optStr, bulan: num.optional(), anggaran: numNN, note: optStr }),
+  fin_surat_tagih: z.object({ no_surat: nonEmpty, tanggal: z.string().optional(), payer_id: uuid.nullable().optional(), payer_nama: optStr, periode_dari: z.string().nullable().optional(), periode_sampai: z.string().nullable().optional(), invoice_ids: jsonish, total: numNN.optional(), catatan: optStr, status: optStr }),
+  fin_rab: z.object({ periode: nonEmpty, coa_code: nonEmpty, coa_nama: optStr, cost_center_code: optStr, anggaran: numNN, catatan: optStr }),
 };
 
 function pickAllowed(table: FinTable, row: Record<string, unknown>) {
