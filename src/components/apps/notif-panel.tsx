@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { sanitizeDeepLink } from "@/lib/safe-url";
+
 
 
 /** Realtime subscription untuk notif & queue refresh */
@@ -134,9 +136,7 @@ export function NotificationsPagePatient() {
                     {new Date(n.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
                   </span>
                   {(() => {
-                    // Sanitize: reject javascript:/data:/etc. to prevent XSS via crafted notif payload.
-                    // eslint-disable-next-line @typescript-eslint/no-var-requires
-                    const safe = require("@/lib/safe-url").sanitizeDeepLink(n.deep_link);
+                    const safe = sanitizeDeepLink(n.deep_link);
                     if (!safe) return null;
                     const isExternal = /^https?:/i.test(safe);
                     return (
@@ -150,6 +150,7 @@ export function NotificationsPagePatient() {
                       </a>
                     );
                   })()}
+
 
                 </div>
               </div>
