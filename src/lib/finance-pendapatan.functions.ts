@@ -94,7 +94,7 @@ export const createInvoice = createServerFn({ method: "POST" })
     const { error: e2 } = await supabaseAdmin.from("fin_invoice_item").insert(items);
     if (e2) throw new Error(e2.message);
 
-    const pays = data.pembayaran.map((p) => ({
+    const pays = data.pembayaran.map((p: z.infer<typeof paySchema>) => ({
       invoice_id: inv.id,
       tanggal: data.tanggal,
       metode: p.metode,
