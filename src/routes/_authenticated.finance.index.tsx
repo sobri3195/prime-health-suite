@@ -700,7 +700,7 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
     <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); setPayer("all"); setCompare([]); }}
+        onReset={() => { url.set({ from: undefined, to: undefined, payer: undefined, cmp: undefined }); }}
         extra={
           <>
             <div className="flex flex-col">
