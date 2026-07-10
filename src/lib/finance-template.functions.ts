@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { writeFinAudit } from "./finance-audit.helper";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFinView, requireFinEdit } from "./finance-guard";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -16,7 +16,7 @@ const invItemSchema = z.object({
   qty: z.number().int().min(1).default(1),
 });
 
-export const listTplInvoice = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async () => {
+export const listTplInvoice = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
   const s = await sb();
   const { data: rows } = await s.from("fin_template_invoice").select("*").order("nama");
   const { data: items } = await s.from("fin_template_invoice_item").select("*");
@@ -24,7 +24,7 @@ export const listTplInvoice = createServerFn({ method: "POST" }).middleware([req
 });
 
 export const upsertTplInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: {
     id?: string;
     nama: string;
@@ -69,7 +69,7 @@ export const upsertTplInvoice = createServerFn({ method: "POST" })
   });
 
 export const deleteTplInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
     const s = await sb();
@@ -87,7 +87,7 @@ const vchItemSchema = z.object({
   harga: z.number().default(0),
 });
 
-export const listTplVoucher = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async () => {
+export const listTplVoucher = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
   const s = await sb();
   const { data: rows } = await s.from("fin_template_voucher").select("*").order("nama");
   const { data: items } = await s.from("fin_template_voucher_item").select("*");
@@ -95,7 +95,7 @@ export const listTplVoucher = createServerFn({ method: "POST" }).middleware([req
 });
 
 export const upsertTplVoucher = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: {
     id?: string;
     nama: string;
@@ -141,7 +141,7 @@ export const upsertTplVoucher = createServerFn({ method: "POST" })
   });
 
 export const deleteTplVoucher = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
     const s = await sb();
@@ -152,14 +152,14 @@ export const deleteTplVoucher = createServerFn({ method: "POST" })
   });
 
 // ============ MDR RULE ============
-export const listMdrRule = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async () => {
+export const listMdrRule = createServerFn({ method: "POST" }).middleware([requireFinView]).handler(async () => {
   const s = await sb();
   const { data } = await s.from("fin_mdr_rule").select("*").order("metode").order("bank");
   return { rows: data ?? [] };
 });
 
 export const upsertMdrRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: {
     id?: string; metode: string; bank?: string | null; rate_pct: number;
     fixed_fee?: number; coa_code?: string; is_active?: boolean; actor?: string;
@@ -188,7 +188,7 @@ export const upsertMdrRule = createServerFn({ method: "POST" })
   });
 
 export const deleteMdrRule = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { id: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), actor: d.actor }))
   .handler(async ({ data }) => {
     const s = await sb();

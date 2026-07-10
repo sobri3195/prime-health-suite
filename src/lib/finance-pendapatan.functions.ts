@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFinView, requireFinEdit } from "./finance-guard";
 import { writeFinAudit } from "./finance-audit.helper";
 
 const itemSchema = z.object({
@@ -52,15 +52,15 @@ async function nextJournalNo(sb: any) {
 
 export type CreateInvoiceInput = z.input<typeof createSchema>;
 export const createInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: CreateInvoiceInput) => createSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertFinanceEditor(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const subtotal = data.items.reduce((a, i) => a + i.tarif * i.qty, 0);
+    const subtotal = data.items.reduce((a: number, i: z.infer<typeof itemSchema>) => a + i.tarif * i.qty, 0);
     const pajak = Math.round((subtotal * data.pajak_persen) / 100);
     const total = subtotal + pajak;
-    const totalBayar = data.pembayaran.reduce((a, p) => a + p.jumlah, 0);
+    const totalBayar = data.pembayaran.reduce((a: number, p: z.infer<typeof paySchema>) => a + p.jumlah, 0);
     const status = totalBayar >= total ? "paid" : totalBayar > 0 ? "partial" : "issued";
     const no = `INV-${data.tanggal.replaceAll("-", "")}-${Date.now().toString().slice(-5)}`;
 
@@ -83,7 +83,7 @@ export const createInvoice = createServerFn({ method: "POST" })
       .single();
     if (e1) throw new Error(e1.message);
 
-    const items = data.items.map((i) => ({
+    const items = data.items.map((i: z.infer<typeof itemSchema>) => ({
       invoice_id: inv.id,
       layanan_id: i.layanan_id ?? null,
       layanan_nama: i.layanan_nama,
@@ -94,7 +94,7 @@ export const createInvoice = createServerFn({ method: "POST" })
     const { error: e2 } = await supabaseAdmin.from("fin_invoice_item").insert(items);
     if (e2) throw new Error(e2.message);
 
-    const pays = data.pembayaran.map((p) => ({
+    const pays = data.pembayaran.map((p: z.infer<typeof paySchema>) => ({
       invoice_id: inv.id,
       tanggal: data.tanggal,
       metode: p.metode,
@@ -164,7 +164,7 @@ const listSchema = z.object({
 });
 
 export const listInvoices = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinView])
   .inputValidator((d: unknown) => listSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -186,7 +186,7 @@ export const listInvoices = createServerFn({ method: "POST" })
 // Void invoice (reversal via status change + journal reversal). Hard delete is
 // forbidden — use voidInvoice from finance-tx for full reversal.
 export const deleteInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { id: string; reason?: string }) =>
     z.object({ id: z.string().uuid(), reason: z.string().min(3).max(500).default("Dihapus dari pendapatan") }).parse(d),
   )

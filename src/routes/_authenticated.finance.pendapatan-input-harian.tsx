@@ -67,7 +67,7 @@ function Page() {
 
   const create = useMutation({
     mutationFn: (vars: Parameters<typeof createInvoice>[0]["data"]) => createInvoice({ data: vars }),
-    onSuccess: (res) => {
+    onSuccess: (res: { id: string; no_invoice: string; total: number }) => {
       toast.success(`Tersimpan ${res.no_invoice} · ${formatIDR(res.total)}`);
       setPatientCode(""); setPatientName("");
       const f = layananRows[0];

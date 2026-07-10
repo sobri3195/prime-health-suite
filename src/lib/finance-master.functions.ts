@@ -63,6 +63,37 @@ const ALLOWED_COLS: Record<FinTable, readonly string[]> = {
   fin_rab: ["tahun", "kategori", "coa_code", "cost_center_code", "bulan", "anggaran", "note"],
 };
 
+// Reusable primitive types
+const nonEmpty = z.string().trim().min(1).max(200);
+const optStr = z.string().trim().max(500).nullable().optional();
+const num = z.coerce.number().finite();
+const numNN = num.refine((n: number) => n >= 0, "harus ≥ 0");
+const pct = num.refine((n: number) => n >= 0 && n <= 100, "0–100");
+const bool = z.coerce.boolean().optional();
+const uuid = z.string().uuid();
+
+// Per-table shape validators; unknown keys are stripped by pickAllowed first.
+const ROW_SCHEMAS: Record<FinTable, z.ZodTypeAny> = {
+  fin_coa: z.object({ code: nonEmpty, name: nonEmpty, type: z.enum(["Asset","Liability","Equity","Revenue","Expense"]).optional(), parent_code: optStr, cash_flow_section: optStr, is_active: bool, note: optStr }).partial({ type: true }),
+  fin_cost_center: z.object({ code: nonEmpty, name: nonEmpty, description: optStr, is_active: bool }),
+  fin_dokter: z.object({ code: nonEmpty, name: nonEmpty, spesialisasi: optStr, default_fee_pct: pct.optional(), schedule_note: optStr, is_active: bool, user_id: uuid.nullable().optional() }),
+  fin_karyawan: z.object({ code: nonEmpty, name: nonEmpty, jabatan: optStr, departemen: optStr, gaji_pokok: numNN.optional(), is_active: bool }),
+  fin_payer: z.object({ code: nonEmpty, name: nonEmpty, type: optStr, contact: optStr, npwp: optStr, is_active: bool }),
+  fin_vendor: z.object({ code: nonEmpty, name: nonEmpty, npwp: optStr, contact: optStr, alamat: optStr, is_active: bool }),
+  fin_kategori_layanan: z.object({ code: nonEmpty, name: nonEmpty, coa_pendapatan: optStr, is_active: bool }),
+  fin_layanan: z.object({ code: nonEmpty, name: nonEmpty, kategori_id: uuid.nullable().optional(), harga: numNN, coa_pendapatan: optStr, is_active: bool }),
+  fin_tarif_pajak: z.object({ code: nonEmpty, name: nonEmpty, rate: pct, coa_hutang: optStr, is_active: bool, note: optStr }),
+  fin_profil_klinik: z.object({ nama: nonEmpty, alamat: optStr, telepon: optStr, email: optStr, npwp: optStr, logo_url: optStr, kop_surat: optStr, tagline: optStr }),
+  fin_persediaan: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, satuan: optStr, harga_beli: numNN.optional(), harga_jual: numNN.optional(), min_stok: numNN.optional(), is_active: bool }),
+  fin_persediaan_mutasi: z.object({ persediaan_id: uuid, tanggal: z.string(), tipe: z.enum(["masuk","keluar","penyesuaian"]), qty: num, harga: numNN.optional(), ref_no: optStr, keterangan: optStr }),
+  fin_aset: z.object({ kode: nonEmpty, nama: nonEmpty, kategori: optStr, tanggal_perolehan: z.string().optional(), harga_perolehan: numNN.optional(), umur_ekonomis_bulan: numNN.optional(), metode_penyusutan: optStr, nilai_residu: numNN.optional(), lokasi: optStr, is_active: bool, note: optStr }),
+  fin_aset_penyusutan: z.object({ aset_id: uuid, periode: z.string(), beban_bulan: numNN, akumulasi: numNN, nilai_buku: num }),
+  fin_kas_kecil: z.object({ tanggal: z.string(), no_voucher: optStr, tipe: z.enum(["masuk","keluar"]), amount: numNN, coa_lawan: optStr, penerima: optStr, keterangan: optStr, status: optStr }),
+  fin_bukti_setor: z.object({ tanggal: z.string(), no_setor: optStr, amount: numNN, bank_coa: optStr, kas_coa: optStr, ref_bank: optStr, keterangan: optStr, status: optStr }),
+  fin_surat_tagih: z.object({ tanggal: z.string(), no_surat: optStr, invoice_id: uuid.nullable().optional(), payer_id: uuid.nullable().optional(), patient_code: optStr, patient_name: optStr, jumlah: numNN, jatuh_tempo: z.string().optional(), status: optStr, keterangan: optStr }),
+  fin_rab: z.object({ tahun: num, kategori: optStr, coa_code: optStr, cost_center_code: optStr, bulan: num.optional(), anggaran: numNN, note: optStr }),
+};
+
 function pickAllowed(table: FinTable, row: Record<string, unknown>) {
   const cols = new Set(ALLOWED_COLS[table] ?? []);
   const out: Record<string, unknown> = {};
@@ -81,10 +112,19 @@ export const upsertFinMaster = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const payload = pickAllowed(data.table, data.row);
-    if (Object.keys(payload).length === 0) {
+    const filtered = pickAllowed(data.table, data.row);
+    if (Object.keys(filtered).length === 0) {
       throw new Error("Tidak ada kolom valid untuk disimpan");
     }
+    // Strict per-table validation. Partial() on update so users can patch only
+    // the fields they touched without re-supplying required columns.
+    const schema = data.id ? (ROW_SCHEMAS[data.table] as any).partial() : ROW_SCHEMAS[data.table];
+    const parsed = schema.safeParse(filtered);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((i: any) => `${i.path.join(".") || "row"}: ${i.message}`).join("; ");
+      throw new Error(`Validasi gagal — ${msg}`);
+    }
+    const payload = parsed.data as Record<string, unknown>;
     const tbl = supabaseAdmin.from(data.table) as any;
     if (data.id) {
       const { data: row, error } = await tbl.update(payload).eq("id", data.id).select().single();
