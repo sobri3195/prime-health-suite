@@ -794,7 +794,12 @@ export function PatientProfil() {
                     {t("patient.reschedule")}
                   </button>
                   <button
-                    onClick={async () => { if (await confirm({ description: t("patient.cancel_confirm"), destructive: true, confirmText: t("patient.cancel") })) cancelM.mutate(b.id); }}
+                    onClick={async () => {
+                      const alasan = typeof window !== "undefined" ? window.prompt(t("patient.cancel_reason_prompt") || "Alasan pembatalan (opsional):") ?? undefined : undefined;
+                      if (await confirm({ description: t("patient.cancel_confirm"), destructive: true, confirmText: t("patient.cancel") })) {
+                        cancelM.mutate({ id: b.id, alasan: alasan?.trim() || undefined });
+                      }
+                    }}
                     disabled={cancelM.isPending}
                     className="rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700"
                   >
