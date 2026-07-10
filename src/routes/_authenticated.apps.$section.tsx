@@ -114,7 +114,7 @@ function Section() {
     case "privasi": return <PatientPrivasi />;
     case "laporan": return <PatientLaporan />;
     case "launcher": return <LauncherPage />;
-    case "notifications": return null;
+    
     case "helpdesk": return <HelpdeskPage />;
     case "documents": return <DocumentsPage />;
     case "users": return <UsersPage />;
