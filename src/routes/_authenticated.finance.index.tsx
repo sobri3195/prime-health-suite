@@ -81,8 +81,6 @@ function FinanceDashboard() {
     return a ? Math.round(((b - a) / a) * 100) : 0;
   })();
   const laba = netProfit(mtdRev, kasKeluar);
-  const byP = byPayer(filtered);
-  const topDokter = topBy(filtered, "doctor", 10);
   const insights = generateInsights(filtered, monthlyTrend);
 
   if (q.isLoading) {
