@@ -76,6 +76,16 @@ export function PatientPrivasi() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const revokeM = useMutation({
+    mutationFn: () => callRevoke(),
+    onSuccess: () => {
+      toast.success(t("priv.consent.saved"));
+      profileQ.refetch();
+      auditQ.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
