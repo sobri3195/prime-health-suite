@@ -196,7 +196,8 @@ function LaporanPage() {
             { key: "d", label: "Debit", get: (r: any) => r.debit },
             { key: "c", label: "Kredit", get: (r: any) => r.credit },
             { key: "s", label: "Saldo Akhir", get: (r: any) => r.closing },
-          ])} />
+          ])} page={page} setPage={setPage} />
+
         </TabsContent>
 
         <TabsContent value="pendapatan">
@@ -217,7 +218,8 @@ function LaporanPage() {
             { key: "t", label: "Total", get: (r: any) => r.total },
             { key: "pd", label: "Dibayar", get: (r: any) => r.paid },
             { key: "s", label: "Status", get: (r: any) => r.status },
-          ])} />
+          ])} page={page} setPage={setPage} />
+
         </TabsContent>
 
         <TabsContent value="piutang">
@@ -238,7 +240,8 @@ function LaporanPage() {
                 { key: "t", label: "Total", get: (r: any) => r.total },
                 { key: "s", label: "Sisa", get: (r: any) => r.total - r.paid },
                 { key: "st", label: "Status", get: (r: any) => r.status },
-              ])} />
+              ])} page={page} setPage={setPage} />
+
             );
           })()}
         </TabsContent>
