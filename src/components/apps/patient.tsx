@@ -763,9 +763,13 @@ export function PatientProfil() {
         <div className="text-base font-bold">{t("patient.security")}</div>
         <p className="mt-1 text-xs text-muted-foreground">{t("patient.security.desc")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input label="Password saat ini" type="password" value={pwd.cur} onChange={(v) => setPwd({ ...pwd, cur: v })} />
+          </div>
           <Input label={t("patient.pw_new")} type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
           <Input label={t("patient.pw_confirm")} type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
         </div>
+
         <button
           onClick={changePassword}
           disabled={pwdLoading || !pwd.p1}
