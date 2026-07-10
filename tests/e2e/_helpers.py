@@ -38,6 +38,14 @@ async def login_demo(page: Page) -> None:
     await page.wait_for_url(re.compile(r"/sim-klinik(?!/login)"), timeout=15000)
 
 
+async def login_finance_demo(page: Page) -> None:
+    await page.goto("http://localhost:8080/finance/login", wait_until="domcontentloaded")
+    await page.locator("input[type=email]").first.fill("demo-manajemen@prime.id")
+    await page.locator("input[type=password]").first.fill("demo1234")
+    await page.locator("button[type=submit]").first.click()
+    await page.wait_for_url(re.compile(r"/finance(?!/login)"), timeout=15000)
+
+
 async def open_form_with_new_patient(page: Page, name: str, phone: str) -> None:
     await page.get_by_role("button", name=re.compile("Pasien Baru")).click()
     await page.wait_for_selector('role=dialog')
