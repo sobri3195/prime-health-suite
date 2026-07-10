@@ -149,6 +149,30 @@ function FinanceDashboard() {
               onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
             />
           </div>
+      <div className="no-print sticky top-0 z-30 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-6 py-3 backdrop-blur md:-mx-8 md:px-8">
+        <div className="flex items-center gap-2">
+          <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
+            <Calendar className="mr-1.5 h-3 w-3" /> Periode aktif: {period}
+          </Badge>
+          <Badge className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <BadgeCheck className="mr-1.5 h-3 w-3" /> Tersimpan
+          </Badge>
+        </div>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              ref={searchRef}
+              value={globalQ}
+              onChange={(e) => setGlobalQ(e.target.value)}
+              placeholder='Cari global... (tekan "/")'
+              className="h-9 pl-8"
+              onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={copyShareLink} title="Copy shareable link (L)">
+            <Link2 className="mr-1.5 h-3.5 w-3.5" /> Copy Link
+          </Button>
           <FinanceExportBar
             resource="pendapatan-dashboard"
             title="Pendapatan Periode"
@@ -165,10 +189,33 @@ function FinanceDashboard() {
             rows={filtered}
             meta={{ page: "dashboard" }}
           />
+          <Button variant="outline" size="sm" onClick={() => toast.info("Shortcuts: / cari · P print · L copy link · ? bantuan", { duration: 4000 })} title="Keyboard shortcuts (?)">
+            <Keyboard className="h-3.5 w-3.5" />
+          </Button>
           <Button variant="outline" size="sm" onClick={() => toast.success("Demo direset")}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset Demo
           </Button>
         </div>
+      </div>
+
+      {/* Hero header */}
+      <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-cyan-accent">
+              Finance Operations
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Dashboard</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Ringkasan eksekutif Finance Operations Klinik Utama Prime Mata untuk periode aktif {period}.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+          </Button>
+        </div>
+      </div>
+
       </div>
 
       {/* Hero header */}
