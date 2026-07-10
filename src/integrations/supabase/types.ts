@@ -101,6 +101,41 @@ export type Database = {
         }
         Relationships: []
       }
+      apps_artikel_rating: {
+        Row: {
+          artikel_id: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artikel_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artikel_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_artikel_rating_artikel_id_fkey"
+            columns: ["artikel_id"]
+            isOneToOne: false
+            referencedRelation: "apps_artikel"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apps_audit_log: {
         Row: {
           action: string
