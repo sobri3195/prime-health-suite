@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { pageHead } from "@/lib/page-head";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -15,13 +17,24 @@ import { useFinanceDate } from "@/context/finance-date";
 import { getProfitLoss, getCashFlow, getTrialBalance, getBalanceSheet } from "@/lib/finance-report.functions";
 import { getFinanceDashboard, getBukuBesar, getPajakRekap } from "@/lib/finance-dashboard.functions";
 
-export const Route = createFileRoute("/_authenticated/finance/laporan")({ 
+const searchSchema = z.object({
+  tab: fallback(z.string(), "executive").default("executive"),
+  page: fallback(z.number().int(), 1).default(1),
+});
+
+export const Route = createFileRoute("/_authenticated/finance/laporan")({
+  validateSearch: zodValidator(searchSchema),
   head: () => pageHead({ title: "Laporan Manajemen — Finance", description: "Laporan Manajemen pada modul keuangan klinik.", path: "/finance/laporan" }),
   component: LaporanPage });
 
 function LaporanPage() {
+  const { tab, page } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setTab = (v: string) => navigate({ search: (p) => ({ ...p, tab: v, page: 1 }) });
+  const setPage = (fn: (n: number) => number) => navigate({ search: (p) => ({ ...p, page: Math.max(1, fn(p.page ?? 1)) }) });
   const { from, to, label } = useFinanceDate();
   const year = new Date(from || new Date().toISOString()).getFullYear();
+
 
   const plFn = useServerFn(getProfitLoss);
   const cfFn = useServerFn(getCashFlow);
