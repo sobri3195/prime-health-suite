@@ -260,7 +260,8 @@ function FinanceDashboard() {
       </div>
 
       {/* AR Aging + AP Aging + Recent Activities + Finance Alerts */}
-      <AgingActivitiesAlerts rows={filtered} outstanding={outstanding} hutang={hutang} />
+      <AgingActivitiesAlerts rows={filtered} outstanding={outstanding} hutang={hutang} recentActivities={recentActivities} alerts={alerts} />
+
 
       {/* unused placeholder */}
       <input type="hidden" value={PiggyBank.displayName ?? ""} />
