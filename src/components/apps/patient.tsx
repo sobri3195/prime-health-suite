@@ -561,8 +561,9 @@ export function PatientProfil() {
     nama: "", nik: "", tgl_lahir: "", jenis_kelamin: "" as "" | "L" | "P",
     telp: "", alamat: "", no_bpjs: "", alergi: "", kontak_darurat: "", foto_url: "",
   });
-  const [pwd, setPwd] = useState({ p1: "", p2: "" });
+  const [pwd, setPwd] = useState({ cur: "", p1: "", p2: "" });
   const [pwdLoading, setPwdLoading] = useState(false);
+
   const [reschedId, setReschedId] = useState<string | null>(null);
   const [reschedDokter, setReschedDokter] = useState<string>("");
   const [reschedDate, setReschedDate] = useState("");
@@ -586,20 +587,26 @@ export function PatientProfil() {
   }
 
   const updateM = useMutation({
-    mutationFn: () => callUpdate({
-      data: {
-        nama: form.nama,
-        nik: form.nik || null,
-        tgl_lahir: form.tgl_lahir || null,
-        jenis_kelamin: form.jenis_kelamin || null,
-        telp: form.telp || null,
-        alamat: form.alamat || null,
-        no_bpjs: form.no_bpjs || null,
-        alergi: form.alergi || null,
-        kontak_darurat: form.kontak_darurat || null,
-        foto_url: form.foto_url || null,
-      },
-    }),
+    mutationFn: () => {
+      if (form.nik && form.nik.length !== 16) throw new Error("NIK harus 16 digit");
+      if (form.no_bpjs && !/^\d{13}$/.test(form.no_bpjs)) throw new Error("No. BPJS harus 13 digit angka");
+      if (form.telp && !/^(\+?62|0)8\d{7,12}$/.test(form.telp.replace(/[\s-]/g, ""))) throw new Error("Nomor HP tidak valid (format 08xxxx / +628xxxx)");
+      return callUpdate({
+        data: {
+          nama: form.nama,
+          nik: form.nik || null,
+          tgl_lahir: form.tgl_lahir || null,
+          jenis_kelamin: form.jenis_kelamin || null,
+          telp: form.telp || null,
+          alamat: form.alamat || null,
+          no_bpjs: form.no_bpjs || null,
+          alergi: form.alergi || null,
+          kontak_darurat: form.kontak_darurat || null,
+          foto_url: form.foto_url || null,
+        },
+      });
+    },
+
     onSuccess: () => {
       toast.success("Profil disimpan");
       qc.invalidateQueries({ queryKey: ["apps", "profile"] });
@@ -643,15 +650,25 @@ export function PatientProfil() {
   });
 
   async function changePassword() {
+    if (!pwd.cur) return toast.error("Masukkan password saat ini");
     if (pwd.p1.length < 8) return toast.error("Password minimal 8 karakter");
+    if (!/[A-Za-z]/.test(pwd.p1) || !/\d/.test(pwd.p1)) return toast.error("Password harus mengandung huruf dan angka");
+    if (pwd.p1 === pwd.cur) return toast.error("Password baru harus berbeda dari yang lama");
     if (pwd.p1 !== pwd.p2) return toast.error("Konfirmasi password tidak cocok");
     setPwdLoading(true);
+    // Re-authenticate with current password before allowing change
+    const { data: userData } = await supabase.auth.getUser();
+    const email = userData.user?.email;
+    if (!email) { setPwdLoading(false); return toast.error("Sesi tidak valid, silakan login ulang"); }
+    const { error: reauthErr } = await supabase.auth.signInWithPassword({ email, password: pwd.cur });
+    if (reauthErr) { setPwdLoading(false); return toast.error("Password saat ini salah"); }
     const { error } = await supabase.auth.updateUser({ password: pwd.p1 });
     setPwdLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Password berhasil diubah");
-    setPwd({ p1: "", p2: "" });
+    setPwd({ cur: "", p1: "", p2: "" });
   }
+
 
   async function handleLogout() {
     await qc.cancelQueries();
@@ -714,7 +731,7 @@ export function PatientProfil() {
             <Select label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
               options={[{ v: "", l: "—" }, { v: "L", l: "Laki-laki" }, { v: "P", l: "Perempuan" }]} />
             <Input label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
-            <Input label="No. BPJS" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v })} />
+            <Input label="No. BPJS (13 digit)" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v.replace(/\D/g, "").slice(0, 13) })} />
             <Input label="Kontak darurat (nama & no HP)" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
             <Input label="Foto profil (URL)" value={form.foto_url} onChange={(v) => setForm({ ...form, foto_url: v })} />
             <div className="sm:col-span-2">
@@ -752,9 +769,13 @@ export function PatientProfil() {
         <div className="text-base font-bold">{t("patient.security")}</div>
         <p className="mt-1 text-xs text-muted-foreground">{t("patient.security.desc")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input label="Password saat ini" type="password" value={pwd.cur} onChange={(v) => setPwd({ ...pwd, cur: v })} />
+          </div>
           <Input label={t("patient.pw_new")} type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
           <Input label={t("patient.pw_confirm")} type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
         </div>
+
         <button
           onClick={changePassword}
           disabled={pwdLoading || !pwd.p1}
