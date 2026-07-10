@@ -131,7 +131,7 @@ export function PatientBeranda() {
             <div className="mt-1 text-3xl font-bold">{queue.no_antrean || `#${(posisi ?? 0) + 1}`}</div>
             <div className="mt-2 text-xs text-muted-foreground">
               {posisi !== null && posisi !== undefined && total !== null && total !== undefined
-                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * 15} menit`
+                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * slotMenit} menit`
                 : "Memuat posisi…"}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
