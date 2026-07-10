@@ -12,6 +12,7 @@ import {
   Wallet, TrendingUp, TrendingDown, Receipt, Landmark, AlertTriangle, Sparkles,
   PiggyBank, ShieldCheck, FileWarning, ArrowDownCircle, ArrowUpCircle, Activity,
   Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar, Search,
+  Link2, Keyboard, ArrowUp,
 } from "lucide-react";
 import { FinanceTrendChart } from "@/components/finance-trend-chart";
 import { getFinanceDashboard } from "@/lib/finance-dashboard.functions";
@@ -42,18 +43,40 @@ function FinanceDashboard() {
     queryFn: () => call({ data: { from, to } }),
   });
 
-  // Batch 4 polish: keyboard shortcuts — "/" to focus search, "p" to print
+  // Batch 4 polish: keyboard shortcuts — "/" focus search, "p" print, "?" show help
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const editable = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
       if (editable) return;
       if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        toast.info("Shortcuts: / cari · P print · L copy link · ↑ scroll top", { duration: 4000 });
+      }
+      else if (e.key.toLowerCase() === "l" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); copyShareLink(); }
       else if (e.key.toLowerCase() === "p" && (e.metaKey || e.ctrlKey)) { /* leave native */ }
       else if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); window.print(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Scroll-to-top affordance
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link dashboard (dengan filter) disalin");
+    } catch {
+      toast.error("Gagal menyalin link");
+    }
   }, []);
 
   const invoices = (q.data?.invoices ?? []) as unknown as Invoice[];
@@ -105,7 +128,8 @@ function FinanceDashboard() {
   return (
     <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
       {/* Top action bar */}
-      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
+
+      <div className="no-print sticky top-0 z-30 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-6 py-3 backdrop-blur md:-mx-8 md:px-8">
         <div className="flex items-center gap-2">
           <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
             <Calendar className="mr-1.5 h-3 w-3" /> Periode aktif: {period}
@@ -126,6 +150,9 @@ function FinanceDashboard() {
               onKeyDown={(e) => { if (e.key === "Enter" && globalQ) toast.info(`Mencari "${globalQ}"…`); }}
             />
           </div>
+          <Button variant="outline" size="sm" onClick={copyShareLink} title="Copy shareable link (L)">
+            <Link2 className="mr-1.5 h-3.5 w-3.5" /> Copy Link
+          </Button>
           <FinanceExportBar
             resource="pendapatan-dashboard"
             title="Pendapatan Periode"
@@ -142,11 +169,34 @@ function FinanceDashboard() {
             rows={filtered}
             meta={{ page: "dashboard" }}
           />
+          <Button variant="outline" size="sm" onClick={() => toast.info("Shortcuts: / cari · P print · L copy link · ? bantuan", { duration: 4000 })} title="Keyboard shortcuts (?)">
+            <Keyboard className="h-3.5 w-3.5" />
+          </Button>
           <Button variant="outline" size="sm" onClick={() => toast.success("Demo direset")}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset Demo
           </Button>
         </div>
       </div>
+
+      {/* Hero header */}
+      <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-cyan-accent">
+              Finance Operations
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Dashboard</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Ringkasan eksekutif Finance Operations Klinik Utama Prime Mata untuk periode aktif {period}.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+          </Button>
+        </div>
+      </div>
+
+
 
       {/* Hero header */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
@@ -266,9 +316,22 @@ function FinanceDashboard() {
       {/* AR Aging + AP Aging + Recent Activities + Finance Alerts */}
       <AgingActivitiesAlerts rows={filtered} outstanding={outstanding} hutang={hutang} recentActivities={recentActivities} alerts={alerts} />
 
-
       {/* unused placeholder */}
       <input type="hidden" value={PiggyBank.displayName ?? ""} />
+
+      {/* Scroll-to-top FAB */}
+      {showTop && (
+        <Button
+          size="icon"
+          variant="secondary"
+          aria-label="Kembali ke atas"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="no-print fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full border border-border shadow-lg"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
+
     </div>
   );
 }
