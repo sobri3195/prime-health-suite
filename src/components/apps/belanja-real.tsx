@@ -338,6 +338,31 @@ export function PatientOrders() {
               </div>
               <OrderTimeline status={o.status} />
               <div className="mt-2 text-xs text-muted-foreground">{o.items?.length ?? 0} item • {o.metode_bayar}</div>
+              {(o.kurir || o.resi) && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-[#fdf8e8] px-3 py-2 text-xs">
+                  <Truck className="h-4 w-4 text-[#6b5a16]" />
+                  <span className="font-semibold">{o.kurir ?? "Kurir"}</span>
+                  {o.resi && (
+                    <>
+                      <span className="text-muted-foreground">Resi:</span>
+                      <span className="font-mono">{o.resi}</span>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] bg-white px-2 py-0.5 hover:bg-[#fdf2c4]"
+                        onClick={async () => { try { await navigator.clipboard.writeText(o.resi); toast.success("Resi disalin"); } catch { /* ignore */ } }}
+                      >
+                        <Copy className="h-3 w-3" /> Salin
+                      </button>
+                    </>
+                  )}
+                  {o.tracking_url && (
+                    <a href={o.tracking_url} target="_blank" rel="noreferrer"
+                      className="ml-auto inline-flex items-center gap-1 rounded-lg bg-[#6b5a16] px-2 py-1 text-white">
+                      Lacak <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              )}
               <div className="mt-2 text-base font-bold">{fmt(o.total)}</div>
             </div>
           ))}
