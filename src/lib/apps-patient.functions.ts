@@ -204,7 +204,12 @@ export const getMyQueueToday = createServerFn({ method: "GET" })
         total = (pos[0] as { total: number }).total;
       }
     }
-    return { queue: data, posisi, total };
+    const { data: setting } = await supabase
+      .from("clinic_setting").select("value").eq("key", "slot_menit_default").maybeSingle();
+    const raw = setting?.value as unknown;
+    const slot_menit = typeof raw === "number" ? raw : Number(raw) || 15;
+    return { queue: data, posisi, total, slot_menit };
+
   });
 
 const PageInput = z.object({
