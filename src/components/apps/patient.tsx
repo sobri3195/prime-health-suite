@@ -66,6 +66,8 @@ export function PatientBeranda() {
   const queue = queueQ.data?.queue;
   const posisi = queueQ.data?.posisi;
   const total = queueQ.data?.total;
+  const slotMenit = queueQ.data?.slot_menit ?? 15;
+
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = bookingsQ.data?.bookings.find(
     (b) => b.tanggal >= today && b.status !== "cancelled" && b.status !== "done"
@@ -129,7 +131,7 @@ export function PatientBeranda() {
             <div className="mt-1 text-3xl font-bold">{queue.no_antrean || `#${(posisi ?? 0) + 1}`}</div>
             <div className="mt-2 text-xs text-muted-foreground">
               {posisi !== null && posisi !== undefined && total !== null && total !== undefined
-                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * 15} menit`
+                ? `Posisi Anda: ${posisi + 1} dari ${total} pasien • Estimasi tunggu ±${posisi * slotMenit} menit`
                 : "Memuat posisi…"}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -607,7 +609,8 @@ export function PatientProfil() {
   });
 
   const cancelM = useMutation({
-    mutationFn: (id: string) => callCancel({ data: { id } }),
+    mutationFn: (v: { id: string; alasan?: string }) => callCancel({ data: v }),
+
     onSuccess: () => {
       toast.success("Booking dibatalkan");
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
@@ -791,7 +794,12 @@ export function PatientProfil() {
                     {t("patient.reschedule")}
                   </button>
                   <button
-                    onClick={async () => { if (await confirm({ description: t("patient.cancel_confirm"), destructive: true, confirmText: t("patient.cancel") })) cancelM.mutate(b.id); }}
+                    onClick={async () => {
+                      const alasan = typeof window !== "undefined" ? window.prompt(t("patient.cancel_reason_prompt") || "Alasan pembatalan (opsional):") ?? undefined : undefined;
+                      if (await confirm({ description: t("patient.cancel_confirm"), destructive: true, confirmText: t("patient.cancel") })) {
+                        cancelM.mutate({ id: b.id, alasan: alasan?.trim() || undefined });
+                      }
+                    }}
                     disabled={cancelM.isPending}
                     className="rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700"
                   >
