@@ -334,7 +334,10 @@ function Empty({ text }: { text: string }) {
   return <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">{text}</div>;
 }
 
-function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/types/finance").Invoice[]; outstanding: number; hutang: number }) {
+type ActivityItem = { id: string; kind: "payment" | "invoice"; ref: string; subject: string; note: string; amount: number; date: string };
+type AlertsBundle = { overdueCount: number; overdueTotal: number; apVendors: number; apTotal: number; unreconciledCount: number };
+
+function AgingActivitiesAlerts({ rows, outstanding, hutang, recentActivities, alerts }: { rows: import("@/types/finance").Invoice[]; outstanding: number; hutang: number; recentActivities: ActivityItem[]; alerts: AlertsBundle }) {
   const ar = aging(rows);
   const apQ = useQuery({
     queryKey: ["fin","ap-aging"],
@@ -361,8 +364,9 @@ function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/
     }
     return (["0-30","31-60","61-90",">90"] as const).map((bucket) => ({ bucket, ...buckets[bucket] }));
   }, [apQ.data]);
-  const recent = rows.slice(0, 5);
-  const alertCount = ar.find((a) => a.bucket === ">90")?.count ?? 0;
+  const recent: ActivityItem[] = recentActivities.length ? recentActivities.slice(0, 6) : rows.slice(0, 5).map((r) => ({
+    id: r.id, kind: "invoice", ref: r.invoice, subject: r.patientCode, note: r.service, amount: r.total, date: r.date,
+  }));
 
   return (
     <div className="mt-6 grid gap-4 lg:grid-cols-4">
@@ -372,15 +376,18 @@ function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/
       <Card title="AP Aging" subtitle="Distribusi hutang berdasarkan umur">
         <AgingBars data={ap} tone="rose" />
       </Card>
-      <Card title="Recent Activities" subtitle="5 transaksi terakhir">
+      <Card title="Recent Activities" subtitle={`${recent.length} transaksi terakhir`}>
         <ul className="space-y-2 text-sm">
           {recent.map((r) => (
             <li key={r.id} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/20 p-2">
               <div className="min-w-0">
-                <div className="truncate font-mono text-xs">{r.invoice}</div>
-                <div className="truncate text-[11px] text-muted-foreground">{r.patientCode} • {r.service}</div>
+                <div className="truncate font-mono text-xs">{r.ref}</div>
+                <div className="truncate text-[11px] text-muted-foreground">{r.subject} • {r.note}</div>
               </div>
-              <div className="text-right font-mono text-xs">{formatCompactIDR(r.total)}</div>
+              <div className="text-right font-mono text-xs">
+                <div className={r.kind === "payment" ? "text-emerald-600" : ""}>{formatCompactIDR(r.amount)}</div>
+                <div className="text-[10px] uppercase text-muted-foreground">{r.kind === "payment" ? "Bayar" : "Invoice"}</div>
+              </div>
             </li>
           ))}
         </ul>
@@ -389,21 +396,22 @@ function AgingActivitiesAlerts({ rows, outstanding, hutang }: { rows: import("@/
         <ul className="space-y-2 text-sm">
           <li className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
             <div className="font-medium">Piutang jatuh tempo</div>
-            <div className="text-xs text-muted-foreground">{alertCount} invoice • {formatIDR(outstanding)}</div>
+            <div className="text-xs text-muted-foreground">{alerts.overdueCount} invoice • {formatIDR(alerts.overdueTotal || outstanding)}</div>
           </li>
           <li className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3">
             <div className="font-medium">Hutang jatuh tempo</div>
-            <div className="text-xs text-muted-foreground">3 vendor • {formatIDR(hutang)}</div>
+            <div className="text-xs text-muted-foreground">{alerts.apVendors} vendor • {formatIDR(alerts.apTotal || hutang)}</div>
           </li>
           <li className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3">
             <div className="font-medium">Belum rekonsiliasi</div>
-            <div className="text-xs text-muted-foreground">{rows.length} transaksi • Perlu matching bank</div>
+            <div className="text-xs text-muted-foreground">{alerts.unreconciledCount} transaksi • Perlu matching bank</div>
           </li>
         </ul>
       </Card>
     </div>
   );
 }
+
 
 function AgingBars({ data, tone }: { data: { bucket: string; amount: number; count: number }[]; tone: "amber" | "rose" }) {
   const max = Math.max(1, ...data.map((d) => d.amount));
