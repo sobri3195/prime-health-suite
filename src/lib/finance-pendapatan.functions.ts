@@ -57,10 +57,10 @@ export const createInvoice = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertFinanceEditor(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const subtotal = data.items.reduce((a, i) => a + i.tarif * i.qty, 0);
+    const subtotal = data.items.reduce((a: number, i: z.infer<typeof itemSchema>) => a + i.tarif * i.qty, 0);
     const pajak = Math.round((subtotal * data.pajak_persen) / 100);
     const total = subtotal + pajak;
-    const totalBayar = data.pembayaran.reduce((a, p) => a + p.jumlah, 0);
+    const totalBayar = data.pembayaran.reduce((a: number, p: z.infer<typeof paySchema>) => a + p.jumlah, 0);
     const status = totalBayar >= total ? "paid" : totalBayar > 0 ? "partial" : "issued";
     const no = `INV-${data.tanggal.replaceAll("-", "")}-${Date.now().toString().slice(-5)}`;
 
