@@ -12,6 +12,7 @@ import {
   Wallet, TrendingUp, TrendingDown, Receipt, Landmark, AlertTriangle, Sparkles,
   PiggyBank, ShieldCheck, FileWarning, ArrowDownCircle, ArrowUpCircle, Activity,
   Printer, Download, RotateCcw, Plus, FileText, UserPlus, BadgeCheck, Calendar, Search,
+  Link2, Keyboard, ArrowUp,
 } from "lucide-react";
 import { FinanceTrendChart } from "@/components/finance-trend-chart";
 import { getFinanceDashboard } from "@/lib/finance-dashboard.functions";
