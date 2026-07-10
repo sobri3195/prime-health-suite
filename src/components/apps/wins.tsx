@@ -15,8 +15,9 @@ export function PatientWins() {
   const callReward = useServerFn(listReward);
   const callRedeem = useServerFn(redeemReward);
   const callMyRedeem = useServerFn(listMyRedeem);
+  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
   const poinQ = useQuery({ queryKey: ["apps", "poin"], queryFn: () => callPoin() });
-  const boardQ = useQuery({ queryKey: ["apps", "leaderboard"], queryFn: () => callBoard() });
+  const boardQ = useQuery({ queryKey: ["apps", "leaderboard", period], queryFn: () => callBoard({ data: { period } }) });
   const rewardQ = useQuery({ queryKey: ["apps", "reward"], queryFn: () => callReward() });
   const myRedeemQ = useQuery({ queryKey: ["apps", "my-redeem"], queryFn: () => callMyRedeem() });
   const [voucher, setVoucher] = useState<string | null>(null);
