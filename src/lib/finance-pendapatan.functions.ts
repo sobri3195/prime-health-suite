@@ -164,7 +164,7 @@ const listSchema = z.object({
 });
 
 export const listInvoices = createServerFn({ method: "POST" })
-  .middleware([requireFinEdit])
+  .middleware([requireFinView])
   .inputValidator((d: unknown) => listSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
