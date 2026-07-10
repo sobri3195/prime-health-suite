@@ -12,8 +12,23 @@ export async function generateResepPDF(d: ResepData) {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a5" });
   const W = doc.internal.pageSize.getWidth();
-  let y = 14;
+  const H = doc.internal.pageSize.getHeight();
 
+  // ── Watermark klinik (diagonal, tipis) — ditulis lebih dulu supaya konten menimpa ──
+  const wmText = (d.klinik || "Klinik Utama Mata Prime").toUpperCase();
+  const anyDoc = doc as any;
+  anyDoc.saveGraphicsState?.();
+  const gs = anyDoc.GState?.({ opacity: 0.08 });
+  if (gs) anyDoc.setGState?.(gs);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(40);
+  doc.setTextColor(0, 0, 0);
+  doc.text(wmText, W / 2, H / 2, { align: "center", angle: -30 });
+  anyDoc.restoreGraphicsState?.();
+  doc.setTextColor(0);
+
+  let y = 14;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text(d.klinik || "Klinik Utama Mata Prime", W / 2, y, { align: "center" });
@@ -25,6 +40,7 @@ export async function generateResepPDF(d: ResepData) {
   doc.setLineWidth(0.3);
   doc.line(10, y, W - 10, y);
   y += 6;
+
 
   doc.setFontSize(9);
   doc.text(`No. Invoice : ${d.no_invoice}`, 10, y);

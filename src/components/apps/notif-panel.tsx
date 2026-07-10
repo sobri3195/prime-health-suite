@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { sanitizeDeepLink } from "@/lib/safe-url";
+
 
 
 /** Realtime subscription untuk notif & queue refresh */
@@ -133,15 +135,23 @@ export function NotificationsPagePatient() {
                   <span className="text-[11px] text-muted-foreground">
                     {new Date(n.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
                   </span>
-                  {n.deep_link && (
-                    <a
-                      href={n.deep_link}
-                      onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
-                      className="text-xs font-semibold text-[#6b5a16]"
-                    >
-                      {t("notif.open")} →
-                    </a>
-                  )}
+                  {(() => {
+                    const safe = sanitizeDeepLink(n.deep_link);
+                    if (!safe) return null;
+                    const isExternal = /^https?:/i.test(safe);
+                    return (
+                      <a
+                        href={safe}
+                        {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        onClick={() => { if (!n.read_at) readM.mutate(n.id); }}
+                        className="inline-flex min-h-11 items-center text-xs font-semibold text-[#6b5a16]"
+                      >
+                        {t("notif.open")} →
+                      </a>
+                    );
+                  })()}
+
+
                 </div>
               </div>
               <div className="flex flex-col gap-1">
