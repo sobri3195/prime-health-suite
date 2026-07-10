@@ -34,12 +34,15 @@ function Stars({ value, onRate, size = 14 }: { value: number; onRate?: (n: numbe
 
 async function share(title: string, url: string) {
   try {
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ title, url });
+    const nav = typeof navigator !== "undefined" ? (navigator as Navigator) : null;
+    if (nav && "share" in nav && typeof nav.share === "function") {
+      await nav.share({ title, url });
       return;
     }
-    await navigator.clipboard.writeText(url);
-    toast.success("Tautan disalin");
+    if (nav?.clipboard) {
+      await nav.clipboard.writeText(url);
+      toast.success("Tautan disalin");
+    }
   } catch {
     /* user cancelled */
   }
