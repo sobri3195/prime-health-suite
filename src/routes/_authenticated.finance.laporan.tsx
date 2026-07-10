@@ -286,12 +286,17 @@ function ReportRow({ label, val, bold }: { label: string; val: number | string; 
   );
 }
 
-function ReportTable({ title, rows, cols, onExport }: { title: string; rows: any[]; cols: { h: string; align?: "right"; get: (r: any) => any }[]; onExport: () => void }) {
+function ReportTable({ title, rows, cols, onExport, page, setPage }: { title: string; rows: any[]; cols: { h: string; align?: "right"; get: (r: any) => any }[]; onExport: () => void; page?: number; setPage?: (fn: (n: number) => number) => void }) {
+  const PAGE_SIZE = 50;
+  const usePaging = typeof page === "number" && typeof setPage === "function";
+  const totalPages = usePaging ? Math.max(1, Math.ceil(rows.length / PAGE_SIZE)) : 1;
+  const currentPage = usePaging ? Math.min(Math.max(1, page!), totalPages) : 1;
+  const visible = usePaging ? rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE) : rows.slice(0, 200);
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border p-3">
         <div className="font-semibold">{title}</div>
-        <Button size="sm" variant="outline" className="gap-1" onClick={onExport} disabled={!rows.length}>
+        <Button size="sm" variant="outline" className="gap-1 min-h-11" onClick={onExport} disabled={!rows.length}>
           <Download className="h-4 w-4" /> CSV
         </Button>
       </div>
@@ -299,9 +304,9 @@ function ReportTable({ title, rows, cols, onExport }: { title: string; rows: any
         <Table>
           <TableHeader><TableRow>{cols.map((c, i) => <TableHead key={i} className={c.align === "right" ? "text-right" : ""}>{c.h}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
-            {rows.length === 0 ? (
+            {visible.length === 0 ? (
               <TableRow><TableCell colSpan={cols.length} className="py-10 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
-            ) : rows.slice(0, 200).map((r, i) => (
+            ) : visible.map((r, i) => (
               <TableRow key={i}>
                 {cols.map((c, j) => <TableCell key={j} className={`text-xs ${c.align === "right" ? "text-right font-mono" : ""}`}>{c.get(r)}</TableCell>)}
               </TableRow>
@@ -309,6 +314,16 @@ function ReportTable({ title, rows, cols, onExport }: { title: string; rows: any
           </TableBody>
         </Table>
       </div>
+      {usePaging && rows.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between border-t border-border p-2 text-xs">
+          <div className="text-muted-foreground">Hal. {currentPage} / {totalPages} · {rows.length} baris</div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="min-h-11" disabled={currentPage <= 1} onClick={() => setPage!((n) => n - 1)}>Prev</Button>
+            <Button size="sm" variant="outline" className="min-h-11" disabled={currentPage >= totalPages} onClick={() => setPage!((n) => n + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
