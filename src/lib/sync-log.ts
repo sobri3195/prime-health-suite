@@ -15,28 +15,8 @@ export type SyncEntry = {
   payload?: Record<string, unknown>;
 };
 
-function seed(): SyncEntry[] {
-  const now = Date.now();
-  const mk = (i: number, p: Omit<SyncEntry, "id" | "ts">): SyncEntry => ({
-    id: "syn_seed_" + i,
-    ts: new Date(now - i * 1000 * 60 * 7).toISOString(),
-    ...p,
-  });
-  return [
-    mk(1, { source: "SIM Klinik", target: "Finance", channel: "billing.invoice", refId: "BIL-1042",
-            status: "success", message: "Invoice INV/2026/06/1042 terkirim ke Finance" }),
-    mk(2, { source: "Finance", target: "SIM Klinik", channel: "payment.status", refId: "INV/2026/06/1042",
-            status: "success", message: "Status pembayaran disinkron: paid" }),
-    mk(3, { source: "SIM Klinik", target: "Prime Apps", channel: "notification.summary", refId: "NTF-998",
-            status: "success", message: "Notifikasi billing baru ke portal" }),
-    mk(4, { source: "Finance", target: "SIM Klinik", channel: "payment.status", refId: "INV/2026/06/1021",
-            status: "pending", message: "Menunggu konfirmasi gateway internal" }),
-    mk(5, { source: "SIM Klinik", target: "Finance", channel: "billing.invoice", refId: "BIL-1011",
-            status: "failed", message: "Payer 'Asuransi X' belum dimapping di master Finance" }),
-  ];
-}
+let log: SyncEntry[] = [];
 
-let log: SyncEntry[] = seed();
 const listeners = new Set<() => void>();
 
 export function getSyncLog() { return log; }
