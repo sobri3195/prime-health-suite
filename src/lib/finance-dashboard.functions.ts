@@ -139,12 +139,17 @@ export const getFinanceDashboard = createServerFn({ method: "POST" })
       target: Math.round(v.revenue * 1.1) || 50_000_000,
     }));
 
-    // Bank balance = sum of journal lines for cash/bank COA (1100/1110/1120) net debit
-    const { data: bankLines } = await s
-      .from("fin_journal_line")
-      .select("coa_code, debit, kredit, fin_journal_entry!inner(status)")
-      .eq("fin_journal_entry.status", "posted")
-      .in("coa_code", ["1100", "1110", "1120"]);
+    // Bank balance = sum of journal lines for cash/bank COA (resolved dynamically)
+    const { data: cashCoa } = await s.from("fin_coa").select("code, name, type, cash_flow_section");
+    const cashCodes = (cashCoa ?? [])
+      .filter((c: any) => c.type === "Asset" && (/^(kas|bank)/i.test(String(c.name ?? "")) || String(c.cash_flow_section ?? "").toLowerCase() === "cash"))
+      .map((c: any) => c.code as string);
+    const { data: bankLines } = cashCodes.length
+      ? await s.from("fin_journal_line")
+          .select("coa_code, debit, kredit, fin_journal_entry!inner(status)")
+          .eq("fin_journal_entry.status", "posted")
+          .in("coa_code", cashCodes)
+      : { data: [] as any[] };
     const bankBalance = (bankLines ?? []).reduce(
       (a: number, l: any) => a + (Number(l.debit) - Number(l.kredit)), 0,
     );
