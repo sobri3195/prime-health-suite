@@ -66,6 +66,8 @@ export function PatientBeranda() {
   const queue = queueQ.data?.queue;
   const posisi = queueQ.data?.posisi;
   const total = queueQ.data?.total;
+  const slotMenit = queueQ.data?.slot_menit ?? 15;
+
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = bookingsQ.data?.bookings.find(
     (b) => b.tanggal >= today && b.status !== "cancelled" && b.status !== "done"
