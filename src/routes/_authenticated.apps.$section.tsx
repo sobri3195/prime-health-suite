@@ -1,6 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { LauncherPage } from "@/components/apps/launcher";
-import { NotificationsPage } from "@/components/apps/notifications";
 import { HelpdeskPage } from "@/components/apps/helpdesk";
 import { DocumentsPage } from "@/components/apps/documents";
 import { UsersPage } from "@/components/apps/users";
@@ -17,7 +16,7 @@ import { useRoles, hasAnyRole, type AppRole } from "@/lib/rbac";
 
 // Operator/staff-only sections. Patient sessions must NOT reach these.
 const OPERATOR_SECTIONS = new Set([
-  "launcher", "notifications", "helpdesk", "documents",
+  "launcher", "helpdesk", "documents",
   "users", "integration", "audit-log",
 ]);
 const OPERATOR_ROLES: AppRole[] = [
@@ -28,9 +27,10 @@ const OPERATOR_ROLES: AppRole[] = [
 
 const KNOWN_SECTIONS = new Set([
   "ai", "belanja", "cart", "checkout", "orders", "edukasi", "wins", "chat",
-  "profil", "privasi", "laporan", "launcher", "notifications", "helpdesk",
+  "profil", "privasi", "laporan", "launcher", "helpdesk",
   "documents", "users", "integration", "audit-log",
 ]);
+
 
 const SECTION_META: Record<string, { title: string; description: string }> = {
   belanja: { title: "Belanja — Prime Apps", description: "Marketplace produk & layanan klinik untuk pasien." },
