@@ -196,7 +196,7 @@ function FinanceDashboard() {
         </div>
       </div>
 
-      </div>
+
 
       {/* Hero header */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
