@@ -52,7 +52,7 @@ async function nextJournalNo(sb: any) {
 
 export type CreateInvoiceInput = z.input<typeof createSchema>;
 export const createInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: CreateInvoiceInput) => createSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertFinanceEditor(context);
@@ -164,7 +164,7 @@ const listSchema = z.object({
 });
 
 export const listInvoices = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: unknown) => listSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -186,7 +186,7 @@ export const listInvoices = createServerFn({ method: "POST" })
 // Void invoice (reversal via status change + journal reversal). Hard delete is
 // forbidden — use voidInvoice from finance-tx for full reversal.
 export const deleteInvoice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFinEdit])
   .inputValidator((d: { id: string; reason?: string }) =>
     z.object({ id: z.string().uuid(), reason: z.string().min(3).max(500).default("Dihapus dari pendapatan") }).parse(d),
   )
