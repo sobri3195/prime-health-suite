@@ -81,8 +81,6 @@ function FinanceDashboard() {
     return a ? Math.round(((b - a) / a) * 100) : 0;
   })();
   const laba = netProfit(mtdRev, kasKeluar);
-  const byP = byPayer(filtered);
-  const topDokter = topBy(filtered, "doctor", 10);
   const insights = generateInsights(filtered, monthlyTrend);
 
   if (q.isLoading) {
@@ -194,17 +192,23 @@ function FinanceDashboard() {
 
         <Card title="Quick Actions" subtitle="Aksi operasional finance yang paling sering dipakai.">
           <div className="space-y-2">
-            <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate({ to: "/finance/pendapatan" })}>
+            <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate({ to: "/finance/pendapatan-input-harian" })}>
               <Plus className="mr-2 h-4 w-4" /> Input Pendapatan
             </Button>
             <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher-bkk" })}>
-              <FileText className="mr-2 h-4 w-4" /> Buat Voucher
+              <FileText className="mr-2 h-4 w-4" /> Buat Voucher BKK
             </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/master" })}>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/voucher-bbk" })}>
+              <FileText className="mr-2 h-4 w-4" /> Buat Voucher BBK
+            </Button>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/master/vendor" })}>
               <UserPlus className="mr-2 h-4 w-4" /> Tambah Vendor
             </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => toast.success("Export laporan diunduh")}>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/laporan" })}>
               <Download className="mr-2 h-4 w-4" /> Export Laporan
+            </Button>
+            <Button variant="outline" className="w-full justify-center" onClick={() => navigate({ to: "/finance/rekonsiliasi" })}>
+              <ShieldCheck className="mr-2 h-4 w-4" /> Rekonsiliasi Bank
             </Button>
           </div>
         </Card>
@@ -643,27 +647,69 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [payer, setPayer] = useState<Payer | "all">("all");
-  const filtered = useMemo(() => {
-    return dateRange(rows, from, to).filter((r) => payer === "all" || r.payer === payer);
-  }, [rows, from, to, payer]);
+  const [compare, setCompare] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const availableMonths = useMemo(() => Array.from(new Set(rows.map((r) => monthKey(r.date)))).sort().reverse(), [rows]);
+  const filtered = useMemo(() => dateRange(rows, from, to).filter((r) => payer === "all" || r.payer === payer), [rows, from, to, payer]);
   const top = topBy(filtered, "doctor", 10);
   const totalRev = filtered.reduce((a, r) => a + r.total, 0);
+
+  const compareData = useMemo(() => compare.map((mk) => {
+    const { from: f, to: t } = monthRange(mk);
+    const sub = dateRange(rows, f, t).filter((r) => payer === "all" || r.payer === payer);
+    return { key: mk, label: monthLabel(mk), top: topBy(sub, "doctor", 10), total: sub.reduce((a, r) => a + r.total, 0) };
+  }), [rows, compare, payer]);
+
+  const toggleCompare = (mk: string) => {
+    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    setPickerOpen(false);
+  };
 
   return (
     <Card title="Top 10 Dokter by Revenue" subtitle="Peringkat dokter berdasarkan total pendapatan">
       <FilterRow
         from={from} to={to} onFrom={setFrom} onTo={setTo}
-        onReset={() => { setFrom(""); setTo(""); setPayer("all"); }}
+        onReset={() => { setFrom(""); setTo(""); setPayer("all"); setCompare([]); }}
         extra={
-          <div className="flex flex-col">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payer</label>
-            <select value={payer} onChange={(e) => setPayer(e.target.value as Payer | "all")}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs capitalize">
-              {PAYER_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
+          <>
+            <div className="flex flex-col">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payer</label>
+              <select value={payer} onChange={(e) => setPayer(e.target.value as Payer | "all")}
+                className="h-8 rounded-md border border-border bg-background px-2 text-xs capitalize">
+                {PAYER_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="relative flex flex-col">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Bandingkan Periode</label>
+              <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setPickerOpen((v) => !v)}>
+                <Plus className="mr-1 h-3 w-3" /> Tambah Periode
+              </Button>
+              {pickerOpen && (
+                <div className="absolute left-0 top-full z-20 mt-1 max-h-56 w-44 overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
+                  {availableMonths.map((mk) => (
+                    <button key={mk} type="button" onClick={() => toggleCompare(mk)}
+                      className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${compare.includes(mk) ? "bg-accent" : ""}`}>
+                      <span>{monthLabel(mk)}</span>
+                      {compare.includes(mk) && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         }
       />
+      {compare.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-1">
+          {compare.map((mk) => (
+            <Badge key={mk} variant="secondary" className="cursor-pointer gap-1" onClick={() => toggleCompare(mk)}>
+              {monthLabel(mk)} <span className="text-muted-foreground">✕</span>
+            </Badge>
+          ))}
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setCompare([])}>Clear Comparison</Button>
+        </div>
+      )}
       <div className="mb-2 text-[11px] text-muted-foreground">
         Menampilkan data {from || "awal"} – {to || "sekarang"} • Payer: <span className="capitalize">{payer}</span>
       </div>
@@ -673,6 +719,17 @@ function TopDokterCard({ rows }: { rows: Invoice[] }) {
         <div><div className="text-muted-foreground">Jumlah Dokter</div><div className="font-semibold">{top.length}</div></div>
         <div><div className="text-muted-foreground">Dokter Tertinggi</div><div className="truncate font-semibold">{top[0]?.name ?? "—"}</div></div>
       </div>
+      {compareData.length > 0 && (
+        <div className="mt-4 space-y-2 border-t border-border pt-3">
+          <div className="text-xs font-semibold">Summary Perbandingan</div>
+          {compareData.map((c) => (
+            <div key={c.key} className="flex justify-between text-xs">
+              <span className="text-muted-foreground">{c.label} · {c.top.length} dokter</span>
+              <span className="font-mono font-semibold">{formatIDR(c.total)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
