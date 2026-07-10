@@ -3,9 +3,9 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Minus, Trash2, Package, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, Package, ArrowLeft, Copy, Truck, ExternalLink } from "lucide-react";
 import {
-  listProduk, getMyCart, addToCart, updateCartQty, removeCartItem, checkoutCart, listMyOrders,
+  listProduk, getMyCart, addToCart, updateCartQty, removeCartItem, checkoutCart, listMyOrders, listBankAccounts,
 } from "@/lib/apps-shop.functions";
 import { EmptyState, Skeleton, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
@@ -202,7 +202,9 @@ export function PatientCheckout() {
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
   const callCheckout = useServerFn(checkoutCart);
+  const callBanks = useServerFn(listBankAccounts);
   const cartQ = useQuery({ queryKey: ["apps", "cart"], queryFn: () => callCart() });
+  const banksQ = useQuery({ queryKey: ["apps", "bank-accounts"], queryFn: () => callBanks() });
   const [alamat, setAlamat] = useState("");
   const [catatan, setCatatan] = useState("");
   const [metode, setMetode] = useState<"transfer" | "cod">("transfer");
@@ -264,9 +266,34 @@ export function PatientCheckout() {
                 ))}
               </div>
               {metode === "transfer" && (
-                <p className="mt-2 rounded-xl bg-[#fdf8e8] p-2 text-[11px] text-muted-foreground">
-                  {t("checkout.transfer_hint")}
-                </p>
+                <div className="mt-2 space-y-2">
+                  <p className="rounded-xl bg-[#fdf8e8] p-2 text-[11px] text-muted-foreground">
+                    {t("checkout.transfer_hint")}
+                  </p>
+                  {(banksQ.data?.accounts ?? []).length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">Rekening belum dikonfigurasi.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {(banksQ.data?.accounts ?? []).map((b) => (
+                        <div key={`${b.bank}-${b.no_rek}`} className="flex items-center justify-between rounded-xl border border-[#e9dfb8] bg-white px-3 py-2 text-xs">
+                          <div>
+                            <div className="font-semibold">{b.bank} • {b.no_rek}</div>
+                            <div className="text-muted-foreground">a.n. {b.atas_nama}</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] px-2 py-1 hover:bg-[#fdf2c4]"
+                            onClick={async () => {
+                              try { await navigator.clipboard.writeText(b.no_rek); toast.success("No. rek disalin"); } catch { /* ignore */ }
+                            }}
+                          >
+                            <Copy className="h-3 w-3" /> Salin
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -311,6 +338,31 @@ export function PatientOrders() {
               </div>
               <OrderTimeline status={o.status} />
               <div className="mt-2 text-xs text-muted-foreground">{o.items?.length ?? 0} item • {o.metode_bayar}</div>
+              {(o.kurir || o.resi) && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-[#fdf8e8] px-3 py-2 text-xs">
+                  <Truck className="h-4 w-4 text-[#6b5a16]" />
+                  <span className="font-semibold">{o.kurir ?? "Kurir"}</span>
+                  {o.resi && (
+                    <>
+                      <span className="text-muted-foreground">Resi:</span>
+                      <span className="font-mono">{o.resi}</span>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] bg-white px-2 py-0.5 hover:bg-[#fdf2c4]"
+                        onClick={async () => { try { await navigator.clipboard.writeText(o.resi); toast.success("Resi disalin"); } catch { /* ignore */ } }}
+                      >
+                        <Copy className="h-3 w-3" /> Salin
+                      </button>
+                    </>
+                  )}
+                  {o.tracking_url && (
+                    <a href={o.tracking_url} target="_blank" rel="noreferrer"
+                      className="ml-auto inline-flex items-center gap-1 rounded-lg bg-[#6b5a16] px-2 py-1 text-white">
+                      Lacak <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              )}
               <div className="mt-2 text-base font-bold">{fmt(o.total)}</div>
             </div>
           ))}

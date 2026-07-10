@@ -124,3 +124,16 @@ export const listMyOrders = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { orders: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
+
+export type BankAccount = { bank: string; no_rek: string; atas_nama: string };
+
+export const listBankAccounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("clinic_setting").select("value").eq("key", "bank_accounts").maybeSingle();
+    if (error) throw new Error(error.message);
+    const raw = data?.value;
+    const list = Array.isArray(raw) ? (raw as BankAccount[]) : [];
+    return { accounts: list.filter((b) => b && b.bank && b.no_rek) };
+  });
