@@ -281,6 +281,9 @@ export type Database = {
       }
       apps_chat_msg: {
         Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_path: string | null
           body: string
           created_at: string
           id: string
@@ -288,6 +291,9 @@ export type Database = {
           sender: string
         }
         Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
           body: string
           created_at?: string
           id?: string
@@ -295,6 +301,9 @@ export type Database = {
           sender: string
         }
         Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
           body?: string
           created_at?: string
           id?: string
@@ -3412,6 +3421,15 @@ export type Database = {
           total_poin: number
         }[]
       }
+      apps_leaderboard_periodik: {
+        Args: { _period?: string }
+        Returns: {
+          is_me: boolean
+          nama_mask: string
+          rank: number
+          total_poin: number
+        }[]
+      }
       apps_list_doctors: {
         Args: never
         Returns: {
@@ -3468,6 +3486,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      apps_revoke_marketing_consent: { Args: never; Returns: undefined }
       apps_send_booking_reminders: { Args: never; Returns: number }
       apps_slot_terisi_for: {
         Args: { _dokter_id: string; _tanggal: string }
