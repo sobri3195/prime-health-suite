@@ -30,12 +30,14 @@ export const addPoin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const getLeaderboard = createServerFn({ method: "GET" })
+export const getLeaderboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.rpc("apps_leaderboard_mingguan");
+  .inputValidator((d?: { period?: "week" | "month" | "all" }) =>
+    z.object({ period: z.enum(["week", "month", "all"]).default("week") }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc("apps_leaderboard_periodik", { _period: data.period });
     if (error) throw new Error(error.message);
-    return { board: (data ?? []) as Array<{ rank: number; nama_mask: string; total_poin: number; is_me: boolean }> };
+    return { board: (rows ?? []) as Array<{ rank: number; nama_mask: string; total_poin: number; is_me: boolean }>, period: data.period };
   });
 
 export const listReward = createServerFn({ method: "GET" })

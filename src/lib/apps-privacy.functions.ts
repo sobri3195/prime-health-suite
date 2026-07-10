@@ -14,6 +14,14 @@ export const acceptConsent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const revokeMarketingConsent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await context.supabase.rpc("apps_revoke_marketing_consent");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const exportMyData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

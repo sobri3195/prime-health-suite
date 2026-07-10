@@ -15,8 +15,9 @@ export function PatientWins() {
   const callReward = useServerFn(listReward);
   const callRedeem = useServerFn(redeemReward);
   const callMyRedeem = useServerFn(listMyRedeem);
+  const [period, setPeriod] = useState<"week" | "month" | "all">("week");
   const poinQ = useQuery({ queryKey: ["apps", "poin"], queryFn: () => callPoin() });
-  const boardQ = useQuery({ queryKey: ["apps", "leaderboard"], queryFn: () => callBoard() });
+  const boardQ = useQuery({ queryKey: ["apps", "leaderboard", period], queryFn: () => callBoard({ data: { period } }) });
   const rewardQ = useQuery({ queryKey: ["apps", "reward"], queryFn: () => callReward() });
   const myRedeemQ = useQuery({ queryKey: ["apps", "my-redeem"], queryFn: () => callMyRedeem() });
   const [voucher, setVoucher] = useState<string | null>(null);
@@ -87,7 +88,17 @@ export function PatientWins() {
       </div>
 
       <div>
-        <h3 className="mb-2 flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#6b5a16]" /> {t("wins.leaderboard")}</h3>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="flex items-center gap-2 text-base font-semibold"><Trophy className="h-4 w-4 text-[#6b5a16]" /> {t("wins.leaderboard")}</h3>
+          <div className="inline-flex rounded-full border border-[#e9dfb8] bg-white p-0.5 text-[11px]">
+            {(["week", "month", "all"] as const).map((p) => (
+              <button key={p} onClick={() => setPeriod(p)}
+                className={`rounded-full px-2.5 py-1 font-semibold ${period === p ? "bg-[#a08a2a] text-white" : "text-[#6b5a16]"}`}>
+                {p === "week" ? "Minggu" : p === "month" ? "Bulan" : "Semua"}
+              </button>
+            ))}
+          </div>
+        </div>
         {boardQ.isLoading ? <SkeletonList rows={3} /> : (
           <div className="rounded-2xl border border-[#e9dfb8] bg-white p-2">
             {(boardQ.data?.board ?? []).length === 0 && (

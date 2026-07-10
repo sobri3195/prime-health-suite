@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, ShieldCheck, Trash2, History, AlertTriangle, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
-  listMyAuditLog, exportMyData, requestAccountDeletion, acceptConsent,
+  listMyAuditLog, exportMyData, requestAccountDeletion, acceptConsent, revokeMarketingConsent,
 } from "@/lib/apps-privacy.functions";
 import { getMyProfile } from "@/lib/apps-patient.functions";
 import { useI18n } from "@/lib/i18n";
@@ -21,6 +21,7 @@ export function PatientPrivasi() {
   const callExport = useServerFn(exportMyData);
   const callDelete = useServerFn(requestAccountDeletion);
   const callConsent = useServerFn(acceptConsent);
+  const callRevoke = useServerFn(revokeMarketingConsent);
   const callProfile = useServerFn(getMyProfile);
 
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
@@ -31,6 +32,7 @@ export function PatientPrivasi() {
 
   const p = profileQ.data?.profile;
   const consentAt = p?.consent_privacy_at as string | null | undefined;
+  const marketingAt = p?.consent_marketing_at as string | null | undefined;
 
   const actionLabel = (a: string) => {
     const k = `priv.action.${a}`;
@@ -74,6 +76,16 @@ export function PatientPrivasi() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const revokeM = useMutation({
+    mutationFn: () => callRevoke(),
+    onSuccess: () => {
+      toast.success(t("priv.consent.saved"));
+      profileQ.refetch();
+      auditQ.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
@@ -87,10 +99,35 @@ export function PatientPrivasi() {
           <div className="flex-1">
             <div className="text-base font-bold text-[#3a2a05]">{t("priv.consent.title")}</div>
             {consentAt ? (
-              <p className="mt-1 text-sm text-[#5a4a14]">
-                {t("priv.consent.accepted_at", { at: new Date(consentAt).toLocaleString(locale) })}{" "}
-                <Link to="/privacy" className="underline">{t("priv.consent.read")}</Link>
-              </p>
+              <>
+                <p className="mt-1 text-sm text-[#5a4a14]">
+                  {t("priv.consent.accepted_at", { at: new Date(consentAt).toLocaleString(locale) })}{" "}
+                  <Link to="/privacy" className="underline">{t("priv.consent.read")}</Link>
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[#e9dfb8] bg-[#fdf8e8] px-3 py-2 text-sm">
+                  <span className="font-medium text-[#3a2a05]">{t("priv.consent.marketing")}:</span>
+                  <span className={marketingAt ? "text-emerald-700" : "text-muted-foreground"}>
+                    {marketingAt ? `Aktif sejak ${new Date(marketingAt).toLocaleDateString(locale)}` : "Tidak aktif"}
+                  </span>
+                  {marketingAt ? (
+                    <button
+                      onClick={() => revokeM.mutate()}
+                      disabled={revokeM.isPending}
+                      className="ml-auto rounded-lg border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                    >
+                      Cabut persetujuan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setMarketing(true); consentM.mutate(); }}
+                      disabled={consentM.isPending}
+                      className="ml-auto rounded-lg bg-[#a08a2a] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      Aktifkan
+                    </button>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <p className="mt-1 text-sm text-[#5a4a14]">
