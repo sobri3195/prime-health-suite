@@ -25,7 +25,7 @@ export async function generateResepPDF(d: ResepData) {
   doc.setFontSize(40);
   doc.setTextColor(0, 0, 0);
   doc.text(wmText, W / 2, H / 2, { align: "center", angle: -30 });
-  doc.restoreGraphicsState?.();
+  anyDoc.restoreGraphicsState?.();
   doc.setTextColor(0);
 
   let y = 14;
