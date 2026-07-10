@@ -137,6 +137,12 @@ function LaporanPage() {
         </TabsContent>
 
         <TabsContent value="neraca-saldo">
+          <div className="mb-2 flex items-center justify-end gap-2 text-xs">
+            <span className="text-muted-foreground">Status:</span>
+            {tb.data?.balanced
+              ? <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-medium text-emerald-700">Balanced</span>
+              : <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-700">Tidak balanced · selisih {formatIDR(Math.abs((tb.data?.totalDebit ?? 0) - (tb.data?.totalKredit ?? 0)))}</span>}
+          </div>
           <ReportTable title="Neraca Saldo (Trial Balance)" rows={tb.data?.rows ?? []} cols={[
             { h: "Akun", get: (r: any) => `${r.code} – ${r.name}` },
             { h: "Debit", align: "right", get: (r: any) => formatIDR(r.debit_bal) },
