@@ -609,7 +609,8 @@ export function PatientProfil() {
   });
 
   const cancelM = useMutation({
-    mutationFn: (id: string) => callCancel({ data: { id } }),
+    mutationFn: (v: { id: string; alasan?: string }) => callCancel({ data: v }),
+
     onSuccess: () => {
       toast.success("Booking dibatalkan");
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
