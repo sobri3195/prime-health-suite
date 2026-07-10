@@ -67,7 +67,8 @@ const ALLOWED_COLS: Record<FinTable, readonly string[]> = {
 const nonEmpty = z.string().trim().min(1).max(200);
 const optStr = z.string().trim().max(500).nullable().optional();
 const num = z.coerce.number().finite();
-const numNN = num.refine((n) => n >= 0, "harus ≥ 0");
+const numNN = num.refine((n: number) => n >= 0, "harus ≥ 0");
+const pct = num.refine((n: number) => n >= 0 && n <= 100, "0–100");
 const bool = z.coerce.boolean().optional();
 const uuid = z.string().uuid();
 
