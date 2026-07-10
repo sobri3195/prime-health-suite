@@ -544,7 +544,8 @@ function PayerCard({ rows }: { rows: Invoice[] }) {
   }, [compareData]);
 
   const toggleCompare = (mk: string) => {
-    setCompare((prev) => prev.includes(mk) ? prev.filter((x) => x !== mk) : [...prev, mk].sort());
+    const next = compare.includes(mk) ? compare.filter((x) => x !== mk) : [...compare, mk].sort();
+    url.set({ cmp: next });
     setPickerOpen(false);
   };
 
