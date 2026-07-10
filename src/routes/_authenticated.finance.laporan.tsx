@@ -70,7 +70,7 @@ function LaporanPage() {
     <div>
       <PageHeader title="Laporan Manajemen" desc={`Semua laporan dihitung live dari jurnal posted — periode ${label}.`} />
 
-      <Tabs defaultValue="executive">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="executive">Executive</TabsTrigger>
           <TabsTrigger value="rugi-laba">Laba Rugi</TabsTrigger>
