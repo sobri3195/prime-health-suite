@@ -83,10 +83,29 @@ function FinanceDashboard() {
   const topDokter = topBy(filtered, "doctor", 10);
   const insights = generateInsights(filtered, monthlyTrend);
 
+  if (q.isLoading) {
+    return (
+      <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-9 w-80" />
+        </div>
+        <Skeleton className="mb-6 h-40 w-full rounded-2xl" />
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Skeleton className="h-80 rounded-2xl lg:col-span-2" />
+          <Skeleton className="h-80 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="-mx-6 -my-6 min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 dark:from-slate-950 dark:via-background dark:to-slate-900 md:-mx-8 md:-my-8 md:p-8">
       {/* Top action bar */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Badge className="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300">
             <Calendar className="mr-1.5 h-3 w-3" /> Periode aktif: {period}
