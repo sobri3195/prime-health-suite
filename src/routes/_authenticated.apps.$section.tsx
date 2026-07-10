@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { LauncherPage } from "@/components/apps/launcher";
 import { NotificationsPage } from "@/components/apps/notifications";
 import { HelpdeskPage } from "@/components/apps/helpdesk";
@@ -13,6 +13,17 @@ import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
 import { PatientPrivasi } from "@/components/apps/privacy";
 import { CLINIC_CONTACT } from "@/lib/brand";
+import { useRoles, hasAnyRole, type AppRole } from "@/lib/rbac";
+
+// Operator/staff-only sections. Patient sessions must NOT reach these.
+const OPERATOR_SECTIONS = new Set([
+  "launcher", "notifications", "helpdesk", "documents",
+  "users", "integration", "audit-log",
+]);
+const OPERATOR_ROLES: AppRole[] = [
+  "super_admin", "admin_klinik", "dokter", "perawat", "perawat_optometri",
+  "pendaftaran", "kasir", "farmasi", "manajemen",
+];
 
 
 const KNOWN_SECTIONS = new Set([
