@@ -142,6 +142,7 @@ export type Database = {
       }
       apps_booking: {
         Row: {
+          cancel_reason: string | null
           created_at: string
           dokter_id: string | null
           dokter_nama: string
@@ -158,6 +159,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          cancel_reason?: string | null
           created_at?: string
           dokter_id?: string | null
           dokter_nama: string
@@ -174,6 +176,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          cancel_reason?: string | null
           created_at?: string
           dokter_id?: string | null
           dokter_nama?: string
@@ -3395,6 +3398,32 @@ export type Database = {
         }[]
       }
       apps_request_account_deletion: { Args: never; Returns: undefined }
+      apps_reschedule_booking_locked: {
+        Args: { _id: string; _jam_slot: string; _tanggal: string }
+        Returns: {
+          cancel_reason: string | null
+          created_at: string
+          dokter_id: string | null
+          dokter_nama: string
+          id: string
+          jam_slot: string
+          keluhan: string | null
+          no_antrean: string | null
+          no_urut: number | null
+          pasien_id: string | null
+          source: string
+          status: string
+          tanggal: string
+          updated_at: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "apps_booking"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       apps_send_booking_reminders: { Args: never; Returns: number }
       apps_slot_terisi_for: {
         Args: { _dokter_id: string; _tanggal: string }
