@@ -561,8 +561,9 @@ export function PatientProfil() {
     nama: "", nik: "", tgl_lahir: "", jenis_kelamin: "" as "" | "L" | "P",
     telp: "", alamat: "", no_bpjs: "", alergi: "", kontak_darurat: "", foto_url: "",
   });
-  const [pwd, setPwd] = useState({ p1: "", p2: "" });
+  const [pwd, setPwd] = useState({ cur: "", p1: "", p2: "" });
   const [pwdLoading, setPwdLoading] = useState(false);
+
   const [reschedId, setReschedId] = useState<string | null>(null);
   const [reschedDokter, setReschedDokter] = useState<string>("");
   const [reschedDate, setReschedDate] = useState("");
