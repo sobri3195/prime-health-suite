@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { LauncherPage } from "@/components/apps/launcher";
 import { NotificationsPage } from "@/components/apps/notifications";
 import { HelpdeskPage } from "@/components/apps/helpdesk";
@@ -13,6 +13,17 @@ import { PatientWins } from "@/components/apps/wins";
 import { PatientChat } from "@/components/apps/chat";
 import { PatientPrivasi } from "@/components/apps/privacy";
 import { CLINIC_CONTACT } from "@/lib/brand";
+import { useRoles, hasAnyRole, type AppRole } from "@/lib/rbac";
+
+// Operator/staff-only sections. Patient sessions must NOT reach these.
+const OPERATOR_SECTIONS = new Set([
+  "launcher", "notifications", "helpdesk", "documents",
+  "users", "integration", "audit-log",
+]);
+const OPERATOR_ROLES: AppRole[] = [
+  "super_admin", "admin_klinik", "dokter", "perawat", "perawat_optometri",
+  "pendaftaran", "kasir", "farmasi", "manajemen",
+];
 
 
 const KNOWN_SECTIONS = new Set([
@@ -68,6 +79,28 @@ export const Route = createFileRoute("/_authenticated/apps/$section")({
 
 function Section() {
   const { section } = Route.useParams();
+  const isOperatorSection = OPERATOR_SECTIONS.has(section);
+  const { data: roles, isLoading } = useRoles({ enabled: isOperatorSection });
+
+  if (isOperatorSection) {
+    if (isLoading) {
+      return <div className="p-8 text-sm text-muted-foreground">Memeriksa akses…</div>;
+    }
+    if (!hasAnyRole(roles, OPERATOR_ROLES)) {
+      return (
+        <div className="mx-auto max-w-md p-8 text-center">
+          <h1 className="text-xl font-semibold">Akses Ditolak</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Halaman ini hanya untuk staf klinik. Akun pasien tidak memiliki akses.
+          </p>
+          <Link to="/apps" className="mt-4 inline-block text-sm underline">
+            Kembali ke Beranda
+          </Link>
+        </div>
+      );
+    }
+  }
+
   switch (section) {
     case "ai": return <PatientAI />;
     case "belanja": return <PatientBelanjaReal />;
