@@ -63,7 +63,8 @@ function Page() {
       const cur = byVendor.get(v) ?? { "0-30": 0, "31-60": 0, "61-90": 0, ">90": 0 };
       cur[k] += sisa; byVendor.set(v, cur);
     }
-    const list = Array.from(byVendor.entries()).map(([nama, x]) => ({ nama, ...x, total: x["0-30"] + x["31-60"] + x["61-90"] + x[">90"] }));
+    type Row = { nama: string; "0-30": number; "31-60": number; "61-90": number; ">90": number; total: number };
+    const list: Row[] = Array.from(byVendor.entries()).map(([nama, x]) => ({ nama, "0-30": x["0-30"], "31-60": x["31-60"], "61-90": x["61-90"], ">90": x[">90"], total: x["0-30"] + x["31-60"] + x["61-90"] + x[">90"] }));
     list.sort((a, z) => z.total - a.total);
     return { b, list };
   }, [rows]);
