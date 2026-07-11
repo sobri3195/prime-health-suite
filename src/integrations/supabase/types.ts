@@ -2568,13 +2568,19 @@ export type Database = {
           created_at: string
           employee_id: string
           gaji_pokok: number
+          hari_alpa: number
+          hari_hadir: number
           id: string
           nama_snapshot: string
           nominal_lembur: number
           payroll_run_id: string
           potongan: number
+          potongan_bpjs_kes: number
+          potongan_bpjs_tk: number
+          potongan_pph21: number
           take_home: number
           total_jam_lembur: number
+          tunjangan: number
           updated_at: string
         }
         Insert: {
@@ -2582,13 +2588,19 @@ export type Database = {
           created_at?: string
           employee_id: string
           gaji_pokok?: number
+          hari_alpa?: number
+          hari_hadir?: number
           id?: string
           nama_snapshot: string
           nominal_lembur?: number
           payroll_run_id: string
           potongan?: number
+          potongan_bpjs_kes?: number
+          potongan_bpjs_tk?: number
+          potongan_pph21?: number
           take_home?: number
           total_jam_lembur?: number
+          tunjangan?: number
           updated_at?: string
         }
         Update: {
@@ -2596,13 +2608,19 @@ export type Database = {
           created_at?: string
           employee_id?: string
           gaji_pokok?: number
+          hari_alpa?: number
+          hari_hadir?: number
           id?: string
           nama_snapshot?: string
           nominal_lembur?: number
           payroll_run_id?: string
           potongan?: number
+          potongan_bpjs_kes?: number
+          potongan_bpjs_tk?: number
+          potongan_pph21?: number
           take_home?: number
           total_jam_lembur?: number
+          tunjangan?: number
           updated_at?: string
         }
         Relationships: [
