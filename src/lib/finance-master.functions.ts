@@ -149,3 +149,38 @@ export const deleteFinMaster = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Bulk CSV import: validate every row, then insert in one round-trip.
+// Returns per-row errors so the UI can show which lines failed.
+export const bulkImportFinMaster = createServerFn({ method: "POST" })
+  .middleware([requireFinEdit])
+  .inputValidator((d: { table: FinTable; rows: Record<string, unknown>[] }) => ({
+    table: tableSchema.parse(d.table),
+    rows: z.array(z.record(z.string(), z.any())).max(2000).parse(d.rows),
+  }))
+  .handler(async ({ data }) => {
+    const schema = ROW_SCHEMAS[data.table];
+    const valid: Record<string, unknown>[] = [];
+    const errors: { row: number; message: string }[] = [];
+    data.rows.forEach((raw, idx) => {
+      const filtered = pickAllowed(data.table, raw);
+      if (Object.keys(filtered).length === 0) {
+        errors.push({ row: idx + 1, message: "tidak ada kolom valid" });
+        return;
+      }
+      const parsed = schema.safeParse(filtered);
+      if (!parsed.success) {
+        errors.push({
+          row: idx + 1,
+          message: parsed.error.issues.map((i: any) => `${i.path.join(".") || "row"}: ${i.message}`).join("; "),
+        });
+        return;
+      }
+      valid.push(parsed.data as Record<string, unknown>);
+    });
+    if (valid.length === 0) return { inserted: 0, errors, total: data.rows.length };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin.from(data.table) as any).insert(valid);
+    if (error) throw new Error(error.message);
+    return { inserted: valid.length, errors, total: data.rows.length };
+  });
