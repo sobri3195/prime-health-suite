@@ -38,6 +38,8 @@ export interface DataTableProps<T> {
   /** Enable row multi-select checkboxes. When set, `bulkActions` renders in the selection toolbar. */
   selectable?: boolean;
   bulkActions?: (selected: T[], clear: () => void) => ReactNode;
+  /** When set, sync search/sort/page to URL query string using this namespace (e.g. "coa" → ?coa_q=&coa_p=&coa_s=). */
+  urlKey?: string;
 }
 
 function fmtValue<T>(col: DataTableColumn<T>, row: T): string | number | null | undefined {
