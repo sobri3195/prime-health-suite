@@ -59,6 +59,8 @@ function Page() {
   const unpostedFn = useServerFn(reconUnposted);
   const auditFn = useServerFn(postingAudit);
   const slaFn = useServerFn(slaConfig);
+  const rebuildFn = useServerFn(rebuildSaldo);
+  const unbalancedFn = useServerFn(unbalancedEntries);
 
   const sla = useQuery({ queryKey: ["sla-config"], queryFn: () => slaFn(), staleTime: 5 * 60_000 });
   const UNPOSTED_SLA_HOURS = sla.data?.slaHours ?? DEFAULT_SLA_HOURS;
@@ -67,6 +69,23 @@ function Page() {
   const recon = useQuery({ queryKey: ["recon-jurnal", from, to], queryFn: () => reconFn({ data: { from, to } }) });
   const unposted = useQuery({ queryKey: ["recon-unposted", from, to], queryFn: () => unpostedFn({ data: { from, to } }) });
   const audit = useQuery({ queryKey: ["posting-audit", from, to], queryFn: () => auditFn({ data: { from, to, limit: 500 } }) });
+  const unbalanced = useQuery({ queryKey: ["unbalanced", from, to], queryFn: () => unbalancedFn({ data: { from, to } }) });
+  const [reconciling, setReconciling] = useState(false);
+
+  const handleReconcile = async () => {
+    setReconciling(true);
+    try {
+      const res: any = await rebuildFn({ data: { from, to } });
+      const rows = res?.rows ?? [];
+      const retried = rows.reduce((a: number, r: any) => a + Number(r.retried || 0), 0);
+      toast.success(`Rekonsiliasi selesai: ${retried} transaksi diproses ulang`);
+      recon.refetch(); unposted.refetch(); audit.refetch(); unbalanced.refetch();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal rekonsiliasi");
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   // Drill state
   const [drillEntry, setDrillEntry] = useState<{ id: string; title: string } | null>(null);
