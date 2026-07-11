@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/finance/bukti-setor")({
         { key: "amount", label: "Jumlah", type: "number" },
         { key: "ref_bank", label: "Ref. Bank" },
         { key: "keterangan", label: "Keterangan" },
-        { key: "status", label: "Status", type: "select", options: ["draft", "posted", "void"] },
+        { key: "status", label: "Status", type: "select", options: ["posted", "draft", "void"] },
       ]}
-      newRow={() => ({ no_setor: `BS-${Date.now()}`, tanggal: new Date().toISOString().slice(0, 10), kas_coa: "1100", bank_coa: "1110", amount: 0, ref_bank: "", keterangan: "", status: "draft" })}
+      newRow={() => ({ no_setor: `BS-${Date.now()}`, tanggal: new Date().toISOString().slice(0, 10), kas_coa: "1-1000", bank_coa: "1-1200", amount: 0, ref_bank: "", keterangan: "", status: "posted" })}
     />
   ),
 });
