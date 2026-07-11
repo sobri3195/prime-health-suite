@@ -3554,6 +3554,14 @@ export type Database = {
         Args: { _periode: string }
         Returns: number
       }
+      fin_rebuild_saldo: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          posted: number
+          retried: number
+          sumber: string
+        }[]
+      }
       fin_recon_jurnal: {
         Args: { _from: string; _to: string }
         Returns: {
@@ -3592,6 +3600,18 @@ export type Database = {
       fin_resolve_cash_bank_coa: {
         Args: { _bank: string; _metode: string }
         Returns: string
+      }
+      fin_unbalanced_entries: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          entry_id: string
+          no_jurnal: string
+          selisih: number
+          sumber: string
+          tanggal: string
+          total_debit: number
+          total_kredit: number
+        }[]
       }
       has_role: {
         Args: {

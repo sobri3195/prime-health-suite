@@ -7,9 +7,9 @@ import { PageHeader } from "@/components/app-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, FileSpreadsheet, Download, ExternalLink, Bell } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, FileSpreadsheet, Download, ExternalLink, Bell, Wand2, Scale } from "lucide-react";
 import { useFinanceDate, type DatePreset } from "@/context/finance-date";
-import { reconJurnal, reconUnposted, postingAudit, slaConfig } from "@/lib/finance-recon-jurnal.functions";
+import { reconJurnal, reconUnposted, postingAudit, slaConfig, rebuildSaldo, unbalancedEntries } from "@/lib/finance-recon-jurnal.functions";
 import { FinanceDrillDialog } from "@/components/finance-drill-dialog";
 import { exportCsv, exportPdf, exportReportPdf, type Column } from "@/lib/exporter";
 import { toast } from "sonner";
@@ -59,6 +59,8 @@ function Page() {
   const unpostedFn = useServerFn(reconUnposted);
   const auditFn = useServerFn(postingAudit);
   const slaFn = useServerFn(slaConfig);
+  const rebuildFn = useServerFn(rebuildSaldo);
+  const unbalancedFn = useServerFn(unbalancedEntries);
 
   const sla = useQuery({ queryKey: ["sla-config"], queryFn: () => slaFn(), staleTime: 5 * 60_000 });
   const UNPOSTED_SLA_HOURS = sla.data?.slaHours ?? DEFAULT_SLA_HOURS;
@@ -67,6 +69,23 @@ function Page() {
   const recon = useQuery({ queryKey: ["recon-jurnal", from, to], queryFn: () => reconFn({ data: { from, to } }) });
   const unposted = useQuery({ queryKey: ["recon-unposted", from, to], queryFn: () => unpostedFn({ data: { from, to } }) });
   const audit = useQuery({ queryKey: ["posting-audit", from, to], queryFn: () => auditFn({ data: { from, to, limit: 500 } }) });
+  const unbalanced = useQuery({ queryKey: ["unbalanced", from, to], queryFn: () => unbalancedFn({ data: { from, to } }) });
+  const [reconciling, setReconciling] = useState(false);
+
+  const handleReconcile = async () => {
+    setReconciling(true);
+    try {
+      const res: any = await rebuildFn({ data: { from, to } });
+      const rows = res?.rows ?? [];
+      const retried = rows.reduce((a: number, r: any) => a + Number(r.retried || 0), 0);
+      toast.success(`Rekonsiliasi selesai: ${retried} transaksi diproses ulang`);
+      recon.refetch(); unposted.refetch(); audit.refetch(); unbalanced.refetch();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal rekonsiliasi");
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   // Drill state
   const [drillEntry, setDrillEntry] = useState<{ id: string; title: string } | null>(null);
@@ -234,7 +253,10 @@ function Page() {
           <Button size="sm" className="h-8 gap-1" onClick={handlePdfReport}>
             <Download className="h-3.5 w-3.5" /> PDF Laporan
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); }} className="h-8 gap-1">
+          <Button size="sm" variant="secondary" className="h-8 gap-1" onClick={handleReconcile} disabled={reconciling}>
+            {reconciling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />} Reconcile
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); unbalanced.refetch(); }} className="h-8 gap-1">
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -462,6 +484,45 @@ function Page() {
                       {r.journal_status}
                     </Badge>
                   </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <Scale className="h-4 w-4" /> Jurnal Tidak Balance
+          {(unbalanced.data?.rows?.length ?? 0) > 0 && (
+            <Badge variant="secondary" className="bg-rose-500/15 text-rose-700">{unbalanced.data!.rows.length}</Badge>
+          )}
+        </h3>
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>No. Jurnal</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Sumber</TableHead>
+                <TableHead className="text-right">Debit</TableHead>
+                <TableHead className="text-right">Kredit</TableHead>
+                <TableHead className="text-right">Selisih</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {unbalanced.isLoading ? (
+                <TableRow><TableCell colSpan={6} className="py-6 text-center"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></TableCell></TableRow>
+              ) : (unbalanced.data?.rows?.length ?? 0) === 0 ? (
+                <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-emerald-700">✓ Semua jurnal balance (debit = kredit).</TableCell></TableRow>
+              ) : (unbalanced.data!.rows as any[]).map((r) => (
+                <TableRow key={r.entry_id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDrillEntry({ id: r.entry_id, title: `Detail ${r.no_jurnal}` })}>
+                  <TableCell className="font-mono text-xs">{r.no_jurnal}</TableCell>
+                  <TableCell>{r.tanggal}</TableCell>
+                  <TableCell><Badge variant="outline">{r.sumber}</Badge></TableCell>
+                  <TableCell className="text-right font-mono">{fmt(r.total_debit)}</TableCell>
+                  <TableCell className="text-right font-mono">{fmt(r.total_kredit)}</TableCell>
+                  <TableCell className="text-right font-mono font-semibold text-rose-600">{fmt(r.selisih)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
