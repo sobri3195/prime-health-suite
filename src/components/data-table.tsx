@@ -35,6 +35,9 @@ export interface DataTableProps<T> {
   rightActions?: (row: T) => ReactNode; // per-row trailing actions cell
   toolbar?: ReactNode; // shown above the table (filters)
   initialSort?: { key: string; dir: "asc" | "desc" };
+  /** Enable row multi-select checkboxes. When set, `bulkActions` renders in the selection toolbar. */
+  selectable?: boolean;
+  bulkActions?: (selected: T[], clear: () => void) => ReactNode;
 }
 
 function fmtValue<T>(col: DataTableColumn<T>, row: T): string | number | null | undefined {
