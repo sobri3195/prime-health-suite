@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, Undo2 } from "lucide-react";
+import { Search, Undo2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
@@ -32,6 +32,35 @@ const ACTION_TONE: Record<string, string> = {
   import: "bg-slate-500/15 text-slate-700",
   unmatch: "bg-amber-500/15 text-amber-700",
 };
+
+function csvEscape(v: unknown): string {
+  if (v == null) return "";
+  const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function exportAuditCsv(rows: any[]) {
+  const header = ["waktu","aktor","aksi","entity","entity_no","entity_id","alasan","changed_fields","diff"];
+  const lines = [header.join(",")];
+  for (const r of rows) {
+    const before = (r.before ?? {}) as Record<string, unknown>;
+    const after = (r.after ?? {}) as Record<string, unknown>;
+    const keys = Array.from(new Set([...(r.changed_fields ?? []), ...Object.keys(before), ...Object.keys(after)]));
+    const changed = keys.filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+    const diff = changed.map((k) => `${k}: ${JSON.stringify(before[k]) ?? "∅"} → ${JSON.stringify(after[k]) ?? "∅"}`).join(" | ");
+    lines.push([
+      new Date(r.created_at).toISOString(),
+      r.actor_email ?? "system",
+      r.action, r.entity, r.entity_no ?? "", r.entity_id ?? "",
+      r.reason ?? "", (r.changed_fields ?? []).join(";"), diff,
+    ].map(csvEscape).join(","));
+  }
+  const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `audit-finance-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
 
 function AuditPage() {
   const { isAdmin } = useFinanceAccess();
@@ -85,6 +114,9 @@ function AuditPage() {
             {Object.keys(ACTION_TONE).map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
+          <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
