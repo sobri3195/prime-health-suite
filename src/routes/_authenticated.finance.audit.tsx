@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { useFinanceDate } from "@/context/finance-date";
-import { listFinAudit } from "@/lib/finance-report.functions";
+import { listFinAudit, revertFinAudit } from "@/lib/finance-report.functions";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Search, Undo2 } from "lucide-react";
+import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
 export const Route = createFileRoute("/_authenticated/finance/audit")({ 
