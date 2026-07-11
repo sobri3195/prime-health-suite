@@ -108,8 +108,8 @@ function AuditPage() {
   });
   const rows = data?.rows ?? [];
 
-  const searchRef = React.useRef<HTMLInputElement>(null);
-  React.useEffect(() => {
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       const typing = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
