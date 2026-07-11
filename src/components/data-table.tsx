@@ -38,6 +38,8 @@ export interface DataTableProps<T> {
   /** Enable row multi-select checkboxes. When set, `bulkActions` renders in the selection toolbar. */
   selectable?: boolean;
   bulkActions?: (selected: T[], clear: () => void) => ReactNode;
+  /** When set, sync search/sort/page to URL query string using this namespace (e.g. "coa" → ?coa_q=&coa_p=&coa_s=). */
+  urlKey?: string;
 }
 
 function fmtValue<T>(col: DataTableColumn<T>, row: T): string | number | null | undefined {
@@ -61,11 +63,36 @@ export function DataTable<T>({
   initialSort,
   selectable,
   bulkActions,
+  urlKey,
 }: DataTableProps<T>) {
-  const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(initialSort ?? null);
+  const readUrl = () => {
+    if (!urlKey || typeof window === "undefined") return null;
+    const sp = new URLSearchParams(window.location.search);
+    const s = sp.get(`${urlKey}_s`);
+    const [sk, sd] = s ? s.split(":") : [];
+    return {
+      q: sp.get(`${urlKey}_q`) ?? "",
+      page: Math.max(1, Number(sp.get(`${urlKey}_p`) ?? 1) || 1),
+      sort: sk && (sd === "asc" || sd === "desc") ? { key: sk, dir: sd as "asc" | "desc" } : null,
+    };
+  };
+  const initial = readUrl();
+  const [q, setQ] = useState(initial?.q ?? "");
+  const [page, setPage] = useState(initial?.page ?? 1);
+  const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(initial?.sort ?? initialSort ?? null);
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
+
+  useEffect(() => {
+    if (!urlKey || typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const set = (k: string, v: string) => { if (v) sp.set(k, v); else sp.delete(k); };
+    set(`${urlKey}_q`, q);
+    set(`${urlKey}_p`, page > 1 ? String(page) : "");
+    set(`${urlKey}_s`, sort ? `${sort.key}:${sort.dir}` : "");
+    const qs = sp.toString();
+    const url = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", url);
+  }, [urlKey, q, page, sort]);
 
   const filtered = useMemo(() => {
     if (!q) return rows;
