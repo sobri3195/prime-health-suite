@@ -82,13 +82,20 @@ function AuditPage() {
   const [presets, setPresets] = useState<AuditPreset[]>([]);
   const [presetName, setPresetName] = useState("");
   const [presetOpen, setPresetOpen] = useState(false);
+  const [refreshMs, setRefreshMs] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return Number(localStorage.getItem("fin-audit-refresh") || 0);
+  });
   useEffect(() => { setPresets(loadPresets()); }, []);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, dataUpdatedAt } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
     queryFn: () => fn({ data: { from, to, q: q || undefined, entity: entity === "all" ? undefined : entity, action: action === "all" ? undefined : action } }),
+    refetchInterval: refreshMs > 0 ? refreshMs : false,
+    refetchIntervalInBackground: false,
   });
   const revertMut = useMutation({
     mutationFn: (v: { audit_id: string; reason?: string }) => revertFn({ data: v }),
@@ -147,10 +154,24 @@ function AuditPage() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <Select value={String(refreshMs)} onValueChange={(v) => setRefreshMs(Number(v))}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Auto-refresh" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">Auto-refresh: Off</SelectItem>
+            <SelectItem value="10000">Setiap 10 detik</SelectItem>
+            <SelectItem value="30000">Setiap 30 detik</SelectItem>
+            <SelectItem value="60000">Setiap 60 detik</SelectItem>
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
       </div>
+      <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+        {refreshMs > 0 && <span className="inline-flex items-center gap-1"><span className={`inline-block h-1.5 w-1.5 rounded-full ${isFetching ? "bg-emerald-500 animate-pulse" : "bg-emerald-500/50"}`} /> Live setiap {refreshMs / 1000}s</span>}
+        {dataUpdatedAt > 0 && <span>· Diperbarui {new Date(dataUpdatedAt).toLocaleTimeString("id-ID")}</span>}
+      </div>
+
 
       <Dialog open={presetOpen} onOpenChange={setPresetOpen}>
         <DialogContent className="max-w-sm">
