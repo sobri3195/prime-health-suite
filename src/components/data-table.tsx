@@ -1,9 +1,10 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { TableSkeleton } from "@/components/table-skeleton";
 import { EmptyState } from "@/components/empty-state";
@@ -34,6 +35,9 @@ export interface DataTableProps<T> {
   rightActions?: (row: T) => ReactNode; // per-row trailing actions cell
   toolbar?: ReactNode; // shown above the table (filters)
   initialSort?: { key: string; dir: "asc" | "desc" };
+  /** Enable row multi-select checkboxes. When set, `bulkActions` renders in the selection toolbar. */
+  selectable?: boolean;
+  bulkActions?: (selected: T[], clear: () => void) => ReactNode;
 }
 
 function fmtValue<T>(col: DataTableColumn<T>, row: T): string | number | null | undefined {
@@ -55,10 +59,13 @@ export function DataTable<T>({
   rightActions,
   toolbar,
   initialSort,
+  selectable,
+  bulkActions,
 }: DataTableProps<T>) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(initialSort ?? null);
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
   const filtered = useMemo(() => {
     if (!q) return rows;
@@ -96,6 +103,20 @@ export function DataTable<T>({
     });
   };
 
+  const keyOf = (r: T, i: number): string | number => (rowKey ? rowKey(r, i) : i);
+  const pageKeys = paged.map((r, i) => keyOf(r, i));
+  const allChecked = selectable && pageKeys.length > 0 && pageKeys.every((k) => selected.has(k));
+  const someChecked = selectable && pageKeys.some((k) => selected.has(k)) && !allChecked;
+  const selectedRows = useMemo(
+    () => sorted.filter((r, i) => selected.has(keyOf(r, i))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sorted, selected],
+  );
+  const clearSelection = () => setSelected(new Set());
+  useEffect(() => { setSelected(new Set()); }, [q]);
+
+  const colSpan = columns.length + (rightActions ? 1 : 0) + (selectable ? 1 : 0);
+
   return (
     <div className="space-y-3">
       {(searchable || actions || toolbar) && (
@@ -116,10 +137,36 @@ export function DataTable<T>({
         </div>
       )}
 
+      {selectable && selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+          <span className="font-medium">{selected.size} dipilih</span>
+          <Button size="sm" variant="ghost" className="h-7" onClick={clearSelection}>Bersihkan</Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {bulkActions?.(selectedRows, clearSelection)}
+          </div>
+        </div>
+      )}
+
       <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-card">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-[inset_0_-1px_0_hsl(var(--border))]">
             <TableRow>
+              {selectable && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                    onCheckedChange={(v) => {
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (v) pageKeys.forEach((k) => next.add(k));
+                        else pageKeys.forEach((k) => next.delete(k));
+                        return next;
+                      });
+                    }}
+                    aria-label="Pilih semua baris di halaman ini"
+                  />
+                </TableHead>
+              )}
               {columns.map((c) => {
                 const isSorted = sort?.key === c.key;
                 const Icon = !isSorted ? ArrowUpDown : sort?.dir === "asc" ? ArrowUp : ArrowDown;
@@ -149,16 +196,34 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableSkeleton rows={6} cols={columns.length + (rightActions ? 1 : 0)} />
+              <TableSkeleton rows={6} cols={colSpan} />
             ) : paged.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + (rightActions ? 1 : 0)} className="p-0">
+                <TableCell colSpan={colSpan} className="p-0">
                   <EmptyState title={emptyTitle ?? (q ? "Tidak ada hasil" : "Belum ada data")} desc={emptyDesc ?? (q ? "Coba kata kunci lain." : "Data akan muncul di sini setelah tersedia.")} />
                 </TableCell>
               </TableRow>
             ) : (
-              paged.map((r, i) => (
-                <TableRow key={rowKey ? rowKey(r, i) : i}>
+              paged.map((r, i) => {
+                const k = keyOf(r, i);
+                const isSel = selectable && selected.has(k);
+                return (
+                <TableRow key={k} data-state={isSel ? "selected" : undefined}>
+                  {selectable && (
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={isSel}
+                        onCheckedChange={(v) => {
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(k); else next.delete(k);
+                            return next;
+                          });
+                        }}
+                        aria-label="Pilih baris"
+                      />
+                    </TableCell>
+                  )}
                   {columns.map((c) => (
                     <TableCell
                       key={c.key}
@@ -173,7 +238,8 @@ export function DataTable<T>({
                     </TableCell>
                   )}
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
