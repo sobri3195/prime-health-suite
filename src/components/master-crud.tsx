@@ -94,6 +94,29 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
     onError: (e) => handleError(e),
   });
 
+  const bulkDelete = async (ids: string[], clear: () => void) => {
+    if (!canEdit) { toast.error("Read-only: tidak dapat menghapus."); return; }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await Promise.all(ids.map((id) => deleteFn({ data: { table, id } })));
+        qc.invalidateQueries({ queryKey });
+        addAudit({ actor: user?.email ?? "system", action: "role_change", target: `finance/master/${module}`, meta: { op: "bulk_delete", count: ids.length, ids } });
+        toast.success(`${ids.length} data dihapus`);
+        clear();
+      } catch (e) { handleError(e); }
+    }, 5000);
+    toast(`Menghapus ${ids.length} data…`, {
+      description: "Batalkan dalam 5 detik.",
+      duration: 5000,
+      action: {
+        label: "Urungkan",
+        onClick: () => { cancelled = true; clearTimeout(timer); toast.success("Penghapusan dibatalkan"); },
+      },
+    });
+  };
+
   const renderCell = (f: Field, v: any) => {
     if (f.type === "boolean") return v ? "Ya" : "Tidak";
     if (f.type === "number" && typeof v === "number") return v.toLocaleString("id-ID");
