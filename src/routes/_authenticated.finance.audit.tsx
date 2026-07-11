@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -108,6 +108,20 @@ function AuditPage() {
   });
   const rows = data?.rows ?? [];
 
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+      if (e.key === "/" && !typing) { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === "Escape" && document.activeElement === searchRef.current) {
+        setQ(""); setEntity("all"); setAction("all"); searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   if (!isAdmin) {
     return <div><PageHeader title="Audit Log Finance" desc="Akses ditolak — hanya admin." /></div>;
   }
@@ -118,7 +132,8 @@ function AuditPage() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari aktor / no. / alasan…" className="pl-9" />
+          <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari aktor / no. / alasan…  ( / fokus, Esc reset)" className="pl-9 pr-10" />
+          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 items-center rounded border bg-muted px-1.5 text-[10px] font-mono text-muted-foreground">/</kbd>
         </div>
         <Select value={entity} onValueChange={setEntity}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
