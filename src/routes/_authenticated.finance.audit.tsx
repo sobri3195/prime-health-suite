@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search } from "lucide-react";
 import { useFinanceAccess } from "@/lib/finance-access";
 
@@ -35,6 +36,7 @@ function AuditPage() {
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
+  const [detail, setDetail] = useState<any | null>(null);
   const fn = useServerFn(listFinAudit);
   const { data, isLoading } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
@@ -80,7 +82,7 @@ function AuditPage() {
             {isLoading ? <TableRow><TableCell colSpan={7} className="py-6 text-center">Loading…</TableCell></TableRow>
               : rows.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>
               : rows.map((r: any) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetail(r)}>
                   <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>
                   <TableCell className="text-sm">{r.actor_email ?? "system"}</TableCell>
                   <TableCell><Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0`} variant="secondary">{r.action}</Badge></TableCell>
@@ -93,7 +95,59 @@ function AuditPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">Total {rows.length} entri (max 500).</div>
+      <div className="mt-2 text-xs text-muted-foreground">Total {rows.length} entri (max 500). Klik baris untuk melihat diff.</div>
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex flex-wrap items-center gap-2">
+              <Badge className={`${ACTION_TONE[detail?.action] ?? "bg-muted"} border-0`} variant="secondary">{detail?.action}</Badge>
+              <span className="text-sm">{detail?.entity}</span>
+              <span className="font-mono text-xs text-muted-foreground">{detail?.entity_no ?? detail?.entity_id}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {detail && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs">
+                <div><span className="text-muted-foreground">Waktu:</span> {new Date(detail.created_at).toLocaleString("id-ID")}</div>
+                <div><span className="text-muted-foreground">Aktor:</span> {detail.actor_email ?? "system"}</div>
+                {detail.reason && <div className="col-span-2"><span className="text-muted-foreground">Alasan:</span> {detail.reason}</div>}
+              </div>
+              <div>
+                <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Perubahan Field</div>
+                <div className="overflow-hidden rounded-lg border border-border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 text-left">Field</th>
+                        <th className="p-2 text-left">Sebelum</th>
+                        <th className="p-2 text-left">Sesudah</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const before = (detail.before ?? {}) as Record<string, unknown>;
+                        const after = (detail.after ?? {}) as Record<string, unknown>;
+                        const keys = Array.from(new Set([...(detail.changed_fields ?? []), ...Object.keys(before), ...Object.keys(after)]));
+                        const changed = keys.filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+                        if (changed.length === 0) return <tr><td colSpan={3} className="p-3 text-center text-muted-foreground">Tidak ada diff terekam.</td></tr>;
+                        const fmt = (v: unknown) => v == null ? "—" : typeof v === "object" ? JSON.stringify(v) : String(v);
+                        return changed.map((k) => (
+                          <tr key={k} className="border-t border-border align-top">
+                            <td className="p-2 font-mono">{k}</td>
+                            <td className="p-2 text-rose-600 line-through decoration-rose-400/60">{fmt(before[k])}</td>
+                            <td className="p-2 text-emerald-700">{fmt(after[k])}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
