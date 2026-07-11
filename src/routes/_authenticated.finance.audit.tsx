@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { useFinanceDate } from "@/context/finance-date";
-import { listFinAudit } from "@/lib/finance-report.functions";
+import { listFinAudit, revertFinAudit } from "@/lib/finance-report.functions";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Search, Undo2 } from "lucide-react";
+import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
 export const Route = createFileRoute("/_authenticated/finance/audit")({ 
@@ -37,10 +40,22 @@ function AuditPage() {
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
   const [detail, setDetail] = useState<any | null>(null);
+  const [revertReason, setRevertReason] = useState("");
+  const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
+  const revertFn = useServerFn(revertFinAudit);
   const { data, isLoading } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
     queryFn: () => fn({ data: { from, to, q: q || undefined, entity: entity === "all" ? undefined : entity, action: action === "all" ? undefined : action } }),
+  });
+  const revertMut = useMutation({
+    mutationFn: (v: { audit_id: string; reason?: string }) => revertFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(`Dipulihkan: ${(r?.restored_fields ?? []).join(", ") || "ok"}`);
+      setDetail(null); setRevertReason("");
+      qc.invalidateQueries({ queryKey: ["fin-audit"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Gagal revert"),
   });
   const rows = data?.rows ?? [];
 
@@ -145,6 +160,25 @@ function AuditPage() {
                 </div>
               </div>
             </div>
+          )}
+          {detail?.action === "edit" && detail?.entity_id && (
+            <DialogFooter className="mt-3 flex-col items-stretch gap-2 sm:flex-col">
+              <Textarea
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+                placeholder="Alasan revert (opsional)"
+                className="min-h-[60px] text-xs"
+              />
+              <Button
+                variant="destructive"
+                disabled={revertMut.isPending}
+                onClick={() => revertMut.mutate({ audit_id: detail.id, reason: revertReason || undefined })}
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                {revertMut.isPending ? "Memulihkan…" : "Revert ke nilai sebelumnya"}
+              </Button>
+              <p className="text-[10px] text-muted-foreground">Hanya field aman (whitelist) yang dipulihkan. Aksi ini juga tercatat di audit log.</p>
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>

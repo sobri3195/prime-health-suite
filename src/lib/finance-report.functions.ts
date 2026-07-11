@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireFinView } from "./finance-guard";
+import { requireFinView, requireFinEdit } from "./finance-guard";
+import { writeFinAudit } from "./finance-audit.helper";
 
 async function sb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -205,3 +206,55 @@ export const listFinAudit = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { rows: rows ?? [] };
   });
+
+// ============ REVERT AUDIT ENTRY ============
+// Restores whitelisted scalar fields from `before` snapshot back onto the entity row.
+// Only 'edit' actions on safe master/transaction tables are revertable.
+const REVERTABLE: Record<string, { table: string; fields: string[] }> = {
+  invoice: { table: "fin_invoice", fields: ["tanggal","catatan","status","diskon","pajak","total","subtotal","due_date"] },
+  expense: { table: "fin_expense", fields: ["tanggal","keterangan","vendor_nama","subtotal","pajak","total","coa_code","cost_center_code","metode","bank"] },
+  payment: { table: "fin_pembayaran", fields: ["tanggal","metode","bank","jumlah","mdr","netto","no_kartu_last4"] },
+  coa:     { table: "fin_coa",     fields: ["name","type","cash_flow_section","is_active"] },
+  vendor:  { table: "fin_vendor",  fields: ["nama","npwp","alamat","kontak","is_active"] },
+  payer:   { table: "fin_payer",   fields: ["nama","kontak","alamat","is_active"] },
+  layanan: { table: "fin_layanan", fields: ["nama","harga","kategori_id","coa_code","is_active"] },
+  karyawan:{ table: "fin_karyawan",fields: ["nama","jabatan","gaji_pokok","is_active"] },
+  mdr_rule:{ table: "fin_mdr_rule",fields: ["nama","bank","kartu","persen","is_active"] },
+};
+
+export const revertFinAudit = createServerFn({ method: "POST" })
+  .middleware([requireFinEdit])
+  .inputValidator((d: { audit_id: string; reason?: string }) => d)
+  .handler(async ({ data, context }) => {
+    const s = await sb();
+    const { data: row, error } = await s.from("fin_audit_log").select("*").eq("id", data.audit_id).maybeSingle();
+    if (error || !row) throw new Error("Audit entry tidak ditemukan");
+    if (row.action !== "edit") throw new Error("Hanya aksi 'edit' yang dapat di-revert");
+    if (!row.before || !row.entity_id) throw new Error("Snapshot 'before' atau entity_id tidak tersedia");
+    const spec = REVERTABLE[row.entity as string];
+    if (!spec) throw new Error(`Entity '${row.entity}' tidak dapat di-revert dari sini`);
+
+    const patch: Record<string, unknown> = {};
+    for (const f of spec.fields) {
+      if (f in (row.before as any)) patch[f] = (row.before as any)[f];
+    }
+    if (Object.keys(patch).length === 0) throw new Error("Tidak ada field yang bisa dipulihkan");
+
+    const { data: current } = await s.from(spec.table).select("*").eq("id", row.entity_id).maybeSingle();
+    const { error: upErr } = await s.from(spec.table).update(patch).eq("id", row.entity_id);
+    if (upErr) throw new Error(upErr.message);
+
+    await writeFinAudit({
+      actor_id: context.userId,
+      actor_email: (context.claims as any)?.email ?? null,
+      action: "edit",
+      entity: row.entity,
+      entity_id: row.entity_id,
+      entity_no: row.entity_no,
+      before: current ?? null,
+      after: { ...(current ?? {}), ...patch },
+      reason: `Revert audit ${row.id}${data.reason ? ` — ${data.reason}` : ""}`,
+    });
+    return { ok: true, restored_fields: Object.keys(patch) };
+  });
+
