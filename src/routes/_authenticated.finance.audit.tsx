@@ -36,6 +36,7 @@ function AuditPage() {
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
+  const [detail, setDetail] = useState<any | null>(null);
   const fn = useServerFn(listFinAudit);
   const { data, isLoading } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
