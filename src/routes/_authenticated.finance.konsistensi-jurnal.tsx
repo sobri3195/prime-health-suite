@@ -491,6 +491,45 @@ function Page() {
         </div>
       </section>
 
+      <section className="mt-6">
+        <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <Scale className="h-4 w-4" /> Jurnal Tidak Balance
+          {(unbalanced.data?.rows?.length ?? 0) > 0 && (
+            <Badge variant="secondary" className="bg-rose-500/15 text-rose-700">{unbalanced.data!.rows.length}</Badge>
+          )}
+        </h3>
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>No. Jurnal</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Sumber</TableHead>
+                <TableHead className="text-right">Debit</TableHead>
+                <TableHead className="text-right">Kredit</TableHead>
+                <TableHead className="text-right">Selisih</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {unbalanced.isLoading ? (
+                <TableRow><TableCell colSpan={6} className="py-6 text-center"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></TableCell></TableRow>
+              ) : (unbalanced.data?.rows?.length ?? 0) === 0 ? (
+                <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-emerald-700">✓ Semua jurnal balance (debit = kredit).</TableCell></TableRow>
+              ) : (unbalanced.data!.rows as any[]).map((r) => (
+                <TableRow key={r.entry_id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDrillEntry({ id: r.entry_id, title: `Detail ${r.no_jurnal}` })}>
+                  <TableCell className="font-mono text-xs">{r.no_jurnal}</TableCell>
+                  <TableCell>{r.tanggal}</TableCell>
+                  <TableCell><Badge variant="outline">{r.sumber}</Badge></TableCell>
+                  <TableCell className="text-right font-mono">{fmt(r.total_debit)}</TableCell>
+                  <TableCell className="text-right font-mono">{fmt(r.total_kredit)}</TableCell>
+                  <TableCell className="text-right font-mono font-semibold text-rose-600">{fmt(r.selisih)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+
       <FinanceDrillDialog
         open={!!drillEntry}
         onClose={() => setDrillEntry(null)}
