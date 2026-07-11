@@ -3517,6 +3517,10 @@ export type Database = {
           total: number
         }[]
       }
+      fin_generate_penyusutan: {
+        Args: { _aset_id: string; _from_periode: string; _to_periode: string }
+        Returns: number
+      }
       fin_post_journal: {
         Args: {
           _keterangan: string
@@ -3527,6 +3531,10 @@ export type Database = {
           _tanggal: string
         }
         Returns: string
+      }
+      fin_post_penyusutan_periode: {
+        Args: { _periode: string }
+        Returns: number
       }
       fin_recon_jurnal: {
         Args: { _from: string; _to: string }
