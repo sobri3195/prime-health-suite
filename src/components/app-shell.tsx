@@ -226,6 +226,7 @@ export function AppShell({ system, children }: { system: System; children: React
         })()}
       </div>
       <CommandPalette system={system} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ShortcutsHelp system={system} open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }
