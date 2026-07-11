@@ -167,10 +167,19 @@ function AuditPage() {
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
       </div>
-      <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
         {refreshMs > 0 && <span className="inline-flex items-center gap-1"><span className={`inline-block h-1.5 w-1.5 rounded-full ${isFetching ? "bg-emerald-500 animate-pulse" : "bg-emerald-500/50"}`} /> Live setiap {refreshMs / 1000}s</span>}
         {dataUpdatedAt > 0 && <span>· Diperbarui {new Date(dataUpdatedAt).toLocaleTimeString("id-ID")}</span>}
+        {(q || entity !== "all" || action !== "all") && (
+          <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+            {q && <Badge variant="secondary" className="gap-1 pr-1">Cari: {q}<button type="button" onClick={() => setQ("")} className="ml-0.5 rounded hover:bg-muted-foreground/20 px-1">×</button></Badge>}
+            {entity !== "all" && <Badge variant="secondary" className="gap-1 pr-1">Entity: {entity}<button type="button" onClick={() => setEntity("all")} className="ml-0.5 rounded hover:bg-muted-foreground/20 px-1">×</button></Badge>}
+            {action !== "all" && <Badge variant="secondary" className="gap-1 pr-1">Aksi: {action}<button type="button" onClick={() => setAction("all")} className="ml-0.5 rounded hover:bg-muted-foreground/20 px-1">×</button></Badge>}
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setQ(""); setEntity("all"); setAction("all"); }}>Reset semua</Button>
+          </div>
+        )}
       </div>
+
 
 
       <Dialog open={presetOpen} onOpenChange={setPresetOpen}>
