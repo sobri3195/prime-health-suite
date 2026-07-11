@@ -223,6 +223,7 @@ export function AppShell({ system, children }: { system: System; children: React
           );
         })()}
       </div>
+      <CommandPalette system={system} open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );
 }
