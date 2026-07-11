@@ -116,7 +116,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-card">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-[inset_0_-1px_0_hsl(var(--border))]">
             <TableRow>
