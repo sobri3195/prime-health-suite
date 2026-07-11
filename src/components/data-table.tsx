@@ -103,6 +103,20 @@ export function DataTable<T>({
     });
   };
 
+  const keyOf = (r: T, i: number): string | number => (rowKey ? rowKey(r, i) : i);
+  const pageKeys = paged.map((r, i) => keyOf(r, i));
+  const allChecked = selectable && pageKeys.length > 0 && pageKeys.every((k) => selected.has(k));
+  const someChecked = selectable && pageKeys.some((k) => selected.has(k)) && !allChecked;
+  const selectedRows = useMemo(
+    () => sorted.filter((r, i) => selected.has(keyOf(r, i))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sorted, selected],
+  );
+  const clearSelection = () => setSelected(new Set());
+  useEffect(() => { setSelected(new Set()); }, [q]);
+
+  const colSpan = columns.length + (rightActions ? 1 : 0) + (selectable ? 1 : 0);
+
   return (
     <div className="space-y-3">
       {(searchable || actions || toolbar) && (
@@ -120,6 +134,16 @@ export function DataTable<T>({
           )}
           {toolbar}
           {actions && <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div>}
+        </div>
+      )}
+
+      {selectable && selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+          <span className="font-medium">{selected.size} dipilih</span>
+          <Button size="sm" variant="ghost" className="h-7" onClick={clearSelection}>Bersihkan</Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {bulkActions?.(selectedRows, clearSelection)}
+          </div>
         </div>
       )}
 
