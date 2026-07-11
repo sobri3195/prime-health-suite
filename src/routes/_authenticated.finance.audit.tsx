@@ -207,9 +207,27 @@ function AuditPage() {
               : rows.map((r: any) => (
                 <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetail(r)}>
                   <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>
-                  <TableCell className="text-sm">{r.actor_email ?? "system"}</TableCell>
-                  <TableCell><Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0`} variant="secondary">{r.action}</Badge></TableCell>
-                  <TableCell className="text-xs">{r.entity}</TableCell>
+                  <TableCell className="text-sm">
+                    <button
+                      type="button"
+                      className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
+                      onClick={(e) => { e.stopPropagation(); setQ(r.actor_email ?? "system"); toast.success(`Filter aktor: ${r.actor_email ?? "system"}`); }}
+                      title="Filter berdasarkan aktor ini"
+                    >{r.actor_email ?? "system"}</button>
+                  </TableCell>
+                  <TableCell>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setAction(r.action); toast.success(`Filter aksi: ${r.action}`); }} title="Filter aksi ini">
+                      <Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0 cursor-pointer hover:ring-2 hover:ring-primary/40`} variant="secondary">{r.action}</Badge>
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <button
+                      type="button"
+                      className="rounded px-1 -mx-1 font-medium hover:bg-primary/10 hover:text-primary"
+                      onClick={(e) => { e.stopPropagation(); setEntity(r.entity); toast.success(`Filter entity: ${r.entity}`); }}
+                      title="Filter entity ini"
+                    >{r.entity}</button>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{r.entity_no ?? r.entity_id ?? "—"}</TableCell>
                   <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>
                   <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>
