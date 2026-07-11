@@ -151,6 +151,22 @@ export function DataTable<T>({
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-[inset_0_-1px_0_hsl(var(--border))]">
             <TableRow>
+              {selectable && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                    onCheckedChange={(v) => {
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (v) pageKeys.forEach((k) => next.add(k));
+                        else pageKeys.forEach((k) => next.delete(k));
+                        return next;
+                      });
+                    }}
+                    aria-label="Pilih semua baris di halaman ini"
+                  />
+                </TableHead>
+              )}
               {columns.map((c) => {
                 const isSorted = sort?.key === c.key;
                 const Icon = !isSorted ? ArrowUpDown : sort?.dir === "asc" ? ArrowUp : ArrowDown;
@@ -180,16 +196,34 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableSkeleton rows={6} cols={columns.length + (rightActions ? 1 : 0)} />
+              <TableSkeleton rows={6} cols={colSpan} />
             ) : paged.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + (rightActions ? 1 : 0)} className="p-0">
+                <TableCell colSpan={colSpan} className="p-0">
                   <EmptyState title={emptyTitle ?? (q ? "Tidak ada hasil" : "Belum ada data")} desc={emptyDesc ?? (q ? "Coba kata kunci lain." : "Data akan muncul di sini setelah tersedia.")} />
                 </TableCell>
               </TableRow>
             ) : (
-              paged.map((r, i) => (
-                <TableRow key={rowKey ? rowKey(r, i) : i}>
+              paged.map((r, i) => {
+                const k = keyOf(r, i);
+                const isSel = selectable && selected.has(k);
+                return (
+                <TableRow key={k} data-state={isSel ? "selected" : undefined}>
+                  {selectable && (
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={isSel}
+                        onCheckedChange={(v) => {
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(k); else next.delete(k);
+                            return next;
+                          });
+                        }}
+                        aria-label="Pilih baris"
+                      />
+                    </TableCell>
+                  )}
                   {columns.map((c) => (
                     <TableCell
                       key={c.key}
@@ -204,7 +238,8 @@ export function DataTable<T>({
                     </TableCell>
                   )}
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
