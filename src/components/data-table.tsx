@@ -59,10 +59,13 @@ export function DataTable<T>({
   rightActions,
   toolbar,
   initialSort,
+  selectable,
+  bulkActions,
 }: DataTableProps<T>) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(initialSort ?? null);
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
   const filtered = useMemo(() => {
     if (!q) return rows;
