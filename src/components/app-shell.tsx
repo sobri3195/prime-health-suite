@@ -4,6 +4,7 @@ import {
   Activity, Bell, ChevronDown, ChevronRight, Lock, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
+import { CommandPalette, useCommandPalette } from "@/components/command-palette";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { addAudit } from "@/lib/audit-log";
@@ -18,6 +19,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const { t, lang, setLang } = useI18n();
   const brand = BRAND[system];
 
@@ -118,13 +120,16 @@ export function AppShell({ system, children }: { system: System; children: React
 
 
           <div className="ml-auto flex flex-1 items-center justify-end gap-2">
-            <div className="relative hidden max-w-sm flex-1 md:block">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="relative hidden max-w-sm flex-1 items-center gap-2 rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-left text-sm text-muted-foreground outline-none hover:bg-muted focus:ring-2 focus:ring-ring md:flex"
+              aria-label={t("shell.search_ph")}
+            >
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                placeholder={t("shell.search_ph")}
-                className="w-full rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
+              <span className="flex-1 truncate">{t("shell.search_ph")}</span>
+              <kbd className="pointer-events-none hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground md:inline">Ctrl+K</kbd>
+            </button>
 
             <button
               onClick={() => setLang(lang === "id" ? "en" : "id")}
@@ -218,6 +223,7 @@ export function AppShell({ system, children }: { system: System; children: React
           );
         })()}
       </div>
+      <CommandPalette system={system} open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );
 }
