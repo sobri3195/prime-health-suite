@@ -82,7 +82,7 @@ function AuditPage() {
             {isLoading ? <TableRow><TableCell colSpan={7} className="py-6 text-center">Loading…</TableCell></TableRow>
               : rows.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>
               : rows.map((r: any) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetail(r)}>
                   <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>
                   <TableCell className="text-sm">{r.actor_email ?? "system"}</TableCell>
                   <TableCell><Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0`} variant="secondary">{r.action}</Badge></TableCell>
