@@ -90,3 +90,25 @@ export const slaConfig = createServerFn({ method: "GET" }).middleware([requireFi
   slaHours: Number(process.env.FINANCE_UNPOSTED_SLA_HOURS) || 24,
   source: process.env.FINANCE_UNPOSTED_SLA_HOURS ? "env" : "default",
 }));
+
+// Reconcile: re-trigger auto-posting for unposted transactions in range
+export const rebuildSaldo = createServerFn({ method: "POST" })
+  .middleware([requireFinEdit])
+  .inputValidator((d: { from: string; to: string }) => d)
+  .handler(async ({ data }) => {
+    const sb = await adminClient();
+    const { data: rows, error } = await sb.rpc("fin_rebuild_saldo", { _from: data.from, _to: data.to });
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
+// Unbalanced journal entries (debit != kredit)
+export const unbalancedEntries = createServerFn({ method: "POST" })
+  .middleware([requireFinView])
+  .inputValidator((d: { from: string; to: string }) => d)
+  .handler(async ({ data }) => {
+    const sb = await adminClient();
+    const { data: rows, error } = await sb.rpc("fin_unbalanced_entries", { _from: data.from, _to: data.to });
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
