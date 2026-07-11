@@ -85,6 +85,9 @@ function AuditPage() {
             {Object.keys(ACTION_TONE).map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
+          <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
