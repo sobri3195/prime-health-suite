@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { CommandPalette, useCommandPalette } from "@/components/command-palette";
+import { ShortcutsHelp, useShortcuts } from "@/components/shortcuts-help";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { addAudit } from "@/lib/audit-log";
