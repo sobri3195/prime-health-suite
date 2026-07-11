@@ -82,13 +82,20 @@ function AuditPage() {
   const [presets, setPresets] = useState<AuditPreset[]>([]);
   const [presetName, setPresetName] = useState("");
   const [presetOpen, setPresetOpen] = useState(false);
+  const [refreshMs, setRefreshMs] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return Number(localStorage.getItem("fin-audit-refresh") || 0);
+  });
   useEffect(() => { setPresets(loadPresets()); }, []);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, dataUpdatedAt } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
     queryFn: () => fn({ data: { from, to, q: q || undefined, entity: entity === "all" ? undefined : entity, action: action === "all" ? undefined : action } }),
+    refetchInterval: refreshMs > 0 ? refreshMs : false,
+    refetchIntervalInBackground: false,
   });
   const revertMut = useMutation({
     mutationFn: (v: { audit_id: string; reason?: string }) => revertFn({ data: v }),
