@@ -7,8 +7,9 @@ import { Download, Upload, ArrowRight, FileUp, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { bulkImportFinMaster, type FinTable } from "@/lib/finance-master.functions";
+import { bulkImportFinMaster, exportFinMaster, type FinTable } from "@/lib/finance-master.functions";
 import { toast } from "sonner";
+import { exportCsv } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/finance/import-export")({
   head: () => pageHead({ title: "Import / Export — Finance", description: "Import / Export pada modul keuangan klinik.", path: "/finance/import-export" }),
