@@ -21,6 +21,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
+  const { helpOpen, setHelpOpen } = useShortcuts(system);
   const { t, lang, setLang } = useI18n();
   const brand = BRAND[system];
 
