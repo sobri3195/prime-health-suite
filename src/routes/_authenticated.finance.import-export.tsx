@@ -169,8 +169,12 @@ function MasterCsvImporter() {
             {IMPORT_TABLES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
-        <Button type="button" variant="outline" onClick={downloadTemplate} disabled={m.isPending}>
+        <Button type="button" variant="outline" onClick={downloadTemplate} disabled={m.isPending} aria-label={`Unduh template CSV ${current.label}`}>
           <Download className="h-4 w-4 mr-2" />Template
+        </Button>
+        <Button type="button" variant="outline" onClick={doExport} disabled={m.isPending || exporting} aria-label={`Export ${current.label} ke CSV`}>
+          {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+          Export
         </Button>
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">File CSV (maks 2MB / 2000 baris)</label>
