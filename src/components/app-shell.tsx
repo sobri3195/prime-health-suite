@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
 import { CommandPalette, useCommandPalette } from "@/components/command-palette";
+import { ShortcutsHelp, useShortcuts } from "@/components/shortcuts-help";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { addAudit } from "@/lib/audit-log";
@@ -20,6 +21,7 @@ export function AppShell({ system, children }: { system: System; children: React
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
+  const { helpOpen, setHelpOpen } = useShortcuts(system);
   const { t, lang, setLang } = useI18n();
   const brand = BRAND[system];
 
@@ -224,6 +226,7 @@ export function AppShell({ system, children }: { system: System; children: React
         })()}
       </div>
       <CommandPalette system={system} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ShortcutsHelp system={system} open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }
