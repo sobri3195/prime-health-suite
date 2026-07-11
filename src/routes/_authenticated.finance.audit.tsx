@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -13,9 +13,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, Undo2, Download } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
+
+type AuditPreset = { name: string; q: string; entity: string; action: string };
+const PRESET_KEY = "fin-audit-presets-v1";
+function loadPresets(): AuditPreset[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem(PRESET_KEY) || "[]"); } catch { return []; }
+}
+function savePresets(p: AuditPreset[]) { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
 
 export const Route = createFileRoute("/_authenticated/finance/audit")({ 
   head: () => pageHead({ title: "Audit Log Finance — Finance", description: "Audit Log Finance pada modul keuangan klinik.", path: "/finance/audit" }),
@@ -70,6 +79,10 @@ function AuditPage() {
   const [action, setAction] = useState("all");
   const [detail, setDetail] = useState<any | null>(null);
   const [revertReason, setRevertReason] = useState("");
+  const [presets, setPresets] = useState<AuditPreset[]>([]);
+  const [presetName, setPresetName] = useState("");
+  const [presetOpen, setPresetOpen] = useState(false);
+  useEffect(() => { setPresets(loadPresets()); }, []);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
@@ -114,10 +127,52 @@ function AuditPage() {
             {Object.keys(ACTION_TONE).map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
           </SelectContent>
         </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm"><Bookmark className="mr-2 h-4 w-4" /> Preset ({presets.length})</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="text-xs">Muat preset filter</DropdownMenuLabel>
+            {presets.length === 0 ? (
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">Belum ada preset</DropdownMenuItem>
+            ) : presets.map((p) => (
+              <DropdownMenuItem key={p.name} className="flex items-center justify-between gap-2" onSelect={(e) => { e.preventDefault(); setQ(p.q); setEntity(p.entity); setAction(p.action); toast.success(`Preset "${p.name}" dimuat`); }}>
+                <span className="truncate text-xs">{p.name}</span>
+                <Trash2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); const next = presets.filter((x) => x.name !== p.name); setPresets(next); savePresets(next); toast.success(`Preset "${p.name}" dihapus`); }} />
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setPresetOpen(true); }}>
+              <BookmarkPlus className="mr-2 h-4 w-4" /> Simpan filter saat ini
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
       </div>
+
+      <Dialog open={presetOpen} onOpenChange={setPresetOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Simpan preset filter</DialogTitle></DialogHeader>
+          <div className="space-y-2 text-sm">
+            <Input autoFocus value={presetName} onChange={(e) => setPresetName(e.target.value)} placeholder="Nama preset (mis. Void bulan ini)" />
+            <div className="rounded-md border border-border bg-muted/30 p-2 text-xs text-muted-foreground">
+              <div>Cari: <span className="font-mono">{q || "—"}</span></div>
+              <div>Entity: <span className="font-mono">{entity}</span> · Aksi: <span className="font-mono">{action}</span></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPresetOpen(false)}>Batal</Button>
+            <Button disabled={!presetName.trim()} onClick={() => {
+              const name = presetName.trim();
+              const next = [...presets.filter((p) => p.name !== name), { name, q, entity, action }];
+              setPresets(next); savePresets(next); setPresetName(""); setPresetOpen(false);
+              toast.success(`Preset "${name}" disimpan`);
+            }}>Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
           <TableHeader><TableRow>
