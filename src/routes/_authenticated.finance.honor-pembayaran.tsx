@@ -1,54 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
-import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
-import { invoices } from "@/data/financeData";
-import { applyFilter, formatIDR } from "@/lib/finance";
+import { formatIDR } from "@/lib/finance";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Printer } from "lucide-react";
+import { Check, Printer, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useFinanceDate } from "@/context/finance-date";
+import { getHonorRekap } from "@/lib/finance-dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/finance/honor-pembayaran")({
-  
   head: () => pageHead({ title: "Pembayaran Honor — Finance", description: "Pembayaran Honor pada modul keuangan klinik.", path: "/finance/honor-pembayaran" }),
   component: Page,
 });
 
-const PCT: Record<string, number> = {
-  "dr. Rini, Sp.M": 40, "dr. Bagas, Sp.M": 45, "dr. Anisa, Sp.M": 45,
-  "dr. Hadi, Sp.M(K)": 50, "dr. Tania, Sp.M": 40, "dr. Yusuf, Sp.M": 45,
-};
 const PPH = 0.025;
 
 function Page() {
-  const [filter, setFilter] = useState(defaultFilter);
+  const { from, to, label } = useFinanceDate();
+  const call = useServerFn(getHonorRekap);
+  const q = useQuery({
+    queryKey: ["fin", "honor-pembayaran", from, to],
+    queryFn: () => call({ data: { from, to } }),
+  });
   const [paid, setPaid] = useState<Record<string, boolean>>({});
-  const doctors = useMemo(() => Array.from(new Set(invoices.map((r) => r.doctor))), []);
-  const services = useMemo(() => Array.from(new Set(invoices.map((r) => r.category))), []);
-  const rows = applyFilter(invoices, filter);
 
   const rekap = useMemo(() => {
-    const m = new Map<string, { dokter: string; jasa: number; pph: number; net: number }>();
-    rows.forEach((r) => {
-      const pct = PCT[r.doctor] ?? 40;
-      const jasa = Math.round((r.total * pct) / 100);
-      const cur = m.get(r.doctor) ?? { dokter: r.doctor, jasa: 0, pph: 0, net: 0 };
-      cur.jasa += jasa; cur.pph += Math.round(jasa * PPH); cur.net = cur.jasa - cur.pph;
-      m.set(r.doctor, cur);
-    });
-    return Array.from(m.values()).sort((a, z) => z.net - a.net);
-  }, [rows]);
+    return (q.data?.rows ?? []).map((r) => {
+      const pph = Math.round(r.jasa * PPH);
+      return { dokter: r.dokter, jasa: r.jasa, pph, net: r.jasa - pph };
+    }).sort((a, z) => z.net - a.net);
+  }, [q.data]);
 
   const totalNet = rekap.reduce((a, r) => a + r.net, 0);
   const totalPaid = rekap.filter((r) => paid[r.dokter]).reduce((a, r) => a + r.net, 0);
 
   return (
     <div>
-      <PageHeader title="Pembayaran Honor Dokter" desc="Daftar honor dokter siap dibayar. Tandai lunas untuk membentuk voucher BKK." />
-      <FinanceFilters value={filter} onChange={setFilter} doctors={doctors} services={services} />
+      <PageHeader title="Pembayaran Honor Dokter" desc={`Daftar honor dokter siap dibayar — periode ${label}. Tandai lunas untuk membentuk voucher BKK.`} />
       <div className="mb-3 grid gap-3 md:grid-cols-3">
         <Kpi label="Total Net" value={formatIDR(totalNet)} />
         <Kpi label="Sudah Dibayar" value={formatIDR(totalPaid)} />
@@ -62,7 +55,8 @@ function Page() {
             <TableHead>Status</TableHead><TableHead className="w-32" />
           </TableRow></TableHeader>
           <TableBody>
-            {rekap.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">Tidak ada honor dibayar pada periode ini.</TableCell></TableRow>
+            {q.isLoading ? <TableRow><TableCell colSpan={6} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              : rekap.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">Tidak ada honor dibayar pada periode ini.</TableCell></TableRow>
               : rekap.map((r) => (
                 <TableRow key={r.dokter}>
                   <TableCell className="font-semibold">{r.dokter}</TableCell>

@@ -1,46 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
-import { FinanceFilters, defaultFilter } from "@/components/finance-filters";
-import { invoices } from "@/data/financeData";
-import { applyFilter } from "@/lib/finance";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { downloadCSV, toCSV } from "@/lib/export";
+import { useFinanceDate } from "@/context/finance-date";
+import { getHonorRekap } from "@/lib/finance-dashboard.functions";
+import { formatIDR } from "@/lib/finance";
 
 export const Route = createFileRoute("/_authenticated/finance/pajak-pph-honor")({
-  
   head: () => pageHead({ title: "PPh Honor Dokter — Finance", description: "PPh Honor Dokter pada modul keuangan klinik.", path: "/finance/pajak-pph-honor" }),
   component: Page,
 });
 
-const fmt = (n: number) => "Rp " + (Number(n) || 0).toLocaleString("id-ID");
-const PCT: Record<string, number> = {
-  "dr. Rini, Sp.M": 40, "dr. Bagas, Sp.M": 45, "dr. Anisa, Sp.M": 45,
-  "dr. Hadi, Sp.M(K)": 50, "dr. Tania, Sp.M": 40, "dr. Yusuf, Sp.M": 45,
-};
-const PPH_RATE = 0.025; // PPh 21 final atas jasa dokter (estimasi 2.5%)
+const PPH_RATE = 0.025;
 
 function Page() {
-  const [filter, setFilter] = useState(defaultFilter);
-  const doctors = useMemo(() => Array.from(new Set(invoices.map((r) => r.doctor))), []);
-  const services = useMemo(() => Array.from(new Set(invoices.map((r) => r.category))), []);
-  const rows = applyFilter(invoices, filter);
+  const { from, to, label } = useFinanceDate();
+  const call = useServerFn(getHonorRekap);
+  const q = useQuery({
+    queryKey: ["fin", "honor-pph", from, to],
+    queryFn: () => call({ data: { from, to } }),
+  });
 
   const rekap = useMemo(() => {
-    const m = new Map<string, { dokter: string; gross: number; jasa: number; pph: number; net: number; count: number }>();
-    rows.forEach((r) => {
-      const pct = PCT[r.doctor] ?? 40;
-      const jasa = Math.round((r.total * pct) / 100);
-      const pph = Math.round(jasa * PPH_RATE);
-      const cur = m.get(r.doctor) ?? { dokter: r.doctor, gross: 0, jasa: 0, pph: 0, net: 0, count: 0 };
-      cur.count += 1; cur.gross += r.total; cur.jasa += jasa; cur.pph += pph; cur.net += jasa - pph;
-      m.set(r.doctor, cur);
-    });
-    return Array.from(m.values()).sort((a, z) => z.pph - a.pph);
-  }, [rows]);
+    return (q.data?.rows ?? []).map((r) => {
+      const pph = Math.round(r.jasa * PPH_RATE);
+      return { dokter: r.dokter, count: r.count, jasa: r.jasa, pph, net: r.jasa - pph };
+    }).sort((a, z) => z.pph - a.pph);
+  }, [q.data]);
 
   const totals = rekap.reduce((a, r) => ({ jasa: a.jasa + r.jasa, pph: a.pph + r.pph, net: a.net + r.net }), { jasa: 0, pph: 0, net: 0 });
 
@@ -52,17 +44,16 @@ function Page() {
       { key: "pph", label: "PPh (2.5%)", get: (r) => r.pph },
       { key: "net", label: "Diterima Net", get: (r) => r.net },
     ]);
-    downloadCSV(`pph-honor-${filter.period}.csv`, csv);
+    downloadCSV(`pph-honor-${from}_${to}.csv`, csv);
   };
 
   return (
     <div>
-      <PageHeader title="PPh Honor Dokter" desc="Estimasi PPh 21 atas jasa medis dokter (tarif final 2.5%). Bisa diadjust per kontrak." />
-      <FinanceFilters value={filter} onChange={setFilter} doctors={doctors} services={services} />
+      <PageHeader title="PPh Honor Dokter" desc={`Estimasi PPh 21 atas jasa medis dokter (2.5%) — periode ${label}.`} />
       <div className="mb-3 grid gap-3 md:grid-cols-3">
-        <Kpi label="Total Jasa Bruto" value={fmt(totals.jasa)} />
-        <Kpi label="PPh Terhutang" value={fmt(totals.pph)} />
-        <Kpi label="Diterima Dokter (Net)" value={fmt(totals.net)} />
+        <Kpi label="Total Jasa Bruto" value={formatIDR(totals.jasa)} />
+        <Kpi label="PPh Terhutang" value={formatIDR(totals.pph)} />
+        <Kpi label="Diterima Dokter (Net)" value={formatIDR(totals.net)} />
       </div>
       <div className="mb-2 flex justify-end"><Button variant="outline" size="sm" onClick={exportCsv} className="gap-1"><Download className="h-4 w-4" /> Export CSV</Button></div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -73,14 +64,15 @@ function Page() {
             <TableHead className="text-right">Net</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {rekap.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+            {q.isLoading ? <TableRow><TableCell colSpan={5} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+              : rekap.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">Tidak ada data.</TableCell></TableRow>
               : rekap.map((r) => (
                 <TableRow key={r.dokter}>
                   <TableCell>{r.dokter}</TableCell>
                   <TableCell className="text-right">{r.count}</TableCell>
-                  <TableCell className="text-right font-mono">{fmt(r.jasa)}</TableCell>
-                  <TableCell className="text-right font-mono text-rose-600">{fmt(r.pph)}</TableCell>
-                  <TableCell className="text-right font-mono font-semibold">{fmt(r.net)}</TableCell>
+                  <TableCell className="text-right font-mono">{formatIDR(r.jasa)}</TableCell>
+                  <TableCell className="text-right font-mono text-rose-600">{formatIDR(r.pph)}</TableCell>
+                  <TableCell className="text-right font-mono font-semibold">{formatIDR(r.net)}</TableCell>
                 </TableRow>
               ))}
           </TableBody>
