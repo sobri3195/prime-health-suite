@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, Undo2 } from "lucide-react";
+import { Search, Undo2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
