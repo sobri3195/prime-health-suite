@@ -60,9 +60,10 @@ function NeracaSaldo() {
             : <Badge className="gap-1 bg-amber-500/15 text-amber-700"><AlertTriangle className="h-3 w-3" /> Tidak balanced</Badge>}
           <span className="text-xs text-muted-foreground">Total D {fmt(data?.totalDebit ?? 0)} vs K {fmt(data?.totalKredit ?? 0)}</span>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={csv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
-          <Button variant="outline" size="sm" onClick={pdf}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+        <div className="flex gap-2 no-print">
+          <Button variant="outline" size="sm" onClick={csv} aria-label="Export Neraca ke CSV"><Download className="mr-1 h-4 w-4" /> CSV</Button>
+          <Button variant="outline" size="sm" onClick={pdf} aria-label="Export Neraca ke PDF"><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} aria-label="Print Neraca">Print</Button>
         </div>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
