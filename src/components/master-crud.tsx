@@ -160,7 +160,22 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
               {canEdit ? <Pencil className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </Button>
             {!singleton && canEdit && (
-              <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => { if (confirm("Hapus data ini?")) deleteMut.mutate(r.id); }}>
+              <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => {
+                const id = r.id as string;
+                const label = (r.name ?? r.nama ?? r.code ?? r.kode ?? "data") as string;
+                let cancelled = false;
+                const timer = setTimeout(() => {
+                  if (!cancelled) deleteMut.mutate(id);
+                }, 5000);
+                toast(`Menghapus "${label}"…`, {
+                  description: "Batalkan dalam 5 detik.",
+                  duration: 5000,
+                  action: {
+                    label: "Urungkan",
+                    onClick: () => { cancelled = true; clearTimeout(timer); toast.success("Penghapusan dibatalkan"); },
+                  },
+                });
+              }}>
                 <Trash2 className="h-4 w-4 text-rose-500" />
               </Button>
             )}
