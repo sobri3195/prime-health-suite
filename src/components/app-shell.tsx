@@ -4,6 +4,7 @@ import {
   Activity, Bell, ChevronDown, ChevronRight, Lock, LogOut, Menu, Moon, Search, Sun, X,
 } from "lucide-react";
 import { NAV, findNav, type NavItem } from "@/lib/nav-config";
+import { CommandPalette, useCommandPalette } from "@/components/command-palette";
 import { ROLE_LABEL, useAuth, type System } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { addAudit } from "@/lib/audit-log";
