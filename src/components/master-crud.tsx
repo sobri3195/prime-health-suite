@@ -148,6 +148,12 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
         searchPlaceholder={`Cari ${title.toLowerCase()}…`}
         emptyTitle="Belum ada data"
         emptyDesc={canEdit ? `Tambahkan ${title.toLowerCase()} pertama untuk memulai.` : "Hubungi admin untuk menambahkan data."}
+        selectable={!singleton && canEdit}
+        bulkActions={(sel, clear) => (
+          <Button size="sm" variant="destructive" className="gap-1" onClick={() => bulkDelete(sel.map((r) => r.id as string), clear)}>
+            <Trash2 className="h-4 w-4" /> Hapus {sel.length}
+          </Button>
+        )}
         toolbar={
           <FinanceExportBar
             resource={`master-${module}`}
