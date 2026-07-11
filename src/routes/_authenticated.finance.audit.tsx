@@ -40,10 +40,22 @@ function AuditPage() {
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
   const [detail, setDetail] = useState<any | null>(null);
+  const [revertReason, setRevertReason] = useState("");
+  const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
+  const revertFn = useServerFn(revertFinAudit);
   const { data, isLoading } = useQuery({
     queryKey: ["fin-audit", from, to, q, entity, action],
     queryFn: () => fn({ data: { from, to, q: q || undefined, entity: entity === "all" ? undefined : entity, action: action === "all" ? undefined : action } }),
+  });
+  const revertMut = useMutation({
+    mutationFn: (v: { audit_id: string; reason?: string }) => revertFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(`Dipulihkan: ${(r?.restored_fields ?? []).join(", ") || "ok"}`);
+      setDetail(null); setRevertReason("");
+      qc.invalidateQueries({ queryKey: ["fin-audit"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Gagal revert"),
   });
   const rows = data?.rows ?? [];
 
