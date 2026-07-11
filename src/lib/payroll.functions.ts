@@ -79,22 +79,46 @@ export const createPayrollRun = createServerFn({ method: "POST" })
       byEmp.set(o.employee_id, cur);
     }
 
+    // Kehadiran per karyawan
+    const { data: atts } = await supabase.from("hr_attendance")
+      .select("employee_id,status")
+      .gte("tanggal", fromStr).lte("tanggal", toStr);
+    const attByEmp = new Map<string, { hadir: number; alpa: number }>();
+    for (const a of atts ?? []) {
+      const cur = attByEmp.get(a.employee_id) ?? { hadir: 0, alpa: 0 };
+      const s = String(a.status ?? "").toLowerCase();
+      if (s === "alpa" || s === "absent") cur.alpa += 1;
+      else if (s !== "off" && s !== "libur") cur.hadir += 1;
+      attByEmp.set(a.employee_id, cur);
+    }
+
+    // Tarif potongan dari master
+    const { data: tarif } = await supabase.from("fin_tarif_pajak")
+      .select("code,tarif_pct").in("code", ["BPJS-KES", "BPJS-TK", "PPH21"]);
+    const rate = (c: string) => Number(tarif?.find((t) => t.code === c)?.tarif_pct ?? 0) / 100;
+    const rBpjsKes = rate("BPJS-KES");
+    const rBpjsTk = rate("BPJS-TK");
+    const rPph21 = rate("PPH21");
+
     let totalGaji = 0, totalLembur = 0, totalTH = 0;
     type ItemInsert = {
-      payroll_run_id: string;
-      employee_id: string;
-      nama_snapshot: string;
-      gaji_pokok: number;
-      total_jam_lembur: number;
-      nominal_lembur: number;
-      potongan: number;
-      take_home: number;
+      payroll_run_id: string; employee_id: string; nama_snapshot: string;
+      gaji_pokok: number; total_jam_lembur: number; nominal_lembur: number;
+      tunjangan: number; potongan_bpjs_kes: number; potongan_bpjs_tk: number;
+      potongan_pph21: number; potongan: number; take_home: number;
+      hari_hadir: number; hari_alpa: number;
     };
     const itemRows: ItemInsert[] = [];
     for (const e of emps ?? []) {
       const agg = byEmp.get(e.id) ?? { jam: 0, nominal: 0, ids: [] };
+      const att = attByEmp.get(e.id) ?? { hadir: 0, alpa: 0 };
       const gaji = Number(e.gaji_pokok ?? 0);
-      const take = +(gaji + agg.nominal).toFixed(2);
+      const bruto = gaji + agg.nominal;
+      const potBpjsKes = +(gaji * rBpjsKes).toFixed(2);
+      const potBpjsTk = +(gaji * rBpjsTk).toFixed(2);
+      const potPph21 = +(bruto * rPph21).toFixed(2);
+      const potongan = potBpjsKes + potBpjsTk + potPph21;
+      const take = +(bruto - potongan).toFixed(2);
       totalGaji += gaji; totalLembur += agg.nominal; totalTH += take;
       itemRows.push({
         payroll_run_id: run.id,
@@ -103,8 +127,14 @@ export const createPayrollRun = createServerFn({ method: "POST" })
         gaji_pokok: gaji,
         total_jam_lembur: agg.jam,
         nominal_lembur: agg.nominal,
-        potongan: 0,
+        tunjangan: 0,
+        potongan_bpjs_kes: potBpjsKes,
+        potongan_bpjs_tk: potBpjsTk,
+        potongan_pph21: potPph21,
+        potongan,
         take_home: take,
+        hari_hadir: att.hadir,
+        hari_alpa: att.alpa,
       });
     }
     if (itemRows.length) {
@@ -129,6 +159,7 @@ export const createPayrollRun = createServerFn({ method: "POST" })
 
     return updRun ?? run;
   });
+
 
 export const finalizePayrollRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
