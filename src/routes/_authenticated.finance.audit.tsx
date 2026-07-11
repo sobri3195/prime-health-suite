@@ -161,6 +161,25 @@ function AuditPage() {
               </div>
             </div>
           )}
+          {detail?.action === "edit" && detail?.entity_id && (
+            <DialogFooter className="mt-3 flex-col items-stretch gap-2 sm:flex-col">
+              <Textarea
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+                placeholder="Alasan revert (opsional)"
+                className="min-h-[60px] text-xs"
+              />
+              <Button
+                variant="destructive"
+                disabled={revertMut.isPending}
+                onClick={() => revertMut.mutate({ audit_id: detail.id, reason: revertReason || undefined })}
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                {revertMut.isPending ? "Memulihkan…" : "Revert ke nilai sebelumnya"}
+              </Button>
+              <p className="text-[10px] text-muted-foreground">Hanya field aman (whitelist) yang dipulihkan. Aksi ini juga tercatat di audit log.</p>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
