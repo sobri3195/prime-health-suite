@@ -253,7 +253,10 @@ function Page() {
           <Button size="sm" className="h-8 gap-1" onClick={handlePdfReport}>
             <Download className="h-3.5 w-3.5" /> PDF Laporan
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); }} className="h-8 gap-1">
+          <Button size="sm" variant="secondary" className="h-8 gap-1" onClick={handleReconcile} disabled={reconciling}>
+            {reconciling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />} Reconcile
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { recon.refetch(); unposted.refetch(); audit.refetch(); unbalanced.refetch(); }} className="h-8 gap-1">
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>
