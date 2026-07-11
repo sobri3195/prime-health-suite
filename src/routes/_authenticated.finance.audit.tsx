@@ -79,6 +79,10 @@ function AuditPage() {
   const [action, setAction] = useState("all");
   const [detail, setDetail] = useState<any | null>(null);
   const [revertReason, setRevertReason] = useState("");
+  const [presets, setPresets] = useState<AuditPreset[]>([]);
+  const [presetName, setPresetName] = useState("");
+  const [presetOpen, setPresetOpen] = useState(false);
+  useEffect(() => { setPresets(loadPresets()); }, []);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
