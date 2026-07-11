@@ -170,6 +170,8 @@ function AuditPage() {
       <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
         {refreshMs > 0 && <span className="inline-flex items-center gap-1"><span className={`inline-block h-1.5 w-1.5 rounded-full ${isFetching ? "bg-emerald-500 animate-pulse" : "bg-emerald-500/50"}`} /> Live setiap {refreshMs / 1000}s</span>}
         {dataUpdatedAt > 0 && <span>· Diperbarui {new Date(dataUpdatedAt).toLocaleTimeString("id-ID")}</span>}
+      </div>
+
 
       <Dialog open={presetOpen} onOpenChange={setPresetOpen}>
         <DialogContent className="max-w-sm">
