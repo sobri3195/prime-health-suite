@@ -150,8 +150,29 @@ export const deleteFinMaster = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Bulk CSV import: validate every row, then insert in one round-trip.
-// Returns per-row errors so the UI can show which lines failed.
+// Cross-table FK checks (Batch 4.4). Only common CSV mistakes.
+const FK_CHECKS: Partial<Record<FinTable, { col: string; refTable: FinTable; refCol: string }[]>> = {
+  fin_coa: [{ col: "parent_code", refTable: "fin_coa", refCol: "code" }],
+  fin_layanan: [{ col: "kategori_code", refTable: "fin_kategori_layanan", refCol: "code" }],
+  fin_persediaan: [{ col: "coa_persediaan", refTable: "fin_coa", refCol: "code" }],
+  fin_aset: [
+    { col: "cost_center_code", refTable: "fin_cost_center", refCol: "code" },
+    { col: "coa_aset", refTable: "fin_coa", refCol: "code" },
+    { col: "coa_akm_penyusutan", refTable: "fin_coa", refCol: "code" },
+    { col: "coa_beban_penyusutan", refTable: "fin_coa", refCol: "code" },
+  ],
+  fin_kas_kecil: [{ col: "coa_lawan", refTable: "fin_coa", refCol: "code" }],
+  fin_bukti_setor: [
+    { col: "bank_coa", refTable: "fin_coa", refCol: "code" },
+    { col: "kas_coa", refTable: "fin_coa", refCol: "code" },
+  ],
+  fin_rab: [
+    { col: "coa_code", refTable: "fin_coa", refCol: "code" },
+    { col: "cost_center_code", refTable: "fin_cost_center", refCol: "code" },
+  ],
+};
+
+// Bulk CSV import: validate every row + FK, then insert in one round-trip.
 export const bulkImportFinMaster = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { table: FinTable; rows: Record<string, unknown>[] }) => ({
@@ -160,7 +181,7 @@ export const bulkImportFinMaster = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const schema = ROW_SCHEMAS[data.table];
-    const valid: Record<string, unknown>[] = [];
+    const valid: { row: Record<string, unknown>; idx: number }[] = [];
     const errors: { row: number; message: string }[] = [];
     data.rows.forEach((raw, idx) => {
       const filtered = pickAllowed(data.table, raw);
@@ -176,11 +197,47 @@ export const bulkImportFinMaster = createServerFn({ method: "POST" })
         });
         return;
       }
-      valid.push(parsed.data as Record<string, unknown>);
+      valid.push({ row: parsed.data as Record<string, unknown>, idx });
     });
     if (valid.length === 0) return { inserted: 0, errors, total: data.rows.length };
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin.from(data.table) as any).insert(valid);
+    const checks = FK_CHECKS[data.table] ?? [];
+    for (const c of checks) {
+      const wanted = Array.from(new Set(valid
+        .map((v) => v.row[c.col])
+        .filter((x) => x != null && String(x).trim() !== "")
+        .map(String)));
+      if (!wanted.length) continue;
+      const { data: found, error } = await (supabaseAdmin.from(c.refTable) as any)
+        .select(c.refCol).in(c.refCol, wanted);
+      if (error) throw new Error(`FK check ${c.refTable}.${c.refCol}: ${error.message}`);
+      const present = new Set((found ?? []).map((r: any) => String(r[c.refCol])));
+      for (let i = valid.length - 1; i >= 0; i--) {
+        const v = valid[i]!;
+        const ref = v.row[c.col];
+        if (ref != null && String(ref).trim() !== "" && !present.has(String(ref))) {
+          errors.push({ row: v.idx + 1, message: `${c.col}: "${ref}" tidak ada di ${c.refTable}.${c.refCol}` });
+          valid.splice(i, 1);
+        }
+      }
+    }
+    if (valid.length === 0) return { inserted: 0, errors, total: data.rows.length };
+    const { error } = await (supabaseAdmin.from(data.table) as any).insert(valid.map((v) => v.row));
     if (error) throw new Error(error.message);
     return { inserted: valid.length, errors, total: data.rows.length };
+  });
+
+// Export master rows with whitelisted columns (Batch 4.2).
+export const exportFinMaster = createServerFn({ method: "POST" })
+  .middleware([requireFinView])
+  .inputValidator((d: { table: FinTable }) => ({ table: tableSchema.parse(d.table) }))
+  .handler(async ({ data }) => {
+    const cols = ALLOWED_COLS[data.table];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await (supabaseAdmin.from(data.table) as any)
+      .select(cols.join(","))
+      .limit(10000);
+    if (error) throw new Error(error.message);
+    return { columns: [...cols] as string[], rows: (rows ?? []) as Array<Record<string, string | number | boolean | null>> };
   });

@@ -7,8 +7,9 @@ import { Download, Upload, ArrowRight, FileUp, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { bulkImportFinMaster, type FinTable } from "@/lib/finance-master.functions";
+import { bulkImportFinMaster, exportFinMaster, type FinTable } from "@/lib/finance-master.functions";
 import { toast } from "sonner";
+import { exportCsv } from "@/lib/exporter";
 
 export const Route = createFileRoute("/_authenticated/finance/import-export")({
   head: () => pageHead({ title: "Import / Export — Finance", description: "Import / Export pada modul keuangan klinik.", path: "/finance/import-export" }),
@@ -100,6 +101,7 @@ function MasterCsvImporter() {
   const fileRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const call = useServerFn(bulkImportFinMaster);
+  const callExport = useServerFn(exportFinMaster);
   const m = useMutation({
     mutationFn: (rows: Record<string, string>[]) => call({ data: { table, rows } }),
     onSuccess: (r) => {
@@ -110,6 +112,20 @@ function MasterCsvImporter() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal impor CSV"),
   });
+  const [exporting, setExporting] = useState(false);
+  const doExport = async () => {
+    setExporting(true);
+    try {
+      const r = await callExport({ data: { table } });
+      const cols = r.columns.map((k) => ({ key: k, header: k }));
+      exportCsv(`export-${table}-${new Date().toISOString().slice(0, 10)}.csv`, cols, r.rows);
+      toast.success(`Export ${r.rows.length} baris.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal export");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const current = IMPORT_TABLES.find((t) => t.value === table)!;
 
@@ -153,8 +169,12 @@ function MasterCsvImporter() {
             {IMPORT_TABLES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
-        <Button type="button" variant="outline" onClick={downloadTemplate} disabled={m.isPending}>
+        <Button type="button" variant="outline" onClick={downloadTemplate} disabled={m.isPending} aria-label={`Unduh template CSV ${current.label}`}>
           <Download className="h-4 w-4 mr-2" />Template
+        </Button>
+        <Button type="button" variant="outline" onClick={doExport} disabled={m.isPending || exporting} aria-label={`Export ${current.label} ke CSV`}>
+          {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+          Export
         </Button>
         <div className="grid gap-1.5">
           <label className="text-xs text-muted-foreground">File CSV (maks 2MB / 2000 baris)</label>

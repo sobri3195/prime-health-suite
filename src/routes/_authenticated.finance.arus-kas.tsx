@@ -60,9 +60,10 @@ function ArusKas() {
         <Kpi label="Pendanaan" value={fmt(s.financing)} tone={s.financing >= 0 ? "ok" : "warn"} />
         <Kpi label="Kenaikan Bersih" value={fmt(s.operating + s.investing + s.financing)} tone={s.operating + s.investing + s.financing >= 0 ? "ok" : "warn"} />
       </div>
-      <div className="mb-2 flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={csv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
-        <Button variant="outline" size="sm" onClick={pdf}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+      <div className="mb-2 flex justify-end gap-2 no-print">
+        <Button variant="outline" size="sm" onClick={csv} aria-label="Export Arus Kas ke CSV"><Download className="mr-1 h-4 w-4" /> CSV</Button>
+        <Button variant="outline" size="sm" onClick={pdf} aria-label="Export Arus Kas ke PDF"><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()} aria-label="Print Arus Kas">Print</Button>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>

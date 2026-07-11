@@ -63,9 +63,10 @@ function LabaRugi() {
   return (
     <div>
       <PageHeader title="Laba Rugi" desc={`Periode ${label}. Klik akun untuk drill-down ke jurnal detail.`} />
-      <div className="mb-3 flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={csv}><Download className="mr-1 h-4 w-4" /> CSV</Button>
-        <Button variant="outline" size="sm" onClick={pdf}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+      <div className="mb-3 flex justify-end gap-2 no-print">
+        <Button variant="outline" size="sm" onClick={csv} aria-label="Export Laba Rugi ke CSV"><Download className="mr-1 h-4 w-4" /> CSV</Button>
+        <Button variant="outline" size="sm" onClick={pdf} aria-label="Export Laba Rugi ke PDF"><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()} aria-label="Print Laba Rugi">Print</Button>
       </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
