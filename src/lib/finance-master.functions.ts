@@ -235,10 +235,9 @@ export const exportFinMaster = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const cols = ALLOWED_COLS[data.table];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
-      .from(data.table)
+    const { data: rows, error } = await (supabaseAdmin.from(data.table) as any)
       .select(cols.join(","))
       .limit(10000);
     if (error) throw new Error(error.message);
-    return { columns: cols as readonly string[], rows: (rows ?? []) as Record<string, unknown>[] };
+    return { columns: [...cols] as string[], rows: (rows ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
