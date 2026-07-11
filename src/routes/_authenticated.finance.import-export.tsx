@@ -101,6 +101,7 @@ function MasterCsvImporter() {
   const fileRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const call = useServerFn(bulkImportFinMaster);
+  const callExport = useServerFn(exportFinMaster);
   const m = useMutation({
     mutationFn: (rows: Record<string, string>[]) => call({ data: { table, rows } }),
     onSuccess: (r) => {
@@ -111,6 +112,20 @@ function MasterCsvImporter() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal impor CSV"),
   });
+  const [exporting, setExporting] = useState(false);
+  const doExport = async () => {
+    setExporting(true);
+    try {
+      const r = await callExport({ data: { table } });
+      const cols = r.columns.map((k) => ({ key: k, header: k }));
+      exportCsv(`export-${table}-${new Date().toISOString().slice(0, 10)}.csv`, cols, r.rows);
+      toast.success(`Export ${r.rows.length} baris.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal export");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const current = IMPORT_TABLES.find((t) => t.value === table)!;
 
