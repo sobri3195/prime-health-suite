@@ -294,6 +294,17 @@ function AuditPage() {
         }}>
           <Download className="mr-2 h-4 w-4" /> Export JSON
         </Button>
+        <Button variant="outline" size="sm" onClick={() => {
+          const u = new URL(window.location.href);
+          u.searchParams.delete("q"); u.searchParams.delete("entity"); u.searchParams.delete("action");
+          if (q) u.searchParams.set("q", q);
+          if (entity !== "all") u.searchParams.set("entity", entity);
+          if (action !== "all") u.searchParams.set("action", action);
+          navigator.clipboard.writeText(u.toString());
+          toast.success("Tautan disalin dengan filter aktif");
+        }} title="Salin URL dengan filter aktif">
+          🔗 Salin tautan
+        </Button>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
         <Button
