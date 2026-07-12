@@ -723,6 +723,18 @@ function AuditPage() {
         setDetail(list[nextIdx]);
         toast.success(e.key === "]" ? "Lompat +10 (])" : "Lompat -10 ([)");
       }
+      else if (!typing && (e.key === "{" || e.key === "}")) {
+        e.preventDefault();
+        const list = rows as any[];
+        if (!list.length) { toast.info("Tidak ada baris"); return; }
+        const idx = detail ? list.findIndex((r) => r.id === (detail as any).id) : -1;
+        const step = 50;
+        const nextIdx = e.key === "}"
+          ? Math.min(list.length - 1, (idx < 0 ? 0 : idx) + step)
+          : Math.max(0, (idx < 0 ? 0 : idx) - step);
+        setDetail(list[nextIdx]);
+        toast.success(e.key === "}" ? "Lompat +50 (})" : "Lompat -50 ({)");
+      }
     };
 
 
@@ -1277,6 +1289,7 @@ function AuditPage() {
               ["-", "Ringkas cepat: total baris • unik aktor/entity/action"],
               ["+", "Salin entity_no / entity_id target"],
               ["[ / ]", "Lompat detail -10 / +10 baris"],
+              ["{ / }", "Lompat detail -50 / +50 baris"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
