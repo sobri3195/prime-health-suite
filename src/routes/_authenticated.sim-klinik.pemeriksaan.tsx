@@ -222,7 +222,7 @@ const DIFF_FIELDS: Array<{ k: string; label: string }> = [
   { k: "treatment_plan", label: "Rencana Terapi" }, { k: "tindakan", label: "Tindakan" }, { k: "notes", label: "Catatan" },
 ];
 
-function RmHistoryPanel({ visitId }: { visitId: string }) {
+function RmHistoryPanel({ visitId, canRestore, onRestore }: { visitId: string; canRestore?: boolean; onRestore?: (snap: Record<string, unknown>) => void }) {
   const call = useServerFn(listMedicalRecordHistory);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const q = useQuery({
