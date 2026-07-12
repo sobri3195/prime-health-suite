@@ -265,6 +265,13 @@ function RmHistoryPanel({ visitId, canRestore, onRestore }: { visitId: string; c
                 </div>
               )}
               {open && diffs.length === 0 && <div className="mt-2 text-muted-foreground">Tidak ada perubahan.</div>}
+              {open && canRestore && onRestore && (
+                <div className="mt-2 flex justify-end">
+                  <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => onRestore(next)}>
+                    Muat versi ini ke form
+                  </Button>
+                </div>
+              )}
             </li>
           );
         })}
