@@ -318,6 +318,7 @@ export function PatientCheckout() {
 export function PatientOrders() {
   const { t } = useI18n();
   const fmt = useFmtIDR();
+  const df = useDateFmt();
   const callOrders = useServerFn(listMyOrders);
   const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
   const orders = q.data?.orders ?? [];
