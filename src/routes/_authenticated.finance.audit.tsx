@@ -262,7 +262,7 @@ function AuditPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className={`overflow-hidden rounded-xl border border-border bg-card ${density === "compact" ? "[&_td]:py-1.5 [&_th]:py-2 text-[12px]" : ""}`}>
         <Table>
           <TableHeader><TableRow>
             {cols.waktu && <TableHead>Waktu</TableHead>}
