@@ -12,30 +12,20 @@ export const getMyPoin = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const from = (data.page - 1) * data.pageSize;
     const to = from + data.pageSize - 1;
-    const { data: tot } = await context.supabase.rpc("apps_my_poin_total");
-    const { data: hist, count } = await context.supabase.from("apps_poin")
+    const { data: tot, error: totErr } = await context.supabase.rpc("apps_my_poin_total");
+    if (totErr) throw new Error(totErr.message);
+    const { data: hist, count, error: histErr } = await context.supabase.from("apps_poin")
       .select("*", { count: "exact" }).eq("user_id", context.userId)
       .order("created_at", { ascending: false }).range(from, to);
+    if (histErr) throw new Error(histErr.message);
     return { total: (tot as number) ?? 0, history: hist ?? [], totalHistory: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 
-export const addPoin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { delta: number; alasan: string; ref_type?: string; ref_id?: string }) =>
-    z.object({
-      delta: z.number().int().min(-1000).max(1000),
-      alasan: z.string().min(1).max(200),
-      ref_type: z.string().max(40).optional(),
-      ref_id: z.string().max(200).optional(),
-    }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("apps_poin").insert({
-      user_id: context.userId, delta: data.delta, alasan: data.alasan,
-      ref_type: data.ref_type ?? null, ref_id: data.ref_id ?? null,
-    });
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+// NOTE: addPoin dihapus dari public server-fn — sebelumnya endpoint publik tanpa
+// guard bisnis memungkinkan client memposting delta arbitrer & self-redeem reward.
+// Poin harus dimutasi HANYA lewat RPC server-side yang memverifikasi kejadian
+// nyata (mis. apps_redeem_reward, trigger booking selesai, dsb).
+
 
 export const getLeaderboard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
