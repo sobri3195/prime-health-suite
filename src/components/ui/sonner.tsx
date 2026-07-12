@@ -18,6 +18,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
+      hotkey={["altKey", "KeyT"]}
+      containerAriaLabel="Notifikasi"
       {...props}
     />
   );

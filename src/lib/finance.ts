@@ -96,11 +96,17 @@ export function generateInsights(rows: Invoice[], trend: MonthlyTrend[]) {
   const over90 = agingRows.find((a) => a.bucket === ">90");
   const last = trend[trend.length - 1], prev = trend[trend.length - 2];
   if (last && prev) {
-    const delta = ((last.revenue - prev.revenue) / prev.revenue) * 100;
-    out.push({
-      tone: delta >= 0 ? "success" : "warning",
-      text: `Pendapatan bulan ${last.month} ${delta >= 0 ? "naik" : "turun"} ${Math.abs(delta).toFixed(1)}% vs ${prev.month}.`,
-    });
+    if (prev.revenue === 0 && last.revenue > 0) {
+      out.push({ tone: "success", text: `Pendapatan bulan ${last.month} mulai tercatat (${formatIDR(last.revenue)}) vs ${prev.month} nihil.` });
+    } else if (prev.revenue === 0 && last.revenue === 0) {
+      out.push({ tone: "info", text: `Pendapatan bulan ${last.month} dan ${prev.month} nihil.` });
+    } else {
+      const delta = ((last.revenue - prev.revenue) / prev.revenue) * 100;
+      out.push({
+        tone: delta >= 0 ? "success" : "warning",
+        text: `Pendapatan bulan ${last.month} ${delta >= 0 ? "naik" : "turun"} ${Math.abs(delta).toFixed(1)}% vs ${prev.month}.`,
+      });
+    }
   }
   if (over90 && over90.amount > 0) {
     out.push({ tone: "warning", text: `Piutang > 90 hari: ${formatIDR(over90.amount)} (${over90.count} invoice). Perlu follow-up.` });

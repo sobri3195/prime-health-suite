@@ -192,7 +192,7 @@ export function MasterCrudPage({ title, desc, module, table, fields, newRow, sin
             {!singleton && canEdit && (
               <Button size="icon" variant="ghost" disabled={deleteMut.isPending} onClick={() => {
                 const id = r.id as string;
-                const label = (r.name ?? r.nama ?? r.code ?? r.kode ?? "data") as string;
+                const label = (r.name ?? r.nama ?? r.title ?? r.judul ?? r.label ?? r.no_voucher ?? r.no_invoice ?? r.no_jurnal ?? r.keterangan ?? r.deskripsi ?? r.code ?? r.kode ?? r.id ?? "data") as string;
                 let cancelled = false;
                 const timer = setTimeout(() => {
                   if (!cancelled) deleteMut.mutate(id);
