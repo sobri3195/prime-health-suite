@@ -53,6 +53,10 @@ function PemeriksaanPage() {
   const callVisits = useServerFn(listVisits);
   const callDetail = useServerFn(getVisitDetail);
   const callSave = useServerFn(upsertMedicalRecord);
+  const callTpl = useServerFn(listPemeriksaanTemplate);
+  const tplQ = useQuery({ queryKey: ["klinik","pemeriksaan-tpl"], queryFn: () => callTpl({ data: {} }) });
+  const templates = (tplQ.data ?? []) as PemTemplate[];
+
 
   const [selVisit, setSelVisit] = useState<string | null>(null);
 
