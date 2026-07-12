@@ -38,16 +38,28 @@ export function NotificationsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
+  // Reset ke halaman 1 setiap kali filter/q berubah agar sinkron dengan hasil server.
+  useEffect(() => { setPage(1); }, [q, typ, st]);
+
   const notifQ = useQuery({
-    queryKey: ["apps", "notif-operator", page],
+    queryKey: ["apps", "notif-operator", page, q, typ, st],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("apps_notif")
         .select("id,user_id,title,body,type,deep_link,read_at,created_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
+      if (typ !== "all") query = query.eq("type", typ);
+      if (st === "read") query = query.not("read_at", "is", null);
+      else if (st === "unread") query = query.is("read_at", null);
+      const qq = q.trim();
+      if (qq) {
+        const esc = qq.replace(/[%_,]/g, (m) => `\\${m}`);
+        query = query.or(`title.ilike.%${esc}%,body.ilike.%${esc}%`);
+      }
+      const { data, error, count } = await query;
       if (error) throw error;
       return { rows: (data ?? []) as NotifRow[], total: count ?? 0 };
     },
@@ -69,8 +81,6 @@ export function NotificationsPage() {
     mutationFn: async (id: string) => {
       const { data: { user }, error: ue } = await supabase.auth.getUser();
       if (ue || !user) throw new Error("Sesi berakhir, silakan login ulang");
-      // Jangan filter user_id: notif milik pasien lain. Andalkan RLS + cek row affected
-      // agar kegagalan izin tidak silent-success.
       const { data, error } = await supabase
         .from("apps_notif")
         .update({ read_at: new Date().toISOString() })
@@ -83,14 +93,7 @@ export function NotificationsPage() {
     onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
-  const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    return (notifQ.data?.rows ?? []).filter((n) => {
-      const isRead = !!n.read_at;
-      return (typ === "all" || n.type === typ) &&
-        (st === "all" || (st === "read" ? isRead : !isRead)) &&
-        (!qq || n.title.toLowerCase().includes(qq) || (n.body ?? "").toLowerCase().includes(qq));
-    });
+  const filtered = notifQ.data?.rows ?? [];
   }, [notifQ.data, q, typ, st]);
 
   return (
