@@ -1470,6 +1470,7 @@ function AuditPage() {
               ["g / G", "Lompat detail ke baris pertama / terakhir"],
               ["Esc", "Tutup panel detail baris"],
               ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
+              ["#", "Salin action baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
