@@ -130,22 +130,22 @@ export function DocumentsPage() {
         }
         if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Upload gagal");
         setProgress(75);
-        const { error } = await supabase.from("clinic_document").insert({
-          patient_code: meta.patient_code || "-",
-          patient_name: meta.patient_name || "Internal",
-          doc_type: meta.doc_type,
-          title: meta.title.trim(),
-          mime,
-          size_bytes: pendingFile.size,
-          storage_path: path,
-          uploaded_by: uid,
-          uploaded_by_email: auth.user?.email ?? null,
-        });
-        if (error) {
+        try {
+          await callUpload({ data: {
+            patient_code: meta.patient_code || "-",
+            patient_name: meta.patient_name || "Internal",
+            doc_type: meta.doc_type,
+            title: meta.title.trim(),
+            mime,
+            size_bytes: pendingFile.size,
+            storage_path: path,
+          } as any });
+        } catch (e) {
           await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
-          throw error;
+          throw e;
         }
         setProgress(100);
+
       } finally {
         window.clearTimeout(timeoutId);
       }
