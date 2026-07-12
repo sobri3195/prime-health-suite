@@ -396,7 +396,7 @@ function AuditPage() {
                   onClick={() => setDetail(r)}
                 >
 
-                  {cols.waktu && <TableCell className="font-mono text-xs" title={new Date(r.created_at).toLocaleString("id-ID")}>{relativeTime(r.created_at)}</TableCell>}
+                  {cols.waktu && <TableCell className="font-mono text-xs" title={timeFmt === "relative" ? new Date(r.created_at).toLocaleString("id-ID") : relativeTime(r.created_at)}>{timeFmt === "relative" ? relativeTime(r.created_at) : new Date(r.created_at).toLocaleString("id-ID")}</TableCell>}
                   {cols.aktor && (
                     <TableCell className="text-sm">
                       <button
