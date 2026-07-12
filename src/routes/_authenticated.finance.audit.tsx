@@ -1425,6 +1425,7 @@ function AuditPage() {
               ["y", "Salin JSON baris target ke clipboard"],
               ["i", "Salin row id baris target"],
               ["p", "Cetak baris target di tab baru"],
+              ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
