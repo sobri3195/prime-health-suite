@@ -527,6 +527,12 @@ function AuditPage() {
         setDetail(next);
         toast.success(e.key === ">" ? "Bertanda berikutnya (>)" : "Bertanda sebelumnya (<)");
       }
+      else if (!typing && e.key === "0") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (detail) setDetail(null);
+        toast.success("Kembali ke atas (0)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1057,6 +1063,7 @@ function AuditPage() {
               ["i", "Info statistik cepat (aktor/entity/action)"],
               ["*", "Lompat ke entri bertanda pertama"],
               ["< / >", "Navigasi antar entri bertanda (prev/next)"],
+              ["0", "Scroll ke atas & tutup detail"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
