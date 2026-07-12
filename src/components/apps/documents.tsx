@@ -203,14 +203,14 @@ export function DocumentsPage() {
           return;
         }
       }
-      const { error } = await supabase.from("clinic_document").delete().eq("id", row.id);
-      if (error) { toast.error(`Gagal menghapus: ${error.message}`); return; }
+      await callDelete({ data: { id: row.id } });
       toast.success("Dokumen dihapus");
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     } catch (e) {
       toast.error(`Gagal menghapus dokumen: ${(e as Error).message}`);
     }
   };
+
 
   return (
     <PageContainer>
