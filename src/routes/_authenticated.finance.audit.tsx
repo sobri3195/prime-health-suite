@@ -821,6 +821,20 @@ function AuditPage() {
         w.print();
         toast.success("Cetak baris (p)");
       }
+      else if (!typing && e.key === "j") {
+        e.preventDefault();
+        const idx = detail ? (rows as any[]).findIndex((r: any) => r.id === detail.id) : -1;
+        const next = (rows as any[])[idx + 1];
+        if (next) { setDetail(next); toast.success("Baris berikutnya (j)"); }
+        else toast.info("Sudah di baris terakhir");
+      }
+      else if (!typing && e.key === "h") {
+        e.preventDefault();
+        const idx = detail ? (rows as any[]).findIndex((r: any) => r.id === detail.id) : -1;
+        const prev = (rows as any[])[idx - 1];
+        if (prev) { setDetail(prev); toast.success("Baris sebelumnya (h)"); }
+        else toast.info("Sudah di baris pertama");
+      }
     };
 
 
