@@ -104,9 +104,14 @@ function AuditPage() {
     return Number(localStorage.getItem("fin-audit-refresh") || 0);
   });
   const [cols, setCols] = useState<Record<ColKey, boolean>>(() => loadCols());
+  const [density, setDensity] = useState<"compact" | "comfy">(() => {
+    if (typeof window === "undefined") return "comfy";
+    return (localStorage.getItem("fin-audit-density") as "compact" | "comfy") || "comfy";
+  });
   useEffect(() => { setPresets(loadPresets()); }, []);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(COL_KEY, JSON.stringify(cols)); }, [cols]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-density", density); }, [density]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
