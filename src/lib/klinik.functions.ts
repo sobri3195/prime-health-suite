@@ -512,14 +512,20 @@ export const createPrescription = createServerFn({ method: "POST" })
     if (danger) {
       throw new Error(`Interaksi obat berbahaya: ${danger.drugs.join(" + ")} — ${danger.reason}`);
     }
-    // Pre-validate stock BEFORE insert to prevent zombie prescriptions
-    // (dispense fallback exists, but we want to fail fast at creation time).
-    for (const it of data.items) {
-      if (!it.obat_id) continue;
-      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
-      if (!ob) continue;
-      if (Number(ob.stock) < Number(it.quantity)) {
-        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+    // Advisory pre-check stok (best-effort UX). Otoritas final ada di dispense: RPC
+    // klinik_dispense_prescription_locked mengunci per-obat + FOR UPDATE, sehingga
+    // race tidak dapat mengakibatkan stok negatif meski pre-check lolos.
+    // Kita batch SELECT sekali agar tidak N+1.
+    const obatIds = data.items.map((it) => it.obat_id).filter((v): v is string => !!v);
+    if (obatIds.length) {
+      const { data: stocks } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
+      const byId = new Map((stocks ?? []).map((r) => [r.id, r]));
+      for (const it of data.items) {
+        if (!it.obat_id) continue;
+        const ob = byId.get(it.obat_id);
+        if (ob && Number(ob.stock) < Number(it.quantity)) {
+          throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+        }
       }
     }
     const { data: pres, error } = await sb.from("klinik_prescription").insert({
