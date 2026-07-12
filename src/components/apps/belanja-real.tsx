@@ -11,7 +11,13 @@ import {
 import { EmptyState, Skeleton, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 
-function fmt(n: number) { return "Rp " + n.toLocaleString("id-ID"); }
+function useFmt() {
+  const { lang } = useI18n();
+  return (n: number) =>
+    new Intl.NumberFormat(lang === "id" ? "id-ID" : "en-US", {
+      style: "currency", currency: "IDR", maximumFractionDigits: 0,
+    }).format(n);
+}
 
 function ProductCardSkeleton() {
   return (
@@ -27,6 +33,7 @@ function ProductCardSkeleton() {
 
 export function PatientBelanjaReal() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const qc = useQueryClient();
   const callList = useServerFn(listProduk);
   const callCart = useServerFn(getMyCart);
@@ -41,7 +48,7 @@ export function PatientBelanjaReal() {
   });
 
   const produk = produkQ.data?.produk ?? [];
-  const cats = ["semua", ...Array.from(new Set(produk.map((p) => p.kategori)))];
+  const cats = ["semua", ...Array.from(new Set(produk.map((p) => p.kategori))).sort((a, b) => a.localeCompare(b, "id"))];
   const list = kategori === "semua" ? produk : produk.filter((p) => p.kategori === kategori);
   const cartCount = cartQ.data?.items.reduce((s, x) => s + x.qty, 0) ?? 0;
 
@@ -100,7 +107,7 @@ export function PatientBelanjaReal() {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              {p.stok < 5 && <div className="mt-1 text-[10px] text-rose-600">{t("shop.stock_low", { n: p.stok })}</div>}
+              {p.stok < 5 && <div role="status" aria-live="polite" className="mt-1 text-[10px] text-rose-600">{t("shop.stock_low", { n: p.stok })}</div>}
             </div>
           ))}
         </div>
@@ -111,6 +118,7 @@ export function PatientBelanjaReal() {
 
 export function PatientCart() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
   const callUpd = useServerFn(updateCartQty);
@@ -199,6 +207,7 @@ export function PatientCart() {
 
 export function PatientCheckout() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
@@ -316,6 +325,7 @@ export function PatientCheckout() {
 
 export function PatientOrders() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const callOrders = useServerFn(listMyOrders);
   const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
   const orders = q.data?.orders ?? [];
