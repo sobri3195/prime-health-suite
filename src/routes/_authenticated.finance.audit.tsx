@@ -140,6 +140,14 @@ function AuditPage() {
   });
   const rows = data?.rows ?? [];
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !rows.length || detail) return;
+    const id = new URL(window.location.href).searchParams.get("id");
+    if (!id) return;
+    const found = (rows as any[]).find((r) => r.id === id);
+    if (found) _setDetail(found);
+  }, [rows, detail]);
+
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
