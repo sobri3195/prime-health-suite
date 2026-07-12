@@ -74,9 +74,16 @@ export function NotificationsPagePatient() {
   const callReadAll = useServerFn(markAllNotifRead);
   const callDelete = useServerFn(deleteNotif);
 
-  const q = useQuery({ queryKey: ["apps", "notifs"], queryFn: () => callList() });
+  const [page, setPage] = useState(1);
+  const pageSize = 30;
+  const q = useQuery({
+    queryKey: ["apps", "notifs", page],
+    queryFn: () => callList({ data: { page, pageSize } }),
+  });
   const notifs = q.data?.notifs ?? [];
   const unread = q.data?.unread ?? 0;
+  const total = q.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const readM = useMutation({
     mutationFn: (id: string) => callRead({ data: { id } }),
