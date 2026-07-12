@@ -567,11 +567,16 @@ export const previewInteractions = createServerFn({ method: "POST" })
 
 export const listPrescription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    status: z.string().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
     let q = (context.supabase as Supa).from("klinik_prescription")
-      .select("*, apps_pasien(no_rm,nama), fin_dokter(name), klinik_prescription_item(*)")
-      .order("created_at", { ascending: false }).limit(data.limit ?? 100);
+      .select("*, apps_pasien(no_rm,nama,alergi_obat), fin_dokter(name), klinik_prescription_item(*)")
+      .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw error;
