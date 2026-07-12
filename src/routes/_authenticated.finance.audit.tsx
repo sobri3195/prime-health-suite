@@ -104,9 +104,18 @@ function exportAuditCsv(rows: any[]) {
 function AuditPage() {
   const { isAdmin } = useFinanceAccess();
   const { from, to, setRange } = useFinanceDate();
-  const [q, setQ] = useState("");
-  const [entity, setEntity] = useState("all");
-  const [action, setAction] = useState("all");
+  const initialParams = typeof window !== "undefined" ? new URL(window.location.href).searchParams : null;
+  const [q, setQ] = useState(() => initialParams?.get("q") ?? "");
+  const [entity, setEntity] = useState(() => initialParams?.get("entity") ?? "all");
+  const [action, setAction] = useState(() => initialParams?.get("action") ?? "all");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    if (q) u.searchParams.set("q", q); else u.searchParams.delete("q");
+    if (entity !== "all") u.searchParams.set("entity", entity); else u.searchParams.delete("entity");
+    if (action !== "all") u.searchParams.set("action", action); else u.searchParams.delete("action");
+    window.history.replaceState({}, "", u);
+  }, [q, entity, action]);
   const [detail, _setDetail] = useState<any | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
