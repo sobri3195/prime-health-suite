@@ -248,10 +248,15 @@ function AuditPage() {
           return next;
         });
       }
+      else if (!typing && e.key === "s" && detail) {
+        e.preventDefault();
+        toggleStar(detail.id);
+        toast.success(starred[detail.id] ? "Tanda dihapus (s)" : "Entri ditandai (s)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [rows, detail, q, entity, action, onlyStar]);
+  }, [rows, detail, q, entity, action, onlyStar, starred]);
 
   if (!isAdmin) {
     return <div><PageHeader title="Audit Log Finance" desc="Akses ditolak — hanya admin." /></div>;
@@ -767,6 +772,7 @@ function AuditPage() {
               ["r", "Reset semua filter aktif"],
               ["e", "Ekspor hasil ke CSV"],
               ["d", "Toggle kerapatan (kompak/nyaman)"],
+              ["s", "Tandai/lepas tanda entri terbuka"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
