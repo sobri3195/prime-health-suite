@@ -773,6 +773,15 @@ function AuditPage() {
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
         toast.success("JSON baris dibuka di tab baru (o)");
       }
+      else if (!typing && e.key === "k") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.created_at) { toast.info("Tidak ada timestamp"); return; }
+        navigator.clipboard.writeText(String(target.created_at)).then(
+          () => toast.success("Timestamp disalin (k)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1358,6 +1367,7 @@ function AuditPage() {
 
 
 
+              ["k", "Salin timestamp baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
