@@ -304,6 +304,13 @@ function AuditPage() {
           toast.success("URL filter disalin (u)");
         } catch { toast.error("Gagal menyalin URL"); }
       }
+      else if (!typing && e.key === "y" && (rows as any[]).length) {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
+          toast.success(`JSON ${(rows as any[]).length} entri disalin (y)`);
+        } catch { toast.error("Gagal menyalin JSON"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
