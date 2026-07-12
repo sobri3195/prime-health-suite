@@ -778,19 +778,18 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: inv, error: ie } = await sb.from("fin_invoice").select("id,total,dibayar,status").eq("id", data.invoice_id).maybeSingle();
-    if (ie || !inv) throw ie ?? new Error("Invoice tidak ditemukan");
-    const { computePaymentStatus } = await import("./klinik-invariants");
-    const { newPaid, status } = computePaymentStatus(Number(inv.total ?? 0), Number(inv.dibayar ?? 0), Number(data.amount));
-    const { error: pe } = await sb.from("fin_pembayaran").insert({
-      invoice_id: data.invoice_id,
-      tanggal: new Date().toISOString().slice(0, 10),
-      metode: data.method, bank: data.bank ?? null, no_kartu_last4: data.no_kartu_last4 ?? null,
-      jumlah: data.amount, mdr: 0, netto: data.amount, status: "posted",
+    // Anti-race: RPC mengunci invoice + revalidasi sisa dalam 1 tx (mencegah overpayment paralel).
+    const { data: rpcRows, error } = await sb.rpc("klinik_add_invoice_payment_locked", {
+      _invoice_id: data.invoice_id,
+      _amount: data.amount,
+      _method: data.method,
+      _bank: data.bank ?? null,
+      _no_kartu_last4: data.no_kartu_last4 ?? null,
     });
-    if (pe) throw pe;
-    const { error: ue } = await sb.from("fin_invoice").update({ dibayar: newPaid, status }).eq("id", data.invoice_id);
-    if (ue) throw ue;
+    if (error) throw new Error(error.message ?? "Gagal simpan pembayaran");
+    const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
+    const newPaid = Number(row?.dibayar_baru ?? 0);
+    const status = String(row?.status ?? "unpaid");
     await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "add_payment", target: data.invoice_id, meta: { amount: data.amount, method: data.method, status } });
     return { ok: true, dibayar: newPaid, status };
   });
