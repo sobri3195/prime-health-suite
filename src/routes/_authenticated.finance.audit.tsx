@@ -527,6 +527,12 @@ function AuditPage() {
         setDetail(next);
         toast.success(e.key === ">" ? "Bertanda berikutnya (>)" : "Bertanda sebelumnya (<)");
       }
+      else if (!typing && e.key === "0") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (detail) setDetail(null);
+        toast.success("Kembali ke atas (0)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
