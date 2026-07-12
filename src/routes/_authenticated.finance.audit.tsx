@@ -179,7 +179,17 @@ function AuditPage() {
   }
 
   return (
-    <div>
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full shadow-md"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        title="Kembali ke atas"
+        aria-label="Kembali ke atas"
+      >
+        ↑
+      </Button>
       <PageHeader title="Audit Log Finance" desc="Jejak setiap aksi finance: siapa, kapan, perubahan field, alasan void." />
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
