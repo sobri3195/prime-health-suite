@@ -641,8 +641,8 @@ export const getDashboardStats = createServerFn({ method: "POST" })
       sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lte("visit_date", today + "T23:59:59"),
       sb.from("apps_booking").select("*", { count: "exact", head: true }).eq("tanggal", today),
       sb.from("klinik_queue").select("*", { count: "exact", head: true }).eq("queue_date", today).in("status", ["waiting","called","in_service"]),
-      sb.from("fin_invoice").select("total.sum()").eq("tanggal", today),
-      sb.from("fin_invoice").select("total.sum()").gte("tanggal", monthStart),
+      sb.from("fin_invoice").select("total.sum()").eq("tanggal", today).neq("status","void"),
+      sb.from("fin_invoice").select("total.sum()").gte("tanggal", monthStart).neq("status","void"),
       sb.from("fin_invoice").select("*", { count: "exact", head: true }).in("status", ["unpaid","partial"]),
       sb.from("klinik_prescription").select("*", { count: "exact", head: true }).eq("status", "sent_to_pharmacy"),
       sb.from("klinik_obat").select("stock,min_stock,expired_date"),
@@ -660,9 +660,9 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     });
     const trend = Array.from(trendMap.entries()).sort().map(([date, visits]) => ({ date, visits }));
 
-    // revenue monthly 12
+    // revenue monthly 12 (exclude void)
     const yearStart = new Date(); yearStart.setMonth(yearStart.getMonth() - 11); yearStart.setDate(1);
-    const { data: invRows } = await sb.from("fin_invoice").select("tanggal,total").gte("tanggal", yearStart.toISOString().slice(0,10));
+    const { data: invRows } = await sb.from("fin_invoice").select("tanggal,total,status").gte("tanggal", yearStart.toISOString().slice(0,10)).neq("status","void");
     const revMap = new Map<string, number>();
     (invRows ?? []).forEach((r: { tanggal: string; total: number }) => {
       const m = String(r.tanggal).slice(0, 7);
