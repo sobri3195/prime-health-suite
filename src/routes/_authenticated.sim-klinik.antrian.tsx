@@ -87,6 +87,7 @@ function AntrianPage() {
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
+      if (updM.isPending) return;
       if (k === "n" && waiting[0]) { e.preventDefault(); updM.mutate({ id: waiting[0].id, status: "called" }); }
       else if (k === "c" && inService) { e.preventDefault(); updM.mutate({ id: inService.id, status: "done" }); }
       else if (k === "p" && called) { e.preventDefault(); updM.mutate({ id: called.id, status: "called" }); }
