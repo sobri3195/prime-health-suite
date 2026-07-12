@@ -475,7 +475,7 @@ function AuditPage() {
                         className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
                         onClick={(e) => { e.stopPropagation(); setQ(r.actor_email ?? "system"); toast.success(`Filter aktor: ${r.actor_email ?? "system"}`); }}
                         title="Filter berdasarkan aktor ini"
-                      >{r.actor_email ?? "system"}</button>
+                      >{highlight(r.actor_email ?? "system", q)}</button>
                     </TableCell>
                   )}
                   {cols.aksi && (
