@@ -1063,6 +1063,7 @@ function AuditPage() {
               ["i", "Info statistik cepat (aktor/entity/action)"],
               ["*", "Lompat ke entri bertanda pertama"],
               ["< / >", "Navigasi antar entri bertanda (prev/next)"],
+              ["0", "Scroll ke atas & tutup detail"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
