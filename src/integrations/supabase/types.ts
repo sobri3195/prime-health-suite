@@ -3637,6 +3637,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      klinik_add_invoice_payment_locked: {
+        Args: {
+          _amount: number
+          _bank: string
+          _invoice_id: string
+          _method: string
+          _no_kartu_last4: string
+        }
+        Returns: {
+          dibayar_baru: number
+          status: string
+        }[]
+      }
       klinik_dispense_prescription_locked: {
         Args: { _id: string }
         Returns: undefined
