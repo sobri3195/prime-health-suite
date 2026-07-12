@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2, Columns3 } from "lucide-react";
+import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2, Columns3, Rows3 } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
@@ -104,9 +104,14 @@ function AuditPage() {
     return Number(localStorage.getItem("fin-audit-refresh") || 0);
   });
   const [cols, setCols] = useState<Record<ColKey, boolean>>(() => loadCols());
+  const [density, setDensity] = useState<"compact" | "comfy">(() => {
+    if (typeof window === "undefined") return "comfy";
+    return (localStorage.getItem("fin-audit-density") as "compact" | "comfy") || "comfy";
+  });
   useEffect(() => { setPresets(loadPresets()); }, []);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(COL_KEY, JSON.stringify(cols)); }, [cols]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-density", density); }, [density]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
@@ -214,6 +219,9 @@ function AuditPage() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button variant="outline" size="sm" onClick={() => setDensity((d) => d === "compact" ? "comfy" : "compact")} title="Toggle kerapatan baris">
+          <Rows3 className="mr-2 h-4 w-4" /> {density === "compact" ? "Kompak" : "Nyaman"}
+        </Button>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
@@ -254,7 +262,7 @@ function AuditPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className={`overflow-hidden rounded-xl border border-border bg-card ${density === "compact" ? "[&_td]:py-1.5 [&_th]:py-2 text-[12px]" : ""}`}>
         <Table>
           <TableHeader><TableRow>
             {cols.waktu && <TableHead>Waktu</TableHead>}
