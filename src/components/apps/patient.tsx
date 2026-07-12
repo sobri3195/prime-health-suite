@@ -21,7 +21,7 @@ import { useAuth } from "@/lib/auth";
 import { useAppsRealtime, NotifBellBadge } from "@/components/apps/notif-panel";
 import { generateResepPDF } from "@/lib/resep-pdf";
 import { GoldButton, OutlineButton, EmptyState, SkeletonList } from "@/components/apps/ui";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useFmtIDR, useDateFmt } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { waLink } from "@/lib/brand";
 import { useConfirm } from "@/components/apps/confirm-dialog";
@@ -952,6 +952,8 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 export function PatientLaporan() {
   const { t } = useI18n();
+  const fmt = useFmtIDR();
+  const df = useDateFmt();
   const callInvoices = useServerFn(listMyInvoices);
   const callProfile = useServerFn(getMyProfile);
   const invoicesQ = useQuery({ queryKey: ["apps", "invoices"], queryFn: () => callInvoices({ data: { page: 1, pageSize: 20 } }) });
