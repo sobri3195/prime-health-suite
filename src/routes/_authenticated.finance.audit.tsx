@@ -593,6 +593,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "^") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const ts = target?.created_at;
+        if (!ts) { toast.info("Tidak ada timestamp untuk disalin"); return; }
+        navigator.clipboard.writeText(String(ts)).then(
+          () => toast.success(`Timestamp disalin (^)`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1131,6 +1141,7 @@ function AuditPage() {
               ["#", "Salin entity_no / entity_id"],
               ["$", "Salin alasan (reason)"],
               ["%", "Salin action"],
+              ["^", "Salin timestamp (created_at)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
