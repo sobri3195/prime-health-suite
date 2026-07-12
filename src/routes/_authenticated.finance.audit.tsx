@@ -835,6 +835,19 @@ function AuditPage() {
         if (prev) { setDetail(prev); toast.success("Baris sebelumnya (h)"); }
         else toast.info("Sudah di baris pertama");
       }
+      else if (!typing && e.key === "g") {
+        e.preventDefault();
+        const first = (rows as any[])[0];
+        if (first) { setDetail(first); toast.success("Baris pertama (g)"); }
+        else toast.info("Tidak ada baris");
+      }
+      else if (!typing && e.key === "G") {
+        e.preventDefault();
+        const arr = rows as any[];
+        const last = arr[arr.length - 1];
+        if (last) { setDetail(last); toast.success("Baris terakhir (G)"); }
+        else toast.info("Tidak ada baris");
+      }
     };
 
 
@@ -1426,6 +1439,7 @@ function AuditPage() {
               ["i", "Salin row id baris target"],
               ["p", "Cetak baris target di tab baru"],
               ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
+              ["g / G", "Lompat detail ke baris pertama / terakhir"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
