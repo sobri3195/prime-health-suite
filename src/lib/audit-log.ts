@@ -7,7 +7,8 @@ export type AuditEntry = {
   meta?: Record<string, unknown>;
 };
 
-// In-memory audit log (mock). Replace with persistent store in production.
+// In-memory audit log ring buffer for the current tab; the authoritative log
+// is mirrored to the backend via appendAudit() below.
 let log: AuditEntry[] = [];
 const listeners = new Set<() => void>();
 
