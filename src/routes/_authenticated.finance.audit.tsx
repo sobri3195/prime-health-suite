@@ -351,6 +351,15 @@ function AuditPage() {
         }}>
           <Download className="mr-2 h-4 w-4" /> Export JSON
         </Button>
+        <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={async () => {
+          const header = "| Waktu | Aktor | Aksi | Entity | No/ID | Alasan |\n|---|---|---|---|---|---|";
+          const esc = (v: unknown) => String(v ?? "—").replace(/\|/g, "\\|").replace(/\n/g, " ");
+          const body = (rows as any[]).map((r) => `| ${new Date(r.created_at).toLocaleString("id-ID")} | ${esc(r.actor_email ?? "system")} | ${esc(r.action)} | ${esc(r.entity)} | ${esc(r.entity_no ?? r.entity_id)} | ${esc(r.reason)} |`).join("\n");
+          try { await navigator.clipboard.writeText(`${header}\n${body}`); toast.success(`${rows.length} entri disalin sebagai Markdown`); }
+          catch { toast.error("Gagal menyalin"); }
+        }} title="Salin sebagai tabel Markdown (siap tempel ke tiket/dokumen)">
+          📋 Salin Markdown
+        </Button>
         <Button variant="outline" size="sm" onClick={() => {
           const u = new URL(window.location.href);
           u.searchParams.delete("q"); u.searchParams.delete("entity"); u.searchParams.delete("action");
