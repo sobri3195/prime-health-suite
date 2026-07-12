@@ -153,7 +153,7 @@ function PemeriksaanPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="text-sm font-semibold">Template Cepat:</span>
-                  {Object.keys(TEMPLATES).map((k) => <Button key={k} size="sm" variant="outline" onClick={() => applyTpl(k)}>{k}</Button>)}
+                  {templates.length === 0 ? <span className="text-xs text-muted-foreground">Belum ada template</span> : templates.map((t) => <Button key={t.id} size="sm" variant="outline" onClick={() => applyTpl(t.id)}>{t.label}</Button>)}
                 </div>
                 <div><Label>Anamnesis / Keluhan</Label><AutoTextarea value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
                 <div className="grid grid-cols-4 gap-2">
