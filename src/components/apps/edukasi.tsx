@@ -163,7 +163,7 @@ export function PatientArtikelDetail({ slug }: { slug: string }) {
       qc.invalidateQueries({ queryKey: ["apps", "artikel", slug] });
       qc.invalidateQueries({ queryKey: ["apps", "artikel"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   if (q.isLoading) return <SkeletonList rows={5} />;
