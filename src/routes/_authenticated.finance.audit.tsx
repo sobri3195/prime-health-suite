@@ -1263,6 +1263,7 @@ function AuditPage() {
               [":", "Salin nama entity (invoice/payment/…)"] ,
               [",", "Salin ringkasan baris (waktu • aktor • entity action no)"],
               ["-", "Ringkas cepat: total baris • unik aktor/entity/action"],
+              ["+", "Salin entity_no / entity_id target"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
