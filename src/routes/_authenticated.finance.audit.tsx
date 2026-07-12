@@ -516,6 +516,17 @@ function AuditPage() {
         if (first) { setDetail(first); toast.success("Entri bertanda pertama (*)"); }
         else toast.info("Tidak ada entri bertanda");
       }
+      else if (!typing && (e.key === ">" || e.key === "<") && (rows as any[]).length) {
+        e.preventDefault();
+        const list = (rows as any[]).filter((r) => starred[r.id]);
+        if (!list.length) { toast.info("Tidak ada entri bertanda"); return; }
+        const idx = detail ? list.findIndex((r) => r.id === detail.id) : -1;
+        const next = e.key === ">"
+          ? list[(idx + 1) % list.length]
+          : list[(idx - 1 + list.length) % list.length];
+        setDetail(next);
+        toast.success(e.key === ">" ? "Bertanda berikutnya (>)" : "Bertanda sebelumnya (<)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1045,6 +1056,7 @@ function AuditPage() {
               ["S", "Bagikan URL (Web Share) / fallback copy"],
               ["i", "Info statistik cepat (aktor/entity/action)"],
               ["*", "Lompat ke entri bertanda pertama"],
+              ["< / >", "Navigasi antar entri bertanda (prev/next)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
