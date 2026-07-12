@@ -479,6 +479,17 @@ function AuditPage() {
                   } catch { toast.error("Gagal menyalin"); }
                 }}
               >Salin JSON</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  const u = new URL(window.location.href);
+                  u.searchParams.set("id", detail.id);
+                  navigator.clipboard.writeText(u.toString());
+                  toast.success("Tautan entri disalin");
+                }}
+              >🔗 Salin tautan</Button>
             </DialogTitle>
           </DialogHeader>
           {detail && (
