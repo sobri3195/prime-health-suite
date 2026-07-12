@@ -848,6 +848,7 @@ function AuditPage() {
               ["t", "Toggle format waktu (relatif/absolut)"],
               ["u", "Salin URL dengan filter aktif"],
               ["y", "Salin JSON semua entri hasil"],
+              ["a", "Toggle auto-refresh (10s)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
