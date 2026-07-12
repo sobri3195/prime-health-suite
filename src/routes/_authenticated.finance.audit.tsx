@@ -927,6 +927,7 @@ function AuditPage() {
               ["1-9", "Muat preset ke-1..9 langsung"],
               ["T", "Set rentang tanggal ke hari ini"],
               ["W", "Set rentang tanggal ke minggu ini"],
+              ["M", "Set rentang tanggal ke bulan ini"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
