@@ -735,6 +735,23 @@ function AuditPage() {
         setDetail(list[nextIdx]);
         toast.success(e.key === "}" ? "Lompat +50 (})" : "Lompat -50 ({)");
       }
+      else if (!typing && e.key === "w") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris untuk disalin"); return; }
+        const esc = (v: unknown) => {
+          const s = v == null ? "" : String(v);
+          return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        };
+        const line = [
+          target.created_at, target.actor_email, target.entity,
+          target.action, target.entity_no ?? target.entity_id, target.reason,
+        ].map(esc).join(",");
+        navigator.clipboard.writeText(line).then(
+          () => toast.success("Baris disalin sebagai CSV (w)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
