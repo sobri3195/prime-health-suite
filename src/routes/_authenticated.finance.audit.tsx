@@ -279,6 +279,19 @@ function AuditPage() {
           toast.success("JSON entri disalin (c)");
         } catch { toast.error("Gagal menyalin"); }
       }
+      else if (!typing && e.key === "C" && (rows as any[]).length) {
+        e.preventDefault();
+        try {
+          const keys = Object.keys((rows as any[])[0] ?? {});
+          const esc = (v: unknown) => {
+            const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          };
+          const csv = [keys.join(","), ...(rows as any[]).map((r) => keys.map((k) => esc(r[k])).join(","))].join("\n");
+          void navigator.clipboard.writeText(csv);
+          toast.success(`CSV ${(rows as any[]).length} baris disalin (C)`);
+        } catch { toast.error("Gagal menyalin CSV"); }
+      }
       else if (!typing && (e.key === "." || e.key === "R")) {
         e.preventDefault();
         qc.invalidateQueries({ queryKey: ["fin-audit"] });
@@ -996,6 +1009,7 @@ function AuditPage() {
               ["g / G", "Ke entri pertama / terakhir"],
               ["f", "Toggle filter ★ Bertanda"],
               ["c", "Salin JSON entri terbuka"],
+              ["C", "Salin CSV semua entri hasil"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
