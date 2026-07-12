@@ -533,6 +533,11 @@ function AuditPage() {
         if (detail) setDetail(null);
         toast.success("Kembali ke atas (0)");
       }
+      else if (!typing && e.key === "p") {
+        e.preventDefault();
+        window.print();
+        toast.success("Cetak halaman (p)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
