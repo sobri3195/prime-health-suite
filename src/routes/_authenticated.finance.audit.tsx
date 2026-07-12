@@ -26,6 +26,19 @@ function loadPresets(): AuditPreset[] {
 }
 function savePresets(p: AuditPreset[]) { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
 
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}d lalu`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m lalu`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}j lalu`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}h lalu`;
+  return new Date(iso).toLocaleDateString("id-ID");
+}
+
 const COLS = [
   { key: "waktu", label: "Waktu" },
   { key: "aktor", label: "Aktor" },
