@@ -711,6 +711,14 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        const list = rows as any[];
+        if (!list.length) { toast.info("Tidak ada baris"); return; }
+        const target = e.key === "]" ? list[list.length - 1] : list[0];
+        setDetail(target);
+        toast.success(e.key === "]" ? "Entri terakhir ([ ])" : "Entri pertama ([)");
+      }
     };
 
 
