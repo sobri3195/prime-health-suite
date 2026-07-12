@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,7 +61,7 @@ export function BookingFlow() {
       toast.success(t("booking.success"));
       navigate({ to: "/apps", replace: true });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const next7 = Array.from({ length: 7 }, (_, i) => {

@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { useState } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +37,7 @@ export function PatientBelanjaReal() {
   const addM = useMutation({
     mutationFn: (id: string) => callAdd({ data: { produk_id: id, qty: 1 } }),
     onSuccess: () => { toast.success(t("shop.added")); qc.invalidateQueries({ queryKey: ["apps", "cart"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const produk = produkQ.data?.produk ?? [];
@@ -118,12 +119,12 @@ export function PatientCart() {
   const updM = useMutation({
     mutationFn: (v: { id: string; qty: number }) => callUpd({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "cart"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
   const rmM = useMutation({
     mutationFn: (id: string) => callRm({ data: { id } }),
     onSuccess: () => { toast.success(t("cart.removed")); qc.invalidateQueries({ queryKey: ["apps", "cart"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const items = cartQ.data?.items ?? [];
@@ -217,7 +218,7 @@ export function PatientCheckout() {
       qc.invalidateQueries({ queryKey: ["apps", "poin"] });
       navigate({ to: "/apps/$section", params: { section: "orders" } });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const items = cartQ.data?.items ?? [];

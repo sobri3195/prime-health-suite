@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,7 +31,7 @@ export function PatientWins() {
       qc.invalidateQueries({ queryKey: ["apps", "reward"] });
       qc.invalidateQueries({ queryKey: ["apps", "my-redeem"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const total = poinQ.data?.total ?? 0;

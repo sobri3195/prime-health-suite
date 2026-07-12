@@ -63,16 +63,26 @@ export function HelpdeskPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
-    const ch = supabase.channel("apps-tickets")
-      .on("postgres_changes", { event: "*", schema: "public", table: "apps_ticket" }, () => {
-        qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "apps_ticket_reply" }, () => {
-        qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
-        qc.invalidateQueries({ queryKey: ["apps", "ticket-replies"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let cancelled = false;
+    (async () => {
+      const { data: sess } = await supabase.auth.getUser();
+      const uid = sess.user?.id;
+      if (!uid || cancelled) return;
+      const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: uid });
+      // Non-staff only subscribe to their own tickets; staff see all.
+      const ticketFilter = isStaff ? undefined : { filter: `user_id=eq.${uid}` };
+      const ch = supabase.channel("apps-tickets")
+        .on("postgres_changes", { event: "*", schema: "public", table: "apps_ticket", ...(ticketFilter ?? {}) }, () => {
+          qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "apps_ticket_reply" }, () => {
+          qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
+          qc.invalidateQueries({ queryKey: ["apps", "ticket-replies"] });
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(ch); };
+    })();
+    return () => { cancelled = true; };
   }, [qc]);
 
   const createM = useMutation({
