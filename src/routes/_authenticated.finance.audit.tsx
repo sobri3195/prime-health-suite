@@ -1377,6 +1377,7 @@ function AuditPage() {
 
 
               ["k", "Salin timestamp baris target"],
+              ["u", "Salin actor_id baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
