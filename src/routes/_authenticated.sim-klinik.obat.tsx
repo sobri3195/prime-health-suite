@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Pencil, Download, ArrowDownUp, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
   head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
