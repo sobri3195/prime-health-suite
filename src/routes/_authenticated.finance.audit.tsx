@@ -341,7 +341,8 @@ function AuditPage() {
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>Total {rows.length} entri (max 500).</span>
         {rows.length > 0 && (() => {
-          const counts = rows.reduce<Record<string, number>>((acc, r: any) => { acc[r.action] = (acc[r.action] ?? 0) + 1; return acc; }, {});
+          const counts: Record<string, number> = {};
+          for (const r of rows as any[]) counts[r.action] = (counts[r.action] ?? 0) + 1;
           return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([a, n]) => (
             <button
               key={a}
