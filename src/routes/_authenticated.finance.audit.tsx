@@ -1075,6 +1075,7 @@ function AuditPage() {
               ["< / >", "Navigasi antar entri bertanda (prev/next)"],
               ["0", "Scroll ke atas & tutup detail"],
               ["p", "Cetak halaman audit saat ini"],
+              ["\\", "Bersihkan hanya query pencarian"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
