@@ -219,7 +219,24 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
     const phone = String(profile.phone ?? "");
     const email = String(profile.email ?? "");
     const taxId = String(profile.taxId ?? "");
-    w.document.write(`<html><head><title>${escapeHtml(inv.no_invoice)}</title><style>body{font-family:sans-serif;padding:20px;font-size:12px}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:2px 0}.r{text-align:right}.b{border-top:1px solid #333;margin-top:8px;padding-top:8px}.muted{color:#666;font-size:11px}</style></head><body>
+    // Preset kertas: thermal 58mm/80mm (font kecil, padding sempit) atau A5 (standar).
+    const preset = paper === "58mm"
+      ? { pageWidth: "58mm", body: "10px", head: "12px", muted: "9px", pad: "4mm", tableFont: "10px" }
+      : paper === "80mm"
+      ? { pageWidth: "80mm", body: "11px", head: "13px", muted: "10px", pad: "5mm", tableFont: "11px" }
+      : { pageWidth: "148mm", body: "12px", head: "16px", muted: "11px", pad: "12mm", tableFont: "12px" };
+    w.document.write(`<html><head><title>${escapeHtml(inv.no_invoice)}</title><style>
+      @page{size:${preset.pageWidth} auto;margin:0}
+      html,body{margin:0}
+      body{font-family:'Courier New',monospace;padding:${preset.pad};font-size:${preset.body};color:#000;width:${preset.pageWidth};box-sizing:border-box}
+      h2{margin:0;font-size:${preset.head}}
+      table{width:100%;border-collapse:collapse;margin-top:6px;font-size:${preset.tableFont}}
+      td{padding:2px 0;vertical-align:top}
+      .r{text-align:right}
+      .b{border-top:1px dashed #000;margin-top:6px;padding-top:6px}
+      .muted{color:#444;font-size:${preset.muted}}
+      @media print{ body{padding:${preset.pad}} }
+    </style></head><body>
       <h2>${escapeHtml(clinicName)}</h2>
       ${address ? `<div class="muted">${escapeHtml(address)}</div>` : ""}
       ${(phone || email) ? `<div class="muted">${escapeHtml([phone, email].filter(Boolean).join(" • "))}</div>` : ""}
