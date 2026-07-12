@@ -644,6 +644,15 @@ function AuditPage() {
         setAction("all");
         toast.success("Filter entity & action direset (=)");
       }
+      else if (!typing && e.key === ";") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris untuk disalin"); return; }
+        navigator.clipboard.writeText(JSON.stringify(target, null, 2)).then(
+          () => toast.success("Baris disalin sebagai JSON (;)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1188,6 +1197,7 @@ function AuditPage() {
               [")", "Filter action = action target"],
               ["~", "Toggle detail (buka baris pertama / tutup)"],
               ["=", "Reset filter entity & action"],
+              [";", "Salin baris (detail / pertama) sebagai JSON"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
