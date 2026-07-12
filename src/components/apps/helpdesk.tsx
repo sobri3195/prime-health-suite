@@ -97,13 +97,13 @@ export function HelpdeskPage() {
       setShowNew(false);
       qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Gagal"),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const updateM = useMutation({
     mutationFn: (d: { id: string; status: string }) => callUpdate({ data: d }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "tickets"] }),
-    onError: (e: any) => toast.error(e?.message ?? "Gagal"),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const items = useMemo(() => {
@@ -213,7 +213,7 @@ function TicketDrawer({ ticket, onClose, onStatus }: { ticket: Ticket; onClose: 
       setMsg("");
       qc.invalidateQueries({ queryKey: ["apps", "ticket-replies", ticket.id] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Gagal"),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   return (

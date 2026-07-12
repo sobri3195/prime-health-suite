@@ -79,7 +79,7 @@ export function NotificationsPage() {
       if (!data || data.length === 0) throw new Error("Tidak berwenang menandai notifikasi ini");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "notif-operator"] }),
-    onError: (e: any) => toast.error(e?.message ?? "Gagal"),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const filtered = useMemo(() => {
