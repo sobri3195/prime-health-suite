@@ -791,6 +791,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "y") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris"); return; }
+        navigator.clipboard.writeText(JSON.stringify(target, null, 2)).then(
+          () => toast.success("JSON baris disalin (y)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
