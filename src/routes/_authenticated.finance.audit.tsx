@@ -867,6 +867,15 @@ function AuditPage() {
         if (prev) { setDetail(prev); toast.success("Bertanda sebelumnya (<)"); }
         else toast.info("Tidak ada entri bertanda sebelumnya");
       }
+      else if (!typing && e.key === "\\") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.action) { toast.info("Tidak ada action"); return; }
+        navigator.clipboard.writeText(String(target.action)).then(
+          () => toast.success("Action disalin (\\)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
