@@ -13,7 +13,8 @@ import { useI18n } from "@/lib/i18n";
 type Doctor = { id: string; code: string | null; name: string; spesialisasi: string | null };
 
 function dateLabel(d: Date, lang: string) {
-  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short" });
+  // Format in UTC because next7 dates carry WIB-shifted UTC values.
+  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 }
 function dateISO(d: Date) {
   return d.toISOString().slice(0, 10);
