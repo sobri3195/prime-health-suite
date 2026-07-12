@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory } from "@/lib/klinik.functions";
+import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory, previewInteractions } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
@@ -176,7 +176,7 @@ function PemeriksaanPage() {
                     {(detailQ.data.prescriptions as Array<{ id: string; status: string; klinik_prescription_item?: unknown[] }>).map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
                   </div>
                 )}
-                <RmHistoryPanel visitId={selVisit!} current={form} />
+                <RmHistoryPanel visitId={selVisit!} />
               </div>
             )}
         </Card>
@@ -197,7 +197,7 @@ const DIFF_FIELDS: Array<{ k: string; label: string }> = [
   { k: "treatment_plan", label: "Rencana Terapi" }, { k: "tindakan", label: "Tindakan" }, { k: "notes", label: "Catatan" },
 ];
 
-function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record<string, unknown> | null }) {
+function RmHistoryPanel({ visitId }: { visitId: string }) {
   const call = useServerFn(listMedicalRecordHistory);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const q = useQuery({
@@ -214,8 +214,9 @@ function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record
       <div className="border-b bg-muted/30 px-3 py-2 text-xs font-semibold">Riwayat Versi Rekam Medis ({rows.length})</div>
       <ul className="divide-y">
         {rows.map((h, idx) => {
+          // Bandingkan snapshot tersimpan dgn snapshot tersimpan sebelumnya (bukan draft form yg belum disave).
           const prev = rows[idx + 1]?.snapshot ?? {};
-          const next = idx === 0 && current ? current : h.snapshot;
+          const next = h.snapshot;
           const diffs = DIFF_FIELDS.filter((f) => String(prev?.[f.k] ?? "") !== String(next?.[f.k] ?? ""));
           const open = openIdx === idx;
           return (
@@ -250,6 +251,7 @@ function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record
 function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; onCreated: () => void }) {
   const callObat = useServerFn(listObat);
   const callCreate = useServerFn(createPrescription);
+  const callPreview = useServerFn(previewInteractions);
   const obatQ = useQuery({ queryKey: ["klinik","obat-all"], queryFn: () => callObat({ data: {} }), enabled: open });
   type Item = { obat_id: string; obat_name: string; dosage: string; frequency: string; duration: string; quantity: number; unit_price: number };
   const [items, setItems] = useState<Item[]>([]);
@@ -262,6 +264,13 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const interQ = useQuery({
+    queryKey: ["klinik","interactions", items.map((i) => i.obat_name).join("|")],
+    queryFn: () => callPreview({ data: { names: items.map((i) => i.obat_name) } }),
+    enabled: open && items.length >= 2,
+  });
+  const warnings = ((interQ.data ?? []) as Array<{ severity: string; drugs: string[]; reason: string }>);
+
   type Obat = { id: string; name: string; code: string; price: number; stock: number; unit: string };
   const obat = (obatQ.data ?? []) as Obat[];
 
@@ -269,6 +278,17 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader><DialogTitle>Buat Resep</DialogTitle></DialogHeader>
+        {warnings.length > 0 && (
+          <div role="alert" aria-live="polite" className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            <div className="mb-1 font-semibold">⚠ Peringatan interaksi obat</div>
+            <ul className="list-disc space-y-0.5 pl-4">
+              {warnings.map((w, i) => (
+                <li key={i}><b>[{w.severity.toUpperCase()}]</b> {w.drugs.join(" + ")} — {w.reason}</li>
+              ))}
+            </ul>
+            {warnings.some((w) => w.severity === "danger") && <div className="mt-1 font-medium">Kombinasi ditandai bahaya — server akan menolak submit.</div>}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Daftar Obat</Label>

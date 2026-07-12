@@ -339,21 +339,40 @@ export const listQueueToday = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+const QUEUE_TRANSITIONS: Record<string, string[]> = {
+  waiting: ["called", "cancelled"],
+  called: ["in_service", "cancelled", "waiting"],
+  in_service: ["done", "cancelled"],
+  done: [],
+  cancelled: [],
+};
+const VISIT_TERMINAL = new Set(["done", "billing", "cancelled"]);
+
 export const updateQueueStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["waiting","called","in_service","done","cancelled"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // State-machine guard: cek status queue saat ini sebelum transisi.
+    const { data: cur, error: ce } = await sb.from("klinik_queue").select("status,visit_id").eq("id", data.id).maybeSingle();
+    if (ce || !cur) throw ce ?? new Error("Antrian tidak ditemukan");
+    const allowed = QUEUE_TRANSITIONS[String(cur.status)] ?? [];
+    if (cur.status !== data.status && !allowed.includes(data.status)) {
+      throw new Error(`Transisi antrian ${cur.status} → ${data.status} tidak diizinkan`);
+    }
     const updates: Record<string, unknown> = { status: data.status };
     if (data.status === "called") updates.called_at = new Date().toISOString();
     if (data.status === "in_service") updates.served_at = new Date().toISOString();
     if (data.status === "done") updates.done_at = new Date().toISOString();
-    const { data: q, error } = await sb.from("klinik_queue").update(updates).eq("id", data.id).select("visit_id").maybeSingle();
+    const { error } = await sb.from("klinik_queue").update(updates).eq("id", data.id);
     if (error) throw error;
-    // mirror visit status
-    if (q?.visit_id) {
-      const visitStatus = data.status === "called" ? "in_exam" : data.status === "in_service" ? "in_doctor" : data.status === "done" ? "billing" : data.status === "cancelled" ? "cancelled" : "registered";
-      await sb.from("klinik_visit").update({ status: visitStatus }).eq("id", q.visit_id);
+    // mirror visit status — jangan overwrite visit yang sudah final (done/billing/cancelled)
+    if (cur.visit_id) {
+      const { data: v } = await sb.from("klinik_visit").select("status").eq("id", cur.visit_id).maybeSingle();
+      if (v && !VISIT_TERMINAL.has(String(v.status))) {
+        const visitStatus = data.status === "called" ? "in_exam" : data.status === "in_service" ? "in_doctor" : data.status === "done" ? "billing" : data.status === "cancelled" ? "cancelled" : "registered";
+        await sb.from("klinik_visit").update({ status: visitStatus }).eq("id", cur.visit_id);
+      }
     }
     await appendAuditRow(sb, { actor_id: context.userId, module: "Antrian", action: data.status, target: data.id });
     return { ok: true };
@@ -436,7 +455,10 @@ export const listVisits = createServerFn({ method: "POST" })
     let q = (context.supabase as Supa).from("klinik_visit")
       .select("*, apps_pasien(no_rm,nama,patient_type), fin_dokter(name)")
       .order("visit_date", { ascending: false }).limit(data.limit ?? 100);
-    if (data.date) q = q.gte("visit_date", data.date + "T00:00:00").lte("visit_date", data.date + "T23:59:59");
+    if (data.date) {
+      const next = new Date(data.date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
+      q = q.gte("visit_date", data.date + "T00:00:00").lt("visit_date", next.toISOString().slice(0,10) + "T00:00:00");
+    }
     if (data.pasien_id) q = q.eq("pasien_id", data.pasien_id);
     if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
@@ -490,14 +512,20 @@ export const createPrescription = createServerFn({ method: "POST" })
     if (danger) {
       throw new Error(`Interaksi obat berbahaya: ${danger.drugs.join(" + ")} — ${danger.reason}`);
     }
-    // Pre-validate stock BEFORE insert to prevent zombie prescriptions
-    // (dispense fallback exists, but we want to fail fast at creation time).
-    for (const it of data.items) {
-      if (!it.obat_id) continue;
-      const { data: ob } = await sb.from("klinik_obat").select("stock,name").eq("id", it.obat_id).maybeSingle();
-      if (!ob) continue;
-      if (Number(ob.stock) < Number(it.quantity)) {
-        throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+    // Advisory pre-check stok (best-effort UX). Otoritas final ada di dispense: RPC
+    // klinik_dispense_prescription_locked mengunci per-obat + FOR UPDATE, sehingga
+    // race tidak dapat mengakibatkan stok negatif meski pre-check lolos.
+    // Kita batch SELECT sekali agar tidak N+1.
+    const obatIds = data.items.map((it) => it.obat_id).filter((v): v is string => !!v);
+    if (obatIds.length) {
+      const { data: stocks } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
+      const byId = new Map<string, { id: string; stock: number; name: string }>((stocks ?? []).map((r: { id: string; stock: number; name: string }) => [r.id, r]));
+      for (const it of data.items) {
+        if (!it.obat_id) continue;
+        const ob = byId.get(it.obat_id);
+        if (ob && Number(ob.stock) < Number(it.quantity)) {
+          throw new Error(`Stok ${ob.name} tidak cukup (tersedia ${ob.stock}, dibutuhkan ${it.quantity})`);
+        }
       }
     }
     const { data: pres, error } = await sb.from("klinik_prescription").insert({
@@ -577,6 +605,8 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(no_rm,nama,patient_code), fin_dokter(id,name)").eq("id", data.visit_id).maybeSingle();
     if (error || !visit) throw error ?? new Error("Visit tidak ditemukan");
+    const patientCode = visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code;
+    if (!patientCode) throw new Error("Pasien belum memiliki No. RM. Lengkapi registrasi sebelum menerbitkan invoice.");
     // Idempotent: bila invoice non-void untuk visit ini sudah ada (partial UNIQUE), kembalikan itu.
     const { data: existing } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
     if (existing) return existing;
@@ -589,7 +619,7 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
       const { data: invoice, error: ie } = await sb.from("fin_invoice").insert({
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
         source_visit_id: data.visit_id,
-        patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
+        patient_code: patientCode,
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
         subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
@@ -638,7 +668,7 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     const [pasienAll, pasienNew, visitToday, bookingToday, queueActive, invToday, invMonth, invUnpaid, presPending, obat] = await Promise.all([
       sb.from("apps_pasien").select("*", { count: "exact", head: true }).not("no_rm","is",null),
       sb.from("apps_pasien").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
-      sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lte("visit_date", today + "T23:59:59"),
+      sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lt("visit_date", new Date(new Date(today+"T00:00:00Z").getTime()+86400000).toISOString().slice(0,10) + "T00:00:00"),
       sb.from("apps_booking").select("*", { count: "exact", head: true }).eq("tanggal", today),
       sb.from("klinik_queue").select("*", { count: "exact", head: true }).eq("queue_date", today).in("status", ["waiting","called","in_service"]),
       sb.from("fin_invoice").select("total.sum()").eq("tanggal", today).neq("status","void"),
@@ -652,7 +682,8 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     const nearExp = (obat.data ?? []).filter((o: { expired_date: string | null }) => o.expired_date && new Date(o.expired_date).getTime() < Date.now() + 60 * 86400000).length;
 
     // trend visits 30 days
-    const { data: visitRows } = await sb.from("klinik_visit").select("visit_date").gte("visit_date", from + "T00:00:00").lte("visit_date", to + "T23:59:59").limit(10000);
+    const toNextStr = new Date(new Date(to + "T00:00:00Z").getTime() + 86400000).toISOString().slice(0,10);
+    const { data: visitRows } = await sb.from("klinik_visit").select("visit_date").gte("visit_date", from + "T00:00:00").lt("visit_date", toNextStr + "T00:00:00").limit(10000);
     const trendMap = new Map<string, number>();
     (visitRows ?? []).forEach((r: { visit_date: string }) => {
       const d = String(r.visit_date).slice(0, 10);
