@@ -44,30 +44,12 @@ export function useAppsRealtime(userId: string | undefined) {
 }
 
 export function NotifBellBadge() {
-  const qc = useQueryClient();
   const callList = useServerFn(listMyNotifications);
   const q = useQuery({ queryKey: ["apps", "notifs"], queryFn: () => callList(), staleTime: 30_000 });
   const unread = q.data?.unread ?? 0;
-
-  // Self-contained realtime so the badge stays live even when parent
-  // does not mount useAppsRealtime.
-  useEffect(() => {
-    let cancelled = false;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const uid = data.user?.id;
-      if (!uid || cancelled) return;
-      channel = supabase
-        .channel(`apps-notif-badge-${uid}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "apps_notif", filter: `user_id=eq.${uid}` }, () => {
-          qc.invalidateQueries({ queryKey: ["apps", "notifs"] });
-        })
-        .subscribe();
-    })();
-    return () => { cancelled = true; if (channel) supabase.removeChannel(channel); };
-  }, [qc]);
-
+  // Realtime invalidation is owned by the single parent-mounted useAppsRealtime
+  // (patient.tsx). Do not open a second channel here — it duplicates the
+  // apps_notif subscription and doubles connections/invalidations.
   return (
     <Link to="/apps/notifikasi" className="relative rounded-full border border-[#e9dfb8] p-2 text-[#7a6010]" aria-label="Notifikasi">
       <Bell className="h-4 w-4" />
