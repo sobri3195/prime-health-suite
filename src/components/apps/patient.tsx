@@ -627,7 +627,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "profile"] });
       setEdit(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const cancelM = useMutation({
@@ -638,7 +638,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
       qc.invalidateQueries({ queryKey: ["apps", "queue"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const reschedM = useMutation({
@@ -650,7 +650,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
       qc.invalidateQueries({ queryKey: ["apps", "queue"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const doctorsQ = useQuery({
