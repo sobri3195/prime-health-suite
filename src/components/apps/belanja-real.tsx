@@ -9,15 +9,7 @@ import {
   listProduk, getMyCart, addToCart, updateCartQty, removeCartItem, checkoutCart, listMyOrders, listBankAccounts,
 } from "@/lib/apps-shop.functions";
 import { EmptyState, Skeleton, SkeletonList } from "@/components/apps/ui";
-import { useI18n } from "@/lib/i18n";
-
-function useFmt() {
-  const { lang } = useI18n();
-  return (n: number) =>
-    new Intl.NumberFormat(lang === "id" ? "id-ID" : "en-US", {
-      style: "currency", currency: "IDR", maximumFractionDigits: 0,
-    }).format(n);
-}
+import { useI18n, useFmtIDR, useDateFmt } from "@/lib/i18n";
 
 function ProductCardSkeleton() {
   return (
