@@ -78,6 +78,21 @@ function csvEscape(v: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+function highlight(text: string, q: string): React.ReactNode {
+  if (!q) return text;
+  const needle = q.trim();
+  if (!needle) return text;
+  const idx = text.toLowerCase().indexOf(needle.toLowerCase());
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-500/30">{text.slice(idx, idx + needle.length)}</mark>
+      {text.slice(idx + needle.length)}
+    </>
+  );
+}
+
 function exportAuditCsv(rows: any[]) {
   const header = ["waktu","aktor","aksi","entity","entity_no","entity_id","alasan","changed_fields","diff"];
   const lines = [header.join(",")];
