@@ -8,6 +8,10 @@ const VALID_PRIORITY = ["low", "medium", "high", "critical"] as const;
 const TicketListInput = z.object({
   page: z.number().int().min(1).max(1000).default(1),
   pageSize: z.number().int().min(1).max(100).default(20),
+  status: z.enum(VALID_STATUS).optional(),
+  priority: z.enum(VALID_PRIORITY).optional(),
+  category: z.string().trim().max(50).optional(),
+  q: z.string().trim().max(200).optional(),
 });
 
 export const listTickets = createServerFn({ method: "GET" })
@@ -17,8 +21,6 @@ export const listTickets = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const from = (data.page - 1) * data.pageSize;
     const to = from + data.pageSize - 1;
-    // Defense-in-depth: filter own tickets unless caller is staff. RLS also
-    // enforces this; explicit filter keeps queries index-friendly.
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     let q = supabase
       .from("apps_ticket")
@@ -26,6 +28,13 @@ export const listTickets = createServerFn({ method: "GET" })
       .order("updated_at", { ascending: false })
       .range(from, to);
     if (!isStaff) q = q.eq("user_id", userId);
+    if (data.status) q = q.eq("status", data.status);
+    if (data.priority) q = q.eq("priority", data.priority);
+    if (data.category) q = q.eq("category", data.category);
+    if (data.q) {
+      const esc = data.q.replace(/[%_,]/g, (m) => `\\${m}`);
+      q = q.or(`subject.ilike.%${esc}%,ticket_no.ilike.%${esc}%,reporter.ilike.%${esc}%`);
+    }
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
     return { items: rows ?? [], total: count ?? 0, page: data.page, pageSize: data.pageSize };
