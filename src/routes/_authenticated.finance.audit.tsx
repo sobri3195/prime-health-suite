@@ -197,6 +197,23 @@ function AuditPage() {
             <SelectItem value="60000">Setiap 60 detik</SelectItem>
           </SelectContent>
         </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm"><Columns3 className="mr-2 h-4 w-4" /> Kolom</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs">Tampilkan kolom</DropdownMenuLabel>
+            {COLS.map((c) => (
+              <DropdownMenuCheckboxItem key={c.key} checked={cols[c.key]} onCheckedChange={(v) => setCols((s) => ({ ...s, [c.key]: !!v }))} onSelect={(e) => e.preventDefault()}>
+                {c.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setCols(Object.fromEntries(COLS.map((c) => [c.key, true])) as Record<ColKey, boolean>); }}>
+              Tampilkan semua
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
