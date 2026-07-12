@@ -135,6 +135,7 @@ function AntrianPage() {
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5" />Rata-rata tunggu: <span className="font-semibold text-foreground">{avgWait !== null ? `${avgWait} mnt` : "—"}</span></span>
           <span>Menunggu: <span className="font-semibold text-foreground">{waiting.length}</span></span>
+          <span className="hidden text-[10px] text-muted-foreground md:inline" title="n=panggil berikutnya · c=selesai · p=panggil ulang">⌨ n / c / p</span>
           <span>Total {rows.length}</span>
         </div>
       </div>
