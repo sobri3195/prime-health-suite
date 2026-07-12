@@ -782,6 +782,7 @@ function AuditPage() {
               ["e", "Ekspor hasil ke CSV"],
               ["d", "Toggle kerapatan (kompak/nyaman)"],
               ["s", "Tandai/lepas tanda entri terbuka"],
+              ["m", "Salin hasil sebagai tabel Markdown"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
