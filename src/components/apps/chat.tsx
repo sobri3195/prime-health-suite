@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Send, MessageCircle, Paperclip, X, FileText, ImageIcon } from "lucide-react";
 import { getOrCreateRoom, listChatMessages, sendChatMessage, signChatAttachment } from "@/lib/apps-chat.functions";
+import { friendlyError } from "@/lib/apps-error";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
