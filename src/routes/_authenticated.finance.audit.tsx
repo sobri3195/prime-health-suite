@@ -168,6 +168,7 @@ function AuditPage() {
         if (list[next]) setDetail(list[next]);
       }
       else if (!typing && e.key === "Escape" && detail) { setDetail(null); }
+      else if (!typing && (e.key === "?" || (e.shiftKey && e.key === "/"))) { e.preventDefault(); setHelpOpen((v) => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
