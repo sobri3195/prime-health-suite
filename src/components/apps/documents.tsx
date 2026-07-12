@@ -58,6 +58,9 @@ const ALLOWED_MIME = [
 export function DocumentsPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const callList = useServerFn(listDocuments);
+  const callUpload = useServerFn(uploadDocument);
+  const callDelete = useServerFn(deleteDocument);
   const [q, setQ] = useState("");
 
   const [type, setType] = useState<string>("all");
@@ -69,18 +72,12 @@ export function DocumentsPage() {
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
 
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["clinic_document"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clinic_document")
-        .select("id,patient_code,patient_name,doc_type,title,mime,size_bytes,storage_path,uploaded_by_email,uploaded_at")
-        .order("uploaded_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []) as DocRow[];
-    },
+  const { data: listRes, isLoading } = useQuery({
+    queryKey: ["clinic_document", type],
+    queryFn: () => callList({ data: { type: type === "all" ? undefined : type, pageSize: 200, page: 0 } as any }),
   });
+  const data = ((listRes as any)?.rows ?? []) as DocRow[];
+
 
   const items = useMemo(() => {
     const qq = q.trim().toLowerCase();
