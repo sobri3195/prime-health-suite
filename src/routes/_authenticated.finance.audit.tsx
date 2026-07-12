@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2, Columns3 } from "lucide-react";
+import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2, Columns3, Rows3 } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
