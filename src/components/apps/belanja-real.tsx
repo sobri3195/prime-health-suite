@@ -25,7 +25,7 @@ function ProductCardSkeleton() {
 
 export function PatientBelanjaReal() {
   const { t } = useI18n();
-  const fmt = useFmt();
+  const fmt = useFmtIDR();
   const qc = useQueryClient();
   const callList = useServerFn(listProduk);
   const callCart = useServerFn(getMyCart);
@@ -110,7 +110,7 @@ export function PatientBelanjaReal() {
 
 export function PatientCart() {
   const { t } = useI18n();
-  const fmt = useFmt();
+  const fmt = useFmtIDR();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
   const callUpd = useServerFn(updateCartQty);
@@ -199,7 +199,7 @@ export function PatientCart() {
 
 export function PatientCheckout() {
   const { t } = useI18n();
-  const fmt = useFmt();
+  const fmt = useFmtIDR();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
@@ -317,7 +317,7 @@ export function PatientCheckout() {
 
 export function PatientOrders() {
   const { t } = useI18n();
-  const fmt = useFmt();
+  const fmt = useFmtIDR();
   const callOrders = useServerFn(listMyOrders);
   const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
   const orders = q.data?.orders ?? [];
@@ -335,7 +335,7 @@ export function PatientOrders() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold">{o.no_order}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("id-ID")}</div>
+                  <div className="text-xs text-muted-foreground">{df.dateTime(o.created_at)}</div>
                 </div>
                 <span className="rounded-full bg-[#fdf2c4] px-2 py-0.5 text-[10px] font-semibold text-[#7a6010]">{o.status}</span>
               </div>
