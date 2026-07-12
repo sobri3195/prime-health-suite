@@ -512,7 +512,7 @@ function AuditPage() {
       }
       else if (!typing && e.key === "*" && (rows as any[]).length) {
         e.preventDefault();
-        const first = (rows as any[]).find((r) => starred.has(r.id));
+        const first = (rows as any[]).find((r) => starred[r.id]);
         if (first) { setDetail(first); toast.success("Entri bertanda pertama (*)"); }
         else toast.info("Tidak ada entri bertanda");
       }
