@@ -577,6 +577,9 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(no_rm,nama,patient_code), fin_dokter(id,name)").eq("id", data.visit_id).maybeSingle();
     if (error || !visit) throw error ?? new Error("Visit tidak ditemukan");
+    // Idempotent: bila invoice non-void untuk visit ini sudah ada (partial UNIQUE), kembalikan itu.
+    const { data: existing } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
+    if (existing) return existing;
     const subtotal = data.items.reduce((a, b) => a + Number(b.quantity) * Number(b.unit_price), 0);
     const total = Math.max(0, subtotal - Number(data.discount));
     const status = data.paid_amount >= total ? "paid" : data.paid_amount > 0 ? "partial" : "unpaid";
@@ -585,14 +588,17 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const { data: invoice, error: ie } = await sb.from("fin_invoice").insert({
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
+        source_visit_id: data.visit_id,
         patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
         subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
-      if (!ie) {
-        inv = invoice;
-        break;
+      if (!ie) { inv = invoice; break; }
+      // 23505 pada source_visit_id → invoice sudah dibuat oleh request paralel
+      if (ie.code === "23505") {
+        const { data: race } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
+        if (race) return race;
       }
       if (ie.code !== "23505" || attempt === 2) throw ie;
     }
