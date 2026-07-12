@@ -190,7 +190,7 @@ function AuditPage() {
       <Button
         variant="outline"
         size="icon"
-        className="fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full shadow-md"
+        className={`fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full shadow-md transition-opacity ${showTop ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         title="Kembali ke atas"
         aria-label="Kembali ke atas"
