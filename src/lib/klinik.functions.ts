@@ -575,7 +575,7 @@ export const listPrescription = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const limit = data.limit ?? 100; const offset = data.offset ?? 0;
     let q = (context.supabase as Supa).from("klinik_prescription")
-      .select("*, apps_pasien(no_rm,nama,alergi_obat), fin_dokter(name), klinik_prescription_item(*)")
+      .select("*, apps_pasien(no_rm,nama,alergi), fin_dokter(name), klinik_prescription_item(*)")
       .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
