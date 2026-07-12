@@ -809,6 +809,18 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "p") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris"); return; }
+        const w = window.open("", "_blank", "noopener,noreferrer");
+        if (!w) { toast.error("Popup diblokir"); return; }
+        w.document.write(`<pre style="font-family:ui-monospace,monospace;padding:16px;white-space:pre-wrap">${JSON.stringify(target, null, 2).replace(/</g, "&lt;")}</pre>`);
+        w.document.close();
+        w.focus();
+        w.print();
+        toast.success("Cetak baris (p)");
+      }
     };
 
 
