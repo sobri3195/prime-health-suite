@@ -157,10 +157,20 @@ function AuditPage() {
       else if (e.key === "Escape" && document.activeElement === searchRef.current) {
         setQ(""); setEntity("all"); setAction("all"); searchRef.current?.blur();
       }
+      else if (!typing && (e.key === "j" || e.key === "k") && (rows as any[]).length) {
+        e.preventDefault();
+        const list = rows as any[];
+        const idx = detail ? list.findIndex((r) => r.id === detail.id) : -1;
+        const next = e.key === "j"
+          ? Math.min(list.length - 1, idx + 1)
+          : Math.max(0, idx <= 0 ? 0 : idx - 1);
+        if (list[next]) setDetail(list[next]);
+      }
+      else if (!typing && e.key === "Escape" && detail) { setDetail(null); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [rows, detail]);
 
   if (!isAdmin) {
     return <div><PageHeader title="Audit Log Finance" desc="Akses ditolak — hanya admin." /></div>;
