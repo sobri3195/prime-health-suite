@@ -482,7 +482,9 @@ function AuditPage() {
                   {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
                   {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>}
                 </TableRow>
-              ));
+                );
+                return nodes;
+              });
             })()}
           </TableBody>
         </Table>
