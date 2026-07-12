@@ -1439,6 +1439,7 @@ function AuditPage() {
               ["i", "Salin row id baris target"],
               ["p", "Cetak baris target di tab baru"],
               ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
+              ["g / G", "Lompat detail ke baris pertama / terakhir"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
