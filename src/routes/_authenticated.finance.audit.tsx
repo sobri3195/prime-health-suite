@@ -516,6 +516,15 @@ function AuditPage() {
             </button>
           ));
         })()}
+        {(q || entity !== "all" || action !== "all" || onlyStar) && (
+          <button
+            type="button"
+            onClick={() => { setQ(""); setEntity("all"); setAction("all"); setOnlyStar(false); toast.success("Filter direset"); }}
+            title="Bersihkan semua filter aktif"
+          >
+            <Badge variant="destructive" className="cursor-pointer hover:ring-2 hover:ring-destructive/40">✕ Reset semua filter</Badge>
+          </button>
+        )}
         <span className="ml-auto">Klik baris untuk melihat diff.</span>
       </div>
 
