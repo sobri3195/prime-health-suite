@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -74,9 +74,16 @@ export function NotificationsPagePatient() {
   const callReadAll = useServerFn(markAllNotifRead);
   const callDelete = useServerFn(deleteNotif);
 
-  const q = useQuery({ queryKey: ["apps", "notifs"], queryFn: () => callList() });
+  const [page, setPage] = useState(1);
+  const pageSize = 30;
+  const q = useQuery({
+    queryKey: ["apps", "notifs", page],
+    queryFn: () => callList({ data: { page, pageSize } }),
+  });
   const notifs = q.data?.notifs ?? [];
   const unread = q.data?.unread ?? 0;
+  const total = q.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const readM = useMutation({
     mutationFn: (id: string) => callRead({ data: { id } }),
@@ -177,6 +184,18 @@ export function NotificationsPagePatient() {
           </li>
         ))}
       </ul>
+
+      {total > pageSize && (
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} notifikasi</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

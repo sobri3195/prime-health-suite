@@ -9,6 +9,7 @@ import {
 } from "@/lib/apps-privacy.functions";
 import { getMyProfile } from "@/lib/apps-patient.functions";
 import { useI18n } from "@/lib/i18n";
+import { friendlyError } from "@/lib/apps-error";
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <div className={`rounded-2xl border border-[#e9dfb8] bg-white p-5 shadow-sm ${className}`}>{children}</div>;
@@ -52,7 +53,7 @@ export function PatientPrivasi() {
       URL.revokeObjectURL(url);
       toast.success(t("priv.export.ok"));
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const deleteM = useMutation({
@@ -63,7 +64,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const consentM = useMutation({
@@ -73,7 +74,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const revokeM = useMutation({
@@ -83,7 +84,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   return (

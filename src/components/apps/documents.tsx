@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listDocuments, uploadDocument, deleteDocument } from "@/lib/clinic.functions";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 
 
@@ -159,10 +160,10 @@ export function DocumentsPage() {
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     },
-    onError: (e: any) => {
+    onError: (e: unknown) => {
       setProgress(0);
       setTimedOut(false);
-      toast.error(e?.message ?? "Gagal upload — coba lagi");
+      toast.error(friendlyError(e, "Gagal upload — coba lagi"));
     },
   });
 

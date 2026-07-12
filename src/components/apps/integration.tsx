@@ -147,6 +147,17 @@ export function IntegrationPage() {
         desc="Penghubung antara Prime Apps, SIM Klinik Mata, dan Prime Simon Finance — hanya berbagi data minimum yang diperlukan."
       />
 
+      <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-amber-800">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div>
+          <span className="font-semibold">Mode Simulasi.</span> Tombol Send Billing, Sync Payment,
+          Push Notification, KPI "Sync Hari Ini/Error", dan tabel "Sync Log/Audit" di halaman ini
+          menggunakan data <em>in-memory</em> untuk demo alur integrasi; belum terhubung ke tabel
+          Supabase produksi dan akan hilang saat browser di-refresh.
+        </div>
+      </div>
+
+
       {/* System Status */}
       <div className="mb-4 flex items-center justify-between">
         <div className="text-xs text-muted-foreground">Heartbeat dari RPC <span className="font-mono">app_health_check</span> · auto-refresh tiap 30 dtk.</div>

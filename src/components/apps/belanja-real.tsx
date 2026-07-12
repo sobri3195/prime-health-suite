@@ -320,8 +320,15 @@ export function PatientOrders() {
   const fmt = useFmtIDR();
   const df = useDateFmt();
   const callOrders = useServerFn(listMyOrders);
-  const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const q = useQuery({
+    queryKey: ["apps", "orders", page],
+    queryFn: () => callOrders({ data: { page, pageSize } }),
+  });
   const orders = q.data?.orders ?? [];
+  const total = q.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">{t("orders.title")}</h1>
@@ -370,6 +377,17 @@ export function PatientOrders() {
               <div className="mt-2 text-base font-bold">{fmt(o.total)}</div>
             </div>
           ))}
+        </div>
+      )}
+      {total > pageSize && (
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} pesanan</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
         </div>
       )}
     </div>

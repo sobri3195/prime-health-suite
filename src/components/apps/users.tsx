@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2, Plus, KeyRound } from "lucide-react";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 
 type ApiUser = {
@@ -48,7 +49,7 @@ export function UsersPage() {
   const setM = useMutation({
     mutationFn: (v: { user_id: string; role: Role; grant: boolean }) => callSet({ data: v }),
     onSuccess: () => { toast.success("Role diperbarui"); qc.invalidateQueries({ queryKey: ["apps", "users"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
   const toggleM = useMutation({
     mutationFn: (v: { user_id: string; active: boolean }) => callToggle({ data: v }),
@@ -56,12 +57,12 @@ export function UsersPage() {
       toast.success(v.active ? "User diaktifkan" : "User dinonaktifkan");
       qc.invalidateQueries({ queryKey: ["apps", "users"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
   const resetM = useMutation({
     mutationFn: (v: { user_id: string; new_password: string }) => callReset({ data: v }),
     onSuccess: () => { toast.success("Password berhasil di-reset"); setResetUser(null); setNewPwd(""); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const [q, setQ] = useState("");
