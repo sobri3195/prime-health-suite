@@ -426,6 +426,15 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: 7 hari terakhir (Z)`);
       }
+      else if (!typing && e.key === "D") {
+        e.preventDefault();
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 29);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        setRange({ from: iso(start), to: iso(end), preset: "custom" });
+        toast.success(`Rentang: 30 hari terakhir (D)`);
+      }
 
 
 
@@ -973,6 +982,7 @@ function AuditPage() {
               ["Q", "Set rentang tanggal ke kuartal ini"],
               ["H", "Set rentang tanggal ke kemarin"],
               ["Z", "Set rentang tanggal ke 7 hari terakhir"],
+              ["D", "Set rentang tanggal ke 30 hari terakhir"],
 
 
 
