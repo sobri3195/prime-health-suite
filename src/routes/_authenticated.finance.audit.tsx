@@ -304,6 +304,13 @@ function AuditPage() {
           toast.success("URL filter disalin (u)");
         } catch { toast.error("Gagal menyalin URL"); }
       }
+      else if (!typing && e.key === "y" && (rows as any[]).length) {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
+          toast.success(`JSON ${(rows as any[]).length} entri disalin (y)`);
+        } catch { toast.error("Gagal menyalin JSON"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -832,6 +839,7 @@ function AuditPage() {
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
               ["u", "Salin URL dengan filter aktif"],
+              ["y", "Salin JSON semua entri hasil"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
