@@ -326,6 +326,17 @@ function AuditPage() {
               <Badge className={`${ACTION_TONE[detail?.action] ?? "bg-muted"} border-0`} variant="secondary">{detail?.action}</Badge>
               <span className="text-sm">{detail?.entity}</span>
               <span className="font-mono text-xs text-muted-foreground">{detail?.entity_no ?? detail?.entity_id}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto h-7 px-2 text-xs"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(JSON.stringify(detail, null, 2));
+                    toast.success("JSON disalin");
+                  } catch { toast.error("Gagal menyalin"); }
+                }}
+              >Salin JSON</Button>
             </DialogTitle>
           </DialogHeader>
           {detail && (
