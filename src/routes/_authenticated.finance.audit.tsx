@@ -309,6 +309,14 @@ function AuditPage() {
         <Button variant="outline" size="sm" onClick={() => setTimeFmt((t) => t === "relative" ? "absolute" : "relative")} title="Toggle format waktu">
           🕘 {timeFmt === "relative" ? "Relatif" : "Absolut"}
         </Button>
+        <Button
+          variant={onlyStar ? "default" : "outline"}
+          size="sm"
+          onClick={() => setOnlyStar((v) => !v)}
+          title="Tampilkan hanya entri bertanda"
+        >
+          ★ Bertanda ({Object.keys(starred).length})
+        </Button>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
