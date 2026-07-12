@@ -102,7 +102,7 @@ export const listMyOrders = createServerFn({ method: "GET" })
     const from = (data.page - 1) * data.pageSize;
     const to = from + data.pageSize - 1;
     const { data: rows, error, count } = await context.supabase
-      .from("apps_order").select("*, items:apps_order_item(*)", { count: "exact" })
+      .from("apps_order").select("*, items:apps_order_item(id,produk_nama,harga,qty,subtotal)", { count: "exact" })
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .range(from, to);
