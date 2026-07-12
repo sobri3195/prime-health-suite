@@ -33,6 +33,7 @@ function ProductCardSkeleton() {
 
 export function PatientBelanjaReal() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const qc = useQueryClient();
   const callList = useServerFn(listProduk);
   const callCart = useServerFn(getMyCart);
@@ -117,6 +118,7 @@ export function PatientBelanjaReal() {
 
 export function PatientCart() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
   const callUpd = useServerFn(updateCartQty);
@@ -205,6 +207,7 @@ export function PatientCart() {
 
 export function PatientCheckout() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const callCart = useServerFn(getMyCart);
@@ -322,6 +325,7 @@ export function PatientCheckout() {
 
 export function PatientOrders() {
   const { t } = useI18n();
+  const fmt = useFmt();
   const callOrders = useServerFn(listMyOrders);
   const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
   const orders = q.data?.orders ?? [];
