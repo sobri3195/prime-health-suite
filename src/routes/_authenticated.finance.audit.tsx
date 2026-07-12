@@ -94,7 +94,15 @@ function AuditPage() {
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
-  const [detail, setDetail] = useState<any | null>(null);
+  const [detail, _setDetail] = useState<any | null>(null);
+  const setDetail = (r: any | null) => {
+    _setDetail(r);
+    if (typeof window !== "undefined") {
+      const u = new URL(window.location.href);
+      if (r?.id) u.searchParams.set("id", r.id); else u.searchParams.delete("id");
+      window.history.replaceState({}, "", u);
+    }
+  };
   const [revertReason, setRevertReason] = useState("");
   const [presets, setPresets] = useState<AuditPreset[]>([]);
   const [presetName, setPresetName] = useState("");
@@ -131,6 +139,14 @@ function AuditPage() {
     onError: (e: any) => toast.error(e?.message ?? "Gagal revert"),
   });
   const rows = data?.rows ?? [];
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !rows.length || detail) return;
+    const id = new URL(window.location.href).searchParams.get("id");
+    if (!id) return;
+    const found = (rows as any[]).find((r) => r.id === id);
+    if (found) _setDetail(found);
+  }, [rows, detail]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
