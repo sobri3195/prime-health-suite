@@ -3535,6 +3535,14 @@ export type Database = {
           total: number
         }[]
       }
+      fin_delete_payment_locked: {
+        Args: { _payment_id: string; _reason: string }
+        Returns: {
+          dibayar_baru: number
+          invoice_id: string
+          status: string
+        }[]
+      }
       fin_generate_penyusutan: {
         Args: { _aset_id: string; _from_periode: string; _to_periode: string }
         Returns: number
@@ -3611,6 +3619,12 @@ export type Database = {
           tanggal: string
           total_debit: number
           total_kredit: number
+        }[]
+      }
+      fin_void_invoice_locked: {
+        Args: { _invoice_id: string; _kind?: string; _reason: string }
+        Returns: {
+          voided_payments: number
         }[]
       }
       has_role: {

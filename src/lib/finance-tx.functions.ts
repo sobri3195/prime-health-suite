@@ -237,8 +237,17 @@ export const voidInvoice = createServerFn({ method: "POST" })
     const sb = await adminClient();
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.id).single();
     if (!inv) throw new Error("Invoice tidak ditemukan");
-    await sb.from("fin_invoice").update({ status: data.kind, void_reason: data.reason }).eq("id", data.id);
+    // Void invoice + semua pembayaran terkait + nol-kan `dibayar` (advisory lock).
+    const { error: ve } = await sb.rpc("fin_void_invoice_locked", {
+      _invoice_id: data.id, _reason: data.reason, _kind: data.kind,
+    });
+    if (ve) throw new Error(ve.message);
     await reverseJournal("invoice", data.id, new Date().toISOString().slice(0, 10), data.reason);
+    // Balikkan jurnal pembayaran juga
+    const { data: pays } = await sb.from("fin_pembayaran").select("id").eq("invoice_id", data.id);
+    for (const p of pays ?? []) {
+      await reverseJournal("payment", p.id, new Date().toISOString().slice(0, 10), `Invoice ${data.kind}: ${data.reason}`);
+    }
     await writeFinAudit({ action: "void", entity: "invoice", entity_id: data.id, entity_no: inv.no_invoice, reason: data.reason, before: inv });
     return { ok: true };
   });
@@ -334,14 +343,13 @@ export const deletePayment = createServerFn({ method: "POST" })
     const sb = await adminClient();
     const { data: pay } = await sb.from("fin_pembayaran").select("*").eq("id", data.id).single();
     if (!pay) throw new Error("Pembayaran tidak ditemukan");
+    // Void + adjust invoice.dibayar/status atomically under advisory lock,
+    // menghindari race dengan createPayment paralel.
+    const { error: de } = await sb.rpc("fin_delete_payment_locked", {
+      _payment_id: data.id, _reason: data.reason ?? "deleted",
+    });
+    if (de) throw new Error(de.message);
     await reverseJournal("payment", data.id, new Date().toISOString().slice(0, 10), data.reason ?? "Hapus pembayaran");
-    await sb.from("fin_pembayaran").update({ status: "void", void_reason: data.reason ?? "deleted" }).eq("id", data.id);
-    const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", pay.invoice_id).single();
-    if (inv) {
-      const newPaid = Math.max(0, Number(inv.dibayar) - Number(pay.jumlah));
-      const newStatus = newPaid <= 0 ? "issued" : newPaid >= Number(inv.total) ? "paid" : "partial";
-      await sb.from("fin_invoice").update({ dibayar: newPaid, status: newStatus }).eq("id", pay.invoice_id);
-    }
     await writeFinAudit({ actor_email: data.actor, action: "void", entity: "payment", entity_id: data.id, reason: data.reason, before: pay });
     return { ok: true };
   });
