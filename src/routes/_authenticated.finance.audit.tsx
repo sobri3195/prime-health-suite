@@ -415,7 +415,15 @@ function AuditPage() {
                   onClick={() => setDetail(r)}
                 >
 
-                  {cols.waktu && <TableCell className="font-mono text-xs" title={timeFmt === "relative" ? new Date(r.created_at).toLocaleString("id-ID") : relativeTime(r.created_at)}>{timeFmt === "relative" ? relativeTime(r.created_at) : new Date(r.created_at).toLocaleString("id-ID")}</TableCell>}
+                  {cols.waktu && <TableCell className="font-mono text-xs whitespace-nowrap" title={timeFmt === "relative" ? new Date(r.created_at).toLocaleString("id-ID") : relativeTime(r.created_at)}>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleStar(r.id); }}
+                      className={`mr-1 rounded px-0.5 ${starred[r.id] ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-500"}`}
+                      title={starred[r.id] ? "Hapus tanda" : "Tandai entri"}
+                    >{starred[r.id] ? "★" : "☆"}</button>
+                    {timeFmt === "relative" ? relativeTime(r.created_at) : new Date(r.created_at).toLocaleString("id-ID")}
+                  </TableCell>}
                   {cols.aktor && (
                     <TableCell className="text-sm">
                       <button
