@@ -711,6 +711,18 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        const list = rows as any[];
+        if (!list.length) { toast.info("Tidak ada baris"); return; }
+        const idx = detail ? list.findIndex((r) => r.id === (detail as any).id) : -1;
+        const step = 10;
+        const nextIdx = e.key === "]"
+          ? Math.min(list.length - 1, (idx < 0 ? 0 : idx) + step)
+          : Math.max(0, (idx < 0 ? 0 : idx) - step);
+        setDetail(list[nextIdx]);
+        toast.success(e.key === "]" ? "Lompat +10 (])" : "Lompat -10 ([)");
+      }
     };
 
 
@@ -1264,6 +1276,7 @@ function AuditPage() {
               [",", "Salin ringkasan baris (waktu • aktor • entity action no)"],
               ["-", "Ringkas cepat: total baris • unik aktor/entity/action"],
               ["+", "Salin entity_no / entity_id target"],
+              ["[ / ]", "Lompat detail -10 / +10 baris"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
