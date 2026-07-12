@@ -331,7 +331,7 @@ function AuditPage() {
       </Dialog>
       <div className={`overflow-hidden rounded-xl border border-border bg-card ${density === "compact" ? "[&_td]:py-1.5 [&_th]:py-2 text-[12px]" : ""}`}>
         <Table>
-          <TableHeader><TableRow>
+          <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_0_0_hsl(var(--border))]"><TableRow>
             {cols.waktu && <TableHead>Waktu</TableHead>}
             {cols.aktor && <TableHead>Aktor</TableHead>}
             {cols.aksi && <TableHead>Aksi</TableHead>}
