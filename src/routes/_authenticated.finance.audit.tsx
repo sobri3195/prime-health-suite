@@ -348,6 +348,17 @@ function AuditPage() {
         setPresets(next);
         toast.success(`Preset "${name}" disimpan (P)`);
       }
+      else if (!typing && e.key === "L" && presets.length) {
+        e.preventDefault();
+        const names = presets.map((p) => p.name);
+        const currentIdx = names.findIndex((n) => {
+          const p = presets.find((x) => x.name === n)!;
+          return p.q === q && p.entity === entity && p.action === action;
+        });
+        const next = presets[(currentIdx + 1) % presets.length];
+        setQ(next.q); setEntity(next.entity); setAction(next.action);
+        toast.success(`Preset: ${next.name} (L)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
