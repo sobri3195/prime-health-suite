@@ -45,15 +45,7 @@ export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
   component: PemeriksaanPage,
 });
 
-const TEMPLATES: Record<string, { diagnosis: string; icd: string; treatment: string }> = {
-  katarak: { diagnosis: "Katarak Senilis", icd: "H25.9", treatment: "Edukasi pasien, rencanakan operasi katarak phacoemulsifikasi" },
-  konjungtivitis: { diagnosis: "Konjungtivitis", icd: "H10.9", treatment: "Antibiotik tetes mata 4x sehari, kompres, kontrol 5 hari" },
-  glaukoma: { diagnosis: "Glaukoma", icd: "H40.9", treatment: "Timolol 0.5% 2x sehari, kontrol TIO 2 minggu" },
-  refraksi: { diagnosis: "Refraksi Anomali", icd: "H52.7", treatment: "Resep kacamata sesuai pemeriksaan" },
-  retinopati: { diagnosis: "Retinopati Diabetik", icd: "H36.0", treatment: "Kontrol gula darah, rujuk retina, OCT" },
-  kering: { diagnosis: "Sindrom Mata Kering", icd: "H04.123", treatment: "Air mata buatan 4-6x/hari, kompres hangat" },
-  kontrol: { diagnosis: "Kontrol pasca operasi", icd: "Z48.8", treatment: "Lanjutkan obat tetes, jaga kebersihan, kontrol 1 minggu" },
-};
+type PemTemplate = { id: string; code: string; label: string; diagnosis: string; icd10_code: string | null; treatment: string | null };
 
 function PemeriksaanPage() {
   const qc = useQueryClient();
