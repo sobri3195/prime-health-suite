@@ -177,11 +177,12 @@ export const stockMovement = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     obat_id: z.string().uuid(),
     movement_type: z.enum(["in", "out", "adjustment"]),
-    quantity: z.coerce.number().min(0),
+    quantity: z.coerce.number().refine((v) => v > 0 || false, { message: "Kuantitas harus > 0" }),
     note: z.string().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // Guard trigger klinik_guard_stock_movement menolak qty<=0 dan out melebihi stok (FOR UPDATE).
     const { error } = await sb.from("klinik_stock_movement").insert({ ...data, created_by: context.userId });
     if (error) throw error;
     await appendAuditRow(sb, { actor_id: context.userId, module: "Stok", action: data.movement_type, target: data.obat_id, meta: { qty: data.quantity, note: data.note } });
