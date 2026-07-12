@@ -390,6 +390,16 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: bulan ini (M)`);
       }
+      else if (!typing && e.key === "Y") {
+        e.preventDefault();
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 1);
+        const end = new Date(now.getFullYear(), 11, 31);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        setRange({ from: iso(start), to: iso(end), preset: "custom" });
+        toast.success(`Rentang: tahun ini (Y)`);
+      }
+
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
