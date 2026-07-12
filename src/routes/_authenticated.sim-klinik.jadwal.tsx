@@ -25,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2, LayoutGrid, List as ListIcon } from "lucide-react";
 import { toast } from "sonner";
 import { upsertJadwal, deleteJadwal, listJadwal } from "@/lib/klinik.functions";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/jadwal")({
   head: () => pageHead({ title: 'Jadwal Dokter — SIM Klinik', description: 'Jadwal praktik dokter, slot, dan kepadatan kunjungan harian.', path: '/sim-klinik/jadwal' }),
@@ -64,7 +65,7 @@ function JadwalPage() {
   const delM = useMutation({
     mutationFn: (id: string) => callDel({ data: { id } }),
     onSuccess: () => { toast.success("Jadwal dihapus"); qc.invalidateQueries({ queryKey: ["klinik_jadwal"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const doctors = useMemo(
@@ -254,7 +255,7 @@ function JadwalForm({ initial, onClose, onSaved }: { initial: Jadwal | null; onC
   const m = useMutation({
     mutationFn: () => callUpsert({ data: form }),
     onSuccess: () => { toast.success("Jadwal tersimpan"); onSaved(); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   return (

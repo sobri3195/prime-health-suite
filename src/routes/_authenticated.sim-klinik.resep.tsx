@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({
   head: () => pageHead({ title: 'Resep Elektronik — SIM Klinik', description: 'Peresepan obat, cek stok, dan interaksi obat.', path: '/sim-klinik/resep' }),
@@ -34,7 +35,7 @@ function ResepPage() {
   const dispM = useMutation({
     mutationFn: (id: string) => callDispense({ data: { id } }),
     onSuccess: () => { toast.success("Resep diberikan, stok berkurang"); qc.invalidateQueries({ queryKey: ["klinik"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   type Item = { id: string; obat_name: string; dosage: string | null; frequency: string | null; duration: string | null; quantity: number; unit_price: number | null };

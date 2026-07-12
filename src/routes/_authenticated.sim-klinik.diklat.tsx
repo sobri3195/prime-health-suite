@@ -23,6 +23,7 @@ import { Plus, Trash2, Pencil, ExternalLink, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { listAllDiklat, upsertDiklat, deleteDiklat, listDokterOptions } from "@/lib/diklat.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/diklat")({
   head: () => pageHead({ title: 'Diklat & Sertifikasi — SIM Klinik', description: 'Pelatihan, sertifikasi, dan progres tenaga medis.', path: '/sim-klinik/diklat' }),
@@ -80,7 +81,7 @@ function DiklatAdminPage() {
       setOpen(false);
       setEdit({});
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const del = useServerFn(deleteDiklat);
@@ -91,7 +92,7 @@ function DiklatAdminPage() {
       qc.invalidateQueries({ queryKey: ["diklat", "public"] });
       toast.success("Diklat dihapus");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   function openNew() {

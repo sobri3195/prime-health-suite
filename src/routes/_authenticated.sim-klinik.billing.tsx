@@ -18,6 +18,7 @@ import { listVisits, getVisitDetail, listLayanan, generateInvoiceFromVisit, list
 import { getSettings } from "@/lib/clinic.functions";
 import { terbilangRupiah } from "@/lib/terbilang";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/billing")({
   head: () => pageHead({ title: 'Billing & Kasir — SIM Klinik', description: 'Kelola invoice pasien, pembayaran, dan cetak kwitansi.', path: '/sim-klinik/billing' }),
@@ -116,7 +117,7 @@ function AddPaymentDialog({ invoice, onClose, onSaved }: {
   const m = useMutation({
     mutationFn: () => call({ data: { invoice_id: invoice.id, amount, method } }),
     onSuccess: () => { toast.success("Pembayaran tercatat"); onSaved(); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
   return (
     <Dialog open onOpenChange={onClose}>
@@ -205,7 +206,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
   const genM = useMutation({
     mutationFn: () => callGen({ data: { visit_id, items, payment_method: method, paid_amount: paid, discount } }),
     onSuccess: (i) => { toast.success("Invoice dibuat"); onCreated(); printInvoice(i as Inv); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   type Inv = { no_invoice: string; patient_name: string | null; total: number; tanggal: string };

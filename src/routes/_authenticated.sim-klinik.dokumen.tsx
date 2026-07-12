@@ -21,6 +21,7 @@ import { Upload, Search, Trash2, FileText, FileImage, FileArchive } from "lucide
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
 import { listDocuments, uploadDocument, deleteDocument } from "@/lib/clinic.functions";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/dokumen")({
   head: () => pageHead({ title: 'Dokumen & SOP — SIM Klinik', description: 'Pustaka SOP, kebijakan, dan dokumen operasional klinik.', path: '/sim-klinik/dokumen' }),
@@ -51,7 +52,7 @@ function DokumenPage() {
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["clinic-documents"] }); toast.success("Dokumen dihapus"); },
-    onError: (e: Error) => toast.error(e.message ?? "Gagal hapus"),
+    onError: (e: Error) => toast.error(friendlyError(e, "Gagal hapus")),
   });
 
   const rows = Array.isArray(data) ? data : (data?.rows ?? []);
@@ -170,7 +171,7 @@ function UploadDialog({
       setTitle(""); setFile(null);
       if (fileRef.current) fileRef.current.value = "";
     },
-    onError: (e: Error) => toast.error(e.message ?? "Gagal upload"),
+    onError: (e: Error) => toast.error(friendlyError(e, "Gagal upload")),
   });
 
   return (

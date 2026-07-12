@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Search, UserPlus, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { listPasien, listDokter, createBooking, checkinBooking, listBookingByDate, updateBookingStatus, upsertPasien, listJadwal } from "@/lib/klinik.functions";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/registrasi")({
   head: () => pageHead({ title: 'Registrasi Pasien — SIM Klinik', description: 'Pendaftaran pasien, pemilihan dokter, dan pembuatan booking antrian.', path: '/sim-klinik/registrasi' }), component: RegistrasiPage });
@@ -62,19 +63,19 @@ function RegistrasiPage() {
   const checkinM = useMutation({
     mutationFn: (id: string) => callCheckin({ data: { booking_id: id } }),
     onSuccess: (d) => { toast.success(`Check-in OK. Antrian: ${(d as { queue: { queue_no: string } }).queue.queue_no}`); qc.invalidateQueries({ queryKey: ["klinik"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const updateM = useMutation({
     mutationFn: (v: { id: string; status: "pending"|"confirmed"|"checked_in"|"done"|"cancelled" }) => callUpdate({ data: v }),
     onSuccess: () => { toast.success("Booking dibatalkan."); qc.invalidateQueries({ queryKey: ["klinik"] }); },
-    onError: (e: Error) => toast.error(e.message || "Gagal membatalkan booking."),
+    onError: (e: Error) => toast.error(friendlyError(e, "Gagal membatalkan booking.")),
   });
 
   const newPatientM = useMutation({
     mutationFn: () => callUpsertP({ data: { ...newP } as never }),
     onSuccess: (p) => { const row = p as { id: string; nama: string; no_rm: string }; setSelectedP({ id: row.id, nama: row.nama, no_rm: row.no_rm }); setShowNew(false); toast.success(`Pasien baru: ${row.no_rm}`); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const callJadwal = useServerFn(listJadwal);

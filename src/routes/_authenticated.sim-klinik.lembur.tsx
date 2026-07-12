@@ -22,6 +22,7 @@ import {
 import { useRoles, hasAnyRole } from "@/lib/rbac";
 import { clinicAudit } from "@/lib/clinic-audit";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/apps-error";
 
 type LemburSearch = {
   prefill?: string;
@@ -120,7 +121,7 @@ function LemburPage() {
       qc.invalidateQueries({ queryKey: ["hr.ot.mine"] });
       qc.invalidateQueries({ queryKey: ["hr.ot.pending"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const mApprove = useMutation({
@@ -132,7 +133,7 @@ function LemburPage() {
       qc.invalidateQueries({ queryKey: ["hr.ot.pending"] });
       qc.invalidateQueries({ queryKey: ["hr.ot.mine"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   return (

@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory, previewInteractions, listPemeriksaanTemplate } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 import { useDebounce } from "@/hooks/use-debounce";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
   head: () => pageHead({ title: 'Pemeriksaan & Rekam Medis — SIM Klinik', description: 'Input pemeriksaan pasien, diagnosa, dan rencana terapi.', path: '/sim-klinik/pemeriksaan' }),
@@ -101,7 +102,7 @@ function PemeriksaanPage() {
   const saveM = useMutation({
     mutationFn: (final: boolean) => callSave({ data: { ...form!, is_final: final } as never }),
     onSuccess: () => { toast.success("Rekam medis tersimpan"); qc.invalidateQueries({ queryKey: ["klinik"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const applyTpl = (id: string) => {
@@ -302,7 +303,7 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { visit_id, pasien_id, dokter_id, notes, items } as never }),
     onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); setRawSearch(""); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const interQ = useQuery({

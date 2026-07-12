@@ -16,6 +16,7 @@ import { Search, Plus, Pencil, Download, ArrowDownUp, AlertTriangle } from "luci
 import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
 import { useDebounce } from "@/hooks/use-debounce";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
   head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
@@ -48,12 +49,12 @@ function ObatPage() {
 
   const upsertM = useMutation({ mutationFn: (d: Partial<Obat>) => callUpsert({ data: d as never }),
     onSuccess: () => { toast.success("Obat tersimpan"); qc.invalidateQueries({ queryKey: ["klinik","obat"] }); setEdit(null); },
-    onError: (e: Error) => toast.error(e.message) });
+    onError: (e: Error) => toast.error(friendlyError(e)) });
 
   const moveM = useMutation({
     mutationFn: () => callMove({ data: { obat_id: moveFor!.id, movement_type: moveType, quantity: Number(moveQty), note: moveNote } }),
     onSuccess: () => { toast.success("Pergerakan stok tercatat"); qc.invalidateQueries({ queryKey: ["klinik"] }); setMoveFor(null); setMoveQty(""); setMoveNote(""); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const data = useMemo(() => (listQ.data ?? []) as Obat[], [listQ.data]);

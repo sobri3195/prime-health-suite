@@ -17,6 +17,7 @@ import {
 } from "@/lib/hr.functions";
 import { clinicAudit } from "@/lib/clinic-audit";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/absensi")({
   head: () => pageHead({ title: 'Absensi Karyawan — SIM Klinik', description: 'Rekap kehadiran, shift, dan jam kerja karyawan klinik.', path: '/sim-klinik/absensi' }),
@@ -55,7 +56,7 @@ function AbsensiPage() {
       clinicAudit("Absensi", "clock_in");
       qc.invalidateQueries({ queryKey: ["hr.att"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
   const mOut = useMutation({
     mutationFn: () => clockOut(),
@@ -64,7 +65,7 @@ function AbsensiPage() {
       clinicAudit("Absensi", "clock_out");
       qc.invalidateQueries({ queryKey: ["hr.att"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const columns: Column<AttRow>[] = useMemo(() => [
