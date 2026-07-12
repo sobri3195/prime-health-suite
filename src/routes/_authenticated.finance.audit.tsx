@@ -103,7 +103,7 @@ function exportAuditCsv(rows: any[]) {
 
 function AuditPage() {
   const { isAdmin } = useFinanceAccess();
-  const { from, to } = useFinanceDate();
+  const { from, to, setRange } = useFinanceDate();
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
