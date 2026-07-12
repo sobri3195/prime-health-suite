@@ -763,6 +763,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "o") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris untuk dibuka"); return; }
+        const blob = new Blob([JSON.stringify(target, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener,noreferrer");
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        toast.success("JSON baris dibuka di tab baru (o)");
+      }
     };
 
 
