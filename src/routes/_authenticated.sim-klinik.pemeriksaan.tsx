@@ -6,11 +6,21 @@ import { cn } from "@/lib/utils";
 
 function AutoTextarea({ value, onChange, className, ...rest }: React.ComponentProps<"textarea">) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
-  useLayoutEffect(() => {
+  const measure = () => {
     const el = ref.current; if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 400) + "px";
-  }, [value]);
+  };
+  useLayoutEffect(measure, [value]);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    // Re-measure saat container/sidebar toggle atau window resize
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, []);
   return <Textarea ref={ref} value={value} onChange={onChange} rows={2} className={cn("resize-none overflow-hidden min-h-[38px]", className)} {...rest} />;
 }
 
@@ -27,23 +37,16 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory, previewInteractions } from "@/lib/klinik.functions";
+import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory, previewInteractions, listPemeriksaanTemplate } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
   head: () => pageHead({ title: 'Pemeriksaan & Rekam Medis — SIM Klinik', description: 'Input pemeriksaan pasien, diagnosa, dan rencana terapi.', path: '/sim-klinik/pemeriksaan' }),
   component: PemeriksaanPage,
 });
 
-const TEMPLATES: Record<string, { diagnosis: string; icd: string; treatment: string }> = {
-  katarak: { diagnosis: "Katarak Senilis", icd: "H25.9", treatment: "Edukasi pasien, rencanakan operasi katarak phacoemulsifikasi" },
-  konjungtivitis: { diagnosis: "Konjungtivitis", icd: "H10.9", treatment: "Antibiotik tetes mata 4x sehari, kompres, kontrol 5 hari" },
-  glaukoma: { diagnosis: "Glaukoma", icd: "H40.9", treatment: "Timolol 0.5% 2x sehari, kontrol TIO 2 minggu" },
-  refraksi: { diagnosis: "Refraksi Anomali", icd: "H52.7", treatment: "Resep kacamata sesuai pemeriksaan" },
-  retinopati: { diagnosis: "Retinopati Diabetik", icd: "H36.0", treatment: "Kontrol gula darah, rujuk retina, OCT" },
-  kering: { diagnosis: "Sindrom Mata Kering", icd: "H04.123", treatment: "Air mata buatan 4-6x/hari, kompres hangat" },
-  kontrol: { diagnosis: "Kontrol pasca operasi", icd: "Z48.8", treatment: "Lanjutkan obat tetes, jaga kebersihan, kontrol 1 minggu" },
-};
+type PemTemplate = { id: string; code: string; label: string; diagnosis: string; icd10_code: string | null; treatment: string | null };
 
 function PemeriksaanPage() {
   const qc = useQueryClient();
@@ -51,6 +54,10 @@ function PemeriksaanPage() {
   const callVisits = useServerFn(listVisits);
   const callDetail = useServerFn(getVisitDetail);
   const callSave = useServerFn(upsertMedicalRecord);
+  const callTpl = useServerFn(listPemeriksaanTemplate);
+  const tplQ = useQuery({ queryKey: ["klinik","pemeriksaan-tpl"], queryFn: () => callTpl({ data: {} }) });
+  const templates = (tplQ.data ?? []) as PemTemplate[];
+
 
   const [selVisit, setSelVisit] = useState<string | null>(null);
 
@@ -97,9 +104,9 @@ function PemeriksaanPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const applyTpl = (k: string) => {
-    const t = TEMPLATES[k]; if (!t || !form) return;
-    setForm({ ...form, diagnosis: t.diagnosis, icd10_code: t.icd, treatment_plan: t.treatment });
+  const applyTpl = (id: string) => {
+    const t = templates.find((x) => x.id === id); if (!t || !form) return;
+    setForm({ ...form, diagnosis: t.diagnosis, icd10_code: t.icd10_code ?? "", treatment_plan: t.treatment ?? "" });
   };
 
   const [showResep, setShowResep] = useState(false);
@@ -147,7 +154,7 @@ function PemeriksaanPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="text-sm font-semibold">Template Cepat:</span>
-                  {Object.keys(TEMPLATES).map((k) => <Button key={k} size="sm" variant="outline" onClick={() => applyTpl(k)}>{k}</Button>)}
+                  {templates.length === 0 ? <span className="text-xs text-muted-foreground">Belum ada template</span> : templates.map((t) => <Button key={t.id} size="sm" variant="outline" onClick={() => applyTpl(t.id)}>{t.label}</Button>)}
                 </div>
                 <div><Label>Anamnesis / Keluhan</Label><AutoTextarea value={form.anamnesis} onChange={(e) => setForm({ ...form, anamnesis: e.target.value })} /></div>
                 <div className="grid grid-cols-4 gap-2">
@@ -182,7 +189,7 @@ function PemeriksaanPage() {
         </Card>
       </div>
 
-      {form && <ResepDialog open={showResep} onClose={() => setShowResep(false)} visit_id={form.visit_id} pasien_id={form.pasien_id} dokter_id={form.dokter_id} onCreated={() => qc.invalidateQueries({ queryKey: ["klinik"] })} />}
+      {form && <ResepDialog open={showResep} onClose={() => setShowResep(false)} visit_id={form.visit_id} pasien_id={form.pasien_id} dokter_id={form.dokter_id} alergi={(detailQ.data?.visit as { apps_pasien?: { alergi?: string | null } } | undefined)?.apps_pasien?.alergi ?? null} onCreated={() => qc.invalidateQueries({ queryKey: ["klinik"] })} />}
     </div>
   );
 }
@@ -248,11 +255,17 @@ function RmHistoryPanel({ visitId }: { visitId: string }) {
   );
 }
 
-function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; onCreated: () => void }) {
+function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; alergi: string | null; onCreated: () => void }) {
   const callObat = useServerFn(listObat);
   const callCreate = useServerFn(createPrescription);
   const callPreview = useServerFn(previewInteractions);
-  const obatQ = useQuery({ queryKey: ["klinik","obat-all"], queryFn: () => callObat({ data: {} }), enabled: open });
+  const [rawSearch, setRawSearch] = useState("");
+  const search = useDebounce(rawSearch, 300);
+  const obatQ = useQuery({
+    queryKey: ["klinik","obat-search", search],
+    queryFn: () => callObat({ data: { q: search || undefined, active_only: true, limit: 200 } }),
+    enabled: open,
+  });
   type Item = { obat_id: string; obat_name: string; dosage: string; frequency: string; duration: string; quantity: number; unit_price: number };
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState("");
@@ -260,7 +273,7 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
   const addItem = (o: { id: string; name: string; price: number }) => setItems([...items, { obat_id: o.id, obat_name: o.name, dosage: "", frequency: "3x sehari", duration: "5 hari", quantity: 1, unit_price: Number(o.price) }]);
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { visit_id, pasien_id, dokter_id, notes, items } as never }),
-    onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); },
+    onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); setRawSearch(""); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -273,11 +286,20 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
 
   type Obat = { id: string; name: string; code: string; price: number; stock: number; unit: string };
   const obat = (obatQ.data ?? []) as Obat[];
+  const total = items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0);
+  const alergiList = (alergi ?? "").split(/[,;\n]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const alergiHit = items.filter((it) => alergiList.some((a) => it.obat_name.toLowerCase().includes(a)));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader><DialogTitle>Buat Resep</DialogTitle></DialogHeader>
+        {alergi && (
+          <div role="note" className="rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+            <b>Alergi pasien:</b> {alergi}
+            {alergiHit.length > 0 && <div className="mt-1 font-semibold">⚠ Item resep mengandung alergen: {alergiHit.map((i) => i.obat_name).join(", ")}</div>}
+          </div>
+        )}
         {warnings.length > 0 && (
           <div role="alert" aria-live="polite" className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
             <div className="mb-1 font-semibold">⚠ Peringatan interaksi obat</div>
@@ -291,9 +313,12 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
         )}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Daftar Obat</Label>
+            <Label>Cari Obat</Label>
+            <Input value={rawSearch} onChange={(e) => setRawSearch(e.target.value)} placeholder="Nama / kode / kategori…" className="mb-2" />
             <div className="max-h-72 overflow-y-auto rounded-md border">
-              {obat.map((o) => (
+              {obatQ.isLoading ? <p className="p-2 text-xs text-muted-foreground">Memuat…</p>
+                : obat.length === 0 ? <p className="p-2 text-xs text-muted-foreground">Tidak ada obat cocok.</p>
+                : obat.map((o) => (
                 <button key={o.id} onClick={() => addItem(o)} className="block w-full border-b p-2 text-left text-sm hover:bg-muted/40">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{o.name}</span>
@@ -305,12 +330,15 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
             </div>
           </div>
           <div>
-            <Label>Resep ({items.length} item)</Label>
+            <Label>Resep ({items.length} item) · Total Rp {total.toLocaleString("id-ID")}</Label>
             <div className="max-h-72 overflow-y-auto rounded-md border p-2 space-y-2">
               {items.map((it, idx) => (
                 <div key={idx} className="rounded border p-2 text-xs">
-                  <div className="flex items-center justify-between"><span className="font-medium">{it.obat_name}</span>
-                    <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button></div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{it.obat_name}</span>
+                    <span className="text-muted-foreground">Rp {(Number(it.quantity) * Number(it.unit_price)).toLocaleString("id-ID")}</span>
+                    <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
+                  </div>
                   <div className="mt-1 grid grid-cols-2 gap-1">
                     <Input placeholder="Dosis" value={it.dosage} onChange={(e) => { const c = [...items]; c[idx].dosage = e.target.value; setItems(c); }} />
                     <Input placeholder="Frek." value={it.frequency} onChange={(e) => { const c = [...items]; c[idx].frequency = e.target.value; setItems(c); }} />

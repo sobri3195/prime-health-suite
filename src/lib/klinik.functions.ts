@@ -140,10 +140,18 @@ const ObatSchema = z.object({
 
 export const listObat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ q: z.string().optional(), low_stock_only: z.boolean().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    q: z.string().optional(), low_stock_only: z.boolean().optional(),
+    active_only: z.boolean().optional(),
+    limit: z.number().int().min(1).max(2000).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    let q = sb.from("klinik_obat").select("*").order("name").limit(500);
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    let q = sb.from("klinik_obat").select("*").order("name").range(offset, offset + limit - 1);
+    if (data.active_only) q = q.eq("is_active", true);
     if (data.q) q = q.or(`name.ilike.%${data.q}%,code.ilike.%${data.q}%,category.ilike.%${data.q}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -191,9 +199,16 @@ export const stockMovement = createServerFn({ method: "POST" })
 
 export const listStockMovement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ obat_id: z.string().uuid().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    obat_id: z.string().uuid().optional(),
+    limit: z.number().int().min(1).max(1000).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
-    let q = (context.supabase as Supa).from("klinik_stock_movement").select("*, klinik_obat(name,code,unit)").order("created_at", { ascending: false }).limit(data.limit ?? 100);
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
+    let q = (context.supabase as Supa).from("klinik_stock_movement")
+      .select("*, klinik_obat(name,code,unit)")
+      .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     if (data.obat_id) q = q.eq("obat_id", data.obat_id);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -449,12 +464,14 @@ export const listVisits = createServerFn({ method: "POST" })
     pasien_id: z.string().uuid().optional(),
     dokter_id: z.string().uuid().optional(),
     status: z.string().optional(),
-    limit: z.number().optional(),
+    limit: z.number().int().min(1).max(1000).optional(),
+    offset: z.number().int().min(0).optional(),
   }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
     let q = (context.supabase as Supa).from("klinik_visit")
       .select("*, apps_pasien(no_rm,nama,patient_type), fin_dokter(name)")
-      .order("visit_date", { ascending: false }).limit(data.limit ?? 100);
+      .order("visit_date", { ascending: false }).range(offset, offset + limit - 1);
     if (data.date) {
       const next = new Date(data.date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
       q = q.gte("visit_date", data.date + "T00:00:00").lt("visit_date", next.toISOString().slice(0,10) + "T00:00:00");
@@ -550,11 +567,16 @@ export const previewInteractions = createServerFn({ method: "POST" })
 
 export const listPrescription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    status: z.string().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
     let q = (context.supabase as Supa).from("klinik_prescription")
-      .select("*, apps_pasien(no_rm,nama), fin_dokter(name), klinik_prescription_item(*)")
-      .order("created_at", { ascending: false }).limit(data.limit ?? 100);
+      .select("*, apps_pasien(no_rm,nama,alergi), fin_dokter(name), klinik_prescription_item(*)")
+      .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -625,6 +647,10 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
       if (!ie) { inv = invoice; break; }
+      // Log observability (attempt, code, constraint) untuk membedakan collision no_invoice
+      // (retryable) dari 23505 lain seperti source_visit_id (idempoten → race parallel).
+      // eslint-disable-next-line no-console
+      console.warn("[generateInvoiceFromVisit] insert failed", { attempt, code: ie.code, constraint: (ie as { details?: string }).details, message: ie.message });
       // 23505 pada source_visit_id → invoice sudah dibuat oleh request paralel
       if (ie.code === "23505") {
         const { data: race } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
@@ -925,14 +951,56 @@ const MASTER_TABLE_MAP: Record<keyof typeof MASTER_TABLES, string> = {
 
 export const listMaster = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ key: z.enum(["dokter","payer","layanan","kategori_layanan","obat","jadwal"]) }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    key: z.enum(["dokter","payer","layanan","kategori_layanan","obat","jadwal"]),
+    include_inactive: z.boolean().optional(),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
     const table = MASTER_TABLE_MAP[data.key];
     const cols = MASTER_TABLES[data.key];
-    const { data: rows, error } = await sb.from(table).select(cols).limit(500);
+    let q = sb.from(table).select(cols).limit(500);
+    // Default: sembunyikan obat non-aktif dari dropdown resep, kecuali diminta eksplisit.
+    if (data.key === "obat" && !data.include_inactive) q = q.eq("is_active", true);
+    const { data: rows, error } = await q;
     if (error) throw error;
     return (rows ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
+  });
+
+/* =============================================================
+ * TEMPLATE PEMERIKSAAN — master klinis
+ * ============================================================*/
+export const listPemeriksaanTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ include_inactive: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("klinik_template_pemeriksaan" as never).select("*").order("label");
+    if (!data.include_inactive) q = q.eq("is_active", true);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return (rows ?? []) as unknown as Array<{ id: string; code: string; label: string; diagnosis: string; icd10_code: string | null; treatment: string | null; is_active: boolean }>;
+  });
+
+export const upsertPemeriksaanTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    code: z.string().min(1),
+    label: z.string().min(1),
+    diagnosis: z.string().min(1),
+    icd10_code: z.string().optional().nullable(),
+    treatment: z.string().optional().nullable(),
+    is_active: z.boolean().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const payload = { ...data, created_by: context.userId };
+    const { error } = data.id
+      ? await sb.from("klinik_template_pemeriksaan" as never).update(payload).eq("id", data.id)
+      : await sb.from("klinik_template_pemeriksaan" as never).insert(payload);
+    if (error) throw error;
+    return { ok: true };
   });
 
 /* =============================================================

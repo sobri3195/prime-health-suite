@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Pencil, Download, ArrowDownUp, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
   head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
@@ -41,7 +42,8 @@ function ObatPage() {
   const [moveQty, setMoveQty] = useState("");
   const [moveNote, setMoveNote] = useState("");
 
-  const listQ = useQuery({ queryKey: ["klinik","obat",{q,low}], queryFn: () => callList({ data: { q: q || undefined, low_stock_only: low } }) });
+  const debQ = useDebounce(q, 300);
+  const listQ = useQuery({ queryKey: ["klinik","obat",{q:debQ,low}], queryFn: () => callList({ data: { q: debQ || undefined, low_stock_only: low } }) });
   const movesQ = useQuery({ queryKey: ["klinik","stock-mvmt"], queryFn: () => callMoves({ data: {} }) });
 
   const upsertM = useMutation({ mutationFn: (d: Partial<Obat>) => callUpsert({ data: d as never }),
