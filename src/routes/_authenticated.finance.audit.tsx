@@ -108,14 +108,16 @@ function AuditPage() {
   const [q, setQ] = useState(() => initialParams?.get("q") ?? "");
   const [entity, setEntity] = useState(() => initialParams?.get("entity") ?? "all");
   const [action, setAction] = useState(() => initialParams?.get("action") ?? "all");
+  const [onlyStar, setOnlyStar] = useState(() => initialParams?.get("star") === "1");
   useEffect(() => {
     if (typeof window === "undefined") return;
     const u = new URL(window.location.href);
     if (q) u.searchParams.set("q", q); else u.searchParams.delete("q");
     if (entity !== "all") u.searchParams.set("entity", entity); else u.searchParams.delete("entity");
     if (action !== "all") u.searchParams.set("action", action); else u.searchParams.delete("action");
+    if (onlyStar) u.searchParams.set("star", "1"); else u.searchParams.delete("star");
     window.history.replaceState({}, "", u);
-  }, [q, entity, action]);
+  }, [q, entity, action, onlyStar]);
   const [detail, _setDetail] = useState<any | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
@@ -159,7 +161,6 @@ function AuditPage() {
     if (typeof window === "undefined") return {};
     try { return JSON.parse(localStorage.getItem("fin-audit-starred") || "{}"); } catch { return {}; }
   });
-  const [onlyStar, setOnlyStar] = useState(false);
   const toggleStar = (id: string) => setStarred((s) => {
     const n = { ...s };
     if (n[id]) delete n[id]; else n[id] = true;
