@@ -1319,6 +1319,7 @@ function AuditPage() {
               ["[ / ]", "Lompat detail -10 / +10 baris"],
               ["{ / }", "Lompat detail -50 / +50 baris"],
               ["w", "Salin baris (detail / pertama) sebagai CSV line"],
+              ["l", "Salin permalink baris (URL dengan ?id=…)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
