@@ -5,7 +5,10 @@ type Cell = string | number | boolean | null | undefined;
 
 function escape(v: Cell): string {
   if (v === null || v === undefined) return "";
-  const s = String(v);
+  let s = String(v);
+  // Neutralize spreadsheet formula injection: prefix with single quote when
+  // the value starts with a formula trigger character (=, +, -, @, TAB, CR).
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
