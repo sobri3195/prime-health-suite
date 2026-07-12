@@ -17,11 +17,15 @@ export function PatientWins() {
   const callRedeem = useServerFn(redeemReward);
   const callMyRedeem = useServerFn(listMyRedeem);
   const [period, setPeriod] = useState<"week" | "month" | "all">("week");
-  const [historyLimit, setHistoryLimit] = useState(10);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 10;
   const poinQ = useQuery({ queryKey: ["apps", "poin"], queryFn: () => callPoin() });
   const boardQ = useQuery({ queryKey: ["apps", "leaderboard", period], queryFn: () => callBoard({ data: { period } }) });
   const rewardQ = useQuery({ queryKey: ["apps", "reward"], queryFn: () => callReward() });
-  const myRedeemQ = useQuery({ queryKey: ["apps", "my-redeem"], queryFn: () => callMyRedeem() });
+  const myRedeemQ = useQuery({
+    queryKey: ["apps", "my-redeem", historyPage],
+    queryFn: () => callMyRedeem({ data: { page: historyPage, pageSize: HISTORY_PAGE_SIZE } }),
+  });
   const [voucher, setVoucher] = useState<string | null>(null);
   const m = useMutation({
     mutationFn: (id: string) => callRedeem({ data: { reward_id: id } }),
