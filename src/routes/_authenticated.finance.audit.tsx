@@ -438,6 +438,15 @@ function AuditPage() {
             </button>
           ));
         })()}
+        {rows.length > 0 && (() => {
+          const counts: Record<string, number> = {};
+          for (const r of rows as any[]) counts[r.entity] = (counts[r.entity] ?? 0) + 1;
+          return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([e, n]) => (
+            <button key={e} type="button" onClick={() => { setEntity(e); toast.success(`Filter entity: ${e}`); }} title={`Filter entity ${e}`}>
+              <Badge variant="outline" className="cursor-pointer hover:ring-2 hover:ring-primary/40">{e}: {n}</Badge>
+            </button>
+          ));
+        })()}
         <span className="ml-auto">Klik baris untuk melihat diff.</span>
       </div>
 
