@@ -381,6 +381,15 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: minggu ini (W)`);
       }
+      else if (!typing && e.key === "M") {
+        e.preventDefault();
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        setRange({ from: iso(start), to: iso(end), preset: "custom" });
+        toast.success(`Rentang: bulan ini (M)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -918,6 +927,7 @@ function AuditPage() {
               ["1-9", "Muat preset ke-1..9 langsung"],
               ["T", "Set rentang tanggal ke hari ini"],
               ["W", "Set rentang tanggal ke minggu ini"],
+              ["M", "Set rentang tanggal ke bulan ini"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
