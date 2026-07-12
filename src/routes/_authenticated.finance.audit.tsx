@@ -800,6 +800,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "i") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.id) { toast.info("Tidak ada baris"); return; }
+        navigator.clipboard.writeText(String(target.id)).then(
+          () => toast.success("Row ID disalin (i)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1388,6 +1397,7 @@ function AuditPage() {
               ["k", "Salin timestamp baris target"],
               ["u", "Salin actor_id baris target"],
               ["y", "Salin JSON baris target ke clipboard"],
+              ["i", "Salin row id baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
