@@ -103,7 +103,7 @@ function exportAuditCsv(rows: any[]) {
 
 function AuditPage() {
   const { isAdmin } = useFinanceAccess();
-  const { from, to } = useFinanceDate();
+  const { from, to, setRange } = useFinanceDate();
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
@@ -526,6 +526,21 @@ function AuditPage() {
                 }}
                 title="Filter semua entri dari aktor ini"
               >👤 Aktor ini</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  const d = new Date(detail.created_at);
+                  const iso = (dt: Date) => dt.toISOString().slice(0, 10);
+                  const a = new Date(d); a.setDate(a.getDate() - 1);
+                  const b = new Date(d); b.setDate(b.getDate() + 1);
+                  setRange({ from: iso(a), to: iso(b), preset: "custom" });
+                  setDetail(null);
+                  toast.success(`Rentang ${iso(a)} → ${iso(b)}`);
+                }}
+                title="Set rentang tanggal ±1 hari dari entri ini"
+              >📅 ±1 hari</Button>
             </DialogTitle>
           </DialogHeader>
           {detail && (
