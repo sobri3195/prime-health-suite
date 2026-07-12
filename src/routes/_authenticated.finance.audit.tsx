@@ -297,6 +297,13 @@ function AuditPage() {
           return next;
         });
       }
+      else if (!typing && e.key === "u") {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(window.location.href);
+          toast.success("URL filter disalin (u)");
+        } catch { toast.error("Gagal menyalin URL"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
