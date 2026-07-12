@@ -752,6 +752,17 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "l") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.id) { toast.info("Tidak ada baris untuk ditautkan"); return; }
+        const url = new URL(window.location.href);
+        url.searchParams.set("id", String(target.id));
+        navigator.clipboard.writeText(url.toString()).then(
+          () => toast.success("Permalink baris disalin (l)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
