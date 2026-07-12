@@ -306,6 +306,16 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
                   ))}
                 </div>
               </div>
+              <div className="mt-2"><Label>Ukuran Kertas Cetak</Label>
+                <Select value={paper} onValueChange={(v) => setPaper(v as typeof paper)}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="58mm">Thermal 58mm</SelectItem>
+                    <SelectItem value="80mm">Thermal 80mm</SelectItem>
+                    <SelectItem value="a5">A5 (148mm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {paid > total ? (
                 <div className="mt-2 flex justify-between rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-sm font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
                   <span>Kembalian</span><span>Rp {(paid - total).toLocaleString("id-ID")}</span>
