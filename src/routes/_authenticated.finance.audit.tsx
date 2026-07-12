@@ -533,6 +533,11 @@ function AuditPage() {
         if (detail) setDetail(null);
         toast.success("Kembali ke atas (0)");
       }
+      else if (!typing && e.key === "p") {
+        e.preventDefault();
+        window.print();
+        toast.success("Cetak halaman (p)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1064,6 +1069,7 @@ function AuditPage() {
               ["*", "Lompat ke entri bertanda pertama"],
               ["< / >", "Navigasi antar entri bertanda (prev/next)"],
               ["0", "Scroll ke atas & tutup detail"],
+              ["p", "Cetak halaman audit saat ini"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
