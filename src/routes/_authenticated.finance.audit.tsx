@@ -161,7 +161,6 @@ function AuditPage() {
     if (typeof window === "undefined") return {};
     try { return JSON.parse(localStorage.getItem("fin-audit-starred") || "{}"); } catch { return {}; }
   });
-  const [onlyStar, setOnlyStar] = useState(() => initialParams?.get("star") === "1");
   const toggleStar = (id: string) => setStarred((s) => {
     const n = { ...s };
     if (n[id]) delete n[id]; else n[id] = true;
