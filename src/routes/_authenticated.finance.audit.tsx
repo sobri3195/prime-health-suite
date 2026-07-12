@@ -114,8 +114,9 @@ function AuditPage() {
     if (q) u.searchParams.set("q", q); else u.searchParams.delete("q");
     if (entity !== "all") u.searchParams.set("entity", entity); else u.searchParams.delete("entity");
     if (action !== "all") u.searchParams.set("action", action); else u.searchParams.delete("action");
+    if (onlyStar) u.searchParams.set("star", "1"); else u.searchParams.delete("star");
     window.history.replaceState({}, "", u);
-  }, [q, entity, action]);
+  }, [q, entity, action, onlyStar]);
   const [detail, _setDetail] = useState<any | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
