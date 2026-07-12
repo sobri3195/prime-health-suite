@@ -1,14 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type DiagnoseInput = {
-  keluhan: string;
-  gejala: string[];
-  durasi: string;
-  nyeri: number;
-  usia?: number | null;
-  riwayat?: string;
-};
+// Bounded schema mirrors saveAiHistory limits to prevent oversized/malformed
+// payloads from reaching the paid AI gateway.
+const diagnoseSchema = z.object({
+  keluhan: z.string().trim().max(2000),
+  gejala: z.array(z.string().trim().max(120)).max(30).default([]),
+  durasi: z.string().trim().max(120).default(""),
+  nyeri: z.number().min(0).max(10),
+  usia: z.number().int().min(0).max(130).nullable().optional(),
+  riwayat: z.string().trim().max(2000).optional().default(""),
+});
+
+export type DiagnoseInput = z.input<typeof diagnoseSchema>;
 
 export type DiagnoseResult = {
   risk: "Rendah" | "Sedang" | "Tinggi";
@@ -31,7 +36,7 @@ Aturan:
 
 export const diagnoseEye = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: DiagnoseInput) => d)
+  .inputValidator((d: DiagnoseInput) => diagnoseSchema.parse(d))
   .handler(async ({ data }): Promise<DiagnoseResult> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY tidak tersedia");

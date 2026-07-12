@@ -105,7 +105,7 @@ const invoiceItemSchema = z.object({
 export const listInvoices = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; q?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     let q = sb.from("fin_invoice").select("*").order("tanggal", { ascending: false }).limit(500);
     if (data.from) q = q.gte("tanggal", data.from);
@@ -119,7 +119,7 @@ export const listInvoices = createServerFn({ method: "POST" })
 export const getInvoice = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.id).single();
     const { data: items } = await sb.from("fin_invoice_item").select("*").eq("invoice_id", data.id);
@@ -147,7 +147,7 @@ export const upsertInvoice = createServerFn({ method: "POST" })
     id: d.id ? z.string().uuid().parse(d.id) : undefined,
     items: z.array(invoiceItemSchema).min(1).parse(d.items),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const subtotal = data.items.reduce((a, it) => a + Number(it.tarif) * Number(it.qty), 0);
     const diskon = Number(data.diskon ?? 0);
@@ -222,7 +222,7 @@ export const upsertInvoice = createServerFn({ method: "POST" })
       ],
     });
     await sb.from("fin_invoice").update({ posted_journal_id: invEntry.id, posted_at: new Date().toISOString() }).eq("id", invoice.id);
-    await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "invoice", entity_id: invoice.id, entity_no: invoice.no_invoice, after: invoice });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: data.id ? "edit" : "create", entity: "invoice", entity_id: invoice.id, entity_no: invoice.no_invoice, after: invoice });
     return { invoice };
   });
 
@@ -233,7 +233,7 @@ export const voidInvoice = createServerFn({ method: "POST" })
     reason: z.string().min(3).parse(d.reason),
     kind: d.kind ?? "void",
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.id).single();
     if (!inv) throw new Error("Invoice tidak ditemukan");
@@ -248,7 +248,7 @@ export const voidInvoice = createServerFn({ method: "POST" })
     for (const p of pays ?? []) {
       await reverseJournal("payment", p.id, new Date().toISOString().slice(0, 10), `Invoice ${data.kind}: ${data.reason}`);
     }
-    await writeFinAudit({ action: "void", entity: "invoice", entity_id: data.id, entity_no: inv.no_invoice, reason: data.reason, before: inv });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "void", entity: "invoice", entity_id: data.id, entity_no: inv.no_invoice, reason: data.reason, before: inv });
     return { ok: true };
   });
 
@@ -256,7 +256,7 @@ export const voidInvoice = createServerFn({ method: "POST" })
 export const listPayments = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     let q = sb.from("fin_pembayaran").select("*, fin_invoice(no_invoice, patient_name, patient_code, total)").order("tanggal", { ascending: false }).limit(500);
     if (data.from) q = q.gte("tanggal", data.from);
@@ -282,7 +282,7 @@ export const createPayment = createServerFn({ method: "POST" })
     invoice_id: z.string().uuid().parse(d.invoice_id),
     jumlah: z.number().positive().parse(d.jumlah),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.invoice_id).single();
     if (!inv) throw new Error("Invoice tidak ditemukan");
@@ -332,14 +332,14 @@ export const createPayment = createServerFn({ method: "POST" })
       ],
     });
     await sb.from("fin_pembayaran").update({ posted_journal_id: payEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", pay.id);
-    await writeFinAudit({ actor_email: data.actor, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "pay", entity: "payment", entity_id: pay.id, entity_no: `PAY-${inv.no_invoice}`, after: pay });
     return { payment: pay, mdr_applied: mdr };
   });
 
 export const deletePayment = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { id: string; reason?: string; actor?: string }) => ({ id: z.string().uuid().parse(d.id), reason: d.reason, actor: d.actor }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: pay } = await sb.from("fin_pembayaran").select("*").eq("id", data.id).single();
     if (!pay) throw new Error("Pembayaran tidak ditemukan");
@@ -350,7 +350,7 @@ export const deletePayment = createServerFn({ method: "POST" })
     });
     if (de) throw new Error(de.message);
     await reverseJournal("payment", data.id, new Date().toISOString().slice(0, 10), data.reason ?? "Hapus pembayaran");
-    await writeFinAudit({ actor_email: data.actor, action: "void", entity: "payment", entity_id: data.id, reason: data.reason, before: pay });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "void", entity: "payment", entity_id: data.id, reason: data.reason, before: pay });
     return { ok: true };
   });
 
@@ -365,7 +365,7 @@ const expenseItemSchema = z.object({
 export const listExpenses = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; q?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     let q = sb.from("fin_expense").select("*").order("tanggal", { ascending: false }).limit(500);
     if (data.from) q = q.gte("tanggal", data.from);
@@ -379,7 +379,7 @@ export const listExpenses = createServerFn({ method: "POST" })
 export const getExpense = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: hdr } = await sb.from("fin_expense").select("*").eq("id", data.id).single();
     const { data: items } = await sb.from("fin_expense_item").select("*").eq("expense_id", data.id);
@@ -406,7 +406,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
     id: d.id ? z.string().uuid().parse(d.id) : undefined,
     items: z.array(expenseItemSchema).min(1).parse(d.items),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const subtotal = data.items.reduce((a, it) => a + Number(it.qty) * Number(it.harga), 0);
     const pajak = Math.round(subtotal * Number(data.pajak_pct ?? 0) / 100);
@@ -480,7 +480,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
       ],
     });
     await sb.from("fin_expense").update({ posted_journal_id: expEntry.id, posted_at: new Date().toISOString(), status: "posted" }).eq("id", hdr.id);
-    await writeFinAudit({ actor_email: data.actor, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: data.id ? "edit" : "create", entity: "expense", entity_id: hdr.id, entity_no: hdr.no_voucher, after: hdr });
     return { expense: hdr };
   });
 
@@ -491,12 +491,12 @@ export const voidExpense = createServerFn({ method: "POST" })
     reason: z.string().min(3).parse(d.reason),
     actor: d.actor,
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: before } = await sb.from("fin_expense").select("*").eq("id", data.id).single();
     await sb.from("fin_expense").update({ status: "void", void_reason: data.reason }).eq("id", data.id);
     await reverseJournal("expense", data.id, new Date().toISOString().slice(0, 10), data.reason);
-    await writeFinAudit({ actor_email: data.actor, action: "void", entity: "expense", entity_id: data.id, entity_no: before?.no_voucher, reason: data.reason, before });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "void", entity: "expense", entity_id: data.id, entity_no: before?.no_voucher, reason: data.reason, before });
     return { ok: true };
   });
 
@@ -504,7 +504,7 @@ export const voidExpense = createServerFn({ method: "POST" })
 export const listJournal = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sb = await adminClient();
     let q = sb.from("fin_journal_entry").select("*, fin_journal_line(*)").order("tanggal", { ascending: false }).limit(500);
     if (data.from) q = q.gte("tanggal", data.from);

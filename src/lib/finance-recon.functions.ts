@@ -12,7 +12,7 @@ async function sb() {
 export const listBankStatement = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; bank?: string; matched?: "all" | "true" | "false" } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     let q = s.from("fin_bank_statement").select("*").order("tanggal", { ascending: false }).limit(1000);
     if (data.from) q = q.gte("tanggal", data.from);
@@ -41,7 +41,7 @@ export const importBankStatement = createServerFn({ method: "POST" })
     rows: z.array(importRowSchema).min(1).parse(d.rows),
     actor: d.actor,
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     const batch = `BATCH-${Date.now()}`;
     const payload = data.rows.map((r) => ({
@@ -57,7 +57,7 @@ export const importBankStatement = createServerFn({ method: "POST" })
     }));
     const { error, data: inserted } = await s.from("fin_bank_statement").insert(payload).select("id");
     if (error) throw new Error(error.message);
-    await writeFinAudit({ actor_email: data.actor, action: "import", entity: "bank_statement", entity_no: batch, after: { count: inserted?.length, bank: data.bank } });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "import", entity: "bank_statement", entity_no: batch, after: { count: inserted?.length, bank: data.bank } });
     return { count: inserted?.length ?? 0, batch };
   });
 
@@ -65,10 +65,10 @@ const deleteStmtSchema = z.object({ id: z.string().uuid(), actor: z.string().max
 export const deleteBankStatement = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: unknown) => deleteStmtSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     await s.from("fin_bank_statement").delete().eq("id", data.id);
-    await writeFinAudit({ actor_email: data.actor, action: "delete", entity: "bank_statement", entity_id: data.id });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "delete", entity: "bank_statement", entity_id: data.id });
     return { ok: true };
   });
 
@@ -78,7 +78,7 @@ export const deleteBankStatement = createServerFn({ method: "POST" })
 export const autoMatchStatement = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: { bank?: string; from?: string; to?: string; actor?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     let bq = s.from("fin_bank_statement").select("*").eq("matched", false).order("tanggal");
     if (data.bank) bq = bq.eq("bank", data.bank);
@@ -115,7 +115,7 @@ export const autoMatchStatement = createServerFn({ method: "POST" })
       await s.from("fin_bank_statement").update({ matched: true }).eq("id", st.id);
       matched++;
     }
-    await writeFinAudit({ actor_email: data.actor, action: "reconcile", entity: "bank_statement", after: { matched } });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "reconcile", entity: "bank_statement", after: { matched } });
     return { matched };
   });
 
@@ -123,11 +123,11 @@ const unmatchSchema = z.object({ statement_id: z.string().uuid(), actor: z.strin
 export const unmatchStatement = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: unknown) => unmatchSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     await s.from("fin_reconciliation").delete().eq("statement_id", data.statement_id);
     await s.from("fin_bank_statement").update({ matched: false }).eq("id", data.statement_id);
-    await writeFinAudit({ actor_email: data.actor, action: "unmatch", entity: "bank_statement", entity_id: data.statement_id });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "unmatch", entity: "bank_statement", entity_id: data.statement_id });
     return { ok: true };
   });
 
@@ -143,7 +143,7 @@ const adjustSchema = z.object({
 export const adjustStatement = createServerFn({ method: "POST" })
   .middleware([requireFinEdit])
   .inputValidator((d: unknown) => adjustSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     const { data: st } = await s.from("fin_bank_statement").select("*").eq("id", data.statement_id).single();
     if (!st) throw new Error("Statement tidak ditemukan");
@@ -167,14 +167,14 @@ export const adjustStatement = createServerFn({ method: "POST" })
       matched_by: data.actor ?? null, catatan: data.keterangan,
     });
     await s.from("fin_bank_statement").update({ matched: true }).eq("id", data.statement_id);
-    await writeFinAudit({ actor_email: data.actor, action: "post", entity: "journal", entity_id: entry.id, entity_no: no_jurnal, reason: `Penyesuaian rekonsiliasi`, after: entry });
+    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "post", entity: "journal", entity_id: entry.id, entity_no: no_jurnal, reason: `Penyesuaian rekonsiliasi`, after: entry });
     return { ok: true, no_jurnal };
   });
 
 export const reconSummary = createServerFn({ method: "POST" })
   .middleware([requireFinView])
   .inputValidator((d: { from?: string; to?: string; bank?: string } = {}) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const s = await sb();
     let q = s.from("fin_bank_statement").select("*");
     if (data.bank) q = q.eq("bank", data.bank);
