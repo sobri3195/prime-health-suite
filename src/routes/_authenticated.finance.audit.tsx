@@ -237,6 +237,17 @@ function AuditPage() {
         </Button>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 gap-1 px-2 text-[11px]"
+          onClick={() => qc.invalidateQueries({ queryKey: ["fin-audit"] })}
+          disabled={isFetching}
+          title="Segarkan sekarang"
+        >
+          <span className={`inline-block h-3 w-3 ${isFetching ? "animate-spin" : ""}`}>⟳</span>
+          {isFetching ? "Memuat…" : "Segarkan"}
+        </Button>
         {refreshMs > 0 && <span className="inline-flex items-center gap-1"><span className={`inline-block h-1.5 w-1.5 rounded-full ${isFetching ? "bg-emerald-500 animate-pulse" : "bg-emerald-500/50"}`} /> Live setiap {refreshMs / 1000}s</span>}
         {dataUpdatedAt > 0 && <span>· Diperbarui {new Date(dataUpdatedAt).toLocaleTimeString("id-ID")}</span>}
         {(q || entity !== "all" || action !== "all") && (
