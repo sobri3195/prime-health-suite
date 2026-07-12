@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
