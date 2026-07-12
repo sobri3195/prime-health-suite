@@ -248,6 +248,11 @@ function AuditPage() {
           return next;
         });
       }
+      else if (!typing && e.key === "s" && detail) {
+        e.preventDefault();
+        toggleStar(detail.id);
+        toast.success(starred[detail.id] ? "Tanda dihapus (s)" : "Entri ditandai (s)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
