@@ -899,6 +899,7 @@ function AuditPage() {
               ["N", "Ganti action ke nilai berikutnya"],
               ["P", "Simpan filter aktif sebagai preset"],
               ["L", "Muat preset berikutnya (cycle)"],
+              ["1-9", "Muat preset ke-1..9 langsung"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
