@@ -78,6 +78,21 @@ function csvEscape(v: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+function highlight(text: string, q: string): React.ReactNode {
+  if (!q) return text;
+  const needle = q.trim();
+  if (!needle) return text;
+  const idx = text.toLowerCase().indexOf(needle.toLowerCase());
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-500/30">{text.slice(idx, idx + needle.length)}</mark>
+      {text.slice(idx + needle.length)}
+    </>
+  );
+}
+
 function exportAuditCsv(rows: any[]) {
   const header = ["waktu","aktor","aksi","entity","entity_no","entity_id","alasan","changed_fields","diff"];
   const lines = [header.join(",")];
@@ -460,7 +475,7 @@ function AuditPage() {
                         className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
                         onClick={(e) => { e.stopPropagation(); setQ(r.actor_email ?? "system"); toast.success(`Filter aktor: ${r.actor_email ?? "system"}`); }}
                         title="Filter berdasarkan aktor ini"
-                      >{r.actor_email ?? "system"}</button>
+                      >{highlight(r.actor_email ?? "system", q)}</button>
                     </TableCell>
                   )}
                   {cols.aksi && (
@@ -492,12 +507,12 @@ function AuditPage() {
                             navigator.clipboard.writeText(v).then(() => toast.success(`Disalin: ${v}`));
                           }}
                           title="Klik untuk salin"
-                        >{r.entity_no ?? r.entity_id}</button>
+                        >{highlight(String(r.entity_no ?? r.entity_id), q)}</button>
                       ) : "—"}
                     </TableCell>
                   )}
                   {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
-                  {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>}
+                  {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ? highlight(r.reason, q) : "—"}</TableCell>}
                 </TableRow>
                 );
                 return nodes;
