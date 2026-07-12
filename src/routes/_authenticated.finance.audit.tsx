@@ -297,6 +297,13 @@ function AuditPage() {
           return next;
         });
       }
+      else if (!typing && e.key === "u") {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(window.location.href);
+          toast.success("URL filter disalin (u)");
+        } catch { toast.error("Gagal menyalin URL"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -824,6 +831,7 @@ function AuditPage() {
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
+              ["u", "Salin URL dengan filter aktif"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
