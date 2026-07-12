@@ -1491,6 +1491,7 @@ function AuditPage() {
               ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
               ["#", "Salin action baris target"],
               ["~", "Salin reason baris target"],
+              ["@", "Salin actor baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
