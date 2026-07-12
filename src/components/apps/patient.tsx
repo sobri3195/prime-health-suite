@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -38,6 +38,19 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
   );
 }
 
+function useSupabaseUid(): string | undefined {
+  const [uid, setUid] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => { if (!cancelled) setUid(data.user?.id); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!cancelled) setUid(session?.user?.id);
+    });
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
+  }, []);
+  return uid;
+}
+
 
 function Pill({ children, tone = "amber" }: { children: ReactNode; tone?: "amber" | "green" | "rose" | "navy" }) {
   const t = {
@@ -56,11 +69,12 @@ export function PatientBeranda() {
   const callQueue = useServerFn(getMyQueueToday);
   const callBookings = useServerFn(listMyBookings);
 
+  const authUid = useSupabaseUid();
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue(), refetchInterval: 60_000 });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
 
-  useAppsRealtime(profileQ.data?.profile?.user_id ?? undefined);
+  useAppsRealtime(authUid);
 
   const profile = profileQ.data?.profile;
   const queue = queueQ.data?.queue;
@@ -554,7 +568,8 @@ export function PatientProfil() {
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
   const p = profileQ.data?.profile;
-  useAppsRealtime(p?.user_id ?? undefined);
+  const authUid = useSupabaseUid();
+  useAppsRealtime(authUid);
 
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({
