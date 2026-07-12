@@ -82,7 +82,7 @@ function BillingPage() {
                   <TableCell><Badge variant={i.status === "paid" ? "default" : i.status === "partial" ? "secondary" : "destructive"}>{i.status}</Badge></TableCell>
                   <TableCell className="text-right">Rp {Number(i.total).toLocaleString("id-ID")}</TableCell>
                   <TableCell className="text-right">
-                    {i.status !== "paid" && (
+                    {i.status !== "paid" && i.status !== "void" && Number(i.total) - Number(i.dibayar ?? 0) > 0 && (
                       <Button size="sm" variant="outline" onClick={() => setPayInvoice({ id: i.id, no: i.no_invoice, total: Number(i.total), dibayar: Number(i.dibayar ?? 0), name: i.patient_name })}>
                         Tambah Bayar
                       </Button>
