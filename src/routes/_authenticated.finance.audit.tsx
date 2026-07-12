@@ -513,6 +513,19 @@ function AuditPage() {
                 }}
                 title="Filter entri serupa (entity + aksi)"
               >🔎 Serupa</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={!detail?.actor_email}
+                onClick={() => {
+                  if (!detail?.actor_email) return;
+                  setQ(detail.actor_email);
+                  setDetail(null);
+                  toast.success(`Filter aktor: ${detail.actor_email}`);
+                }}
+                title="Filter semua entri dari aktor ini"
+              >👤 Aktor ini</Button>
             </DialogTitle>
           </DialogHeader>
           {detail && (
