@@ -94,7 +94,6 @@ export function NotificationsPage() {
   });
 
   const filtered = notifQ.data?.rows ?? [];
-  }, [notifQ.data, q, typ, st]);
 
   return (
     <PageContainer>
