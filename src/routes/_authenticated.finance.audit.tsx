@@ -477,6 +477,25 @@ function AuditPage() {
           )}
         </DialogContent>
       </Dialog>
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Pintasan keyboard</DialogTitle></DialogHeader>
+          <div className="space-y-1.5 text-sm">
+            {[
+              ["/", "Fokus pencarian"],
+              ["Esc", "Reset filter / tutup dialog"],
+              ["j", "Detail baris berikutnya"],
+              ["k", "Detail baris sebelumnya"],
+              ["?", "Buka bantuan ini"],
+            ].map(([k, d]) => (
+              <div key={k} className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">{d}</span>
+                <kbd className="rounded border bg-muted px-2 py-0.5 font-mono text-xs">{k}</kbd>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
