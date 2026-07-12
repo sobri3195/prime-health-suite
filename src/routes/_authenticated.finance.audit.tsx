@@ -823,6 +823,7 @@ function AuditPage() {
               ["c", "Salin JSON entri terbuka"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
+              ["t", "Toggle format waktu (relatif/absolut)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
