@@ -379,6 +379,17 @@ export function PatientOrders() {
           ))}
         </div>
       )}
+      {total > pageSize && (
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">Halaman {page} dari {totalPages} · {total} pesanan</div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Prev</button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="rounded-md border border-[#e9dfb8] bg-white px-3 py-1 disabled:opacity-40">Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
