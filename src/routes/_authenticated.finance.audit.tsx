@@ -637,6 +637,13 @@ function AuditPage() {
         setDetail(first);
         toast.success("Detail baris pertama dibuka (~)");
       }
+      else if (!typing && e.key === "=") {
+        e.preventDefault();
+        if (entity === "all" && action === "all") { toast.info("Filter entity/action sudah kosong"); return; }
+        setEntity("all");
+        setAction("all");
+        toast.success("Filter entity & action direset (=)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1180,6 +1187,7 @@ function AuditPage() {
               ["(", "Filter entity = entity target"],
               [")", "Filter action = action target"],
               ["~", "Toggle detail (buka baris pertama / tutup)"],
+              ["=", "Reset filter entity & action"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
