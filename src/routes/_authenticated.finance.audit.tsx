@@ -311,6 +311,14 @@ function AuditPage() {
           toast.success(`JSON ${(rows as any[]).length} entri disalin (y)`);
         } catch { toast.error("Gagal menyalin JSON"); }
       }
+      else if (!typing && e.key === "a") {
+        e.preventDefault();
+        setRefreshMs((cur) => {
+          const next = cur > 0 ? 0 : 10000;
+          toast.success(next > 0 ? `Auto-refresh ON: ${next / 1000}s (a)` : "Auto-refresh OFF (a)");
+          return next;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -840,6 +848,7 @@ function AuditPage() {
               ["t", "Toggle format waktu (relatif/absolut)"],
               ["u", "Salin URL dengan filter aktif"],
               ["y", "Salin JSON semua entri hasil"],
+              ["a", "Toggle auto-refresh (10s)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
