@@ -132,7 +132,7 @@ export function PatientWins() {
           <div className="text-xs text-muted-foreground">{t("wins.history_empty")}</div>
         ) : (
           <div className="space-y-1">
-            {myRedeemQ.data!.redeem.slice(0, historyLimit).map((r: any) => (
+            {(myRedeemQ.data?.redeem ?? []).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between rounded-xl border border-[#e9dfb8] bg-white p-3 text-sm">
                 <div>
                   <div className="font-semibold">{r.reward?.nama}</div>
@@ -141,15 +141,26 @@ export function PatientWins() {
                 <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("id-ID")}</div>
               </div>
             ))}
-            {myRedeemQ.data!.redeem.length > historyLimit && (
-              <button
-                type="button"
-                onClick={() => setHistoryLimit((n) => n + 10)}
-                className="mt-2 w-full rounded-xl border border-[#e9dfb8] bg-white py-2 text-xs font-semibold text-[#6b5a16] hover:bg-[#fdf8e8]"
-              >
-                {t("common.loading").replace("…", "")} +10
-              </button>
-            )}
+            {(() => {
+              const total = myRedeemQ.data?.total ?? 0;
+              const totalPages = Math.max(1, Math.ceil(total / HISTORY_PAGE_SIZE));
+              if (totalPages <= 1) return null;
+              return (
+                <div className="mt-2 flex items-center justify-between text-[11px] text-[#6b5a16]">
+                  <button type="button" disabled={historyPage <= 1}
+                    onClick={() => setHistoryPage((n) => Math.max(1, n - 1))}
+                    className="rounded-xl border border-[#e9dfb8] bg-white px-3 py-1.5 font-semibold disabled:opacity-40">
+                    ← Prev
+                  </button>
+                  <span>{historyPage} / {totalPages}</span>
+                  <button type="button" disabled={historyPage >= totalPages}
+                    onClick={() => setHistoryPage((n) => Math.min(totalPages, n + 1))}
+                    className="rounded-xl border border-[#e9dfb8] bg-white px-3 py-1.5 font-semibold disabled:opacity-40">
+                    Next →
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
