@@ -163,18 +163,26 @@ export const cancelBooking = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("user_id", userId)
       .in("status", ["pending", "confirmed"])
-      .select("id, tanggal, jam_slot");
+      .select("id, tanggal, jam_slot, dokter_nama");
     if (error) throw new Error(error.message);
     if (!rows || rows.length === 0) {
       throw new Error("Booking tidak bisa dibatalkan karena sudah check-in / dipanggil / selesai.");
     }
-    const b = rows[0] as { tanggal: string; jam_slot: string };
-    await supabase
+    const b = rows[0] as { tanggal: string; jam_slot: string; dokter_nama: string | null };
+    // Reminder dikirim H-1 (lihat apps_send_booking_reminders). Batasi hapus ke jendela
+    // [tanggal-2, tanggal] dan cocokkan dokter+jam agar tidak menghapus notif booking lain.
+    const from = new Date(b.tanggal); from.setUTCDate(from.getUTCDate() - 2);
+    const to = new Date(b.tanggal); to.setUTCDate(to.getUTCDate() + 1);
+    let del = supabase
       .from("apps_notif")
       .delete()
       .eq("user_id", userId)
       .eq("type", "reminder")
-      .like("body", `%${b.jam_slot}%`);
+      .gte("created_at", from.toISOString())
+      .lt("created_at", to.toISOString())
+      .like("body", `%pukul ${b.jam_slot}%`);
+    if (b.dokter_nama) del = del.like("body", `%${b.dokter_nama}%`);
+    await del;
     return { ok: true };
   });
 
