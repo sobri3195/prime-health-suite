@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookOpen, ArrowLeft, Search, Share2, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { listArtikel, getArtikel, rateArtikel } from "@/lib/apps-cms.functions";
+import { friendlyError } from "@/lib/apps-error";
 import { useI18n } from "@/lib/i18n";
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
 import { toast } from "sonner";
