@@ -371,7 +371,7 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
                     <Input placeholder="Dosis" value={it.dosage} onChange={(e) => { const c = [...items]; c[idx].dosage = e.target.value; setItems(c); }} />
                     <Input placeholder="Frek." value={it.frequency} onChange={(e) => { const c = [...items]; c[idx].frequency = e.target.value; setItems(c); }} />
                     <Input placeholder="Durasi" value={it.duration} onChange={(e) => { const c = [...items]; c[idx].duration = e.target.value; setItems(c); }} />
-                    <Input type="number" placeholder="Qty" value={it.quantity} onChange={(e) => { const c = [...items]; c[idx].quantity = Number(e.target.value); setItems(c); }} />
+                    <Input type="number" min={0.1} step={0.1} placeholder="Qty" value={it.quantity} onChange={(e) => { const c = [...items]; c[idx].quantity = Math.max(0.1, Number(e.target.value) || 0.1); setItems(c); }} />
                   </div>
                 </div>
               ))}
