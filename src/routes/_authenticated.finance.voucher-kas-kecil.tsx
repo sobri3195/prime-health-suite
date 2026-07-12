@@ -30,7 +30,7 @@ function Page() {
   const sum = useMemo(() => {
     let masuk = 0, keluar = 0;
     for (const r of rows.filter((r) => r.status !== "void")) {
-      if (r.tipe === "penerimaan" || r.tipe === "replenish") masuk += Number(r.amount || 0);
+      if (r.tipe === "masuk" || r.tipe === "in" || r.tipe === "penerimaan" || r.tipe === "replenish") masuk += Number(r.amount || 0);
       else keluar += Number(r.amount || 0);
     }
     return { masuk, keluar, saldo: masuk - keluar };

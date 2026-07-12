@@ -14,14 +14,14 @@ export const Route = createFileRoute("/_authenticated/finance/kas-kecil")({
       fields={[
         { key: "no_voucher", label: "No Voucher" },
         { key: "tanggal", label: "Tanggal" },
-        { key: "tipe", label: "Tipe", type: "select", options: ["in", "out"] },
+        { key: "tipe", label: "Tipe", type: "select", options: ["masuk", "keluar"] },
         { key: "penerima", label: "Penerima/Pembayar" },
         { key: "amount", label: "Jumlah", type: "number" },
-        { key: "coa_lawan", label: "COA Lawan (biaya jika out; sumber jika in)" },
+        { key: "coa_lawan", label: "COA Lawan (biaya jika keluar; sumber jika masuk)" },
         { key: "keterangan", label: "Keterangan" },
         { key: "status", label: "Status", type: "select", options: ["posted", "draft", "void"] },
       ]}
-      newRow={() => ({ no_voucher: `KK-${Date.now()}`, tanggal: new Date().toISOString().slice(0, 10), tipe: "out", penerima: "", amount: 0, coa_lawan: "", keterangan: "", status: "posted" })}
+      newRow={() => ({ no_voucher: `KK-${Date.now()}`, tanggal: new Date().toISOString().slice(0, 10), tipe: "keluar", penerima: "", amount: 0, coa_lawan: "", keterangan: "", status: "posted" })}
     />
   ),
 });
