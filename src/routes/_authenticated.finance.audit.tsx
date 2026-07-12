@@ -103,8 +103,10 @@ function AuditPage() {
     if (typeof window === "undefined") return 0;
     return Number(localStorage.getItem("fin-audit-refresh") || 0);
   });
+  const [cols, setCols] = useState<Record<ColKey, boolean>>(() => loadCols());
   useEffect(() => { setPresets(loadPresets()); }, []);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(COL_KEY, JSON.stringify(cols)); }, [cols]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
