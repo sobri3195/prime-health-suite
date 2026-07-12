@@ -127,7 +127,7 @@ export function PatientChat() {
                     <AttachmentPreview path={m.attachment_path} name={m.attachment_name || "lampiran"} mime={m.attachment_mime} />
                   )}
                   <div className={`mt-1 text-[10px] ${isMe ? "text-white/70" : "text-muted-foreground"}`}>
-                    {new Date(m.created_at).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" })}
+                    {df.time(m.created_at)}
                   </div>
                 </div>
               </div>
