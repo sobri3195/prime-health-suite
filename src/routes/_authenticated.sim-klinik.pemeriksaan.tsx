@@ -197,7 +197,7 @@ const DIFF_FIELDS: Array<{ k: string; label: string }> = [
   { k: "treatment_plan", label: "Rencana Terapi" }, { k: "tindakan", label: "Tindakan" }, { k: "notes", label: "Catatan" },
 ];
 
-function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record<string, unknown> | null }) {
+function RmHistoryPanel({ visitId }: { visitId: string }) {
   const call = useServerFn(listMedicalRecordHistory);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const q = useQuery({
@@ -214,8 +214,9 @@ function RmHistoryPanel({ visitId, current }: { visitId: string; current: Record
       <div className="border-b bg-muted/30 px-3 py-2 text-xs font-semibold">Riwayat Versi Rekam Medis ({rows.length})</div>
       <ul className="divide-y">
         {rows.map((h, idx) => {
+          // Bandingkan snapshot tersimpan dgn snapshot tersimpan sebelumnya (bukan draft form yg belum disave).
           const prev = rows[idx + 1]?.snapshot ?? {};
-          const next = idx === 0 && current ? current : h.snapshot;
+          const next = h.snapshot;
           const diffs = DIFF_FIELDS.filter((f) => String(prev?.[f.k] ?? "") !== String(next?.[f.k] ?? ""));
           const open = openIdx === idx;
           return (
