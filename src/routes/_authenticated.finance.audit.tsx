@@ -821,6 +821,20 @@ function AuditPage() {
         w.print();
         toast.success("Cetak baris (p)");
       }
+      else if (!typing && e.key === "j") {
+        e.preventDefault();
+        const idx = detail ? (rows as any[]).findIndex((r: any) => r.id === detail.id) : -1;
+        const next = (rows as any[])[idx + 1];
+        if (next) { setDetail(next); toast.success("Baris berikutnya (j)"); }
+        else toast.info("Sudah di baris terakhir");
+      }
+      else if (!typing && e.key === "h") {
+        e.preventDefault();
+        const idx = detail ? (rows as any[]).findIndex((r: any) => r.id === detail.id) : -1;
+        const prev = (rows as any[])[idx - 1];
+        if (prev) { setDetail(prev); toast.success("Baris sebelumnya (h)"); }
+        else toast.info("Sudah di baris pertama");
+      }
     };
 
 
@@ -1411,6 +1425,7 @@ function AuditPage() {
               ["y", "Salin JSON baris target ke clipboard"],
               ["i", "Salin row id baris target"],
               ["p", "Cetak baris target di tab baru"],
+              ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
