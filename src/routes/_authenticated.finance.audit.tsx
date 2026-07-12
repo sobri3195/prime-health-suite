@@ -417,6 +417,16 @@ function AuditPage() {
         setRange({ from: iso, to: iso, preset: "custom" });
         toast.success(`Rentang: kemarin (H)`);
       }
+      else if (!typing && e.key === "7") {
+        e.preventDefault();
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        setRange({ from: iso(start), to: iso(end), preset: "custom" });
+        toast.success(`Rentang: 7 hari terakhir (7)`);
+      }
+
 
 
 
