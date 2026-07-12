@@ -37,29 +37,14 @@ export const addToCart = createServerFn({ method: "POST" })
   .inputValidator((d: { produk_id: string; qty?: number }) =>
     z.object({ produk_id: z.string().uuid(), qty: z.number().int().min(1).max(20).default(1) }).parse(d))
   .handler(async ({ data, context }) => {
-    // Server-side stock validation to prevent adding out-of-stock items.
-    const { data: prod, error: pe } = await context.supabase
-      .from("apps_produk").select("stok, is_active, nama").eq("id", data.produk_id).maybeSingle();
-    if (pe) throw new Error(pe.message);
-    if (!prod || !prod.is_active) throw new Error("Produk tidak tersedia");
-    const stok = prod.stok ?? 0;
-    if (stok <= 0) throw new Error(`Stok ${prod.nama} habis`);
-
-    const { data: ex } = await context.supabase
-      .from("apps_cart_item").select("id, qty")
-      .eq("user_id", context.userId).eq("produk_id", data.produk_id).maybeSingle();
-    if (ex) {
-      const nextQty = Math.min(20, stok, ex.qty + (data.qty ?? 1));
-      if (nextQty <= ex.qty) throw new Error(`Stok ${prod.nama} tidak mencukupi`);
-      const { error } = await context.supabase.from("apps_cart_item")
-        .update({ qty: nextQty }).eq("id", ex.id);
-      if (error) throw new Error(error.message);
-    } else {
-      const qty = Math.min(20, stok, data.qty ?? 1);
-      const { error } = await context.supabase.from("apps_cart_item")
-        .insert({ user_id: context.userId, produk_id: data.produk_id, qty });
-      if (error) throw new Error(error.message);
-    }
+    // Atomic: RPC takes an advisory lock on (user, produk), FOR UPDATE on
+    // apps_produk, validates stock, and upserts the cart row. Eliminates the
+    // check-then-insert race between concurrent tabs.
+    const { error } = await context.supabase.rpc("apps_add_to_cart_locked", {
+      _produk_id: data.produk_id,
+      _qty: data.qty ?? 1,
+    });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

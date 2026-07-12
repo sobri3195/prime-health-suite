@@ -91,16 +91,27 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       status: z.enum(VALID_STATUS),
-      pic: z.string().max(200).optional(),
+      // PIC is nullable (unassign) or a trimmed name that must match an
+      // active hr_employee.nama — validated below against the staff table.
+      pic: z.string().trim().max(100).nullable().optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
-    const patch = data.pic !== undefined
-      ? { status: data.status, pic: data.pic }
-      : { status: data.status };
+
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.pic !== undefined) {
+      const pic = data.pic && data.pic.length ? data.pic : null;
+      if (pic) {
+        const { data: emp, error: ee } = await supabase
+          .from("hr_employee").select("id").eq("nama", pic).eq("is_active", true).maybeSingle();
+        if (ee) throw new Error(ee.message);
+        if (!emp) throw new Error(`PIC "${pic}" tidak terdaftar pada daftar karyawan aktif`);
+      }
+      patch.pic = pic;
+    }
     const { error } = await supabase.from("apps_ticket").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
