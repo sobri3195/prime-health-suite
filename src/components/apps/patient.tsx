@@ -272,7 +272,7 @@ export function PatientAI() {
       setFotoPath(sig.path);
       toast.success(t("ai.upload_ok"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("ai.upload_failed"));
+      toast.error(friendlyError(e, t("ai.upload_failed")));
     } finally {
       setUploading(false);
     }
