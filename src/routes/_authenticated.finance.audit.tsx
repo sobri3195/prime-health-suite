@@ -480,11 +480,17 @@ function AuditPage() {
         setRange({ from: "", to: "", preset: "custom" });
         toast.success(`Semua filter direset (X)`);
       }
-
-
-
-
-
+      else if (!typing && e.key === "E" && (rows as any[]).length) {
+        e.preventDefault();
+        const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `finance-audit-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Export JSON (${(rows as any[]).length} baris) — E`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
