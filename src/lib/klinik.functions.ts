@@ -599,6 +599,8 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(no_rm,nama,patient_code), fin_dokter(id,name)").eq("id", data.visit_id).maybeSingle();
     if (error || !visit) throw error ?? new Error("Visit tidak ditemukan");
+    const patientCode = visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code;
+    if (!patientCode) throw new Error("Pasien belum memiliki No. RM. Lengkapi registrasi sebelum menerbitkan invoice.");
     // Idempotent: bila invoice non-void untuk visit ini sudah ada (partial UNIQUE), kembalikan itu.
     const { data: existing } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
     if (existing) return existing;
@@ -611,7 +613,7 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
       const { data: invoice, error: ie } = await sb.from("fin_invoice").insert({
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
         source_visit_id: data.visit_id,
-        patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
+        patient_code: patientCode,
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
         subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
