@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -46,7 +47,7 @@ function PenyusutanPage() {
       toast.success(`${r.created} baris penyusutan dibuat`);
       qc.invalidateQueries({ queryKey: ["master-crud", "fin_aset_penyusutan"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const postMut = useMutation({
@@ -55,7 +56,7 @@ function PenyusutanPage() {
       toast.success(`${r.posted} jurnal penyusutan diposting`);
       qc.invalidateQueries({ queryKey: ["master-crud", "fin_aset_penyusutan"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   return (

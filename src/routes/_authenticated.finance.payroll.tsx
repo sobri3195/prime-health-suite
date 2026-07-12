@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
@@ -64,7 +65,7 @@ function PayrollPage() {
       clinicAudit("Payroll", "create_run", run?.id, { bulan, tahun });
       qc.invalidateQueries({ queryKey: ["hr.runs"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const mFinal = useMutation({
@@ -75,7 +76,7 @@ function PayrollPage() {
       qc.invalidateQueries({ queryKey: ["hr.runs"] });
       qc.invalidateQueries({ queryKey: ["hr.run.detail", id] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const mPay = useMutation({
@@ -87,7 +88,7 @@ function PayrollPage() {
       qc.invalidateQueries({ queryKey: ["hr.run.detail", id] });
       qc.invalidateQueries({ queryKey: ["fin-expenses"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const runCols: Column<RunRow>[] = useMemo(() => [

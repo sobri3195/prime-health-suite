@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/apps-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
@@ -58,12 +59,12 @@ function PengeluaranPage() {
   const upsertMut = useMutation({
     mutationFn: (input: any) => upsert({ data: { ...input, actor: user?.email } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["fin-expenses"] }); toast.success("Voucher tersimpan"); setEditing(null); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
   const voidMut = useMutation({
     mutationFn: (v: { id: string; reason: string }) => voidFn({ data: v }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["fin-expenses"] }); toast.success("Voucher dibatalkan"); setVoidFor(null); setVoidReason(""); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   function startNew() {
