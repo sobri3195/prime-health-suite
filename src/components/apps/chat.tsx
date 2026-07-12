@@ -6,7 +6,7 @@ import { Send, MessageCircle, Paperclip, X, FileText, ImageIcon } from "lucide-r
 import { getOrCreateRoom, listChatMessages, sendChatMessage, signChatAttachment } from "@/lib/apps-chat.functions";
 import { friendlyError } from "@/lib/apps-error";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useDateFmt } from "@/lib/i18n";
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
 
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024; // 8 MB
