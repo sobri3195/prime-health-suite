@@ -155,6 +155,17 @@ function AuditPage() {
     return (localStorage.getItem("fin-audit-timefmt") as "relative" | "absolute") || "relative";
   });
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-timefmt", timeFmt); }, [timeFmt]);
+  const [starred, setStarred] = useState<Record<string, true>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem("fin-audit-starred") || "{}"); } catch { return {}; }
+  });
+  const [onlyStar, setOnlyStar] = useState(false);
+  const toggleStar = (id: string) => setStarred((s) => {
+    const n = { ...s };
+    if (n[id]) delete n[id]; else n[id] = true;
+    if (typeof window !== "undefined") localStorage.setItem("fin-audit-starred", JSON.stringify(n));
+    return n;
+  });
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
