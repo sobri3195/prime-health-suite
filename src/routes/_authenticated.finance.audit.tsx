@@ -621,6 +621,14 @@ function AuditPage() {
         setEntity(ent);
         toast.success(`Filter entity: ${ent}`);
       }
+      else if (!typing && e.key === ")") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const act = target?.action;
+        if (!act) { toast.info("Tidak ada action untuk difilter"); return; }
+        setAction(act);
+        toast.success(`Filter action: ${act}`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1162,6 +1170,7 @@ function AuditPage() {
               ["^", "Salin timestamp (created_at)"],
               ["&", "Salin ID baris audit"],
               ["(", "Filter entity = entity target"],
+              [")", "Filter action = action target"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
