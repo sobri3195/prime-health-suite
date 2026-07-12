@@ -48,7 +48,7 @@ export function PatientBelanjaReal() {
   });
 
   const produk = produkQ.data?.produk ?? [];
-  const cats = ["semua", ...Array.from(new Set(produk.map((p) => p.kategori)))];
+  const cats = ["semua", ...Array.from(new Set(produk.map((p) => p.kategori))).sort((a, b) => a.localeCompare(b, "id"))];
   const list = kategori === "semua" ? produk : produk.filter((p) => p.kategori === kategori);
   const cartCount = cartQ.data?.items.reduce((s, x) => s + x.qty, 0) ?? 0;
 
