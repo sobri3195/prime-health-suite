@@ -680,6 +680,18 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === ",") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const ts = target?.created_at;
+        if (!ts) { toast.info("Tidak ada tanggal untuk difilter"); return; }
+        const d = new Date(ts);
+        if (Number.isNaN(d.getTime())) { toast.info("Tanggal tidak valid"); return; }
+        const iso = d.toISOString().slice(0, 10);
+        setDateFrom?.(iso);
+        setDateTo?.(iso);
+        toast.success(`Filter tanggal: ${iso} (,)`);
+      }
     };
 
 
