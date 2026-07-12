@@ -1330,6 +1330,7 @@ function AuditPage() {
               ["{ / }", "Lompat detail -50 / +50 baris"],
               ["w", "Salin baris (detail / pertama) sebagai CSV line"],
               ["l", "Salin permalink baris (URL dengan ?id=…)"],
+              ["o", "Buka JSON baris di tab baru"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
