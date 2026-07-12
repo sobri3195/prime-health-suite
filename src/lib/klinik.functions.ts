@@ -199,9 +199,16 @@ export const stockMovement = createServerFn({ method: "POST" })
 
 export const listStockMovement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ obat_id: z.string().uuid().optional(), limit: z.number().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    obat_id: z.string().uuid().optional(),
+    limit: z.number().int().min(1).max(1000).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
-    let q = (context.supabase as Supa).from("klinik_stock_movement").select("*, klinik_obat(name,code,unit)").order("created_at", { ascending: false }).limit(data.limit ?? 100);
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
+    let q = (context.supabase as Supa).from("klinik_stock_movement")
+      .select("*, klinik_obat(name,code,unit)")
+      .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
     if (data.obat_id) q = q.eq("obat_id", data.obat_id);
     const { data: rows, error } = await q;
     if (error) throw error;
