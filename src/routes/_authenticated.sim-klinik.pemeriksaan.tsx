@@ -6,11 +6,21 @@ import { cn } from "@/lib/utils";
 
 function AutoTextarea({ value, onChange, className, ...rest }: React.ComponentProps<"textarea">) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
-  useLayoutEffect(() => {
+  const measure = () => {
     const el = ref.current; if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 400) + "px";
-  }, [value]);
+  };
+  useLayoutEffect(measure, [value]);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    // Re-measure saat container/sidebar toggle atau window resize
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, []);
   return <Textarea ref={ref} value={value} onChange={onChange} rows={2} className={cn("resize-none overflow-hidden min-h-[38px]", className)} {...rest} />;
 }
 
