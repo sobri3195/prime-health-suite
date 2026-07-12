@@ -876,6 +876,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "~") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.reason) { toast.info("Tidak ada reason"); return; }
+        navigator.clipboard.writeText(String(target.reason)).then(
+          () => toast.success("Reason disalin (~)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
