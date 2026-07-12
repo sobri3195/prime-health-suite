@@ -187,6 +187,7 @@ function AuditPage() {
           <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari aktor / no. / alasan…  ( / fokus, Esc reset)" className="pl-9 pr-10" />
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 items-center rounded border bg-muted px-1.5 text-[10px] font-mono text-muted-foreground">/</kbd>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setHelpOpen(true)} title="Pintasan keyboard (?)">?</Button>
         <Select value={entity} onValueChange={setEntity}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
