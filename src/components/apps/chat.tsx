@@ -76,7 +76,7 @@ export function PatientChat() {
       setBody(""); setFile(null); if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["apps", "chat-msgs", room!.id] });
     },
-    onError: (e: Error) => { setUploading(false); toast.error(e.message); },
+    onError: (e: unknown) => { setUploading(false); toast.error(friendlyError(e)); },
   });
 
   useEffect(() => {
