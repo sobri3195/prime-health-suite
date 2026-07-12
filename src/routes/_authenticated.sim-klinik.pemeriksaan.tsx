@@ -254,11 +254,17 @@ function RmHistoryPanel({ visitId }: { visitId: string }) {
   );
 }
 
-function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; onCreated: () => void }) {
+function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; alergi: string | null; onCreated: () => void }) {
   const callObat = useServerFn(listObat);
   const callCreate = useServerFn(createPrescription);
   const callPreview = useServerFn(previewInteractions);
-  const obatQ = useQuery({ queryKey: ["klinik","obat-all"], queryFn: () => callObat({ data: {} }), enabled: open });
+  const [rawSearch, setRawSearch] = useState("");
+  const search = useDebounce(rawSearch, 300);
+  const obatQ = useQuery({
+    queryKey: ["klinik","obat-search", search],
+    queryFn: () => callObat({ data: { q: search || undefined, active_only: true, limit: 200 } }),
+    enabled: open,
+  });
   type Item = { obat_id: string; obat_name: string; dosage: string; frequency: string; duration: string; quantity: number; unit_price: number };
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState("");
@@ -266,7 +272,7 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
   const addItem = (o: { id: string; name: string; price: number }) => setItems([...items, { obat_id: o.id, obat_name: o.name, dosage: "", frequency: "3x sehari", duration: "5 hari", quantity: 1, unit_price: Number(o.price) }]);
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { visit_id, pasien_id, dokter_id, notes, items } as never }),
-    onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); },
+    onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); setRawSearch(""); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -279,6 +285,9 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
 
   type Obat = { id: string; name: string; code: string; price: number; stock: number; unit: string };
   const obat = (obatQ.data ?? []) as Obat[];
+  const total = items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0);
+  const alergiList = (alergi ?? "").split(/[,;\n]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const alergiHit = items.filter((it) => alergiList.some((a) => it.obat_name.toLowerCase().includes(a)));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
