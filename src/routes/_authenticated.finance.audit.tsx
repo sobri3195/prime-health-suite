@@ -240,6 +240,14 @@ function AuditPage() {
         exportAuditCsv(rows as any[]);
         toast.success(`${(rows as any[]).length} entri diekspor ke CSV (e)`);
       }
+      else if (!typing && e.key === "d") {
+        e.preventDefault();
+        setDensity((v) => {
+          const next = v === "compact" ? "comfy" : "compact";
+          toast.success(`Kerapatan: ${next === "compact" ? "Kompak" : "Nyaman"} (d)`);
+          return next;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -758,6 +766,7 @@ function AuditPage() {
               ["k", "Detail baris sebelumnya"],
               ["r", "Reset semua filter aktif"],
               ["e", "Ekspor hasil ke CSV"],
+              ["d", "Toggle kerapatan (kompak/nyaman)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
