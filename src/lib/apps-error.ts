@@ -20,7 +20,10 @@ export function friendlyError(err: unknown, fallback = "Terjadi kesalahan. Coba 
   const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
   if (!raw) return fallback;
   for (const [re, msg] of PATTERNS) if (re.test(raw)) return msg;
-  // Trim postgres prefix like "PGRST116: ..." / long stack tails.
-  const clean = raw.replace(/^\w+:\s*/, "").split("\n")[0];
+  // Trim known postgres/postgrest prefixes only (e.g. "PGRST116: ...", "P0001: ...").
+  // Do NOT strip arbitrary "word:" — that eats legitimate user text like "Catatan: ...".
+  const clean = raw
+    .replace(/^(?:PGRST\d+|P\d{4}|[0-9A-Z]{5}|ERROR|Error|error):\s*/, "")
+    .split("\n")[0];
   return clean.length > 160 ? fallback : clean;
 }

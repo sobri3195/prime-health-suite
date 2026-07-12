@@ -544,7 +544,7 @@ export function PatientAI() {
   );
 }
 
-/* Legacy PatientBelanja & PRODUCTS removed — Marketplace lives in src/routes/_authenticated.apps.belanja.tsx */
+
 
 /* ------------------------------ Profil ------------------------------ */
 
@@ -917,7 +917,7 @@ export function PatientProfil() {
 }
 
 
-function Input({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function FieldInput({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
     <label className="block">
       <div className="text-xs font-medium opacity-70">{label}</div>
@@ -931,7 +931,7 @@ function Input({ label, value, onChange, type = "text" }: { label: string; value
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
+function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
   return (
     <label className="block">
       <div className="text-xs font-medium opacity-70">{label}</div>

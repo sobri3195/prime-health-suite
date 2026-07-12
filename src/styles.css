@@ -35,6 +35,12 @@
   --color-emerald-accent: var(--emerald-accent);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-tint: var(--gold-tint);
+  --color-gold-border: var(--gold-border);
+  --color-gold-ink: var(--gold-ink);
+  --color-gold-ink-strong: var(--gold-ink-strong);
 }
 
 :root {
@@ -70,6 +76,14 @@
   --gradient-accent: linear-gradient(135deg, var(--cyan-accent), var(--emerald-accent));
   --shadow-elegant: 0 20px 50px -20px color-mix(in oklab, var(--navy) 30%, transparent);
   --shadow-card: 0 8px 24px -12px color-mix(in oklab, var(--navy) 20%, transparent);
+
+  /* Brand gold palette (Apps module) — replace hardcoded #a08a2a family */
+  --gold: #a08a2a;
+  --gold-soft: #b89a34;
+  --gold-tint: #fdf8e8;
+  --gold-border: #e9dfb8;
+  --gold-ink: #5a4a14;
+  --gold-ink-strong: #6b5a16;
 }
 
 .dark {
