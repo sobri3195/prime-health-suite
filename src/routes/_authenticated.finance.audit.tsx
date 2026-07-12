@@ -95,6 +95,7 @@ function AuditPage() {
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
   const [detail, _setDetail] = useState<any | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const setDetail = (r: any | null) => {
     _setDetail(r);
     if (typeof window !== "undefined") {
@@ -167,6 +168,7 @@ function AuditPage() {
         if (list[next]) setDetail(list[next]);
       }
       else if (!typing && e.key === "Escape" && detail) { setDetail(null); }
+      else if (!typing && (e.key === "?" || (e.shiftKey && e.key === "/"))) { e.preventDefault(); setHelpOpen((v) => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -185,6 +187,7 @@ function AuditPage() {
           <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari aktor / no. / alasan…  ( / fokus, Esc reset)" className="pl-9 pr-10" />
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 items-center rounded border bg-muted px-1.5 text-[10px] font-mono text-muted-foreground">/</kbd>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setHelpOpen(true)} title="Pintasan keyboard (?)">?</Button>
         <Select value={entity} onValueChange={setEntity}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -472,6 +475,25 @@ function AuditPage() {
               <p className="text-[10px] text-muted-foreground">Hanya field aman (whitelist) yang dipulihkan. Aksi ini juga tercatat di audit log.</p>
             </DialogFooter>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Pintasan keyboard</DialogTitle></DialogHeader>
+          <div className="space-y-1.5 text-sm">
+            {[
+              ["/", "Fokus pencarian"],
+              ["Esc", "Reset filter / tutup dialog"],
+              ["j", "Detail baris berikutnya"],
+              ["k", "Detail baris sebelumnya"],
+              ["?", "Buka bantuan ini"],
+            ].map(([k, d]) => (
+              <div key={k} className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">{d}</span>
+                <kbd className="rounded border bg-muted px-2 py-0.5 font-mono text-xs">{k}</kbd>
+              </div>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
