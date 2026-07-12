@@ -464,12 +464,14 @@ export const listVisits = createServerFn({ method: "POST" })
     pasien_id: z.string().uuid().optional(),
     dokter_id: z.string().uuid().optional(),
     status: z.string().optional(),
-    limit: z.number().optional(),
+    limit: z.number().int().min(1).max(1000).optional(),
+    offset: z.number().int().min(0).optional(),
   }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    const limit = data.limit ?? 100; const offset = data.offset ?? 0;
     let q = (context.supabase as Supa).from("klinik_visit")
       .select("*, apps_pasien(no_rm,nama,patient_type), fin_dokter(name)")
-      .order("visit_date", { ascending: false }).limit(data.limit ?? 100);
+      .order("visit_date", { ascending: false }).range(offset, offset + limit - 1);
     if (data.date) {
       const next = new Date(data.date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
       q = q.gte("visit_date", data.date + "T00:00:00").lt("visit_date", next.toISOString().slice(0,10) + "T00:00:00");
