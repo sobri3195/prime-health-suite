@@ -58,8 +58,13 @@ function Page() {
   const total = subtotal + pajak;
 
   const [pays, setPays] = useState<Pay[]>([{ metode: "cash", bank: "", jumlah: 0, mdr: 0 }]);
+  const paysDirty = useRef(false);
+  const prevTotal = useRef(0);
   useEffect(() => {
-    if (pays.length === 1) setPays([{ ...pays[0], jumlah: total }]);
+    if (pays.length === 1 && !paysDirty.current) {
+      setPays([{ ...pays[0], jumlah: total }]);
+    }
+    prevTotal.current = total;
   }, [total]);
 
   const updateItem = (idx: number, patch: Partial<Item>) =>
