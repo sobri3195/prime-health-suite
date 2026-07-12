@@ -3255,6 +3255,45 @@ export type Database = {
           },
         ]
       }
+      klinik_template_pemeriksaan: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          diagnosis: string
+          icd10_code: string | null
+          id: string
+          is_active: boolean
+          label: string
+          treatment: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          diagnosis: string
+          icd10_code?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          treatment?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          diagnosis?: string
+          icd10_code?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          treatment?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       klinik_visit: {
         Row: {
           booking_id: string | null
