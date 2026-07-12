@@ -563,6 +563,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "#") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const ref = target?.entity_no ?? target?.entity_id;
+        if (!ref) { toast.info("Tidak ada nomor/ID entity untuk disalin"); return; }
+        navigator.clipboard.writeText(String(ref)).then(
+          () => toast.success(`Entity disalin (#): ${ref}`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1098,6 +1108,7 @@ function AuditPage() {
               ["\\", "Bersihkan hanya query pencarian"],
               ["!", "Hapus semua tanda (dengan konfirmasi)"],
               ["@", "Salin email aktor (detail / baris pertama)"],
+              ["#", "Salin entity_no / entity_id"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
