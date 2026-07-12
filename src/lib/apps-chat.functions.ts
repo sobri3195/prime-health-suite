@@ -21,13 +21,20 @@ export const getOrCreateRoom = createServerFn({ method: "POST" })
 
 export const listChatMessages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { room_id: string }) => z.object({ room_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { room_id: string; before?: string; pageSize?: number }) =>
+    z.object({
+      room_id: z.string().uuid(),
+      before: z.string().datetime().optional(),
+      pageSize: z.number().int().min(1).max(100).default(50),
+    }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
-      .from("apps_chat_msg").select("*").eq("room_id", data.room_id)
-      .order("created_at", { ascending: true }).limit(200);
+    let q = context.supabase.from("apps_chat_msg").select("*").eq("room_id", data.room_id);
+    if (data.before) q = q.lt("created_at", data.before);
+    const { data: rows, error } = await q.order("created_at", { ascending: false }).limit(data.pageSize);
     if (error) throw new Error(error.message);
-    return { messages: rows ?? [] };
+    const messages = (rows ?? []).slice().reverse();
+    const hasMore = (rows?.length ?? 0) === data.pageSize;
+    return { messages, hasMore, nextBefore: messages[0]?.created_at ?? null };
   });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
