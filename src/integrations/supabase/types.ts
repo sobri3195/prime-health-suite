@@ -1369,6 +1369,7 @@ export type Database = {
           payer_id: string | null
           posted_at: string | null
           posted_journal_id: string | null
+          source_visit_id: string | null
           status: string
           subtotal: number
           tanggal: string
@@ -1392,6 +1393,7 @@ export type Database = {
           payer_id?: string | null
           posted_at?: string | null
           posted_journal_id?: string | null
+          source_visit_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -1415,6 +1417,7 @@ export type Database = {
           payer_id?: string | null
           posted_at?: string | null
           posted_journal_id?: string | null
+          source_visit_id?: string | null
           status?: string
           subtotal?: number
           tanggal?: string
@@ -3633,6 +3636,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      klinik_dispense_prescription_locked: {
+        Args: { _id: string }
+        Returns: undefined
       }
       klinik_is_admin: { Args: { _uid: string }; Returns: boolean }
       klinik_is_staff: { Args: { _uid: string }; Returns: boolean }
