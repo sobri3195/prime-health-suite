@@ -177,11 +177,12 @@ export const stockMovement = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({
     obat_id: z.string().uuid(),
     movement_type: z.enum(["in", "out", "adjustment"]),
-    quantity: z.coerce.number().min(0),
+    quantity: z.coerce.number().refine((v) => v > 0 || false, { message: "Kuantitas harus > 0" }),
     note: z.string().optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // Guard trigger klinik_guard_stock_movement menolak qty<=0 dan out melebihi stok (FOR UPDATE).
     const { error } = await sb.from("klinik_stock_movement").insert({ ...data, created_by: context.userId });
     if (error) throw error;
     await appendAuditRow(sb, { actor_id: context.userId, module: "Stok", action: data.movement_type, target: data.obat_id, meta: { qty: data.quantity, note: data.note } });
@@ -240,26 +241,33 @@ export const checkinBooking = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: bk, error: be } = await sb.from("apps_booking").select("*").eq("id", data.booking_id).maybeSingle();
     if (be || !bk) throw be ?? new Error("Booking tidak ditemukan");
-    // Resolve pasien_id: bookings created from the Apps patient module may
-    // only carry user_id. Backfill via apps_pasien before inserting the visit.
+    // Idempotent: bila visit untuk booking ini sudah ada (partial UNIQUE), kembalikan itu.
+    const { data: existing } = await sb.from("klinik_visit").select("*, klinik_queue(*)").eq("booking_id", bk.id).maybeSingle();
+    if (existing) return { visit: existing, queue: existing.klinik_queue?.[0] ?? null };
+    // Resolve pasien_id
     let pasienId: string | null = bk.pasien_id;
     if (!pasienId && bk.user_id) {
-      const { data: pas } = await sb.from("apps_pasien").select("id").eq("user_id", bk.user_id).maybeSingle();
+      const { data: pas } = await sb.from("apps_pasien").select("id,patient_type").eq("user_id", bk.user_id).maybeSingle();
       pasienId = pas?.id ?? null;
       if (pasienId) await sb.from("apps_booking").update({ pasien_id: pasienId }).eq("id", bk.id);
     }
     if (!pasienId) throw new Error("Pasien belum terdaftar di master pasien. Lengkapi profil pasien terlebih dulu.");
-    // Counter (loket) diturunkan dari huruf pertama fin_dokter.code (fallback "A").
+    const { data: pasFull } = await sb.from("apps_pasien").select("patient_type").eq("id", pasienId).maybeSingle();
     const { data: dok } = await sb.from("fin_dokter").select("code").eq("id", bk.dokter_id).maybeSingle();
     const counter = (dok?.code?.trim()?.[0] ?? "A").toUpperCase();
-    // create visit
     const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
       pasien_id: pasienId, dokter_id: bk.dokter_id, booking_id: bk.id,
-      chief_complaint: bk.keluhan, status: "registered", patient_type: "Umum",
+      chief_complaint: bk.keluhan, status: "registered",
+      patient_type: pasFull?.patient_type ?? "Umum",
       created_by: context.userId,
     }).select("*").single();
-    if (ve) throw ve;
-    // generate queue per-loket
+    if (ve) {
+      if ((ve as { code?: string }).code === "23505") {
+        const { data: race } = await sb.from("klinik_visit").select("*, klinik_queue(*)").eq("booking_id", bk.id).maybeSingle();
+        if (race) return { visit: race, queue: race.klinik_queue?.[0] ?? null };
+      }
+      throw ve;
+    }
     const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: counter });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
@@ -384,13 +392,20 @@ export const upsertMedicalRecord = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const payload: Record<string, unknown> = { ...data };
     delete payload.id;
+    delete payload.visit_id;   // immutable — trigger juga menjaga
+    delete payload.pasien_id;  // immutable
     if (data.id) {
+      // Cek is_final tersimpan; trigger klinik_medrec_final_guard juga menolak, tapi kita mau error lebih ramah.
+      const { data: cur, error: ce } = await sb.from("klinik_medical_record").select("is_final").eq("id", data.id).maybeSingle();
+      if (ce) throw ce;
+      if (cur?.is_final && !data.is_final) throw new Error("Rekam medis sudah difinalisasi dan tidak dapat diubah.");
+      if (cur?.is_final && data.is_final) throw new Error("Rekam medis sudah difinalisasi.");
       const { data: row, error } = await sb.from("klinik_medical_record").update(payload).eq("id", data.id).select("*").single();
       if (error) throw error;
       await appendAuditRow(sb, { actor_id: context.userId, module: "RekamMedis", action: "update", target: data.id });
       return row;
     }
-    const { data: row, error } = await sb.from("klinik_medical_record").upsert(payload, { onConflict: "visit_id" }).select("*").single();
+    const { data: row, error } = await sb.from("klinik_medical_record").upsert({ ...payload, visit_id: data.visit_id, pasien_id: data.pasien_id }, { onConflict: "visit_id" }).select("*").single();
     if (error) throw error;
     if (data.is_final) {
       await sb.from("klinik_visit").update({ status: "billing" }).eq("id", data.visit_id);
@@ -523,47 +538,13 @@ export const dispensePrescription = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: pres, error } = await sb.from("klinik_prescription").select("*, klinik_prescription_item(*)").eq("id", data.id).maybeSingle();
-    if (error || !pres) throw error ?? new Error("Resep tidak ditemukan");
-    if (pres.status === "dispensed") throw new Error("Resep sudah dibagikan");
-    const items = (pres.klinik_prescription_item ?? []) as Array<{ obat_id: string | null; obat_name: string; quantity: number }>;
-    // Ambil stok semua obat sekaligus (single round-trip) untuk validasi.
-    const obatIds = Array.from(new Set(items.map((i) => i.obat_id).filter(Boolean))) as string[];
-    const stockMap = new Map<string, { stock: number; name: string }>();
-    if (obatIds.length) {
-      const { data: obats, error: se } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
-      if (se) throw se;
-      (obats ?? []).forEach((o: { id: string; stock: number | null; name: string }) => stockMap.set(o.id, { stock: Number(o.stock), name: o.name }));
-    }
-    // Agregasi kebutuhan per obat (obat yang sama bisa muncul >1 baris).
-    const need = new Map<string, number>();
-    for (const it of items) {
-      if (!it.obat_id) continue;
-      need.set(it.obat_id, (need.get(it.obat_id) ?? 0) + Number(it.quantity));
-    }
-    for (const [obatId, qty] of need) {
-      const s = stockMap.get(obatId);
-      if (!s) continue;
-      if (s.stock < qty) {
-        throw new Error(`Stok ${s.name} tidak cukup (tersedia ${s.stock}, dibutuhkan ${qty})`);
-      }
-    }
-    // Movements — trigger klinik_apply_stock_movement mengurangi stok per baris.
-    // Catatan: race sisa masih mungkin bila dispense paralel; untuk atomisitas penuh
-    // gunakan RPC dengan FOR UPDATE (TODO: migrasi klinik_dispense_prescription).
-    for (const it of items) {
-      if (!it.obat_id) continue;
-      const { error: me } = await sb.from("klinik_stock_movement").insert({
-        obat_id: it.obat_id, movement_type: "out", quantity: it.quantity,
-        ref_type: "prescription", ref_id: data.id, note: "Dispense resep", created_by: context.userId,
-      });
-      if (me) throw me;
-    }
-    const { error: ue } = await sb.from("klinik_prescription").update({ status: "dispensed", dispensed_at: new Date().toISOString(), dispensed_by: context.userId }).eq("id", data.id);
-    if (ue) throw ue;
+    // Atomic dispense: RPC mengunci per-obat + FOR UPDATE + insert semua movement dalam 1 tx.
+    const { error } = await sb.rpc("klinik_dispense_prescription_locked", { _id: data.id });
+    if (error) throw new Error(error.message ?? "Gagal dispense resep");
     await appendAuditRow(sb, { actor_id: context.userId, module: "Farmasi", action: "dispense", target: data.id });
     return { ok: true };
   });
+
 
 /* =============================================================
  * KASIR / INVOICE
@@ -596,6 +577,9 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: visit, error } = await sb.from("klinik_visit").select("*, apps_pasien(no_rm,nama,patient_code), fin_dokter(id,name)").eq("id", data.visit_id).maybeSingle();
     if (error || !visit) throw error ?? new Error("Visit tidak ditemukan");
+    // Idempotent: bila invoice non-void untuk visit ini sudah ada (partial UNIQUE), kembalikan itu.
+    const { data: existing } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
+    if (existing) return existing;
     const subtotal = data.items.reduce((a, b) => a + Number(b.quantity) * Number(b.unit_price), 0);
     const total = Math.max(0, subtotal - Number(data.discount));
     const status = data.paid_amount >= total ? "paid" : data.paid_amount > 0 ? "partial" : "unpaid";
@@ -604,14 +588,17 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const { data: invoice, error: ie } = await sb.from("fin_invoice").insert({
         no_invoice: clinicInvoiceNo(now), tanggal: now.toISOString().slice(0,10),
+        source_visit_id: data.visit_id,
         patient_code: visit.apps_pasien?.no_rm ?? visit.apps_pasien?.patient_code ?? "P000000",
         patient_name: visit.apps_pasien?.nama, dokter_id: visit.dokter_id,
         subtotal, diskon: Number(data.discount) || 0, pajak: 0, total, status,
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
-      if (!ie) {
-        inv = invoice;
-        break;
+      if (!ie) { inv = invoice; break; }
+      // 23505 pada source_visit_id → invoice sudah dibuat oleh request paralel
+      if (ie.code === "23505") {
+        const { data: race } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
+        if (race) return race;
       }
       if (ie.code !== "23505" || attempt === 2) throw ie;
     }
@@ -654,8 +641,8 @@ export const getDashboardStats = createServerFn({ method: "POST" })
       sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lte("visit_date", today + "T23:59:59"),
       sb.from("apps_booking").select("*", { count: "exact", head: true }).eq("tanggal", today),
       sb.from("klinik_queue").select("*", { count: "exact", head: true }).eq("queue_date", today).in("status", ["waiting","called","in_service"]),
-      sb.from("fin_invoice").select("total.sum()").eq("tanggal", today),
-      sb.from("fin_invoice").select("total.sum()").gte("tanggal", monthStart),
+      sb.from("fin_invoice").select("total.sum()").eq("tanggal", today).neq("status","void"),
+      sb.from("fin_invoice").select("total.sum()").gte("tanggal", monthStart).neq("status","void"),
       sb.from("fin_invoice").select("*", { count: "exact", head: true }).in("status", ["unpaid","partial"]),
       sb.from("klinik_prescription").select("*", { count: "exact", head: true }).eq("status", "sent_to_pharmacy"),
       sb.from("klinik_obat").select("stock,min_stock,expired_date"),
@@ -673,9 +660,9 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     });
     const trend = Array.from(trendMap.entries()).sort().map(([date, visits]) => ({ date, visits }));
 
-    // revenue monthly 12
+    // revenue monthly 12 (exclude void)
     const yearStart = new Date(); yearStart.setMonth(yearStart.getMonth() - 11); yearStart.setDate(1);
-    const { data: invRows } = await sb.from("fin_invoice").select("tanggal,total").gte("tanggal", yearStart.toISOString().slice(0,10));
+    const { data: invRows } = await sb.from("fin_invoice").select("tanggal,total,status").gte("tanggal", yearStart.toISOString().slice(0,10)).neq("status","void");
     const revMap = new Map<string, number>();
     (invRows ?? []).forEach((r: { tanggal: string; total: number }) => {
       const m = String(r.tanggal).slice(0, 7);
@@ -791,19 +778,18 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: inv, error: ie } = await sb.from("fin_invoice").select("id,total,dibayar,status").eq("id", data.invoice_id).maybeSingle();
-    if (ie || !inv) throw ie ?? new Error("Invoice tidak ditemukan");
-    const { computePaymentStatus } = await import("./klinik-invariants");
-    const { newPaid, status } = computePaymentStatus(Number(inv.total ?? 0), Number(inv.dibayar ?? 0), Number(data.amount));
-    const { error: pe } = await sb.from("fin_pembayaran").insert({
-      invoice_id: data.invoice_id,
-      tanggal: new Date().toISOString().slice(0, 10),
-      metode: data.method, bank: data.bank ?? null, no_kartu_last4: data.no_kartu_last4 ?? null,
-      jumlah: data.amount, mdr: 0, netto: data.amount, status: "posted",
+    // Anti-race: RPC mengunci invoice + revalidasi sisa dalam 1 tx (mencegah overpayment paralel).
+    const { data: rpcRows, error } = await sb.rpc("klinik_add_invoice_payment_locked", {
+      _invoice_id: data.invoice_id,
+      _amount: data.amount,
+      _method: data.method,
+      _bank: data.bank ?? null,
+      _no_kartu_last4: data.no_kartu_last4 ?? null,
     });
-    if (pe) throw pe;
-    const { error: ue } = await sb.from("fin_invoice").update({ dibayar: newPaid, status }).eq("id", data.invoice_id);
-    if (ue) throw ue;
+    if (error) throw new Error(error.message ?? "Gagal simpan pembayaran");
+    const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
+    const newPaid = Number(row?.dibayar_baru ?? 0);
+    const status = String(row?.status ?? "unpaid");
     await appendAuditRow(sb, { actor_id: context.userId, module: "Kasir", action: "add_payment", target: data.invoice_id, meta: { amount: data.amount, method: data.method, status } });
     return { ok: true, dibayar: newPaid, status };
   });
