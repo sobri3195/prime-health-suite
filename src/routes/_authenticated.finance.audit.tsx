@@ -279,6 +279,13 @@ function AuditPage() {
           toast.success("JSON entri disalin (c)");
         } catch { toast.error("Gagal menyalin"); }
       }
+      else if (!typing && e.key === "C" && (rows as any[]).length) {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
+          toast.success(`JSON ${(rows as any[]).length} baris disalin (C)`);
+        } catch { toast.error("Gagal menyalin"); }
+      }
       else if (!typing && (e.key === "." || e.key === "R")) {
         e.preventDefault();
         qc.invalidateQueries({ queryKey: ["fin-audit"] });
