@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { listQueueToday, updateQueueStatus } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/antrian")({
   head: () => pageHead({ title: 'Antrian Pasien — SIM Klinik', description: 'Monitoring antrian pasien harian dan waktu tunggu.', path: '/sim-klinik/antrian' }),
@@ -44,7 +45,7 @@ function AntrianPage() {
   const updM = useMutation({
     mutationFn: (v: { id: string; status: "waiting"|"called"|"in_service"|"done"|"cancelled" }) => callUpd({ data: v }),
     onSuccess: (_d, v) => { toast.success(`Antrian → ${STATUS_LABEL[v.status]}`); qc.invalidateQueries({ queryKey: ["klinik"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; served_at: string | null; done_at: string | null; created_at: string; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };

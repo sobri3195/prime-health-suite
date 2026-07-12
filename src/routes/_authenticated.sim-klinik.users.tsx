@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { listUsers, setUserRole } from "@/lib/klinik.functions";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/users")({
   head: () => pageHead({ title: 'Manajemen User — SIM Klinik', description: 'Kelola akun staf klinik, role, dan reset password.', path: '/sim-klinik/users' }),
@@ -34,7 +35,7 @@ function UsersPage() {
       toast.success(v.grant ? "Role ditambahkan" : "Role dihapus");
       qc.invalidateQueries({ queryKey: ["klinik","users"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const users = listQ.data ?? [];

@@ -21,6 +21,7 @@ import { getStoredTheme, setTheme as persistTheme } from "@/lib/theme";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { getSettings, saveSetting } from "@/lib/clinic.functions";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/settings")({
   head: () => pageHead({ title: 'Pengaturan Klinik — SIM Klinik', description: 'Profil klinik, tarif, dan konfigurasi sistem.', path: '/sim-klinik/settings' }),
@@ -45,7 +46,7 @@ function SettingsPage() {
   const save = useMutation({
     mutationFn: fnSave,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["clinic-settings"] }); toast.success("Pengaturan disimpan"); },
-    onError: (e: Error) => toast.error(e.message ?? "Gagal menyimpan"),
+    onError: (e: Error) => toast.error(friendlyError(e, "Gagal menyimpan")),
   });
 
   if (isLoading || !data) {

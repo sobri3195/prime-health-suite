@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { listPasien, upsertPasien, deactivatePasien, getPasien } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pasien")({
   head: () => pageHead({ title: 'Data Pasien — SIM Klinik', description: 'Direktori rekam medis pasien dan riwayat kunjungan.', path: '/sim-klinik/pasien' }),
@@ -63,7 +64,7 @@ function PasienPage() {
   const upsertM = useMutation({
     mutationFn: (d: Partial<Pasien>) => callUpsert({ data: d as never }),
     onSuccess: () => { toast.success("Data pasien tersimpan"); qc.invalidateQueries({ queryKey: ["klinik","pasien"] }); setEdit(null); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const deactM = useMutation({
