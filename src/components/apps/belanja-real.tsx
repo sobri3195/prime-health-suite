@@ -107,7 +107,7 @@ export function PatientBelanjaReal() {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              {p.stok < 5 && <div className="mt-1 text-[10px] text-rose-600">{t("shop.stock_low", { n: p.stok })}</div>}
+              {p.stok < 5 && <div role="status" aria-live="polite" className="mt-1 text-[10px] text-rose-600">{t("shop.stock_low", { n: p.stok })}</div>}
             </div>
           ))}
         </div>
