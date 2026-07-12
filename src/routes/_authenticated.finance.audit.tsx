@@ -413,7 +413,18 @@ function AuditPage() {
                   lastDay = day;
                   nodes.push(
                     <TableRow key={`day-${day}`} className="hover:bg-transparent">
-                      <TableCell colSpan={visibleCount} className="bg-muted/40 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{day}</TableCell>
+                      <TableCell
+                        colSpan={visibleCount}
+                        className="bg-muted/40 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer hover:bg-primary/10 hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const d = new Date(r.created_at);
+                          const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                          setRange({ from: iso, to: iso, preset: "custom" });
+                          toast.success(`Filter tanggal: ${day}`);
+                        }}
+                        title="Klik untuk filter tanggal ini saja"
+                      >{day}</TableCell>
                     </TableRow>
                   );
                 }
