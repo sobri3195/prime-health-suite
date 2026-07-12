@@ -365,6 +365,12 @@ function AuditPage() {
         setQ(p.q); setEntity(p.entity); setAction(p.action);
         toast.success(`Preset #${e.key}: ${p.name}`);
       }
+      else if (!typing && e.key === "T") {
+        e.preventDefault();
+        const today = new Date().toISOString().slice(0, 10);
+        setRange({ from: today, to: today, preset: "custom" });
+        toast.success(`Rentang: hari ini (T)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
