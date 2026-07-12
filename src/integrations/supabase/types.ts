@@ -3467,6 +3467,10 @@ export type Database = {
         Args: { _marketing?: boolean }
         Returns: undefined
       }
+      apps_add_to_cart_locked: {
+        Args: { _produk_id: string; _qty: number }
+        Returns: undefined
+      }
       apps_checkout_cart: {
         Args: { _alamat_kirim: string; _catatan: string; _metode_bayar: string }
         Returns: Json
