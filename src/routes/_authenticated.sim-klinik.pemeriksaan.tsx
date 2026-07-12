@@ -39,6 +39,7 @@ import { FileText, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { listVisits, getVisitDetail, upsertMedicalRecord, listObat, createPrescription, listMedicalRecordHistory, previewInteractions, listPemeriksaanTemplate } from "@/lib/klinik.functions";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/pemeriksaan")({
   head: () => pageHead({ title: 'Pemeriksaan & Rekam Medis — SIM Klinik', description: 'Input pemeriksaan pasien, diagnosa, dan rencana terapi.', path: '/sim-klinik/pemeriksaan' }),
