@@ -885,6 +885,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "@") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const actor = target?.actor ?? target?.actor_name ?? target?.actor_id;
+        if (!actor) { toast.info("Tidak ada actor"); return; }
+        navigator.clipboard.writeText(String(actor)).then(
+          () => toast.success("Actor disalin (@)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1481,6 +1491,7 @@ function AuditPage() {
               ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
               ["#", "Salin action baris target"],
               ["~", "Salin reason baris target"],
+              ["@", "Salin actor baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
