@@ -52,7 +52,7 @@ function RekonsiliasiPage() {
   const importM = useMutation({
     mutationFn: () => importFn({ data: { bank, rows: validRows, actor: user?.email } }),
     onSuccess: (r) => { toast.success(`${r.count} mutasi diimport`); setCsv(""); setOpenImport(false); qc.invalidateQueries(); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
 
   const matchM = useMutation({
@@ -67,7 +67,7 @@ function RekonsiliasiPage() {
   const adjM = useMutation({
     mutationFn: () => adjFn({ data: { ...adj, statement_id: adj.statement_id!, actor: user?.email } }),
     onSuccess: (r) => { toast.success(`Jurnal ${r.no_jurnal} dibuat`); setAdjOpen(false); qc.invalidateQueries(); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
 
   const selisih = (sum?.bookBalance ?? 0) - (sum?.lastSaldo ?? sum?.bookBalance ?? 0);

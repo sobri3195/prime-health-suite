@@ -65,12 +65,12 @@ function PendapatanPage() {
   const upsertMut = useMutation({
     mutationFn: (input: any) => upsert({ data: { ...input, actor: user?.email } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); toast.success("Invoice tersimpan"); setEditing(null); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
   const voidMut = useMutation({
     mutationFn: (v: { id: string; reason: string; kind?: "void" | "refunded" }) => voidFn({ data: v }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); toast.success("Invoice dibatalkan"); setVoidFor(null); setVoidReason(""); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   function startNew() {
@@ -314,7 +314,7 @@ function PendapatanPage() {
       <PaymentDialog
         invoice={payFor}
         onClose={() => setPayFor(null)}
-        onPay={(d) => pay({ data: { ...d, actor: user?.email } }).then(() => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); toast.success("Pembayaran tercatat"); setPayFor(null); }).catch((e) => toast.error(e.message))}
+        onPay={(d) => pay({ data: { ...d, actor: user?.email } }).then(() => { qc.invalidateQueries({ queryKey: ["fin-invoices"] }); toast.success("Pembayaran tercatat"); setPayFor(null); }).catch((e) => toast.error(friendlyError(e)))}
       />
 
       {/* DETAIL */}

@@ -41,7 +41,7 @@ function MasterMdrPage() {
   const saveM = useMutation({
     mutationFn: (d: any) => save({ data: { ...d, actor: user?.email } }),
     onSuccess: () => { toast.success("Aturan MDR tersimpan"); qc.invalidateQueries({ queryKey: ["mdr"] }); setOpen(false); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
   const delM = useMutation({
     mutationFn: (id: string) => del({ data: { id, actor: user?.email } }),

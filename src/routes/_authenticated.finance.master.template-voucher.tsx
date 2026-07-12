@@ -51,7 +51,7 @@ function TplVoucherPage() {
   const saveM = useMutation({
     mutationFn: () => save({ data: { ...(tpl as any), items, actor: user?.email } }),
     onSuccess: () => { toast.success("Template tersimpan"); qc.invalidateQueries({ queryKey: ["tpl-voucher"] }); setOpen(false); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
   const delM = useMutation({ mutationFn: (id: string) => del({ data: { id, actor: user?.email } }), onSuccess: () => { toast.success("Dihapus"); qc.invalidateQueries({ queryKey: ["tpl-voucher"] }); } });
 

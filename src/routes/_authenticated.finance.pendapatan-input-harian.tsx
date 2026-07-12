@@ -80,7 +80,7 @@ function Page() {
       setPays([{ metode: "cash", bank: "", jumlah: 0, mdr: 0 }]);
       qc.invalidateQueries({ queryKey: ["fin-invoices"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const submit = () => {
