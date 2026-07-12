@@ -251,6 +251,7 @@ function RmHistoryPanel({ visitId }: { visitId: string }) {
 function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated }: { open: boolean; onClose: () => void; visit_id: string; pasien_id: string; dokter_id: string | null; onCreated: () => void }) {
   const callObat = useServerFn(listObat);
   const callCreate = useServerFn(createPrescription);
+  const callPreview = useServerFn(previewInteractions);
   const obatQ = useQuery({ queryKey: ["klinik","obat-all"], queryFn: () => callObat({ data: {} }), enabled: open });
   type Item = { obat_id: string; obat_name: string; dosage: string; frequency: string; duration: string; quantity: number; unit_price: number };
   const [items, setItems] = useState<Item[]>([]);
@@ -262,6 +263,13 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
     onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const interQ = useQuery({
+    queryKey: ["klinik","interactions", items.map((i) => i.obat_name).join("|")],
+    queryFn: () => callPreview({ data: { names: items.map((i) => i.obat_name) } }),
+    enabled: open && items.length >= 2,
+  });
+  const warnings = ((interQ.data ?? []) as Array<{ severity: string; drugs: string[]; reason: string }>);
 
   type Obat = { id: string; name: string; code: string; price: number; stock: number; unit: string };
   const obat = (obatQ.data ?? []) as Obat[];
