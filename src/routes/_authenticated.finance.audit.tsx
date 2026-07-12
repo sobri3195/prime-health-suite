@@ -420,7 +420,7 @@ function AuditPage() {
                           e.stopPropagation();
                           const d = new Date(r.created_at);
                           const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                          setRange(iso, iso);
+                          setRange({ from: iso, to: iso, preset: "custom" });
                           toast.success(`Filter tanggal: ${day}`);
                         }}
                         title="Klik untuk filter tanggal ini saja"
