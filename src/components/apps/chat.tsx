@@ -37,7 +37,8 @@ function AttachmentPreview({ path, name, mime }: { path: string; name: string; m
 }
 
 export function PatientChat() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
+  const df = useDateFmt();
   const qc = useQueryClient();
   const callRoom = useServerFn(getOrCreateRoom);
   const callMsgs = useServerFn(listChatMessages);
