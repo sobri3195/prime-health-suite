@@ -322,13 +322,14 @@ export const listMyNotifications = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const from = (data.page - 1) * data.pageSize;
     const to = from + data.pageSize - 1;
-    const [{ data: rows, error, count }, { count: unread }] = await Promise.all([
+    const [{ data: rows, error, count }, { count: unread, error: unreadErr }] = await Promise.all([
       supabase.from("apps_notif").select("*", { count: "exact" })
         .eq("user_id", userId).order("created_at", { ascending: false }).range(from, to),
       supabase.from("apps_notif").select("id", { count: "exact", head: true })
         .eq("user_id", userId).is("read_at", null),
     ]);
     if (error) throw new Error(error.message);
+    if (unreadErr) throw new Error(unreadErr.message);
     return { notifs: rows ?? [], unread: unread ?? 0, total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 

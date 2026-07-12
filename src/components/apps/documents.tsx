@@ -1,12 +1,15 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { listDocuments, uploadDocument, deleteDocument } from "@/lib/clinic.functions";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 
 const BUCKET = "clinic-documents";
@@ -55,6 +58,9 @@ const ALLOWED_MIME = [
 export function DocumentsPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const callList = useServerFn(listDocuments);
+  const callUpload = useServerFn(uploadDocument);
+  const callDelete = useServerFn(deleteDocument);
   const [q, setQ] = useState("");
 
   const [type, setType] = useState<string>("all");
@@ -66,18 +72,12 @@ export function DocumentsPage() {
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
 
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["clinic_document"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clinic_document")
-        .select("id,patient_code,patient_name,doc_type,title,mime,size_bytes,storage_path,uploaded_by_email,uploaded_at")
-        .order("uploaded_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []) as DocRow[];
-    },
+  const { data: listRes, isLoading } = useQuery({
+    queryKey: ["clinic_document", type],
+    queryFn: () => callList({ data: { type: type === "all" ? undefined : type, pageSize: 200, page: 0 } as any }),
   });
+  const data = ((listRes as any)?.rows ?? []) as DocRow[];
+
 
   const items = useMemo(() => {
     const qq = q.trim().toLowerCase();
@@ -130,22 +130,22 @@ export function DocumentsPage() {
         }
         if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Upload gagal");
         setProgress(75);
-        const { error } = await supabase.from("clinic_document").insert({
-          patient_code: meta.patient_code || "-",
-          patient_name: meta.patient_name || "Internal",
-          doc_type: meta.doc_type,
-          title: meta.title.trim(),
-          mime,
-          size_bytes: pendingFile.size,
-          storage_path: path,
-          uploaded_by: uid,
-          uploaded_by_email: auth.user?.email ?? null,
-        });
-        if (error) {
+        try {
+          await callUpload({ data: {
+            patient_code: meta.patient_code || "-",
+            patient_name: meta.patient_name || "Internal",
+            doc_type: meta.doc_type,
+            title: meta.title.trim(),
+            mime,
+            size_bytes: pendingFile.size,
+            storage_path: path,
+          } as any });
+        } catch (e) {
           await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
-          throw error;
+          throw e;
         }
         setProgress(100);
+
       } finally {
         window.clearTimeout(timeoutId);
       }
@@ -203,14 +203,14 @@ export function DocumentsPage() {
           return;
         }
       }
-      const { error } = await supabase.from("clinic_document").delete().eq("id", row.id);
-      if (error) { toast.error(`Gagal menghapus: ${error.message}`); return; }
+      await callDelete({ data: { id: row.id } });
       toast.success("Dokumen dihapus");
       qc.invalidateQueries({ queryKey: ["clinic_document"] });
     } catch (e) {
       toast.error(`Gagal menghapus dokumen: ${(e as Error).message}`);
     }
   };
+
 
   return (
     <PageContainer>
