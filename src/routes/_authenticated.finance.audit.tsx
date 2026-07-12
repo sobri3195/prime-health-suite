@@ -453,6 +453,11 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: tahun lalu (V)`);
       }
+      else if (!typing && e.key === "A") {
+        e.preventDefault();
+        setRange({ from: "", to: "", preset: "custom" });
+        toast.success(`Rentang: semua waktu (A)`);
+      }
 
 
 
@@ -1003,6 +1008,7 @@ function AuditPage() {
               ["D", "Set rentang tanggal ke 30 hari terakhir"],
               ["B", "Set rentang tanggal ke bulan lalu"],
               ["V", "Set rentang tanggal ke tahun lalu"],
+              ["A", "Hapus filter rentang tanggal (semua waktu)"],
 
 
 
