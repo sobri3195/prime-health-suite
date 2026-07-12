@@ -568,7 +568,8 @@ export function PatientProfil() {
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
   const p = profileQ.data?.profile;
-  useAppsRealtime(p?.user_id ?? undefined);
+  const authUid = useSupabaseUid();
+  useAppsRealtime(authUid);
 
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({
