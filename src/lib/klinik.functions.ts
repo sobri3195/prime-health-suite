@@ -221,8 +221,8 @@ export const listStockMovement = createServerFn({ method: "POST" })
 const BookingSchema = z.object({
   pasien_id: z.string().uuid(),
   dokter_id: z.string().uuid(),
-  tanggal: z.string(),
-  jam_slot: z.string(),
+  tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal tidak valid"),
+  jam_slot: z.string().regex(/^\d{2}:\d{2}$/, "Jam slot tidak valid"),
   keluhan: z.string().optional(),
   source: z.enum(["walk_in", "phone", "whatsapp", "online"]).default("walk_in"),
 });
@@ -232,9 +232,17 @@ export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => BookingSchema.parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: dok } = await sb.from("fin_dokter").select("name").eq("id", data.dokter_id).maybeSingle();
+    // P0: cegah booking ke masa lampau.
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.tanggal < today) throw new Error("Tanggal booking tidak boleh di masa lampau.");
+    // P0: validasi dokter aktif — cegah booking ke dokter nonaktif.
+    const { data: dok, error: dokErr } = await sb
+      .from("fin_dokter").select("name,is_active").eq("id", data.dokter_id).maybeSingle();
+    if (dokErr) throw dokErr;
+    if (!dok) throw new Error("Dokter tidak ditemukan.");
+    if (dok.is_active === false) throw new Error("Dokter sedang tidak aktif.");
     const { data: row, error } = await sb.from("apps_booking").insert({
-      pasien_id: data.pasien_id, dokter_id: data.dokter_id, dokter_nama: dok?.name ?? "Dokter",
+      pasien_id: data.pasien_id, dokter_id: data.dokter_id, dokter_nama: dok.name ?? "Dokter",
       tanggal: data.tanggal, jam_slot: data.jam_slot, keluhan: data.keluhan,
       source: data.source, status: "confirmed",
     }).select("*").single();
