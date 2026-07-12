@@ -660,7 +660,9 @@ function AuditPage() {
         if (!actor) { toast.info("Tidak ada aktor untuk difilter"); return; }
         setQ(actor);
         toast.success(`Filter aktor: ${actor}`);
+      }
       else if (!typing && e.key === '"') {
+
         e.preventDefault();
         const target = detail ?? (rows as any[])[0];
         const val = target?.entity_no ?? target?.entity_id;
