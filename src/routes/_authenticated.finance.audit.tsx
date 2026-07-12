@@ -653,6 +653,14 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "'") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const actor = target?.actor_email;
+        if (!actor) { toast.info("Tidak ada aktor untuk difilter"); return; }
+        setQ(actor);
+        toast.success(`Filter aktor: ${actor}`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1198,6 +1206,7 @@ function AuditPage() {
               ["~", "Toggle detail (buka baris pertama / tutup)"],
               ["=", "Reset filter entity & action"],
               [";", "Salin baris (detail / pertama) sebagai JSON"],
+              ["'", "Filter berdasarkan aktor target"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
