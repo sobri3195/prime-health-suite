@@ -53,7 +53,7 @@ export function PatientPrivasi() {
       URL.revokeObjectURL(url);
       toast.success(t("priv.export.ok"));
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const deleteM = useMutation({
@@ -64,7 +64,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const consentM = useMutation({
@@ -74,7 +74,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   const revokeM = useMutation({
@@ -84,7 +84,7 @@ export function PatientPrivasi() {
       profileQ.refetch();
       auditQ.refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   return (
