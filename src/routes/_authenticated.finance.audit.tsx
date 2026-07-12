@@ -691,6 +691,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "-") {
+        e.preventDefault();
+        if (!(rows as any[]).length) { toast.info("Tidak ada data untuk dihitung"); return; }
+        const list = rows as any[];
+        const uniq = <T,>(a: T[]) => Array.from(new Set(a));
+        const actors = uniq(list.map((r) => r.actor_email).filter(Boolean)).length;
+        const entities = uniq(list.map((r) => r.entity).filter(Boolean)).length;
+        const actions = uniq(list.map((r) => r.action).filter(Boolean)).length;
+        toast.success(`Ringkas: ${list.length} baris • ${actors} aktor • ${entities} entity • ${actions} action (-)`);
+      }
     };
 
 
@@ -1242,6 +1252,7 @@ function AuditPage() {
               ['"', "Filter berdasarkan entity_no / entity_id target"],
               [":", "Salin nama entity (invoice/payment/…)"] ,
               [",", "Salin ringkasan baris (waktu • aktor • entity action no)"],
+              ["-", "Ringkas cepat: total baris • unik aktor/entity/action"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
