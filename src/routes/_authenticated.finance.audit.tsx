@@ -455,7 +455,7 @@ function AuditPage() {
       }
       else if (!typing && e.key === "A") {
         e.preventDefault();
-        setRange({ from: "", to: "", preset: "all" });
+        setRange({ from: "", to: "", preset: "custom" });
         toast.success(`Rentang: semua waktu (A)`);
       }
 
