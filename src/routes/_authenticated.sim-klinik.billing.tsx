@@ -133,8 +133,8 @@ function AddPaymentDialog({ invoice, onClose, onSaved }: {
             <Input id="pay-amt" type="number" inputMode="numeric" min={1} max={sisa} placeholder="0" value={amount === 0 ? "" : amount} onChange={(e) => setAmount(e.target.value === "" ? 0 : Number(e.target.value))} />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex gap-1">
-                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setAmount(sisa)}>Lunas ({`Rp ${sisa.toLocaleString("id-ID")}`})</Button>
-                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setAmount(Math.round(sisa/2))}>50%</Button>
+                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" disabled={sisa <= 0} onClick={() => setAmount(sisa)}>Lunas ({`Rp ${sisa.toLocaleString("id-ID")}`})</Button>
+                <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px]" disabled={sisa <= 0} onClick={() => setAmount(Math.round(sisa/2))}>50%</Button>
               </div>
               <span aria-live="polite" className={amount > sisa ? "text-destructive font-medium" : "text-muted-foreground"}>
                 {amount > sisa
