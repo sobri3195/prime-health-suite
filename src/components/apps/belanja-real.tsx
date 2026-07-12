@@ -320,8 +320,15 @@ export function PatientOrders() {
   const fmt = useFmtIDR();
   const df = useDateFmt();
   const callOrders = useServerFn(listMyOrders);
-  const q = useQuery({ queryKey: ["apps", "orders"], queryFn: () => callOrders({ data: { page: 1, pageSize: 20 } }) });
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const q = useQuery({
+    queryKey: ["apps", "orders", page],
+    queryFn: () => callOrders({ data: { page, pageSize } }),
+  });
   const orders = q.data?.orders ?? [];
+  const total = q.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">{t("orders.title")}</h1>
