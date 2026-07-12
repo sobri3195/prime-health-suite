@@ -173,7 +173,7 @@ export function PatientBeranda() {
           <>
             <div className="mt-1 text-lg font-bold">{upcoming.dokter_nama}</div>
             <div className="text-xs text-muted-foreground">
-              {new Date(upcoming.tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • {upcoming.jam_slot} WIB
+              {df.date(upcoming.tanggal, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • {upcoming.jam_slot} WIB
             </div>
             <div className="mt-2 text-sm">{upcoming.keluhan || "Pemeriksaan mata"}</div>
             <div className="mt-2"><Pill tone={upcoming.status === "confirmed" ? "green" : "amber"}>{statusLabel(upcoming.status)}</Pill></div>
