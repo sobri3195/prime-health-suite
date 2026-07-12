@@ -272,6 +272,13 @@ function AuditPage() {
         e.preventDefault();
         setOnlyStar((v) => { toast.success(!v ? "Hanya bertanda (f)" : "Semua entri (f)"); return !v; });
       }
+      else if (!typing && e.key === "c" && detail) {
+        e.preventDefault();
+        try {
+          void navigator.clipboard.writeText(JSON.stringify(detail, null, 2));
+          toast.success("JSON entri disalin (c)");
+        } catch { toast.error("Gagal menyalin"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -795,6 +802,7 @@ function AuditPage() {
               ["m", "Salin hasil sebagai tabel Markdown"],
               ["g / G", "Ke entri pertama / terakhir"],
               ["f", "Toggle filter ★ Bertanda"],
+              ["c", "Salin JSON entri terbuka"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
