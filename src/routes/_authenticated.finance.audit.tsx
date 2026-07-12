@@ -489,7 +489,16 @@ function AuditPage() {
         a.download = `finance-audit-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        toast.success(`Export JSON (${(rows as any[]).length} baris) — E`);
+      else if (!typing && e.key === "S") {
+        e.preventDefault();
+        const url = window.location.href;
+        if (navigator.share) {
+          navigator.share({ title: "Audit Log Finance", url }).catch(() => {});
+          toast.success("Bagikan URL (S)");
+        } else {
+          navigator.clipboard.writeText(url);
+          toast.success("URL disalin — Web Share tidak tersedia (S)");
+        }
       }
     };
     window.addEventListener("keydown", onKey);
