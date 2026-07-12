@@ -511,7 +511,17 @@ function AuditPage() {
                       ) : "—"}
                     </TableCell>
                   )}
-                  {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
+                  {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setQ(f); toast.success(`Filter field: ${f}`); }}
+                      title={`Filter entri yang menyebut "${f}"`}
+                      className="mr-1 mb-1 inline-block"
+                    >
+                      <Badge variant="outline" className="cursor-pointer text-[10px] hover:bg-accent">{f}</Badge>
+                    </button>
+                  ))}{(r.changed_fields ?? []).length > 5 && <span className="text-[10px] text-muted-foreground">+{(r.changed_fields ?? []).length - 5}</span>}</TableCell>}
                   {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ? highlight(r.reason, q) : "—"}</TableCell>}
                 </TableRow>
                 );
