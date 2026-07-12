@@ -225,6 +225,16 @@ function AuditPage() {
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
+        <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => {
+          const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url; a.download = `audit-finance-${new Date().toISOString().slice(0,10)}.json`;
+          a.click(); URL.revokeObjectURL(url);
+          toast.success(`${rows.length} entri diekspor ke JSON`);
+        }}>
+          <Download className="mr-2 h-4 w-4" /> Export JSON
+        </Button>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
         {refreshMs > 0 && <span className="inline-flex items-center gap-1"><span className={`inline-block h-1.5 w-1.5 rounded-full ${isFetching ? "bg-emerald-500 animate-pulse" : "bg-emerald-500/50"}`} /> Live setiap {refreshMs / 1000}s</span>}
