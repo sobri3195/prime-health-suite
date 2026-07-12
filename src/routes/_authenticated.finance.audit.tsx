@@ -338,7 +338,25 @@ function AuditPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">Total {rows.length} entri (max 500). Klik baris untuk melihat diff.</div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span>Total {rows.length} entri (max 500).</span>
+        {rows.length > 0 && (() => {
+          const counts = rows.reduce<Record<string, number>>((acc, r: any) => { acc[r.action] = (acc[r.action] ?? 0) + 1; return acc; }, {});
+          return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([a, n]) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => { setAction(a); toast.success(`Filter aksi: ${a}`); }}
+              title={`Filter aksi ${a}`}
+            >
+              <Badge className={`${ACTION_TONE[a] ?? "bg-muted text-foreground"} border-0 cursor-pointer hover:ring-2 hover:ring-primary/40`} variant="secondary">
+                {a}: {n}
+              </Badge>
+            </button>
+          ));
+        })()}
+        <span className="ml-auto">Klik baris untuk melihat diff.</span>
+      </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
