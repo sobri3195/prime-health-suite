@@ -38,6 +38,19 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
   );
 }
 
+function useSupabaseUid(): string | undefined {
+  const [uid, setUid] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => { if (!cancelled) setUid(data.user?.id); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!cancelled) setUid(session?.user?.id);
+    });
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
+  }, []);
+  return uid;
+}
+
 
 function Pill({ children, tone = "amber" }: { children: ReactNode; tone?: "amber" | "green" | "rose" | "navy" }) {
   const t = {
