@@ -289,6 +289,14 @@ function AuditPage() {
         setQ(""); setEntity("all"); setAction("all"); setOnlyStar(false);
         toast.success("Semua filter dibersihkan (x)");
       }
+      else if (!typing && e.key === "t") {
+        e.preventDefault();
+        setTimeFmt((t) => {
+          const next = t === "relative" ? "absolute" : "relative";
+          toast.success(`Format waktu: ${next === "relative" ? "Relatif" : "Absolut"} (t)`);
+          return next;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -815,6 +823,7 @@ function AuditPage() {
               ["c", "Salin JSON entri terbuka"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
+              ["t", "Toggle format waktu (relatif/absolut)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
