@@ -103,9 +103,9 @@ function PemeriksaanPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const applyTpl = (k: string) => {
-    const t = TEMPLATES[k]; if (!t || !form) return;
-    setForm({ ...form, diagnosis: t.diagnosis, icd10_code: t.icd, treatment_plan: t.treatment });
+  const applyTpl = (id: string) => {
+    const t = templates.find((x) => x.id === id); if (!t || !form) return;
+    setForm({ ...form, diagnosis: t.diagnosis, icd10_code: t.icd10_code ?? "", treatment_plan: t.treatment ?? "" });
   };
 
   const [showResep, setShowResep] = useState(false);
