@@ -359,6 +359,12 @@ function AuditPage() {
         setQ(next.q); setEntity(next.entity); setAction(next.action);
         toast.success(`Preset: ${next.name} (L)`);
       }
+      else if (!typing && /^[1-9]$/.test(e.key) && presets[Number(e.key) - 1]) {
+        e.preventDefault();
+        const p = presets[Number(e.key) - 1];
+        setQ(p.q); setEntity(p.entity); setAction(p.action);
+        toast.success(`Preset #${e.key}: ${p.name}`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -893,6 +899,7 @@ function AuditPage() {
               ["N", "Ganti action ke nilai berikutnya"],
               ["P", "Simpan filter aktif sebagai preset"],
               ["L", "Muat preset berikutnya (cycle)"],
+              ["1-9", "Muat preset ke-1..9 langsung"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
