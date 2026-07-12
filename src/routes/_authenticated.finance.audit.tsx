@@ -558,6 +558,18 @@ function AuditPage() {
             </button>
           ));
         })()}
+        {rows.length > 0 && (() => {
+          const counts: Record<string, number> = {};
+          for (const r of rows as any[]) {
+            const a = r.actor_email ?? "system";
+            counts[a] = (counts[a] ?? 0) + 1;
+          }
+          return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([a, n]) => (
+            <button key={a} type="button" onClick={() => { setQ(a); toast.success(`Filter aktor: ${a}`); }} title={`Filter aktor ${a}`}>
+              <Badge variant="secondary" className="cursor-pointer hover:ring-2 hover:ring-primary/40">👤 {a}: {n}</Badge>
+            </button>
+          ));
+        })()}
         {(q || entity !== "all" || action !== "all" || onlyStar) && (
           <button
             type="button"
