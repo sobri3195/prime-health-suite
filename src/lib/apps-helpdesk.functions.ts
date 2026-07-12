@@ -101,7 +101,7 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
 
-    const patch: Record<string, unknown> = { status: data.status };
+    const patch: { status: typeof data.status; pic?: string | null } = { status: data.status };
     if (data.pic !== undefined) {
       const pic = data.pic && data.pic.length ? data.pic : null;
       if (pic) {
