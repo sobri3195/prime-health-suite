@@ -951,14 +951,56 @@ const MASTER_TABLE_MAP: Record<keyof typeof MASTER_TABLES, string> = {
 
 export const listMaster = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ key: z.enum(["dokter","payer","layanan","kategori_layanan","obat","jadwal"]) }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    key: z.enum(["dokter","payer","layanan","kategori_layanan","obat","jadwal"]),
+    include_inactive: z.boolean().optional(),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
     const table = MASTER_TABLE_MAP[data.key];
     const cols = MASTER_TABLES[data.key];
-    const { data: rows, error } = await sb.from(table).select(cols).limit(500);
+    let q = sb.from(table).select(cols).limit(500);
+    // Default: sembunyikan obat non-aktif dari dropdown resep, kecuali diminta eksplisit.
+    if (data.key === "obat" && !data.include_inactive) q = q.eq("is_active", true);
+    const { data: rows, error } = await q;
     if (error) throw error;
     return (rows ?? []) as unknown as Array<Record<string, string | number | boolean | null>>;
+  });
+
+/* =============================================================
+ * TEMPLATE PEMERIKSAAN — master klinis
+ * ============================================================*/
+export const listPemeriksaanTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ include_inactive: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    let q = sb.from("klinik_template_pemeriksaan" as never).select("*").order("label");
+    if (!data.include_inactive) q = q.eq("is_active", true);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    return (rows ?? []) as unknown as Array<{ id: string; code: string; label: string; diagnosis: string; icd10_code: string | null; treatment: string | null; is_active: boolean }>;
+  });
+
+export const upsertPemeriksaanTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    code: z.string().min(1),
+    label: z.string().min(1),
+    diagnosis: z.string().min(1),
+    icd10_code: z.string().optional().nullable(),
+    treatment: z.string().optional().nullable(),
+    is_active: z.boolean().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as Supa;
+    const payload = { ...data, created_by: context.userId };
+    const { error } = data.id
+      ? await sb.from("klinik_template_pemeriksaan" as never).update(payload).eq("id", data.id)
+      : await sb.from("klinik_template_pemeriksaan" as never).insert(payload);
+    if (error) throw error;
+    return { ok: true };
   });
 
 /* =============================================================
