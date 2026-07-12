@@ -59,7 +59,22 @@ export function HelpdeskPage() {
 
   const [page, setPage] = useState(1);
   const pageSize = 20;
-  const ticketsQ = useQuery({ queryKey: ["apps", "tickets", page], queryFn: () => callList({ data: { page, pageSize } }) });
+
+  // Reset page saat filter/pencarian berubah agar konsisten dgn hasil server.
+  useEffect(() => { setPage(1); }, [q, st, pr, cat]);
+
+  const listParams = useMemo(() => ({
+    page, pageSize,
+    ...(st !== "all" ? { status: st as any } : {}),
+    ...(pr !== "all" ? { priority: pr as any } : {}),
+    ...(cat !== "all" ? { category: cat } : {}),
+    ...(q.trim() ? { q: q.trim() } : {}),
+  }), [page, st, pr, cat, q]);
+
+  const ticketsQ = useQuery({
+    queryKey: ["apps", "tickets", listParams],
+    queryFn: () => callList({ data: listParams }),
+  });
   const total = ticketsQ.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -82,7 +97,6 @@ export function HelpdeskPage() {
           qc.invalidateQueries({ queryKey: ["apps", "ticket-replies"] });
         })
         .subscribe();
-      if (cancelled && channel) supabase.removeChannel(channel);
     })();
     return () => {
       cancelled = true;
@@ -107,15 +121,7 @@ export function HelpdeskPage() {
     onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
-  const items = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    return (ticketsQ.data?.items ?? []).filter((t: Ticket) =>
-      (st === "all" || t.status === st) &&
-      (pr === "all" || t.priority === pr) &&
-      (cat === "all" || t.category === cat) &&
-      (!qq || t.subject.toLowerCase().includes(qq) || t.ticket_no.toLowerCase().includes(qq) || t.reporter.toLowerCase().includes(qq))
-    );
-  }, [ticketsQ.data, q, st, pr, cat]);
+  const items = (ticketsQ.data?.items ?? []) as Ticket[];
 
   return (
     <PageContainer>
