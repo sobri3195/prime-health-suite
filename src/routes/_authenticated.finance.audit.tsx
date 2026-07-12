@@ -453,6 +453,11 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: tahun lalu (V)`);
       }
+      else if (!typing && e.key === "A") {
+        e.preventDefault();
+        setRange({ from: "", to: "", preset: "all" });
+        toast.success(`Rentang: semua waktu (A)`);
+      }
 
 
 
