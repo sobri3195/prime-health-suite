@@ -629,6 +629,14 @@ function AuditPage() {
         setAction(act);
         toast.success(`Filter action: ${act}`);
       }
+      else if (!typing && e.key === "~") {
+        e.preventDefault();
+        if (detail) { setDetail(null); toast.success("Detail ditutup (~)"); return; }
+        const first = (rows as any[])[0];
+        if (!first) { toast.info("Tidak ada baris untuk dibuka"); return; }
+        setDetail(first);
+        toast.success("Detail baris pertama dibuka (~)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1171,6 +1179,7 @@ function AuditPage() {
               ["&", "Salin ID baris audit"],
               ["(", "Filter entity = entity target"],
               [")", "Filter action = action target"],
+              ["~", "Toggle detail (buka baris pertama / tutup)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
