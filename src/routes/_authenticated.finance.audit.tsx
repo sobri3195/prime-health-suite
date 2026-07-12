@@ -1018,6 +1018,7 @@ function AuditPage() {
               ["B", "Set rentang tanggal ke bulan lalu"],
               ["V", "Set rentang tanggal ke tahun lalu"],
               ["A", "Hapus filter rentang tanggal (semua waktu)"],
+              ["X", "Reset semua filter (termasuk rentang tanggal)"],
 
 
 
