@@ -221,8 +221,8 @@ export const listStockMovement = createServerFn({ method: "POST" })
 const BookingSchema = z.object({
   pasien_id: z.string().uuid(),
   dokter_id: z.string().uuid(),
-  tanggal: z.string(),
-  jam_slot: z.string(),
+  tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal tidak valid"),
+  jam_slot: z.string().regex(/^\d{2}:\d{2}$/, "Jam slot tidak valid"),
   keluhan: z.string().optional(),
   source: z.enum(["walk_in", "phone", "whatsapp", "online"]).default("walk_in"),
 });
@@ -232,9 +232,17 @@ export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => BookingSchema.parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    const { data: dok } = await sb.from("fin_dokter").select("name").eq("id", data.dokter_id).maybeSingle();
+    // P0: cegah booking ke masa lampau.
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.tanggal < today) throw new Error("Tanggal booking tidak boleh di masa lampau.");
+    // P0: validasi dokter aktif — cegah booking ke dokter nonaktif.
+    const { data: dok, error: dokErr } = await sb
+      .from("fin_dokter").select("name,is_active").eq("id", data.dokter_id).maybeSingle();
+    if (dokErr) throw dokErr;
+    if (!dok) throw new Error("Dokter tidak ditemukan.");
+    if (dok.is_active === false) throw new Error("Dokter sedang tidak aktif.");
     const { data: row, error } = await sb.from("apps_booking").insert({
-      pasien_id: data.pasien_id, dokter_id: data.dokter_id, dokter_nama: dok?.name ?? "Dokter",
+      pasien_id: data.pasien_id, dokter_id: data.dokter_id, dokter_nama: dok.name ?? "Dokter",
       tanggal: data.tanggal, jam_slot: data.jam_slot, keluhan: data.keluhan,
       source: data.source, status: "confirmed",
     }).select("*").single();
@@ -328,6 +336,12 @@ export const updateBookingStatus = createServerFn({ method: "POST" })
     const curStatus = cur.status as string;
     if (data.status === "cancelled" && !BOOKING_CANCELLABLE_STATUSES.includes(curStatus as typeof BOOKING_CANCELLABLE_STATUSES[number])) {
       throw new Error("Booking tidak bisa dibatalkan: status saat ini '" + curStatus + "' sudah terkunci (check-in / dipanggil / dilayani / selesai).");
+    }
+    // P0: 'checked_in' hanya boleh diset oleh alur checkinBooking (yang membuat visit+queue),
+    // bukan lewat updateBookingStatus manual — jika tidak, booking berstatus checked_in
+    // tanpa visit/queue → pasien hilang dari antrian.
+    if (data.status === "checked_in" && curStatus !== "checked_in") {
+      throw new Error("Gunakan tombol Check-in untuk membuat antrian, bukan ubah status manual.");
     }
     if (data.status !== "cancelled" && BOOKING_LOCKED_STATUSES.includes(curStatus as typeof BOOKING_LOCKED_STATUSES[number]) && curStatus !== data.status) {
       throw new Error("Transisi status tidak diizinkan dari '" + curStatus + "' ke '" + data.status + "'.");
