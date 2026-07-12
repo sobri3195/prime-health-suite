@@ -1289,6 +1289,7 @@ function AuditPage() {
               ["-", "Ringkas cepat: total baris • unik aktor/entity/action"],
               ["+", "Salin entity_no / entity_id target"],
               ["[ / ]", "Lompat detail -10 / +10 baris"],
+              ["{ / }", "Lompat detail -50 / +50 baris"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
