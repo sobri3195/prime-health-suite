@@ -42,7 +42,8 @@ function ObatPage() {
   const [moveQty, setMoveQty] = useState("");
   const [moveNote, setMoveNote] = useState("");
 
-  const listQ = useQuery({ queryKey: ["klinik","obat",{q,low}], queryFn: () => callList({ data: { q: q || undefined, low_stock_only: low } }) });
+  const debQ = useDebounce(q, 300);
+  const listQ = useQuery({ queryKey: ["klinik","obat",{q:debQ,low}], queryFn: () => callList({ data: { q: debQ || undefined, low_stock_only: low } }) });
   const movesQ = useQuery({ queryKey: ["klinik","stock-mvmt"], queryFn: () => callMoves({ data: {} }) });
 
   const upsertM = useMutation({ mutationFn: (d: Partial<Obat>) => callUpsert({ data: d as never }),
