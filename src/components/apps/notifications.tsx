@@ -66,15 +66,17 @@ export function NotificationsPage() {
 
   const markM = useMutation({
     mutationFn: async (id: string) => {
-      // Defense-in-depth: scope to signed-in user in addition to RLS.
       const { data: { user }, error: ue } = await supabase.auth.getUser();
       if (ue || !user) throw new Error("Sesi berakhir, silakan login ulang");
-      const { error } = await supabase
+      // Jangan filter user_id: notif milik pasien lain. Andalkan RLS + cek row affected
+      // agar kegagalan izin tidak silent-success.
+      const { data, error } = await supabase
         .from("apps_notif")
         .update({ read_at: new Date().toISOString() })
         .eq("id", id)
-        .eq("user_id", user.id);
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Tidak berwenang menandai notifikasi ini");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "notif-operator"] }),
     onError: (e: any) => toast.error(e?.message ?? "Gagal"),
