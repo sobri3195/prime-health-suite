@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Search, Undo2, Download, BookmarkPlus, Bookmark, Trash2, Columns3 } from "lucide-react";
 import { toast } from "sonner";
 import { useFinanceAccess } from "@/lib/finance-access";
 
@@ -25,6 +25,23 @@ function loadPresets(): AuditPreset[] {
   try { return JSON.parse(localStorage.getItem(PRESET_KEY) || "[]"); } catch { return []; }
 }
 function savePresets(p: AuditPreset[]) { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
+
+const COLS = [
+  { key: "waktu", label: "Waktu" },
+  { key: "aktor", label: "Aktor" },
+  { key: "aksi", label: "Aksi" },
+  { key: "entity", label: "Entity" },
+  { key: "no", label: "No / ID" },
+  { key: "fields", label: "Field Berubah" },
+  { key: "alasan", label: "Alasan" },
+] as const;
+type ColKey = typeof COLS[number]["key"];
+const COL_KEY = "fin-audit-cols-v1";
+function loadCols(): Record<ColKey, boolean> {
+  const def = Object.fromEntries(COLS.map((c) => [c.key, true])) as Record<ColKey, boolean>;
+  if (typeof window === "undefined") return def;
+  try { return { ...def, ...JSON.parse(localStorage.getItem(COL_KEY) || "{}") }; } catch { return def; }
+}
 
 export const Route = createFileRoute("/_authenticated/finance/audit")({ 
   head: () => pageHead({ title: "Audit Log Finance — Finance", description: "Audit Log Finance pada modul keuangan klinik.", path: "/finance/audit" }),
@@ -86,8 +103,10 @@ function AuditPage() {
     if (typeof window === "undefined") return 0;
     return Number(localStorage.getItem("fin-audit-refresh") || 0);
   });
+  const [cols, setCols] = useState<Record<ColKey, boolean>>(() => loadCols());
   useEffect(() => { setPresets(loadPresets()); }, []);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(COL_KEY, JSON.stringify(cols)); }, [cols]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
@@ -178,6 +197,23 @@ function AuditPage() {
             <SelectItem value="60000">Setiap 60 detik</SelectItem>
           </SelectContent>
         </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm"><Columns3 className="mr-2 h-4 w-4" /> Kolom</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs">Tampilkan kolom</DropdownMenuLabel>
+            {COLS.map((c) => (
+              <DropdownMenuCheckboxItem key={c.key} checked={cols[c.key]} onCheckedChange={(v) => setCols((s) => ({ ...s, [c.key]: !!v }))} onSelect={(e) => e.preventDefault()}>
+                {c.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setCols(Object.fromEntries(COLS.map((c) => [c.key, true])) as Record<ColKey, boolean>); }}>
+              Tampilkan semua
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
@@ -221,42 +257,55 @@ function AuditPage() {
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Waktu</TableHead><TableHead>Aktor</TableHead><TableHead>Aksi</TableHead>
-            <TableHead>Entity</TableHead><TableHead>No / ID</TableHead>
-            <TableHead>Field Berubah</TableHead><TableHead>Alasan</TableHead>
+            {cols.waktu && <TableHead>Waktu</TableHead>}
+            {cols.aktor && <TableHead>Aktor</TableHead>}
+            {cols.aksi && <TableHead>Aksi</TableHead>}
+            {cols.entity && <TableHead>Entity</TableHead>}
+            {cols.no && <TableHead>No / ID</TableHead>}
+            {cols.fields && <TableHead>Field Berubah</TableHead>}
+            {cols.alasan && <TableHead>Alasan</TableHead>}
           </TableRow></TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="py-6 text-center">Loading…</TableCell></TableRow>
-              : rows.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>
-              : rows.map((r: any) => (
+            {(() => {
+              const visibleCount = COLS.filter((c) => cols[c.key]).length || 1;
+              if (isLoading) return <TableRow><TableCell colSpan={visibleCount} className="py-6 text-center">Loading…</TableCell></TableRow>;
+              if (rows.length === 0) return <TableRow><TableCell colSpan={visibleCount} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>;
+              return rows.map((r: any) => (
                 <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetail(r)}>
-                  <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>
-                  <TableCell className="text-sm">
-                    <button
-                      type="button"
-                      className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
-                      onClick={(e) => { e.stopPropagation(); setQ(r.actor_email ?? "system"); toast.success(`Filter aktor: ${r.actor_email ?? "system"}`); }}
-                      title="Filter berdasarkan aktor ini"
-                    >{r.actor_email ?? "system"}</button>
-                  </TableCell>
-                  <TableCell>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setAction(r.action); toast.success(`Filter aksi: ${r.action}`); }} title="Filter aksi ini">
-                      <Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0 cursor-pointer hover:ring-2 hover:ring-primary/40`} variant="secondary">{r.action}</Badge>
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <button
-                      type="button"
-                      className="rounded px-1 -mx-1 font-medium hover:bg-primary/10 hover:text-primary"
-                      onClick={(e) => { e.stopPropagation(); setEntity(r.entity); toast.success(`Filter entity: ${r.entity}`); }}
-                      title="Filter entity ini"
-                    >{r.entity}</button>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{r.entity_no ?? r.entity_id ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>
-                  <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>
+                  {cols.waktu && <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>}
+                  {cols.aktor && (
+                    <TableCell className="text-sm">
+                      <button
+                        type="button"
+                        className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
+                        onClick={(e) => { e.stopPropagation(); setQ(r.actor_email ?? "system"); toast.success(`Filter aktor: ${r.actor_email ?? "system"}`); }}
+                        title="Filter berdasarkan aktor ini"
+                      >{r.actor_email ?? "system"}</button>
+                    </TableCell>
+                  )}
+                  {cols.aksi && (
+                    <TableCell>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setAction(r.action); toast.success(`Filter aksi: ${r.action}`); }} title="Filter aksi ini">
+                        <Badge className={`${ACTION_TONE[r.action] ?? "bg-muted text-foreground"} border-0 cursor-pointer hover:ring-2 hover:ring-primary/40`} variant="secondary">{r.action}</Badge>
+                      </button>
+                    </TableCell>
+                  )}
+                  {cols.entity && (
+                    <TableCell className="text-xs">
+                      <button
+                        type="button"
+                        className="rounded px-1 -mx-1 font-medium hover:bg-primary/10 hover:text-primary"
+                        onClick={(e) => { e.stopPropagation(); setEntity(r.entity); toast.success(`Filter entity: ${r.entity}`); }}
+                        title="Filter entity ini"
+                      >{r.entity}</button>
+                    </TableCell>
+                  )}
+                  {cols.no && <TableCell className="font-mono text-xs">{r.entity_no ?? r.entity_id ?? "—"}</TableCell>}
+                  {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
+                  {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>}
                 </TableRow>
-              ))}
+              ));
+            })()}
           </TableBody>
         </Table>
       </div>
