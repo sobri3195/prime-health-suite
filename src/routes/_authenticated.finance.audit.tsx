@@ -800,6 +800,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "i") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.id) { toast.info("Tidak ada baris"); return; }
+        navigator.clipboard.writeText(String(target.id)).then(
+          () => toast.success("Row ID disalin (i)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
