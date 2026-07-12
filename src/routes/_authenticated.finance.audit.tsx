@@ -502,6 +502,14 @@ function AuditPage() {
           toast.success("URL disalin — Web Share tidak tersedia (S)");
         }
       }
+      else if (!typing && e.key === "i" && (rows as any[]).length) {
+        e.preventDefault();
+        const list = rows as any[];
+        const actors = new Set(list.map((r) => r.actor_email || r.actor_id).filter(Boolean));
+        const entities = new Set(list.map((r) => r.entity).filter(Boolean));
+        const actions = new Set(list.map((r) => r.action).filter(Boolean));
+        toast.info(`${list.length} baris • ${actors.size} aktor • ${entities.size} entity • ${actions.size} action`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
