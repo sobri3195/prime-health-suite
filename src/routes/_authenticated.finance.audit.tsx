@@ -26,6 +26,23 @@ function loadPresets(): AuditPreset[] {
 }
 function savePresets(p: AuditPreset[]) { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
 
+const COLS = [
+  { key: "waktu", label: "Waktu" },
+  { key: "aktor", label: "Aktor" },
+  { key: "aksi", label: "Aksi" },
+  { key: "entity", label: "Entity" },
+  { key: "no", label: "No / ID" },
+  { key: "fields", label: "Field Berubah" },
+  { key: "alasan", label: "Alasan" },
+] as const;
+type ColKey = typeof COLS[number]["key"];
+const COL_KEY = "fin-audit-cols-v1";
+function loadCols(): Record<ColKey, boolean> {
+  const def = Object.fromEntries(COLS.map((c) => [c.key, true])) as Record<ColKey, boolean>;
+  if (typeof window === "undefined") return def;
+  try { return { ...def, ...JSON.parse(localStorage.getItem(COL_KEY) || "{}") }; } catch { return def; }
+}
+
 export const Route = createFileRoute("/_authenticated/finance/audit")({ 
   head: () => pageHead({ title: "Audit Log Finance — Finance", description: "Audit Log Finance pada modul keuangan klinik.", path: "/finance/audit" }),
   component: AuditPage });
