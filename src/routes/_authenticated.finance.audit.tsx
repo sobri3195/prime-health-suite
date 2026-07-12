@@ -289,6 +289,14 @@ function AuditPage() {
         setQ(""); setEntity("all"); setAction("all"); setOnlyStar(false);
         toast.success("Semua filter dibersihkan (x)");
       }
+      else if (!typing && e.key === "t") {
+        e.preventDefault();
+        setTimeFmt((t) => {
+          const next = t === "relative" ? "absolute" : "relative";
+          toast.success(`Format waktu: ${next === "relative" ? "Relatif" : "Absolut"} (t)`);
+          return next;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
