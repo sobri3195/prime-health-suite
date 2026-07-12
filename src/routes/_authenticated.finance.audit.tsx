@@ -319,6 +319,16 @@ function AuditPage() {
           return next;
         });
       }
+      else if (!typing && e.key === "n" && (rows as any[]).length) {
+        e.preventDefault();
+        const uniq = Array.from(new Set((rows as any[]).map((r) => r.entity).filter(Boolean))) as string[];
+        if (!uniq.length) return;
+        const list = ["all", ...uniq];
+        const idx = list.indexOf(entity);
+        const next = list[(idx + 1) % list.length];
+        setEntity(next);
+        toast.success(`Entity: ${next} (n)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -849,6 +859,7 @@ function AuditPage() {
               ["u", "Salin URL dengan filter aktif"],
               ["y", "Salin JSON semua entri hasil"],
               ["a", "Toggle auto-refresh (10s)"],
+              ["n", "Ganti entity ke nilai berikutnya"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
