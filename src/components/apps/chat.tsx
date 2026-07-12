@@ -6,7 +6,7 @@ import { Send, MessageCircle, Paperclip, X, FileText, ImageIcon } from "lucide-r
 import { getOrCreateRoom, listChatMessages, sendChatMessage, signChatAttachment } from "@/lib/apps-chat.functions";
 import { friendlyError } from "@/lib/apps-error";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useDateFmt } from "@/lib/i18n";
 import { SkeletonList, EmptyState } from "@/components/apps/ui";
 
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024; // 8 MB
@@ -37,7 +37,8 @@ function AttachmentPreview({ path, name, mime }: { path: string; name: string; m
 }
 
 export function PatientChat() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
+  const df = useDateFmt();
   const qc = useQueryClient();
   const callRoom = useServerFn(getOrCreateRoom);
   const callMsgs = useServerFn(listChatMessages);
@@ -126,7 +127,7 @@ export function PatientChat() {
                     <AttachmentPreview path={m.attachment_path} name={m.attachment_name || "lampiran"} mime={m.attachment_mime} />
                   )}
                   <div className={`mt-1 text-[10px] ${isMe ? "text-white/70" : "text-muted-foreground"}`}>
-                    {new Date(m.created_at).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" })}
+                    {df.time(m.created_at)}
                   </div>
                 </div>
               </div>

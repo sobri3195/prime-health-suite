@@ -64,14 +64,15 @@ export function HelpdeskPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: sess } = await supabase.auth.getUser();
       const uid = sess.user?.id;
       if (!uid || cancelled) return;
       const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: uid });
-      // Non-staff only subscribe to their own tickets; staff see all.
+      if (cancelled) return;
       const ticketFilter = isStaff ? undefined : { filter: `user_id=eq.${uid}` };
-      const ch = supabase.channel("apps-tickets")
+      channel = supabase.channel("apps-tickets")
         .on("postgres_changes", { event: "*", schema: "public", table: "apps_ticket", ...(ticketFilter ?? {}) }, () => {
           qc.invalidateQueries({ queryKey: ["apps", "tickets"] });
         })
@@ -80,9 +81,12 @@ export function HelpdeskPage() {
           qc.invalidateQueries({ queryKey: ["apps", "ticket-replies"] });
         })
         .subscribe();
-      return () => { supabase.removeChannel(ch); };
+      if (cancelled && channel) supabase.removeChannel(channel);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   const createM = useMutation({

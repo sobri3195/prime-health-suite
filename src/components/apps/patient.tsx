@@ -25,6 +25,7 @@ import { useI18n, useFmtIDR, useDateFmt } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { waLink } from "@/lib/brand";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 
 
@@ -68,6 +69,7 @@ export function PatientBeranda() {
   const callProfile = useServerFn(getMyProfile);
   const callQueue = useServerFn(getMyQueueToday);
   const callBookings = useServerFn(listMyBookings);
+  const df = useDateFmt();
 
   const authUid = useSupabaseUid();
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
@@ -171,7 +173,7 @@ export function PatientBeranda() {
           <>
             <div className="mt-1 text-lg font-bold">{upcoming.dokter_nama}</div>
             <div className="text-xs text-muted-foreground">
-              {new Date(upcoming.tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • {upcoming.jam_slot} WIB
+              {df.date(upcoming.tanggal, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • {upcoming.jam_slot} WIB
             </div>
             <div className="mt-2 text-sm">{upcoming.keluhan || "Pemeriksaan mata"}</div>
             <div className="mt-2"><Pill tone={upcoming.status === "confirmed" ? "green" : "amber"}>{statusLabel(upcoming.status)}</Pill></div>
@@ -627,7 +629,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "profile"] });
       setEdit(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const cancelM = useMutation({
@@ -638,7 +640,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
       qc.invalidateQueries({ queryKey: ["apps", "queue"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const reschedM = useMutation({
@@ -650,7 +652,7 @@ export function PatientProfil() {
       qc.invalidateQueries({ queryKey: ["apps", "bookings"] });
       qc.invalidateQueries({ queryKey: ["apps", "queue"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
   const doctorsQ = useQuery({
