@@ -507,7 +507,7 @@ function AuditPage() {
                             navigator.clipboard.writeText(v).then(() => toast.success(`Disalin: ${v}`));
                           }}
                           title="Klik untuk salin"
-                        >{r.entity_no ?? r.entity_id}</button>
+                        >{highlight(String(r.entity_no ?? r.entity_id), q)}</button>
                       ) : "—"}
                     </TableCell>
                   )}
