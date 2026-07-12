@@ -447,3 +447,26 @@ export function useI18n(): Ctx {
   }
   return ctx;
 }
+
+/** Locale-aware IDR currency formatter. Follows i18n `lang`. */
+export function useFmtIDR() {
+  const { lang } = useI18n();
+  const locale = lang === "en" ? "en-US" : "id-ID";
+  return (n: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+}
+
+/** Locale-aware date/time formatter. Follows i18n `lang`. */
+export function useDateFmt() {
+  const { lang } = useI18n();
+  const locale = lang === "en" ? "en-US" : "id-ID";
+  return {
+    date: (d: string | number | Date, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }) =>
+      new Date(d).toLocaleDateString(locale, opts),
+    dateTime: (d: string | number | Date, opts: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" }) =>
+      new Date(d).toLocaleString(locale, opts),
+    time: (d: string | number | Date, opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" }) =>
+      new Date(d).toLocaleTimeString(locale, opts),
+  };
+}
+
