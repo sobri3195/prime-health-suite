@@ -782,6 +782,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "u") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.actor_id) { toast.info("Tidak ada actor_id"); return; }
+        navigator.clipboard.writeText(String(target.actor_id)).then(
+          () => toast.success("Actor ID disalin (u)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
