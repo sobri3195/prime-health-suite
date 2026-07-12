@@ -150,6 +150,11 @@ function AuditPage() {
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-refresh", String(refreshMs)); }, [refreshMs]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem(COL_KEY, JSON.stringify(cols)); }, [cols]);
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-density", density); }, [density]);
+  const [timeFmt, setTimeFmt] = useState<"relative" | "absolute">(() => {
+    if (typeof window === "undefined") return "relative";
+    return (localStorage.getItem("fin-audit-timefmt") as "relative" | "absolute") || "relative";
+  });
+  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-timefmt", timeFmt); }, [timeFmt]);
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
