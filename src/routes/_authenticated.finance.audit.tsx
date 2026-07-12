@@ -316,7 +316,15 @@ function AuditPage() {
               if (isLoading) return <TableRow><TableCell colSpan={visibleCount} className="py-6 text-center">Loading…</TableCell></TableRow>;
               if (rows.length === 0) return <TableRow><TableCell colSpan={visibleCount} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>;
               return rows.map((r: any) => (
-                <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetail(r)}>
+                <TableRow
+                  key={r.id}
+                  ref={(el) => {
+                    if (el && detail?.id === r.id) el.scrollIntoView({ block: "center", behavior: "smooth" });
+                  }}
+                  className={`cursor-pointer hover:bg-muted/50 ${detail?.id === r.id ? "bg-primary/10 ring-1 ring-primary/40" : ""}`}
+                  onClick={() => setDetail(r)}
+                >
+
                   {cols.waktu && <TableCell className="font-mono text-xs">{new Date(r.created_at).toLocaleString("id-ID")}</TableCell>}
                   {cols.aktor && (
                     <TableCell className="text-sm">
