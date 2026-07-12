@@ -662,7 +662,7 @@ export const getDashboardStats = createServerFn({ method: "POST" })
     const [pasienAll, pasienNew, visitToday, bookingToday, queueActive, invToday, invMonth, invUnpaid, presPending, obat] = await Promise.all([
       sb.from("apps_pasien").select("*", { count: "exact", head: true }).not("no_rm","is",null),
       sb.from("apps_pasien").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
-      sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lte("visit_date", today + "T23:59:59"),
+      sb.from("klinik_visit").select("*", { count: "exact", head: true }).gte("visit_date", today + "T00:00:00").lt("visit_date", new Date(new Date(today+"T00:00:00Z").getTime()+86400000).toISOString().slice(0,10) + "T00:00:00"),
       sb.from("apps_booking").select("*", { count: "exact", head: true }).eq("tanggal", today),
       sb.from("klinik_queue").select("*", { count: "exact", head: true }).eq("queue_date", today).in("status", ["waiting","called","in_service"]),
       sb.from("fin_invoice").select("total.sum()").eq("tanggal", today).neq("status","void"),
