@@ -603,6 +603,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "&") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const id = target?.id;
+        if (!id) { toast.info("Tidak ada ID untuk disalin"); return; }
+        navigator.clipboard.writeText(String(id)).then(
+          () => toast.success(`ID baris disalin (&)`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1142,6 +1152,7 @@ function AuditPage() {
               ["$", "Salin alasan (reason)"],
               ["%", "Salin action"],
               ["^", "Salin timestamp (created_at)"],
+              ["&", "Salin ID baris audit"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
