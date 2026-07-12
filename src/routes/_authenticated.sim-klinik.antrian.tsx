@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageHead } from "@/lib/page-head";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
@@ -54,6 +54,8 @@ function AntrianPage() {
 
   const waiting = rows.filter((r) => r.status === "waiting");
   const now = rows.find((r) => r.status === "in_service" || r.status === "called");
+  const inService = rows.find((r) => r.status === "in_service");
+  const called = rows.find((r) => r.status === "called");
 
   // Rata-rata waktu tunggu: selisih created_at → called_at untuk antrian yang sudah dipanggil hari ini.
   const waitDurations = rows
@@ -61,6 +63,37 @@ function AntrianPage() {
     .map((r) => (new Date(r.called_at!).getTime() - new Date(r.created_at).getTime()) / 60000)
     .filter((m) => m >= 0 && m < 600);
   const avgWait = waitDurations.length ? Math.round(waitDurations.reduce((a, b) => a + b, 0) / waitDurations.length) : null;
+
+  // Text-to-Speech untuk mode display — panggil saat nomor antrian yg dipanggil berubah.
+  const lastSpokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!display || !called) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const key = `${called.id}:${called.queue_no}`;
+    if (lastSpokenRef.current === key) return;
+    lastSpokenRef.current = key;
+    const utter = new SpeechSynthesisUtterance(
+      `Nomor antrian ${called.queue_no.split("").join(" ")}, atas nama ${called.apps_pasien?.nama ?? ""}, silakan menuju loket ${called.counter}.`,
+    );
+    utter.lang = "id-ID"; utter.rate = 0.95;
+    try { window.speechSynthesis.cancel(); window.speechSynthesis.speak(utter); } catch { /* noop */ }
+  }, [display, called]);
+
+  // Keyboard shortcuts (non-display mode) — n: panggil antrian menunggu berikutnya, c: selesai, p: panggil ulang.
+  useEffect(() => {
+    if (display) return;
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === "n" && waiting[0]) { e.preventDefault(); updM.mutate({ id: waiting[0].id, status: "called" }); }
+      else if (k === "c" && inService) { e.preventDefault(); updM.mutate({ id: inService.id, status: "done" }); }
+      else if (k === "p" && called) { e.preventDefault(); updM.mutate({ id: called.id, status: "called" }); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [display, waiting, inService, called, updM]);
 
   if (display) {
     return (
@@ -102,6 +135,7 @@ function AntrianPage() {
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5" />Rata-rata tunggu: <span className="font-semibold text-foreground">{avgWait !== null ? `${avgWait} mnt` : "—"}</span></span>
           <span>Menunggu: <span className="font-semibold text-foreground">{waiting.length}</span></span>
+          <span className="hidden text-[10px] text-muted-foreground md:inline" title="n=panggil berikutnya · c=selesai · p=panggil ulang">⌨ n / c / p</span>
           <span>Total {rows.length}</span>
         </div>
       </div>

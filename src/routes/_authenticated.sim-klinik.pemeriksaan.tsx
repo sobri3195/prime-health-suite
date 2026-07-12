@@ -139,14 +139,22 @@ function PemeriksaanPage() {
         <Card className="p-4">
           {selVisit && (detailQ.isLoading || detailQ.isFetching) && !form ? (
             <div className="space-y-3" aria-busy="true" aria-live="polite">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-9 w-full" />
+              {/* Match tinggi form final: header template + 11 field + tombol */}
+              <div className="flex gap-2"><Skeleton className="h-8 w-32" /><Skeleton className="h-8 w-24" /><Skeleton className="h-8 w-28" /></div>
+              <div><Skeleton className="mb-1 h-4 w-32" /><Skeleton className="h-[60px] w-full" /></div>
               <div className="grid grid-cols-4 gap-2">
-                <Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" /><Skeleton className="h-9" />
+                {[0,1,2,3].map((i) => (<div key={i}><Skeleton className="mb-1 h-4 w-16" /><Skeleton className="h-9" /></div>))}
               </div>
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-2/3" />
+              <div><Skeleton className="mb-1 h-4 w-20" /><Skeleton className="h-9 w-full" /></div>
+              <div><Skeleton className="mb-1 h-4 w-16" /><Skeleton className="h-9 w-full" /></div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2"><Skeleton className="mb-1 h-4 w-20" /><Skeleton className="h-9" /></div>
+                <div><Skeleton className="mb-1 h-4 w-16" /><Skeleton className="h-9" /></div>
+              </div>
+              <div><Skeleton className="mb-1 h-4 w-28" /><Skeleton className="h-[60px] w-full" /></div>
+              <div><Skeleton className="mb-1 h-4 w-20" /><Skeleton className="h-[60px] w-full" /></div>
+              <div><Skeleton className="mb-1 h-4 w-16" /><Skeleton className="h-[60px] w-full" /></div>
+              <div className="flex gap-2"><Skeleton className="h-9 w-32" /><Skeleton className="h-9 w-56" /><Skeleton className="h-9 w-28" /></div>
             </div>
           ) : !form ? <p className="text-sm text-muted-foreground">Pilih pasien di samping untuk mulai pemeriksaan.</p>
             : (
@@ -183,7 +191,17 @@ function PemeriksaanPage() {
                     {(detailQ.data.prescriptions as Array<{ id: string; status: string; klinik_prescription_item?: unknown[] }>).map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
                   </div>
                 )}
-                <RmHistoryPanel visitId={selVisit!} />
+                <RmHistoryPanel visitId={selVisit!} canRestore={!form.is_final} onRestore={(snap) => {
+                  if (!form) return;
+                  setForm({
+                    ...form,
+                    anamnesis: String(snap.anamnesis ?? ""), visus_od: String(snap.visus_od ?? ""), visus_os: String(snap.visus_os ?? ""),
+                    tio_od: String(snap.tio_od ?? ""), tio_os: String(snap.tio_os ?? ""), slit_lamp: String(snap.slit_lamp ?? ""),
+                    fundus: String(snap.fundus ?? ""), diagnosis: String(snap.diagnosis ?? ""), icd10_code: String(snap.icd10_code ?? ""),
+                    treatment_plan: String(snap.treatment_plan ?? ""), tindakan: String(snap.tindakan ?? ""), notes: String(snap.notes ?? ""),
+                  });
+                  toast.success("Snapshot dimuat ke form — tinjau lalu Simpan Draft/Finalisasi untuk menerapkan.");
+                }} />
               </div>
             )}
         </Card>
@@ -204,7 +222,7 @@ const DIFF_FIELDS: Array<{ k: string; label: string }> = [
   { k: "treatment_plan", label: "Rencana Terapi" }, { k: "tindakan", label: "Tindakan" }, { k: "notes", label: "Catatan" },
 ];
 
-function RmHistoryPanel({ visitId }: { visitId: string }) {
+function RmHistoryPanel({ visitId, canRestore, onRestore }: { visitId: string; canRestore?: boolean; onRestore?: (snap: Record<string, unknown>) => void }) {
   const call = useServerFn(listMedicalRecordHistory);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const q = useQuery({
@@ -247,6 +265,13 @@ function RmHistoryPanel({ visitId }: { visitId: string }) {
                 </div>
               )}
               {open && diffs.length === 0 && <div className="mt-2 text-muted-foreground">Tidak ada perubahan.</div>}
+              {open && canRestore && onRestore && (
+                <div className="mt-2 flex justify-end">
+                  <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => onRestore(next)}>
+                    Muat versi ini ke form
+                  </Button>
+                </div>
+              )}
             </li>
           );
         })}
