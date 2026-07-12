@@ -278,6 +278,17 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, onCreated 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader><DialogTitle>Buat Resep</DialogTitle></DialogHeader>
+        {warnings.length > 0 && (
+          <div role="alert" aria-live="polite" className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            <div className="mb-1 font-semibold">⚠ Peringatan interaksi obat</div>
+            <ul className="list-disc space-y-0.5 pl-4">
+              {warnings.map((w, i) => (
+                <li key={i}><b>[{w.severity.toUpperCase()}]</b> {w.drugs.join(" + ")} — {w.reason}</li>
+              ))}
+            </ul>
+            {warnings.some((w) => w.severity === "danger") && <div className="mt-1 font-medium">Kombinasi ditandai bahaya — server akan menolak submit.</div>}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Daftar Obat</Label>
