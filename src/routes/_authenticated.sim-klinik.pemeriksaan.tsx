@@ -294,6 +294,12 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
         <DialogHeader><DialogTitle>Buat Resep</DialogTitle></DialogHeader>
+        {alergi && (
+          <div role="note" className="rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+            <b>Alergi pasien:</b> {alergi}
+            {alergiHit.length > 0 && <div className="mt-1 font-semibold">⚠ Item resep mengandung alergen: {alergiHit.map((i) => i.obat_name).join(", ")}</div>}
+          </div>
+        )}
         {warnings.length > 0 && (
           <div role="alert" aria-live="polite" className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
             <div className="mb-1 font-semibold">⚠ Peringatan interaksi obat</div>
@@ -307,9 +313,12 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
         )}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Daftar Obat</Label>
+            <Label>Cari Obat</Label>
+            <Input value={rawSearch} onChange={(e) => setRawSearch(e.target.value)} placeholder="Nama / kode / kategori…" className="mb-2" />
             <div className="max-h-72 overflow-y-auto rounded-md border">
-              {obat.map((o) => (
+              {obatQ.isLoading ? <p className="p-2 text-xs text-muted-foreground">Memuat…</p>
+                : obat.length === 0 ? <p className="p-2 text-xs text-muted-foreground">Tidak ada obat cocok.</p>
+                : obat.map((o) => (
                 <button key={o.id} onClick={() => addItem(o)} className="block w-full border-b p-2 text-left text-sm hover:bg-muted/40">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{o.name}</span>
@@ -321,12 +330,15 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
             </div>
           </div>
           <div>
-            <Label>Resep ({items.length} item)</Label>
+            <Label>Resep ({items.length} item) · Total Rp {total.toLocaleString("id-ID")}</Label>
             <div className="max-h-72 overflow-y-auto rounded-md border p-2 space-y-2">
               {items.map((it, idx) => (
                 <div key={idx} className="rounded border p-2 text-xs">
-                  <div className="flex items-center justify-between"><span className="font-medium">{it.obat_name}</span>
-                    <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button></div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{it.obat_name}</span>
+                    <span className="text-muted-foreground">Rp {(Number(it.quantity) * Number(it.unit_price)).toLocaleString("id-ID")}</span>
+                    <Button size="icon" aria-label="Hapus" variant="ghost" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button>
+                  </div>
                   <div className="mt-1 grid grid-cols-2 gap-1">
                     <Input placeholder="Dosis" value={it.dosage} onChange={(e) => { const c = [...items]; c[idx].dosage = e.target.value; setItems(c); }} />
                     <Input placeholder="Frek." value={it.frequency} onChange={(e) => { const c = [...items]; c[idx].frequency = e.target.value; setItems(c); }} />
