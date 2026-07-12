@@ -544,7 +544,7 @@ export const dispensePrescription = createServerFn({ method: "POST" })
     await appendAuditRow(sb, { actor_id: context.userId, module: "Farmasi", action: "dispense", target: data.id });
     return { ok: true };
   });
-  });
+
 
 /* =============================================================
  * KASIR / INVOICE
