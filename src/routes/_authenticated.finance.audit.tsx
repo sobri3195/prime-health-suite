@@ -960,6 +960,8 @@ function AuditPage() {
               ["M", "Set rentang tanggal ke bulan ini"],
               ["Y", "Set rentang tanggal ke tahun ini"],
               ["Q", "Set rentang tanggal ke kuartal ini"],
+              ["H", "Set rentang tanggal ke kemarin"],
+
 
 
               ["?", "Buka bantuan ini"],
