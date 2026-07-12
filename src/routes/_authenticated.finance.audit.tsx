@@ -992,6 +992,7 @@ function AuditPage() {
               ["H", "Set rentang tanggal ke kemarin"],
               ["Z", "Set rentang tanggal ke 7 hari terakhir"],
               ["D", "Set rentang tanggal ke 30 hari terakhir"],
+              ["B", "Set rentang tanggal ke bulan lalu"],
 
 
 
