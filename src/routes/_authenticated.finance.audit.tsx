@@ -553,6 +553,16 @@ function AuditPage() {
         if (onlyStar) setOnlyStar(false);
         toast.success(`${count} tanda dihapus (!)`);
       }
+      else if (!typing && e.key === "@") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const actor = target?.actor_email;
+        if (!actor) { toast.info("Tidak ada aktor untuk disalin"); return; }
+        navigator.clipboard.writeText(actor).then(
+          () => toast.success(`Aktor disalin (@): ${actor}`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1087,6 +1097,7 @@ function AuditPage() {
               ["p", "Cetak halaman audit saat ini"],
               ["\\", "Bersihkan hanya query pencarian"],
               ["!", "Hapus semua tanda (dengan konfirmasi)"],
+              ["@", "Salin email aktor (detail / baris pertama)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
