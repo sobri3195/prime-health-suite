@@ -295,7 +295,10 @@ function ResepDialog({ open, onClose, visit_id, pasien_id, dokter_id, alergi, on
   const [items, setItems] = useState<Item[]>([]);
   const [notes, setNotes] = useState("");
 
-  const addItem = (o: { id: string; name: string; price: number }) => setItems([...items, { obat_id: o.id, obat_name: o.name, dosage: "", frequency: "3x sehari", duration: "5 hari", quantity: 1, unit_price: Number(o.price) }]);
+  const addItem = (o: { id: string; name: string; price: number }) => {
+    if (items.some((it) => it.obat_id === o.id)) { toast.info(`${o.name} sudah ada di resep — ubah qty di kanan.`); return; }
+    setItems([...items, { obat_id: o.id, obat_name: o.name, dosage: "", frequency: "3x sehari", duration: "5 hari", quantity: 1, unit_price: Number(o.price) }]);
+  };
   const createM = useMutation({
     mutationFn: () => callCreate({ data: { visit_id, pasien_id, dokter_id, notes, items } as never }),
     onSuccess: () => { toast.success("Resep dikirim ke farmasi"); onCreated(); onClose(); setItems([]); setNotes(""); setRawSearch(""); },
