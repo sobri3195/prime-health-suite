@@ -222,7 +222,7 @@ function AuditPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [rows, detail]);
+  }, [rows, detail, q, entity, action, onlyStar]);
 
   if (!isAdmin) {
     return <div><PageHeader title="Audit Log Finance" desc="Akses ditolak — hanya admin." /></div>;
