@@ -198,7 +198,10 @@ export function DocumentsPage() {
     try {
       if (row.storage_path) {
         const { error: rmErr } = await supabase.storage.from(BUCKET).remove([row.storage_path]);
-        if (rmErr) toast.warning(`File di storage gagal dihapus: ${rmErr.message}. Metadata tetap dihapus.`);
+        if (rmErr) {
+          toast.error(`Gagal menghapus file di storage: ${rmErr.message}. Metadata tidak dihapus agar tidak orphan.`);
+          return;
+        }
       }
       const { error } = await supabase.from("clinic_document").delete().eq("id", row.id);
       if (error) { toast.error(`Gagal menghapus: ${error.message}`); return; }

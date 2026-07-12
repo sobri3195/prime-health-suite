@@ -4,12 +4,19 @@ import { z } from "zod";
 
 export const getMyPoin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z.object({
+      page: z.number().int().min(1).max(1000).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+    }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
     const { data: tot } = await context.supabase.rpc("apps_my_poin_total");
-    const { data: hist } = await context.supabase.from("apps_poin")
-      .select("*").eq("user_id", context.userId)
-      .order("created_at", { ascending: false }).limit(20);
-    return { total: (tot as number) ?? 0, history: hist ?? [] };
+    const { data: hist, count } = await context.supabase.from("apps_poin")
+      .select("*", { count: "exact" }).eq("user_id", context.userId)
+      .order("created_at", { ascending: false }).range(from, to);
+    return { total: (tot as number) ?? 0, history: hist ?? [], totalHistory: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 
 export const addPoin = createServerFn({ method: "POST" })

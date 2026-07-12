@@ -313,17 +313,23 @@ export const listAvailableSlots = createServerFn({ method: "POST" })
 
 export const listMyNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z.object({
+      page: z.number().int().min(1).max(1000).default(1),
+      pageSize: z.number().int().min(1).max(100).default(30),
+    }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
-      .from("apps_notif")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(100);
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const [{ data: rows, error, count }, { count: unread }] = await Promise.all([
+      supabase.from("apps_notif").select("*", { count: "exact" })
+        .eq("user_id", userId).order("created_at", { ascending: false }).range(from, to),
+      supabase.from("apps_notif").select("id", { count: "exact", head: true })
+        .eq("user_id", userId).is("read_at", null),
+    ]);
     if (error) throw new Error(error.message);
-    const unread = (data ?? []).filter((n) => !n.read_at).length;
-    return { notifs: data ?? [], unread };
+    return { notifs: rows ?? [], unread: unread ?? 0, total: count ?? 0, page: data.page, pageSize: data.pageSize };
   });
 
 export const markNotifRead = createServerFn({ method: "POST" })
