@@ -253,6 +253,15 @@ function AuditPage() {
         toggleStar(detail.id);
         toast.success(starred[detail.id] ? "Tanda dihapus (s)" : "Entri ditandai (s)");
       }
+      else if (!typing && e.key === "m" && (rows as any[]).length) {
+        e.preventDefault();
+        const header = "| Waktu | Aktor | Aksi | Entity | No/ID | Alasan |\n|---|---|---|---|---|---|";
+        const esc = (v: unknown) => String(v ?? "—").replace(/\|/g, "\\|").replace(/\n/g, " ");
+        const body = (rows as any[]).map((r) => `| ${new Date(r.created_at).toLocaleString("id-ID")} | ${esc(r.actor_email ?? "system")} | ${esc(r.action)} | ${esc(r.entity)} | ${esc(r.entity_no ?? r.entity_id)} | ${esc(r.reason)} |`).join("\n");
+        navigator.clipboard.writeText(`${header}\n${body}`)
+          .then(() => toast.success(`${(rows as any[]).length} entri disalin sebagai Markdown (m)`))
+          .catch(() => toast.error("Gagal menyalin"));
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
