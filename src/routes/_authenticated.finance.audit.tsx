@@ -240,6 +240,14 @@ function AuditPage() {
         exportAuditCsv(rows as any[]);
         toast.success(`${(rows as any[]).length} entri diekspor ke CSV (e)`);
       }
+      else if (!typing && e.key === "d") {
+        e.preventDefault();
+        setDensity((v) => {
+          const next = v === "compact" ? "comfy" : "compact";
+          toast.success(`Kerapatan: ${next === "compact" ? "Kompak" : "Nyaman"} (d)`);
+          return next;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
