@@ -1,24 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// Demo bootstrap: when the shared demo user signs in for the first time and
-// has no roles yet, grant baseline operational roles so SIM / Finance work
-// without manual seeding. Non-demo users get only their real roles.
-const DEMO_EMAIL = "demo@prime.id";
-const DEMO_DB_ROLES = ["super_admin", "kasir", "pendaftaran"] as const;
-
-// Role-scoped demo accounts (one-click login per persona).
-// Each maps to DB roles that, after DB_TO_TS mapping below, give the right
-// access on SIM Klinik / Finance.
-const DEMO_ROLE_MAP: Record<string, readonly string[]> = {
-  "demo-kasir@prime.id": ["kasir"],
-  "demo-dokter@prime.id": ["dokter"],
-  "demo-manajemen@prime.id": ["manajemen", "super_admin"],
-};
+// Demo role auto-seeding has been REMOVED from the runtime auth path.
+// Previously, first-time signers using hardcoded "demo-*@prime.id" emails
+// were auto-granted super_admin/manajemen/kasir roles when NODE_ENV !== 'production'
+// or LOVABLE_ENV === 'preview'. Public "preview" deployments meant anyone could
+// register with a known email and escalate to super_admin. Demo data must now
+// be seeded via a one-time migration/script, never through a runtime code path
+// reachable in a publicly deployed environment.
 
 type DbRole =
   | "super_admin" | "admin_klinik" | "dokter" | "perawat" | "perawat_optometri"
   | "pendaftaran" | "kasir" | "farmasi" | "manajemen" | "pasien";
+void ({} as DbRole);
 
 // Map DB roles → TS Role values used by useAuth(). Anything not in this map
 // is dropped (e.g. 'pasien').
@@ -39,34 +33,11 @@ export const getMyRoles = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.rpc("current_user_roles");
     if (error) throw error;
-    let dbRoles = ((data as string[] | null) ?? []).filter(Boolean);
-
+    const dbRoles = ((data as string[] | null) ?? []).filter(Boolean);
     const email = (context.claims as { email?: string } | null)?.email ?? null;
-    const lowerEmail = email?.toLowerCase() ?? null;
-    // Demo role auto-seeding is a development convenience ONLY. Never grant
-    // privileged roles based on hardcoded emails in production — that would
-    // let anyone who registers with a demo email escalate to super_admin.
-    const IS_PROD =
-      process.env.NODE_ENV === "production" &&
-      process.env.LOVABLE_ENV !== "preview";
-    let seedRoles: readonly string[] | null = null;
-    if (!IS_PROD && dbRoles.length === 0 && lowerEmail) {
-      if (lowerEmail === DEMO_EMAIL) seedRoles = DEMO_DB_ROLES;
-      else if (DEMO_ROLE_MAP[lowerEmail]) seedRoles = DEMO_ROLE_MAP[lowerEmail];
-    }
-    if (seedRoles) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("user_roles")
-        .upsert(
-          seedRoles.map((role) => ({ user_id: context.userId, role: role as DbRole })),
-          { onConflict: "user_id,role" },
-        );
-      dbRoles = [...seedRoles];
-    }
-
     const roles = Array.from(
       new Set(dbRoles.flatMap((r) => DB_TO_TS[r] ?? [])),
     );
     return { roles, dbRoles, email };
   });
+
