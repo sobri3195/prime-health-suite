@@ -32,6 +32,7 @@ function AntrianPage() {
   const [status, setStatus] = useState<string>("all");
   const [display, setDisplay] = useState(false);
   const [skipTarget, setSkipTarget] = useState<{ id: string; queue_no: string; nama: string } | null>(null);
+  const [search, setSearch] = useState("");
 
   const listQ = useQuery({
     queryKey: ["klinik","queue",date,status],
