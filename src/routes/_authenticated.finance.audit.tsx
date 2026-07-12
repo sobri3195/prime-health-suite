@@ -262,6 +262,12 @@ function AuditPage() {
           .then(() => toast.success(`${(rows as any[]).length} entri disalin sebagai Markdown (m)`))
           .catch(() => toast.error("Gagal menyalin"));
       }
+      else if (!typing && (rows as any[]).length && (e.key === "g" || e.key === "G")) {
+        e.preventDefault();
+        const list = rows as any[];
+        const target = e.key === "G" ? list[list.length - 1] : list[0];
+        if (target) { setDetail(target); toast.success(e.key === "G" ? "Entri terakhir (G)" : "Entri pertama (g)"); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
