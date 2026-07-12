@@ -938,6 +938,8 @@ function AuditPage() {
               ["T", "Set rentang tanggal ke hari ini"],
               ["W", "Set rentang tanggal ke minggu ini"],
               ["M", "Set rentang tanggal ke bulan ini"],
+              ["Y", "Set rentang tanggal ke tahun ini"],
+
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
