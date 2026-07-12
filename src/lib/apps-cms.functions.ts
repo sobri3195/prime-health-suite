@@ -25,8 +25,16 @@ export const listArtikel = createServerFn({ method: "GET" })
       .select("id, slug, judul, ringkasan, kategori, cover_url, published_at", { count: "exact" })
       .eq("is_published", true);
     if (data.q) {
-      const esc = data.q.replace(/[%_,]/g, (m) => `\\${m}`);
-      query = query.or(`judul.ilike.%${esc}%,ringkasan.ilike.%${esc}%,kategori.ilike.%${esc}%`);
+      // Escape LIKE wildcards AND PostgREST .or() separators (, . ( ) " \).
+      // Then wrap each value in double quotes so PostgREST treats it as literal.
+      const esc = data.q
+        .replace(/[\\%_]/g, (m) => `\\${m}`)
+        .replace(/["(),.]/g, " ")
+        .trim();
+      if (esc) {
+        const v = `"%${esc}%"`;
+        query = query.or(`judul.ilike.${v},ringkasan.ilike.${v},kategori.ilike.${v}`);
+      }
     }
     if (data.kategori) query = query.eq("kategori", data.kategori);
     const { data: rows, error, count } = await query

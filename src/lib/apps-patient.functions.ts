@@ -215,7 +215,8 @@ export const getMyQueueToday = createServerFn({ method: "GET" })
     const { data: setting } = await supabase
       .from("clinic_setting").select("value").eq("key", "slot_menit_default").maybeSingle();
     const raw = setting?.value as unknown;
-    const slot_menit = typeof raw === "number" ? raw : Number(raw) || 15;
+    const parsed = typeof raw === "number" ? raw : Number(raw);
+    const slot_menit = Number.isFinite(parsed) && parsed > 0 ? parsed : 15;
     return { queue: data, posisi, total, slot_menit };
 
   });

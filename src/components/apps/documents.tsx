@@ -61,7 +61,7 @@ export function DocumentsPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
-  const abortRef = useRef<{ canceled: boolean; path: string | null }>({ canceled: false, path: null });
+  const abortRef = useRef<{ canceled: boolean; path: string | null; controller: AbortController | null }>({ canceled: false, path: null, controller: null });
   const [timedOut, setTimedOut] = useState(false);
   const [meta, setMeta] = useState({ title: "", doc_type: "SOP Klinik", patient_code: "-", patient_name: "Internal" });
 
@@ -100,18 +100,35 @@ export function DocumentsPage() {
       const uid = auth.user?.id;
       if (!uid) throw new Error("Tidak ada sesi");
       const path = `${uid}/${Date.now()}-${pendingFile.name.replace(/[^\w.\-]/g, "_")}`;
-      abortRef.current = { canceled: false, path };
+      const controller = new AbortController();
+      abortRef.current = { canceled: false, path, controller };
       setTimedOut(false);
       setProgress(10);
       // Timeout 60s: mark UI, tapi upload tetap berjalan hingga user retry/cancel.
       const timeoutId = window.setTimeout(() => setTimedOut(true), 60_000);
       try {
-        const up = await supabase.storage.from(BUCKET).upload(path, pendingFile, { contentType: mime, upsert: false });
+        // Bypass supabase-js so we can pass AbortSignal — cancel really aborts.
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        const url = `${(supabase as any).storageUrl ?? ""}/object/${BUCKET}/${encodeURI(path)}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": mime,
+            "x-upsert": "false",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: pendingFile,
+          signal: controller.signal,
+        }).catch((e) => {
+          if (e?.name === "AbortError") throw new Error("Upload dibatalkan");
+          throw e;
+        });
         if (abortRef.current.canceled) {
           await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
           throw new Error("Upload dibatalkan");
         }
-        if (up.error) throw up.error;
+        if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Upload gagal");
         setProgress(75);
         const { error } = await supabase.from("clinic_document").insert({
           patient_code: meta.patient_code || "-",
@@ -151,10 +168,10 @@ export function DocumentsPage() {
 
   const onCancelUpload = () => {
     abortRef.current.canceled = true;
-    // Tandai selesai secara UI; hasil upload akan dibersihkan di mutationFn.
+    abortRef.current.controller?.abort();
     setProgress(0);
     setTimedOut(false);
-    toast.message("Membatalkan upload…");
+    toast.message("Upload dibatalkan");
   };
 
   const onRetryUpload = () => {
@@ -163,7 +180,10 @@ export function DocumentsPage() {
     upload.mutate();
   };
 
-  useEffect(() => () => { abortRef.current.canceled = true; }, []);
+  useEffect(() => () => {
+    abortRef.current.canceled = true;
+    abortRef.current.controller?.abort();
+  }, []);
 
 
   const onDownload = async (row: DocRow) => {
