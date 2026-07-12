@@ -79,14 +79,17 @@ export function NotificationsPagePatient() {
   const readM = useMutation({
     mutationFn: (id: string) => callRead({ data: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["apps", "notifs"] }),
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
   const readAllM = useMutation({
     mutationFn: () => callReadAll(),
     onSuccess: () => { toast.success(t("notif.mark_all")); qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
   const delM = useMutation({
     mutationFn: (id: string) => callDelete({ data: { id } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["apps", "notifs"] }); },
+    onError: (e: unknown) => toast.error(friendlyError(e)),
   });
 
   return (
