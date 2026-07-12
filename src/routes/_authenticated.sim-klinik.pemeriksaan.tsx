@@ -188,7 +188,7 @@ function PemeriksaanPage() {
         </Card>
       </div>
 
-      {form && <ResepDialog open={showResep} onClose={() => setShowResep(false)} visit_id={form.visit_id} pasien_id={form.pasien_id} dokter_id={form.dokter_id} onCreated={() => qc.invalidateQueries({ queryKey: ["klinik"] })} />}
+      {form && <ResepDialog open={showResep} onClose={() => setShowResep(false)} visit_id={form.visit_id} pasien_id={form.pasien_id} dokter_id={form.dokter_id} alergi={(detailQ.data?.visit as { apps_pasien?: { alergi?: string | null } } | undefined)?.apps_pasien?.alergi ?? null} onCreated={() => qc.invalidateQueries({ queryKey: ["klinik"] })} />}
     </div>
   );
 }
