@@ -543,6 +543,16 @@ function AuditPage() {
         if (q) { setQ(""); toast.success("Query pencarian dibersihkan (\\)"); }
         else toast.info("Query sudah kosong");
       }
+      else if (!typing && e.key === "!") {
+        e.preventDefault();
+        const count = Object.keys(starred).length;
+        if (!count) { toast.info("Belum ada entri bertanda"); return; }
+        if (!window.confirm(`Hapus semua ${count} tanda?`)) return;
+        setStarred({});
+        if (typeof window !== "undefined") localStorage.setItem("fin-audit-starred", "{}");
+        if (onlyStar) setOnlyStar(false);
+        toast.success(`${count} tanda dihapus (!)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1076,6 +1086,7 @@ function AuditPage() {
               ["0", "Scroll ke atas & tutup detail"],
               ["p", "Cetak halaman audit saat ini"],
               ["\\", "Bersihkan hanya query pencarian"],
+              ["!", "Hapus semua tanda (dengan konfirmasi)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
