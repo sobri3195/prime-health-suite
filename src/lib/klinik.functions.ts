@@ -519,7 +519,7 @@ export const createPrescription = createServerFn({ method: "POST" })
     const obatIds = data.items.map((it) => it.obat_id).filter((v): v is string => !!v);
     if (obatIds.length) {
       const { data: stocks } = await sb.from("klinik_obat").select("id,stock,name").in("id", obatIds);
-      const byId = new Map((stocks ?? []).map((r) => [r.id, r]));
+      const byId = new Map<string, { id: string; stock: number; name: string }>((stocks ?? []).map((r: { id: string; stock: number; name: string }) => [r.id, r]));
       for (const it of data.items) {
         if (!it.obat_id) continue;
         const ob = byId.get(it.obat_id);
