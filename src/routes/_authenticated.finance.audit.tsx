@@ -809,6 +809,18 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "p") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris"); return; }
+        const w = window.open("", "_blank", "noopener,noreferrer");
+        if (!w) { toast.error("Popup diblokir"); return; }
+        w.document.write(`<pre style="font-family:ui-monospace,monospace;padding:16px;white-space:pre-wrap">${JSON.stringify(target, null, 2).replace(/</g, "&lt;")}</pre>`);
+        w.document.close();
+        w.focus();
+        w.print();
+        toast.success("Cetak baris (p)");
+      }
     };
 
 
@@ -1398,6 +1410,7 @@ function AuditPage() {
               ["u", "Salin actor_id baris target"],
               ["y", "Salin JSON baris target ke clipboard"],
               ["i", "Salin row id baris target"],
+              ["p", "Cetak baris target di tab baru"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
