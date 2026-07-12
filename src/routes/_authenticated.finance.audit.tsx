@@ -279,6 +279,11 @@ function AuditPage() {
           toast.success("JSON entri disalin (c)");
         } catch { toast.error("Gagal menyalin"); }
       }
+      else if (!typing && (e.key === "." || e.key === "R")) {
+        e.preventDefault();
+        qc.invalidateQueries({ queryKey: ["fin-audit"] });
+        toast.success("Memuat ulang audit (.)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -803,6 +808,7 @@ function AuditPage() {
               ["g / G", "Ke entri pertama / terakhir"],
               ["f", "Toggle filter ★ Bertanda"],
               ["c", "Salin JSON entri terbuka"],
+              [". / R", "Muat ulang data audit"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
