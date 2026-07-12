@@ -1015,7 +1015,7 @@ export function PatientLaporan() {
               <div className="text-[11px] text-muted-foreground">{inv.no_invoice}</div>
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <Stethoscope className="h-4 w-4 text-[#6b5a16]" />
-                {new Date(inv.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                {df.date(inv.tanggal)}
               </div>
             </div>
             <Pill tone={inv.status === "paid" ? "green" : "amber"}>{inv.status}</Pill>
@@ -1024,7 +1024,7 @@ export function PatientLaporan() {
             {inv.fin_invoice_item?.map((it, i) => (
               <li key={i} className="flex items-center justify-between rounded-md bg-[#fdf8e8] px-3 py-2">
                 <span className="truncate">{it.layanan_nama} × {it.qty}</span>
-                <span className="text-xs opacity-70">Rp {Number(it.subtotal).toLocaleString("id-ID")}</span>
+                <span className="text-xs opacity-70">{fmt(Number(it.subtotal))}</span>
               </li>
             ))}
           </ul>
@@ -1035,7 +1035,7 @@ export function PatientLaporan() {
           )}
           <div className="mt-3 flex items-center justify-between border-t border-[#e9dfb8] pt-3">
             <span className="text-xs text-muted-foreground">{t("history.total")}</span>
-            <span className="text-base font-bold">Rp {Number(inv.total).toLocaleString("id-ID")}</span>
+            <span className="text-base font-bold">{fmt(Number(inv.total))}</span>
           </div>
           <div className="mt-3 flex gap-2">
             <button
