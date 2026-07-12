@@ -468,6 +468,17 @@ function AuditPage() {
               <Badge className={`${ACTION_TONE[detail?.action] ?? "bg-muted"} border-0`} variant="secondary">{detail?.action}</Badge>
               <span className="text-sm">{detail?.entity}</span>
               <span className="font-mono text-xs text-muted-foreground">{detail?.entity_no ?? detail?.entity_id}</span>
+              {(() => {
+                const list = rows as any[];
+                const idx = detail ? list.findIndex((r) => r.id === detail.id) : -1;
+                return (
+                  <span className="ml-2 flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled={idx <= 0} onClick={() => setDetail(list[idx - 1])} title="Sebelumnya (k)">‹</Button>
+                    <span className="text-[11px] text-muted-foreground tabular-nums">{idx + 1}/{list.length}</span>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled={idx < 0 || idx >= list.length - 1} onClick={() => setDetail(list[idx + 1])} title="Berikutnya (j)">›</Button>
+                  </span>
+                );
+              })()}
               <Button
                 variant="outline"
                 size="sm"
