@@ -501,6 +501,18 @@ function AuditPage() {
                   toast.success("Tautan entri disalin");
                 }}
               >🔗 Salin tautan</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  setEntity(detail.entity);
+                  setAction(detail.action);
+                  setDetail(null);
+                  toast.success(`Difilter: ${detail.entity} · ${detail.action}`);
+                }}
+                title="Filter entri serupa (entity + aksi)"
+              >🔎 Serupa</Button>
             </DialogTitle>
           </DialogHeader>
           {detail && (
