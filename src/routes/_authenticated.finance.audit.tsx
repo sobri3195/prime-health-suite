@@ -661,7 +661,17 @@ function AuditPage() {
         setQ(actor);
         toast.success(`Filter aktor: ${actor}`);
       }
+      else if (!typing && e.key === '"') {
+
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const val = target?.entity_no ?? target?.entity_id;
+        if (!val) { toast.info("Tidak ada entity untuk difilter"); return; }
+        setQ(String(val));
+        toast.success(`Filter entity: ${val}`);
+      }
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [rows, detail, q, entity, action, onlyStar, starred]);
@@ -1207,6 +1217,7 @@ function AuditPage() {
               ["=", "Reset filter entity & action"],
               [";", "Salin baris (detail / pertama) sebagai JSON"],
               ["'", "Filter berdasarkan aktor target"],
+              ['"', "Filter berdasarkan entity_no / entity_id target"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
