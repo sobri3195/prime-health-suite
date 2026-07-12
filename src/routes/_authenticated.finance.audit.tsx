@@ -279,6 +279,11 @@ function AuditPage() {
           toast.success("JSON entri disalin (c)");
         } catch { toast.error("Gagal menyalin"); }
       }
+      else if (!typing && (e.key === "." || e.key === "R")) {
+        e.preventDefault();
+        qc.invalidateQueries({ queryKey: ["fin-audit"] });
+        toast.success("Memuat ulang audit (.)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
