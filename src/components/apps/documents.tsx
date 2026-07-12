@@ -1,12 +1,15 @@
 // i18n-lint-disable-file — internal/admin or operator UI; strings tracked separately.
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app-shell";
 import { PageContainer, SearchInput, Select, StatusBadge, EmptyState } from "./ui";
 import { Upload, Download, Trash2, X, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { listDocuments, uploadDocument, deleteDocument } from "@/lib/clinic.functions";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+
 
 
 const BUCKET = "clinic-documents";
