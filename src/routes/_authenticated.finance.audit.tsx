@@ -851,6 +851,22 @@ function AuditPage() {
       else if (!typing && e.key === "Escape") {
         if (detail) { e.preventDefault(); setDetail(null); toast.success("Detail ditutup (Esc)"); }
       }
+      else if (!typing && e.key === ">") {
+        e.preventDefault();
+        const arr = rows as any[];
+        const idx = detail ? arr.findIndex((r) => r.id === detail.id) : -1;
+        const next = arr.slice(idx + 1).find((r) => starred[r.id]);
+        if (next) { setDetail(next); toast.success("Bertanda berikutnya (>)"); }
+        else toast.info("Tidak ada entri bertanda berikutnya");
+      }
+      else if (!typing && e.key === "<") {
+        e.preventDefault();
+        const arr = rows as any[];
+        const idx = detail ? arr.findIndex((r) => r.id === detail.id) : arr.length;
+        const prev = [...arr.slice(0, idx)].reverse().find((r) => starred[r.id]);
+        if (prev) { setDetail(prev); toast.success("Bertanda sebelumnya (<)"); }
+        else toast.info("Tidak ada entri bertanda sebelumnya");
+      }
     };
 
 
@@ -1444,6 +1460,7 @@ function AuditPage() {
               ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
               ["g / G", "Lompat detail ke baris pertama / terakhir"],
               ["Esc", "Tutup panel detail baris"],
+              ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
