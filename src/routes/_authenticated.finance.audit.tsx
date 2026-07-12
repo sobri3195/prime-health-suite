@@ -184,7 +184,7 @@ function AuditPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal revert"),
   });
-  const rows = data?.rows ?? [];
+  const rows = (data?.rows ?? []).filter((r: any) => !onlyStar || starred[r.id]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !rows.length || detail) return;
