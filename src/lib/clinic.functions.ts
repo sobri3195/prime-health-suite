@@ -171,8 +171,8 @@ const UploadDocSchema = z.object({
   patient_name: z.string().min(1).max(200),
   doc_type: z.string().min(1).max(64),
   title: z.string().min(1).max(200),
-  mime: z.enum(["pdf", "image", "zip"]).default("pdf"),
-  size_bytes: z.number().int().min(0).default(0),
+  mime: z.string().min(1).max(128),
+  size_bytes: z.number().int().min(0).max(50 * 1024 * 1024).default(0),
   storage_path: z.string().max(512).optional(),
 });
 
