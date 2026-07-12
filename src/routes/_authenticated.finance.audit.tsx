@@ -715,9 +715,13 @@ function AuditPage() {
         e.preventDefault();
         const list = rows as any[];
         if (!list.length) { toast.info("Tidak ada baris"); return; }
-        const target = e.key === "]" ? list[list.length - 1] : list[0];
-        setDetail(target);
-        toast.success(e.key === "]" ? "Entri terakhir ([ ])" : "Entri pertama ([)");
+        const idx = detail ? list.findIndex((r) => r.id === (detail as any).id) : -1;
+        const step = 10;
+        const nextIdx = e.key === "]"
+          ? Math.min(list.length - 1, (idx < 0 ? 0 : idx) + step)
+          : Math.max(0, (idx < 0 ? 0 : idx) - step);
+        setDetail(list[nextIdx]);
+        toast.success(e.key === "]" ? "Lompat +10 (])" : "Lompat -10 ([)");
       }
     };
 
