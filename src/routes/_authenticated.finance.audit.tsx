@@ -155,6 +155,17 @@ function AuditPage() {
     return (localStorage.getItem("fin-audit-timefmt") as "relative" | "absolute") || "relative";
   });
   useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("fin-audit-timefmt", timeFmt); }, [timeFmt]);
+  const [starred, setStarred] = useState<Record<string, true>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem("fin-audit-starred") || "{}"); } catch { return {}; }
+  });
+  const [onlyStar, setOnlyStar] = useState(false);
+  const toggleStar = (id: string) => setStarred((s) => {
+    const n = { ...s };
+    if (n[id]) delete n[id]; else n[id] = true;
+    if (typeof window !== "undefined") localStorage.setItem("fin-audit-starred", JSON.stringify(n));
+    return n;
+  });
   const qc = useQueryClient();
   const fn = useServerFn(listFinAudit);
   const revertFn = useServerFn(revertFinAudit);
@@ -173,7 +184,7 @@ function AuditPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal revert"),
   });
-  const rows = data?.rows ?? [];
+  const rows = (data?.rows ?? []).filter((r: any) => !onlyStar || starred[r.id]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !rows.length || detail) return;
@@ -298,6 +309,14 @@ function AuditPage() {
         <Button variant="outline" size="sm" onClick={() => setTimeFmt((t) => t === "relative" ? "absolute" : "relative")} title="Toggle format waktu">
           🕘 {timeFmt === "relative" ? "Relatif" : "Absolut"}
         </Button>
+        <Button
+          variant={onlyStar ? "default" : "outline"}
+          size="sm"
+          onClick={() => setOnlyStar((v) => !v)}
+          title="Tampilkan hanya entri bertanda"
+        >
+          ★ Bertanda ({Object.keys(starred).length})
+        </Button>
         <Button variant="outline" size="sm" disabled={rows.length === 0} onClick={() => exportAuditCsv(rows)}>
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
@@ -396,7 +415,15 @@ function AuditPage() {
                   onClick={() => setDetail(r)}
                 >
 
-                  {cols.waktu && <TableCell className="font-mono text-xs" title={timeFmt === "relative" ? new Date(r.created_at).toLocaleString("id-ID") : relativeTime(r.created_at)}>{timeFmt === "relative" ? relativeTime(r.created_at) : new Date(r.created_at).toLocaleString("id-ID")}</TableCell>}
+                  {cols.waktu && <TableCell className="font-mono text-xs whitespace-nowrap" title={timeFmt === "relative" ? new Date(r.created_at).toLocaleString("id-ID") : relativeTime(r.created_at)}>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleStar(r.id); }}
+                      className={`mr-1 rounded px-0.5 ${starred[r.id] ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-500"}`}
+                      title={starred[r.id] ? "Hapus tanda" : "Tandai entri"}
+                    >{starred[r.id] ? "★" : "☆"}</button>
+                    {timeFmt === "relative" ? relativeTime(r.created_at) : new Date(r.created_at).toLocaleString("id-ID")}
+                  </TableCell>}
                   {cols.aktor && (
                     <TableCell className="text-sm">
                       <button
