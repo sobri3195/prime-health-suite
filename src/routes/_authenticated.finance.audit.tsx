@@ -1016,6 +1016,7 @@ function AuditPage() {
               ["f", "Toggle filter ★ Bertanda"],
               ["c", "Salin JSON entri terbuka"],
               ["C", "Salin CSV semua entri hasil"],
+              ["E", "Export JSON semua entri hasil"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
