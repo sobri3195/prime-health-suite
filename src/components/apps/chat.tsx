@@ -105,7 +105,7 @@ export function PatientChat() {
           </div>
         </div>
       </div>
-      <div className="flex-1 space-y-2 overflow-y-auto border border-[#e9dfb8] bg-[#fdf8e8] p-4">
+      <div role="log" aria-live="polite" aria-relevant="additions text" aria-label={t("chat.title")} className="flex-1 space-y-2 overflow-y-auto border border-[#e9dfb8] bg-[#fdf8e8] p-4">
         {msgsQ.isLoading ? (
           <SkeletonList rows={3} />
         ) : messages.length === 0 ? (
