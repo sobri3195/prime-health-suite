@@ -337,6 +337,12 @@ export const updateBookingStatus = createServerFn({ method: "POST" })
     if (data.status === "cancelled" && !BOOKING_CANCELLABLE_STATUSES.includes(curStatus as typeof BOOKING_CANCELLABLE_STATUSES[number])) {
       throw new Error("Booking tidak bisa dibatalkan: status saat ini '" + curStatus + "' sudah terkunci (check-in / dipanggil / dilayani / selesai).");
     }
+    // P0: 'checked_in' hanya boleh diset oleh alur checkinBooking (yang membuat visit+queue),
+    // bukan lewat updateBookingStatus manual — jika tidak, booking berstatus checked_in
+    // tanpa visit/queue → pasien hilang dari antrian.
+    if (data.status === "checked_in" && curStatus !== "checked_in") {
+      throw new Error("Gunakan tombol Check-in untuk membuat antrian, bukan ubah status manual.");
+    }
     if (data.status !== "cancelled" && BOOKING_LOCKED_STATUSES.includes(curStatus as typeof BOOKING_LOCKED_STATUSES[number]) && curStatus !== data.status) {
       throw new Error("Transisi status tidak diizinkan dari '" + curStatus + "' ke '" + data.status + "'.");
     }
