@@ -510,6 +510,12 @@ function AuditPage() {
         const actions = new Set(list.map((r) => r.action).filter(Boolean));
         toast.info(`${list.length} baris • ${actors.size} aktor • ${entities.size} entity • ${actions.size} action`);
       }
+      else if (!typing && e.key === "*" && (rows as any[]).length) {
+        e.preventDefault();
+        const first = (rows as any[]).find((r) => starred.has(r.id));
+        if (first) { setDetail(first); toast.success("Entri bertanda pertama (*)"); }
+        else toast.info("Tidak ada entri bertanda");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
