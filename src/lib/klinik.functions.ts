@@ -647,6 +647,10 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
         catatan: `Visit ${data.visit_id} • ${data.payment_method} • Bayar ${data.paid_amount}`,
       }).select("*").single();
       if (!ie) { inv = invoice; break; }
+      // Log observability (attempt, code, constraint) untuk membedakan collision no_invoice
+      // (retryable) dari 23505 lain seperti source_visit_id (idempoten → race parallel).
+      // eslint-disable-next-line no-console
+      console.warn("[generateInvoiceFromVisit] insert failed", { attempt, code: ie.code, constraint: (ie as { details?: string }).details, message: ie.message });
       // 23505 pada source_visit_id → invoice sudah dibuat oleh request paralel
       if (ie.code === "23505") {
         const { data: race } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
