@@ -880,6 +880,7 @@ function AuditPage() {
               ["a", "Toggle auto-refresh (10s)"],
               ["n", "Ganti entity ke nilai berikutnya"],
               ["N", "Ganti action ke nilai berikutnya"],
+              ["P", "Simpan filter aktif sebagai preset"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
