@@ -241,26 +241,33 @@ export const checkinBooking = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const { data: bk, error: be } = await sb.from("apps_booking").select("*").eq("id", data.booking_id).maybeSingle();
     if (be || !bk) throw be ?? new Error("Booking tidak ditemukan");
-    // Resolve pasien_id: bookings created from the Apps patient module may
-    // only carry user_id. Backfill via apps_pasien before inserting the visit.
+    // Idempotent: bila visit untuk booking ini sudah ada (partial UNIQUE), kembalikan itu.
+    const { data: existing } = await sb.from("klinik_visit").select("*, klinik_queue(*)").eq("booking_id", bk.id).maybeSingle();
+    if (existing) return { visit: existing, queue: existing.klinik_queue?.[0] ?? null };
+    // Resolve pasien_id
     let pasienId: string | null = bk.pasien_id;
     if (!pasienId && bk.user_id) {
-      const { data: pas } = await sb.from("apps_pasien").select("id").eq("user_id", bk.user_id).maybeSingle();
+      const { data: pas } = await sb.from("apps_pasien").select("id,patient_type").eq("user_id", bk.user_id).maybeSingle();
       pasienId = pas?.id ?? null;
       if (pasienId) await sb.from("apps_booking").update({ pasien_id: pasienId }).eq("id", bk.id);
     }
     if (!pasienId) throw new Error("Pasien belum terdaftar di master pasien. Lengkapi profil pasien terlebih dulu.");
-    // Counter (loket) diturunkan dari huruf pertama fin_dokter.code (fallback "A").
+    const { data: pasFull } = await sb.from("apps_pasien").select("patient_type").eq("id", pasienId).maybeSingle();
     const { data: dok } = await sb.from("fin_dokter").select("code").eq("id", bk.dokter_id).maybeSingle();
     const counter = (dok?.code?.trim()?.[0] ?? "A").toUpperCase();
-    // create visit
     const { data: visit, error: ve } = await sb.from("klinik_visit").insert({
       pasien_id: pasienId, dokter_id: bk.dokter_id, booking_id: bk.id,
-      chief_complaint: bk.keluhan, status: "registered", patient_type: "Umum",
+      chief_complaint: bk.keluhan, status: "registered",
+      patient_type: pasFull?.patient_type ?? "Umum",
       created_by: context.userId,
     }).select("*").single();
-    if (ve) throw ve;
-    // generate queue per-loket
+    if (ve) {
+      if ((ve as { code?: string }).code === "23505") {
+        const { data: race } = await sb.from("klinik_visit").select("*, klinik_queue(*)").eq("booking_id", bk.id).maybeSingle();
+        if (race) return { visit: race, queue: race.klinik_queue?.[0] ?? null };
+      }
+      throw ve;
+    }
     const { data: qn, error: qne } = await sb.rpc("klinik_next_queue_no", { _date: bk.tanggal, _counter: counter });
     if (qne) throw qne;
     const { data: queue, error: qe } = await sb.from("klinik_queue").insert({
