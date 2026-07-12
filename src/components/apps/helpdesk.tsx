@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import {
   listTickets, listTicketReplies, createTicket, updateTicketStatus, replyTicket,
 } from "@/lib/apps-helpdesk.functions";
+import { friendlyError } from "@/lib/apps-error";
 
 type Ticket = {
   id: string; ticket_no: string; user_id: string; reporter: string;
