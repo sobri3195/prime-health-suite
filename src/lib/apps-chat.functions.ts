@@ -56,6 +56,16 @@ export const signChatAttachment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { path: string }) => z.object({ path: z.string().min(1).max(500) }).parse(d))
   .handler(async ({ data, context }) => {
+    // Verify caller owns/participates in a chat_msg that references this attachment.
+    // RLS on apps_chat_msg scopes rows to the user's own room, so a hit == authorized.
+    const { data: msg, error: mErr } = await context.supabase
+      .from("apps_chat_msg")
+      .select("id")
+      .eq("attachment_path", data.path)
+      .limit(1)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+    if (!msg) throw new Error("Lampiran tidak ditemukan atau bukan milik Anda");
     const { data: sig, error } = await context.supabase.storage.from("apps-mata").createSignedUrl(data.path, 60 * 10);
     if (error) throw new Error(error.message);
     return { url: sig.signedUrl };
