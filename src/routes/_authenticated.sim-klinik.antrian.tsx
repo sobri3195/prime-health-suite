@@ -48,7 +48,9 @@ function AntrianPage() {
   });
 
   type Row = { id: string; queue_no: string; status: string; counter: string; called_at: string | null; served_at: string | null; done_at: string | null; created_at: string; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_visit?: { chief_complaint: string | null } };
-  const rows = (listQ.data ?? []) as Row[];
+  const allRows = (listQ.data ?? []) as Row[];
+  const sTerm = search.trim().toLowerCase();
+  const rows = sTerm ? allRows.filter((r) => r.queue_no.toLowerCase().includes(sTerm) || (r.apps_pasien?.nama ?? "").toLowerCase().includes(sTerm) || (r.apps_pasien?.no_rm ?? "").toLowerCase().includes(sTerm)) : allRows;
 
   const waiting = rows.filter((r) => r.status === "waiting");
   const now = rows.find((r) => r.status === "in_service" || r.status === "called");
