@@ -191,7 +191,17 @@ function PemeriksaanPage() {
                     {(detailQ.data.prescriptions as Array<{ id: string; status: string; klinik_prescription_item?: unknown[] }>).map((p) => (<div key={p.id} className="text-xs">• {p.klinik_prescription_item?.length ?? 0} item · {p.status}</div>))}
                   </div>
                 )}
-                <RmHistoryPanel visitId={selVisit!} />
+                <RmHistoryPanel visitId={selVisit!} canRestore={!form.is_final} onRestore={(snap) => {
+                  if (!form) return;
+                  setForm({
+                    ...form,
+                    anamnesis: String(snap.anamnesis ?? ""), visus_od: String(snap.visus_od ?? ""), visus_os: String(snap.visus_os ?? ""),
+                    tio_od: String(snap.tio_od ?? ""), tio_os: String(snap.tio_os ?? ""), slit_lamp: String(snap.slit_lamp ?? ""),
+                    fundus: String(snap.fundus ?? ""), diagnosis: String(snap.diagnosis ?? ""), icd10_code: String(snap.icd10_code ?? ""),
+                    treatment_plan: String(snap.treatment_plan ?? ""), tindakan: String(snap.tindakan ?? ""), notes: String(snap.notes ?? ""),
+                  });
+                  toast.success("Snapshot dimuat ke form — tinjau lalu Simpan Draft/Finalisasi untuk menerapkan.");
+                }} />
               </div>
             )}
         </Card>
