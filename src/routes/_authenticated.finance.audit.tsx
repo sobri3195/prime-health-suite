@@ -848,6 +848,9 @@ function AuditPage() {
         if (last) { setDetail(last); toast.success("Baris terakhir (G)"); }
         else toast.info("Tidak ada baris");
       }
+      else if (!typing && e.key === "Escape") {
+        if (detail) { e.preventDefault(); setDetail(null); toast.success("Detail ditutup (Esc)"); }
+      }
     };
 
 
