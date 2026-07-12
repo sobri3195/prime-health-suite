@@ -183,6 +183,7 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
   const [discount, setDiscount] = useState(0);
   const [paid, setPaid] = useState(0);
   const [method, setMethod] = useState<"cash"|"transfer"|"qris"|"debit"|"credit"|"insurance">("cash");
+  const [paper, setPaper] = useState<"58mm"|"80mm"|"a5">("80mm");
 
   type Detail = { visit: { id: string; apps_pasien?: { nama: string; no_rm: string; patient_type: string }; fin_dokter?: { name: string } }; prescriptions: Array<{ klinik_prescription_item: Array<{ obat_name: string; quantity: number; unit_price: number }> }> };
   const detail = detailQ.data as Detail | undefined;
