@@ -96,6 +96,13 @@ function AuditPage() {
   const [action, setAction] = useState("all");
   const [detail, _setDetail] = useState<any | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const setDetail = (r: any | null) => {
     _setDetail(r);
     if (typeof window !== "undefined") {
