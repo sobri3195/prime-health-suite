@@ -533,6 +533,14 @@ function AuditPage() {
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>Total {rows.length} entri (max 500).</span>
+        {rows.length > 1 && (() => {
+          const times = (rows as any[]).map((r) => new Date(r.created_at).getTime()).filter((n) => !isNaN(n));
+          if (times.length < 2) return null;
+          const min = new Date(Math.min(...times));
+          const max = new Date(Math.max(...times));
+          const fmt = (d: Date) => d.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+          return <span className="text-muted-foreground/80" title={`${min.toISOString()} → ${max.toISOString()}`}>· {fmt(min)} → {fmt(max)}</span>;
+        })()}
         {rows.length > 0 && (() => {
           const counts: Record<string, number> = {};
           for (const r of rows as any[]) counts[r.action] = (counts[r.action] ?? 0) + 1;
