@@ -329,6 +329,16 @@ function AuditPage() {
         setEntity(next);
         toast.success(`Entity: ${next} (n)`);
       }
+      else if (!typing && e.key === "N" && (rows as any[]).length) {
+        e.preventDefault();
+        const uniq = Array.from(new Set((rows as any[]).map((r) => r.action).filter(Boolean))) as string[];
+        if (!uniq.length) return;
+        const list = ["all", ...uniq];
+        const idx = list.indexOf(action);
+        const next = list[(idx + 1) % list.length];
+        setAction(next);
+        toast.success(`Action: ${next} (N)`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
