@@ -57,7 +57,12 @@ function ResepPage() {
 
       <div className="space-y-3">
         {rows.length === 0 ? <Card className="p-8 text-center text-sm text-muted-foreground">Tidak ada resep.</Card>
-          : rows.map((p) => (
+          : rows.map((p) => {
+            const total = p.klinik_prescription_item.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price ?? 0), 0);
+            const alergi = p.apps_pasien?.alergi ?? "";
+            const alergiList = alergi.split(/[,;\n]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+            const hits = p.klinik_prescription_item.filter((it) => alergiList.some((a) => it.obat_name.toLowerCase().includes(a)));
+            return (
             <Card key={p.id} className="p-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -73,6 +78,12 @@ function ResepPage() {
                   )}
                 </div>
               </div>
+              {alergi && (
+                <div className={`mt-2 rounded border p-1.5 text-xs ${hits.length > 0 ? "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200" : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"}`}>
+                  <b>Alergi pasien:</b> {alergi}
+                  {hits.length > 0 && <span className="ml-1 font-semibold">· ⚠ Item resep mengandung alergen: {hits.map((i) => i.obat_name).join(", ")}</span>}
+                </div>
+              )}
               <div className="mt-2 space-y-1 border-t pt-2">
                 {p.klinik_prescription_item.map((it) => (
                   <div key={it.id} className="flex items-center gap-2 text-sm">
@@ -81,12 +92,16 @@ function ResepPage() {
                     <span className="text-xs text-muted-foreground">
                       {it.dosage} • {it.frequency} • {it.duration} • Qty {it.quantity}
                     </span>
+                    {Number(it.unit_price ?? 0) > 0 && (
+                      <span className="ml-auto text-xs tabular-nums text-muted-foreground">Rp {(Number(it.quantity) * Number(it.unit_price ?? 0)).toLocaleString("id-ID")}</span>
+                    )}
                   </div>
                 ))}
               </div>
+              {total > 0 && <div className="mt-2 flex justify-end border-t pt-2 text-sm font-semibold tabular-nums">Total: Rp {total.toLocaleString("id-ID")}</div>}
               {p.notes && <div className="mt-2 text-xs italic text-muted-foreground">Catatan: {p.notes}</div>}
             </Card>
-          ))}
+          );})}
       </div>
       <ConfirmDialog
         open={!!confirmId}
