@@ -516,6 +516,17 @@ function AuditPage() {
         if (first) { setDetail(first); toast.success("Entri bertanda pertama (*)"); }
         else toast.info("Tidak ada entri bertanda");
       }
+      else if (!typing && (e.key === ">" || e.key === "<") && (rows as any[]).length) {
+        e.preventDefault();
+        const list = (rows as any[]).filter((r) => starred[r.id]);
+        if (!list.length) { toast.info("Tidak ada entri bertanda"); return; }
+        const idx = detail ? list.findIndex((r) => r.id === detail.id) : -1;
+        const next = e.key === ">"
+          ? list[(idx + 1) % list.length]
+          : list[(idx - 1 + list.length) % list.length];
+        setDetail(next);
+        toast.success(e.key === ">" ? "Bertanda berikutnya (>)" : "Bertanda sebelumnya (<)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
