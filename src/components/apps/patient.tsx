@@ -296,7 +296,7 @@ export function PatientAI() {
         toast.success("AI engine selesai menganalisis");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal menganalisis");
+      toast.error(friendlyError(e, "Gagal menganalisis"));
     } finally {
       setLoading(false);
     }
