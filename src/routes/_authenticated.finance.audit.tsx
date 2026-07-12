@@ -950,6 +950,8 @@ function AuditPage() {
               ["W", "Set rentang tanggal ke minggu ini"],
               ["M", "Set rentang tanggal ke bulan ini"],
               ["Y", "Set rentang tanggal ke tahun ini"],
+              ["Q", "Set rentang tanggal ke kuartal ini"],
+
 
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
