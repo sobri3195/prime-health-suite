@@ -455,7 +455,10 @@ export const listVisits = createServerFn({ method: "POST" })
     let q = (context.supabase as Supa).from("klinik_visit")
       .select("*, apps_pasien(no_rm,nama,patient_type), fin_dokter(name)")
       .order("visit_date", { ascending: false }).limit(data.limit ?? 100);
-    if (data.date) q = q.gte("visit_date", data.date + "T00:00:00").lte("visit_date", data.date + "T23:59:59");
+    if (data.date) {
+      const next = new Date(data.date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
+      q = q.gte("visit_date", data.date + "T00:00:00").lt("visit_date", next.toISOString().slice(0,10) + "T00:00:00");
+    }
     if (data.pasien_id) q = q.eq("pasien_id", data.pasien_id);
     if (data.dokter_id) q = q.eq("dokter_id", data.dokter_id);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
