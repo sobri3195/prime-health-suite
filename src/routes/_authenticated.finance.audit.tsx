@@ -396,7 +396,22 @@ function AuditPage() {
                       >{r.entity}</button>
                     </TableCell>
                   )}
-                  {cols.no && <TableCell className="font-mono text-xs">{r.entity_no ?? r.entity_id ?? "—"}</TableCell>}
+                  {cols.no && (
+                    <TableCell className="font-mono text-xs">
+                      {(r.entity_no ?? r.entity_id) ? (
+                        <button
+                          type="button"
+                          className="rounded px-1 -mx-1 hover:bg-primary/10 hover:text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const v = String(r.entity_no ?? r.entity_id);
+                            navigator.clipboard.writeText(v).then(() => toast.success(`Disalin: ${v}`));
+                          }}
+                          title="Klik untuk salin"
+                        >{r.entity_no ?? r.entity_id}</button>
+                      ) : "—"}
+                    </TableCell>
+                  )}
                   {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
                   {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>}
                 </TableRow>
