@@ -339,21 +339,40 @@ export const listQueueToday = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+const QUEUE_TRANSITIONS: Record<string, string[]> = {
+  waiting: ["called", "cancelled"],
+  called: ["in_service", "cancelled", "waiting"],
+  in_service: ["done", "cancelled"],
+  done: [],
+  cancelled: [],
+};
+const VISIT_TERMINAL = new Set(["done", "billing", "cancelled"]);
+
 export const updateQueueStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["waiting","called","in_service","done","cancelled"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
+    // State-machine guard: cek status queue saat ini sebelum transisi.
+    const { data: cur, error: ce } = await sb.from("klinik_queue").select("status,visit_id").eq("id", data.id).maybeSingle();
+    if (ce || !cur) throw ce ?? new Error("Antrian tidak ditemukan");
+    const allowed = QUEUE_TRANSITIONS[String(cur.status)] ?? [];
+    if (cur.status !== data.status && !allowed.includes(data.status)) {
+      throw new Error(`Transisi antrian ${cur.status} → ${data.status} tidak diizinkan`);
+    }
     const updates: Record<string, unknown> = { status: data.status };
     if (data.status === "called") updates.called_at = new Date().toISOString();
     if (data.status === "in_service") updates.served_at = new Date().toISOString();
     if (data.status === "done") updates.done_at = new Date().toISOString();
-    const { data: q, error } = await sb.from("klinik_queue").update(updates).eq("id", data.id).select("visit_id").maybeSingle();
+    const { error } = await sb.from("klinik_queue").update(updates).eq("id", data.id);
     if (error) throw error;
-    // mirror visit status
-    if (q?.visit_id) {
-      const visitStatus = data.status === "called" ? "in_exam" : data.status === "in_service" ? "in_doctor" : data.status === "done" ? "billing" : data.status === "cancelled" ? "cancelled" : "registered";
-      await sb.from("klinik_visit").update({ status: visitStatus }).eq("id", q.visit_id);
+    // mirror visit status — jangan overwrite visit yang sudah final (done/billing/cancelled)
+    if (cur.visit_id) {
+      const { data: v } = await sb.from("klinik_visit").select("status").eq("id", cur.visit_id).maybeSingle();
+      if (v && !VISIT_TERMINAL.has(String(v.status))) {
+        const visitStatus = data.status === "called" ? "in_exam" : data.status === "in_service" ? "in_doctor" : data.status === "done" ? "billing" : data.status === "cancelled" ? "cancelled" : "registered";
+        await sb.from("klinik_visit").update({ status: visitStatus }).eq("id", cur.visit_id);
+      }
     }
     await appendAuditRow(sb, { actor_id: context.userId, module: "Antrian", action: data.status, target: data.id });
     return { ok: true };
