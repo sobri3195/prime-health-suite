@@ -69,6 +69,7 @@ export function PatientBeranda() {
   const callProfile = useServerFn(getMyProfile);
   const callQueue = useServerFn(getMyQueueToday);
   const callBookings = useServerFn(listMyBookings);
+  const df = useDateFmt();
 
   const authUid = useSupabaseUid();
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
