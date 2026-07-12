@@ -876,6 +876,15 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "~") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.reason) { toast.info("Tidak ada reason"); return; }
+        navigator.clipboard.writeText(String(target.reason)).then(
+          () => toast.success("Reason disalin (~)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1471,6 +1480,7 @@ function AuditPage() {
               ["Esc", "Tutup panel detail baris"],
               ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
               ["#", "Salin action baris target"],
+              ["~", "Salin reason baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
