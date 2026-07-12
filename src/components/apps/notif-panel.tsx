@@ -12,6 +12,7 @@ import { EmptyState, SkeletonList } from "@/components/apps/ui";
 import { useI18n } from "@/lib/i18n";
 import { useConfirm } from "@/components/apps/confirm-dialog";
 import { sanitizeDeepLink } from "@/lib/safe-url";
+import { friendlyError } from "@/lib/apps-error";
 
 
 
