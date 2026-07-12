@@ -58,10 +58,12 @@ export const updateMyProfile = createServerFn({ method: "POST" })
 
 export const listMyBookings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { limit?: number; offset?: number } = {}) => ({
-    limit: Math.min(Math.max(Number(d.limit ?? 50), 1), 200),
-    offset: Math.max(Number(d.offset ?? 0), 0),
-  }))
+  .inputValidator((d: unknown) =>
+    z.object({
+      limit: z.coerce.number().int().min(1).max(200).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const from = data.offset;
