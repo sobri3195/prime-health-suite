@@ -1229,6 +1229,7 @@ function AuditPage() {
               [";", "Salin baris (detail / pertama) sebagai JSON"],
               ["'", "Filter berdasarkan aktor target"],
               ['"', "Filter berdasarkan entity_no / entity_id target"],
+              [":", "Salin nama entity (invoice/payment/…)"] ,
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
