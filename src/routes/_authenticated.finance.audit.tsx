@@ -359,6 +359,12 @@ function AuditPage() {
         setQ(next.q); setEntity(next.entity); setAction(next.action);
         toast.success(`Preset: ${next.name} (L)`);
       }
+      else if (!typing && /^[1-9]$/.test(e.key) && presets[Number(e.key) - 1]) {
+        e.preventDefault();
+        const p = presets[Number(e.key) - 1];
+        setQ(p.q); setEntity(p.entity); setAction(p.action);
+        toast.success(`Preset #${e.key}: ${p.name}`);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
