@@ -409,6 +409,15 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: kuartal ini (Q)`);
       }
+      else if (!typing && e.key === "H") {
+        e.preventDefault();
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const iso = d.toISOString().slice(0, 10);
+        setRange({ from: iso, to: iso, preset: "custom" });
+        toast.success(`Rentang: kemarin (H)`);
+      }
+
 
 
     };
@@ -951,6 +960,8 @@ function AuditPage() {
               ["M", "Set rentang tanggal ke bulan ini"],
               ["Y", "Set rentang tanggal ke tahun ini"],
               ["Q", "Set rentang tanggal ke kuartal ini"],
+              ["H", "Set rentang tanggal ke kemarin"],
+
 
 
               ["?", "Buka bantuan ini"],
