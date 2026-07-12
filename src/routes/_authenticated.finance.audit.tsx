@@ -399,6 +399,17 @@ function AuditPage() {
         setRange({ from: iso(start), to: iso(end), preset: "custom" });
         toast.success(`Rentang: tahun ini (Y)`);
       }
+      else if (!typing && e.key === "Q") {
+        e.preventDefault();
+        const now = new Date();
+        const q = Math.floor(now.getMonth() / 3);
+        const start = new Date(now.getFullYear(), q * 3, 1);
+        const end = new Date(now.getFullYear(), q * 3 + 3, 0);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        setRange({ from: iso(start), to: iso(end), preset: "custom" });
+        toast.success(`Rentang: kuartal ini (Q)`);
+      }
+
 
     };
     window.addEventListener("keydown", onKey);
