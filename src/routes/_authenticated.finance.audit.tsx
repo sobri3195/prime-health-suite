@@ -583,6 +583,16 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === "%") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const act = target?.action;
+        if (!act) { toast.info("Tidak ada action untuk disalin"); return; }
+        navigator.clipboard.writeText(String(act)).then(
+          () => toast.success(`Action disalin (%): ${act}`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1120,6 +1130,7 @@ function AuditPage() {
               ["@", "Salin email aktor (detail / baris pertama)"],
               ["#", "Salin entity_no / entity_id"],
               ["$", "Salin alasan (reason)"],
+              ["%", "Salin action"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
