@@ -37,8 +37,8 @@ function ResepPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  type Item = { id: string; obat_name: string; dosage: string | null; frequency: string | null; duration: string | null; quantity: number };
-  type Pres = { id: string; status: string; created_at: string; notes: string | null; apps_pasien?: { no_rm: string; nama: string }; fin_dokter?: { name: string }; klinik_prescription_item: Item[] };
+  type Item = { id: string; obat_name: string; dosage: string | null; frequency: string | null; duration: string | null; quantity: number; unit_price: number | null };
+  type Pres = { id: string; status: string; created_at: string; notes: string | null; apps_pasien?: { no_rm: string; nama: string; alergi: string | null }; fin_dokter?: { name: string }; klinik_prescription_item: Item[] };
   const rows = (listQ.data ?? []) as Pres[];
 
   return (
