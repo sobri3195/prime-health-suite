@@ -140,10 +140,18 @@ const ObatSchema = z.object({
 
 export const listObat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ q: z.string().optional(), low_stock_only: z.boolean().optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) => z.object({
+    q: z.string().optional(), low_stock_only: z.boolean().optional(),
+    active_only: z.boolean().optional(),
+    limit: z.number().int().min(1).max(2000).optional(),
+    offset: z.number().int().min(0).optional(),
+  }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as Supa;
-    let q = sb.from("klinik_obat").select("*").order("name").limit(500);
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    let q = sb.from("klinik_obat").select("*").order("name").range(offset, offset + limit - 1);
+    if (data.active_only) q = q.eq("is_active", true);
     if (data.q) q = q.or(`name.ilike.%${data.q}%,code.ilike.%${data.q}%,category.ilike.%${data.q}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
