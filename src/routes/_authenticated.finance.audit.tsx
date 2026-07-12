@@ -1008,6 +1008,7 @@ function AuditPage() {
               ["D", "Set rentang tanggal ke 30 hari terakhir"],
               ["B", "Set rentang tanggal ke bulan lalu"],
               ["V", "Set rentang tanggal ke tahun lalu"],
+              ["A", "Hapus filter rentang tanggal (semua waktu)"],
 
 
 
