@@ -458,6 +458,15 @@ function AuditPage() {
         setRange({ from: "", to: "", preset: "custom" });
         toast.success(`Rentang: semua waktu (A)`);
       }
+      else if (!typing && e.key === "X") {
+        e.preventDefault();
+        setQ("");
+        setEntity("all");
+        setAction("all");
+        setOnlyStar(false);
+        setRange({ from: "", to: "", preset: "custom" });
+        toast.success(`Semua filter direset (X)`);
+      }
 
 
 
@@ -1009,6 +1018,7 @@ function AuditPage() {
               ["B", "Set rentang tanggal ke bulan lalu"],
               ["V", "Set rentang tanggal ke tahun lalu"],
               ["A", "Hapus filter rentang tanggal (semua waktu)"],
+              ["X", "Reset semua filter (termasuk rentang tanggal)"],
 
 
 
