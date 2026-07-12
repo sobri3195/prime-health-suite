@@ -458,6 +458,15 @@ function AuditPage() {
         setRange({ from: "", to: "", preset: "custom" });
         toast.success(`Rentang: semua waktu (A)`);
       }
+      else if (!typing && e.key === "X") {
+        e.preventDefault();
+        setQ("");
+        setEntity("all");
+        setAction("all");
+        setOnlyStar(false);
+        setRange({ from: "", to: "", preset: "custom" });
+        toast.success(`Semua filter direset (X)`);
+      }
 
 
 
