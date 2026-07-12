@@ -56,7 +56,10 @@ export function PatientWins() {
           <div className="text-xs font-semibold text-emerald-700">{t("wins.voucher")}</div>
           <div className="mt-1 flex items-center gap-2">
             <code className="text-lg font-bold text-emerald-900">{voucher}</code>
-            <button onClick={() => { navigator.clipboard.writeText(voucher); toast.success(t("wins.copied")); }}
+            <button onClick={async () => {
+              try { await navigator.clipboard.writeText(voucher); toast.success(t("wins.copied")); }
+              catch { toast.error(friendlyError(new Error("Clipboard tidak tersedia"))); }
+            }}
               aria-label={t("wins.copied")}
               className="rounded-md p-1 hover:bg-emerald-100"><Copy className="h-4 w-4 text-emerald-700" /></button>
           </div>
