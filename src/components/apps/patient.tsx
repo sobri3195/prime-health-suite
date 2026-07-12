@@ -740,20 +740,20 @@ export function PatientProfil() {
             </button>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <Input label="Nama lengkap" value={form.nama} onChange={(v) => setForm({ ...form, nama: v })} />
-            <Input label="NIK (16 digit)" value={form.nik} onChange={(v) => setForm({ ...form, nik: v.replace(/\D/g, "").slice(0, 16) })} />
-            <Input label="Tanggal lahir" type="date" value={form.tgl_lahir} onChange={(v) => setForm({ ...form, tgl_lahir: v })} />
-            <Select label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
+            <FieldInput label="Nama lengkap" value={form.nama} onChange={(v) => setForm({ ...form, nama: v })} />
+            <FieldInput label="NIK (16 digit)" value={form.nik} onChange={(v) => setForm({ ...form, nik: v.replace(/\D/g, "").slice(0, 16) })} />
+            <FieldInput label="Tanggal lahir" type="date" value={form.tgl_lahir} onChange={(v) => setForm({ ...form, tgl_lahir: v })} />
+            <FieldSelect label="Jenis kelamin" value={form.jenis_kelamin} onChange={(v) => setForm({ ...form, jenis_kelamin: v as "L" | "P" | "" })}
               options={[{ v: "", l: "—" }, { v: "L", l: "Laki-laki" }, { v: "P", l: "Perempuan" }]} />
-            <Input label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
-            <Input label="No. BPJS (13 digit)" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v.replace(/\D/g, "").slice(0, 13) })} />
-            <Input label="Kontak darurat (nama & no HP)" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
-            <Input label="Foto profil (URL)" value={form.foto_url} onChange={(v) => setForm({ ...form, foto_url: v })} />
+            <FieldInput label="No. HP" value={form.telp} onChange={(v) => setForm({ ...form, telp: v })} />
+            <FieldInput label="No. BPJS (13 digit)" value={form.no_bpjs} onChange={(v) => setForm({ ...form, no_bpjs: v.replace(/\D/g, "").slice(0, 13) })} />
+            <FieldInput label="Kontak darurat (nama & no HP)" value={form.kontak_darurat} onChange={(v) => setForm({ ...form, kontak_darurat: v })} />
+            <FieldInput label="Foto profil (URL)" value={form.foto_url} onChange={(v) => setForm({ ...form, foto_url: v })} />
             <div className="sm:col-span-2">
-              <Input label="Alamat" value={form.alamat} onChange={(v) => setForm({ ...form, alamat: v })} />
+              <FieldInput label="Alamat" value={form.alamat} onChange={(v) => setForm({ ...form, alamat: v })} />
             </div>
             <div className="sm:col-span-2">
-              <Input label="Alergi obat / bahan" value={form.alergi} onChange={(v) => setForm({ ...form, alergi: v })} />
+              <FieldInput label="Alergi obat / bahan" value={form.alergi} onChange={(v) => setForm({ ...form, alergi: v })} />
             </div>
           </div>
           <div className="mt-4">
@@ -785,10 +785,10 @@ export function PatientProfil() {
         <p className="mt-1 text-xs text-muted-foreground">{t("patient.security.desc")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Input label="Password saat ini" type="password" value={pwd.cur} onChange={(v) => setPwd({ ...pwd, cur: v })} />
+            <FieldInput label="Password saat ini" type="password" value={pwd.cur} onChange={(v) => setPwd({ ...pwd, cur: v })} />
           </div>
-          <Input label={t("patient.pw_new")} type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
-          <Input label={t("patient.pw_confirm")} type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
+          <FieldInput label={t("patient.pw_new")} type="password" value={pwd.p1} onChange={(v) => setPwd({ ...pwd, p1: v })} />
+          <FieldInput label={t("patient.pw_confirm")} type="password" value={pwd.p2} onChange={(v) => setPwd({ ...pwd, p2: v })} />
         </div>
 
         <button
