@@ -2,11 +2,26 @@ import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type Role } from "@/lib/auth";
+import { useRoles } from "@/lib/rbac";
 import { brandHead } from "@/lib/brand";
 import { LoginSkeleton } from "@/components/auth/login-skeleton";
 import { ConfirmProvider } from "@/components/apps/confirm-dialog";
 
+// Map DB role → UI role for AppShell label. Anything unmapped falls back to
+// front_office so the shell still renders for a valid session.
+const ROLE_MAP: Record<string, Role> = {
+  super_admin: "super_admin",
+  admin_klinik: "admin_klinik",
+  dokter: "dokter",
+  perawat: "perawat",
+  perawat_optometri: "perawat",
+  pendaftaran: "front_office",
+  kasir: "kasir",
+  farmasi: "front_office",
+  manajemen: "owner",
+  pasien: "front_office",
+};
 
 function Layout() {
   const navigate = useNavigate();
@@ -14,6 +29,8 @@ function Layout() {
   const { login, logout, userFor } = useAuth();
   const [checking, setChecking] = useState(true);
   const [authed, setAuthed] = useState(false);
+  const rolesQ = useRoles({ enabled: authed });
+  const primaryRole: Role = (rolesQ.data?.[0] && ROLE_MAP[rolesQ.data[0]]) || "front_office";
 
   // Sync Supabase session into mock auth bridge so AppShell renders.
   useEffect(() => {
@@ -23,7 +40,7 @@ function Layout() {
       if (cancelled) return;
       if (user) {
         if (!userFor("apps")) {
-          login("apps", user.email || "pasien@apps", "front_office");
+          login("apps", user.email || "pasien@apps", primaryRole);
         }
         setAuthed(true);
       } else {
@@ -48,6 +65,16 @@ function Layout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-bridge when the actual role resolves so the shell shows the correct label.
+  useEffect(() => {
+    if (!authed || !rolesQ.data?.length) return;
+    const existing = userFor("apps");
+    if (existing && existing.role !== primaryRole) {
+      login("apps", existing.email, primaryRole);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, primaryRole]);
+
   if (checking) return <LoginSkeleton system="apps" />;
   if (!authed) return <LoginSkeleton system="apps" />;
 
@@ -66,3 +93,4 @@ export const Route = createFileRoute("/_authenticated/apps")({
   ssr: false,
   component: Layout,
 });
+

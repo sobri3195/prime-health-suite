@@ -9,7 +9,7 @@ import {
 } from "@/lib/apps-patient.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState, SkeletonList } from "@/components/apps/ui";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useDateFmt } from "@/lib/i18n";
 import { useConfirm } from "@/components/apps/confirm-dialog";
 import { sanitizeDeepLink } from "@/lib/safe-url";
 import { friendlyError } from "@/lib/apps-error";
@@ -65,6 +65,7 @@ export function NotifBellBadge() {
 
 export function NotificationsPagePatient() {
   const { t } = useI18n();
+  const df = useDateFmt();
   const qc = useQueryClient();
   const confirm = useConfirm();
 
@@ -141,7 +142,7 @@ export function NotificationsPagePatient() {
                 {n.body && <p className="mt-1 text-sm text-muted-foreground">{n.body}</p>}
                 <div className="mt-2 flex items-center gap-3">
                   <span className="text-[11px] text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
+                    {df.dateTime(n.created_at)}
                   </span>
                   {(() => {
                     const safe = sanitizeDeepLink(n.deep_link);

@@ -13,7 +13,8 @@ import { useI18n } from "@/lib/i18n";
 type Doctor = { id: string; code: string | null; name: string; spesialisasi: string | null };
 
 function dateLabel(d: Date, lang: string) {
-  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short" });
+  // Format in UTC because next7 dates carry WIB-shifted UTC values.
+  return d.toLocaleDateString(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 }
 function dateISO(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -64,10 +65,12 @@ export function BookingFlow() {
     onError: (e: Error) => toast.error(friendlyError(e)),
   });
 
+  // Anchor to WIB (UTC+7) so users outside WIB see the same day-list as the
+  // server cutoff (see createBooking). Prevents off-by-one when browser tz != Asia/Jakarta.
   const next7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d;
+    const wibNow = new Date(Date.now() + 7 * 3600 * 1000);
+    wibNow.setUTCDate(wibNow.getUTCDate() + i);
+    return wibNow;
   });
 
   const stepTitle = step === 1 ? t("booking.step1") : step === 2 ? t("booking.step2") : step === 3 ? t("booking.step3") : t("booking.step4");

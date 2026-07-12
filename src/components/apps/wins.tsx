@@ -17,6 +17,7 @@ export function PatientWins() {
   const callRedeem = useServerFn(redeemReward);
   const callMyRedeem = useServerFn(listMyRedeem);
   const [period, setPeriod] = useState<"week" | "month" | "all">("week");
+  const [historyLimit, setHistoryLimit] = useState(10);
   const poinQ = useQuery({ queryKey: ["apps", "poin"], queryFn: () => callPoin() });
   const boardQ = useQuery({ queryKey: ["apps", "leaderboard", period], queryFn: () => callBoard({ data: { period } }) });
   const rewardQ = useQuery({ queryKey: ["apps", "reward"], queryFn: () => callReward() });
@@ -124,7 +125,7 @@ export function PatientWins() {
           <div className="text-xs text-muted-foreground">{t("wins.history_empty")}</div>
         ) : (
           <div className="space-y-1">
-            {myRedeemQ.data!.redeem.map((r: any) => (
+            {myRedeemQ.data!.redeem.slice(0, historyLimit).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between rounded-xl border border-[#e9dfb8] bg-white p-3 text-sm">
                 <div>
                   <div className="font-semibold">{r.reward?.nama}</div>
@@ -133,6 +134,15 @@ export function PatientWins() {
                 <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("id-ID")}</div>
               </div>
             ))}
+            {myRedeemQ.data!.redeem.length > historyLimit && (
+              <button
+                type="button"
+                onClick={() => setHistoryLimit((n) => n + 10)}
+                className="mt-2 w-full rounded-xl border border-[#e9dfb8] bg-white py-2 text-xs font-semibold text-[#6b5a16] hover:bg-[#fdf8e8]"
+              >
+                {t("common.loading").replace("…", "")} +10
+              </button>
+            )}
           </div>
         )}
       </div>
