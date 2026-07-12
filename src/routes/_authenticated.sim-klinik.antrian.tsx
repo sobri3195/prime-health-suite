@@ -124,16 +124,23 @@ function AntrianPage() {
                 </>}
                 {r.status === "in_service" && <Button size="sm" onClick={() => updM.mutate({ id: r.id, status: "done" })}><CheckCircle2 className="mr-1 h-3 w-3" />Selesai</Button>}
                 {(r.status === "waiting" || r.status === "called") && (
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
-                    if (confirm(`Skip antrian ${r.queue_no} (${r.apps_pasien?.nama ?? "-"})? Antrian ini akan dibatalkan.`)) {
-                      updM.mutate({ id: r.id, status: "cancelled" });
-                    }
-                  }} title="Skip / batalkan"><SkipForward className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive"
+                    onClick={() => setSkipTarget({ id: r.id, queue_no: r.queue_no, nama: r.apps_pasien?.nama ?? "-" })}
+                    title="Skip / batalkan"><SkipForward className="h-3 w-3" /></Button>
                 )}
               </div>
             </Card>
           ))}
       </div>
+      <ConfirmDialog
+        open={!!skipTarget}
+        onOpenChange={(o) => { if (!o) setSkipTarget(null); }}
+        title="Batalkan antrian?"
+        description={skipTarget ? `Antrian ${skipTarget.queue_no} (${skipTarget.nama}) akan ditandai batal. Tindakan ini tidak dapat dibatalkan.` : ""}
+        destructive
+        confirmLabel="Ya, batalkan"
+        onConfirm={() => { if (skipTarget) { updM.mutate({ id: skipTarget.id, status: "cancelled" }); setSkipTarget(null); } }}
+      />
     </div>
   );
 }
