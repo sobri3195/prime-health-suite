@@ -670,7 +670,18 @@ function AuditPage() {
         setQ(String(val));
         toast.success(`Filter entity: ${val}`);
       }
+      else if (!typing && e.key === ":") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        const val = target?.entity;
+        if (!val) { toast.info("Tidak ada entity untuk disalin"); return; }
+        navigator.clipboard.writeText(String(val)).then(
+          () => toast.success(`Entity disalin: ${val}`),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
+
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1218,6 +1229,7 @@ function AuditPage() {
               [";", "Salin baris (detail / pertama) sebagai JSON"],
               ["'", "Filter berdasarkan aktor target"],
               ['"', "Filter berdasarkan entity_no / entity_id target"],
+              [":", "Salin nama entity (invoice/payment/…)"] ,
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
