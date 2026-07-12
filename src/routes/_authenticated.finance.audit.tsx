@@ -867,6 +867,15 @@ function AuditPage() {
         if (prev) { setDetail(prev); toast.success("Bertanda sebelumnya (<)"); }
         else toast.info("Tidak ada entri bertanda sebelumnya");
       }
+      else if (!typing && e.key === "#") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target?.action) { toast.info("Tidak ada action"); return; }
+        navigator.clipboard.writeText(String(target.action)).then(
+          () => toast.success("Action disalin (#)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1461,6 +1470,7 @@ function AuditPage() {
               ["g / G", "Lompat detail ke baris pertama / terakhir"],
               ["Esc", "Tutup panel detail baris"],
               ["> / <", "Lompat ke entri bertanda berikutnya / sebelumnya"],
+              ["#", "Salin action baris target"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
