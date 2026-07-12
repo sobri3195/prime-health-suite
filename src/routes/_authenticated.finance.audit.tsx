@@ -284,6 +284,11 @@ function AuditPage() {
         qc.invalidateQueries({ queryKey: ["fin-audit"] });
         toast.success("Memuat ulang audit (.)");
       }
+      else if (!typing && e.key === "x" && (q || entity !== "all" || action !== "all" || onlyStar)) {
+        e.preventDefault();
+        setQ(""); setEntity("all"); setAction("all"); setOnlyStar(false);
+        toast.success("Semua filter dibersihkan (x)");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
