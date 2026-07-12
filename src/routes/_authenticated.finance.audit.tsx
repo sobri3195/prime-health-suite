@@ -680,6 +680,17 @@ function AuditPage() {
           () => toast.error("Gagal menyalin"),
         );
       }
+      else if (!typing && e.key === ",") {
+        e.preventDefault();
+        const target = detail ?? (rows as any[])[0];
+        if (!target) { toast.info("Tidak ada baris untuk diringkas"); return; }
+        const ts = target?.created_at ? new Date(target.created_at).toLocaleString("id-ID") : "-";
+        const summary = `[${ts}] ${target?.actor_email ?? "-"} • ${target?.entity ?? "-"} ${target?.action ?? "-"} ${target?.entity_no ?? target?.entity_id ?? ""}`.trim();
+        navigator.clipboard.writeText(summary).then(
+          () => toast.success("Ringkasan baris disalin (,)"),
+          () => toast.error("Gagal menyalin"),
+        );
+      }
     };
 
 
@@ -1230,6 +1241,7 @@ function AuditPage() {
               ["'", "Filter berdasarkan aktor target"],
               ['"', "Filter berdasarkan entity_no / entity_id target"],
               [":", "Salin nama entity (invoice/payment/…)"] ,
+              [",", "Salin ringkasan baris (waktu • aktor • entity action no)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
