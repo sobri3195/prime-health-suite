@@ -1056,6 +1056,7 @@ function AuditPage() {
               ["S", "Bagikan URL (Web Share) / fallback copy"],
               ["i", "Info statistik cepat (aktor/entity/action)"],
               ["*", "Lompat ke entri bertanda pertama"],
+              ["< / >", "Navigasi antar entri bertanda (prev/next)"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
