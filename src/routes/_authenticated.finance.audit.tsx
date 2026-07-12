@@ -848,6 +848,9 @@ function AuditPage() {
         if (last) { setDetail(last); toast.success("Baris terakhir (G)"); }
         else toast.info("Tidak ada baris");
       }
+      else if (!typing && e.key === "Escape") {
+        if (detail) { e.preventDefault(); setDetail(null); toast.success("Detail ditutup (Esc)"); }
+      }
     };
 
 
@@ -1440,6 +1443,7 @@ function AuditPage() {
               ["p", "Cetak baris target di tab baru"],
               ["j / h", "Pindah detail ke baris berikut / sebelumnya"],
               ["g / G", "Lompat detail ke baris pertama / terakhir"],
+              ["Esc", "Tutup panel detail baris"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
