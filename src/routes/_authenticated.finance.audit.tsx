@@ -268,6 +268,10 @@ function AuditPage() {
         const target = e.key === "G" ? list[list.length - 1] : list[0];
         if (target) { setDetail(target); toast.success(e.key === "G" ? "Entri terakhir (G)" : "Entri pertama (g)"); }
       }
+      else if (!typing && e.key === "f") {
+        e.preventDefault();
+        setOnlyStar((v) => { toast.success(!v ? "Hanya bertanda (f)" : "Semua entri (f)"); return !v; });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
