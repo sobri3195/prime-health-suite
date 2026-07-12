@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2, Plus, KeyRound } from "lucide-react";
 import { useConfirm } from "@/components/apps/confirm-dialog";
+import { friendlyError } from "@/lib/apps-error";
 
 
 type ApiUser = {
