@@ -97,6 +97,7 @@ function AntrianPage() {
             {Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari no antrian / nama / RM…" className="w-56" />
         <Button variant="outline" onClick={() => setDisplay(true)}>Mode Display</Button>
         <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Timer className="h-3.5 w-3.5" />Rata-rata tunggu: <span className="font-semibold text-foreground">{avgWait !== null ? `${avgWait} mnt` : "—"}</span></span>
