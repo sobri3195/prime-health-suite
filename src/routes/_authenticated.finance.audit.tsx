@@ -1028,6 +1028,7 @@ function AuditPage() {
               ["c", "Salin JSON entri terbuka"],
               ["C", "Salin CSV semua entri hasil"],
               ["E", "Export JSON semua entri hasil"],
+              ["S", "Bagikan URL (Web Share) / fallback copy"],
               [". / R", "Muat ulang data audit"],
               ["x", "Bersihkan semua filter"],
               ["t", "Toggle format waktu (relatif/absolut)"],
