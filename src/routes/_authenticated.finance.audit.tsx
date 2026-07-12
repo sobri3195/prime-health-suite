@@ -766,6 +766,7 @@ function AuditPage() {
               ["k", "Detail baris sebelumnya"],
               ["r", "Reset semua filter aktif"],
               ["e", "Ekspor hasil ke CSV"],
+              ["d", "Toggle kerapatan (kompak/nyaman)"],
               ["?", "Buka bantuan ini"],
             ].map(([k, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
