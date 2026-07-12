@@ -56,11 +56,12 @@ export function PatientBeranda() {
   const callQueue = useServerFn(getMyQueueToday);
   const callBookings = useServerFn(listMyBookings);
 
+  const authUid = useSupabaseUid();
   const profileQ = useQuery({ queryKey: ["apps", "profile"], queryFn: () => callProfile() });
   const queueQ = useQuery({ queryKey: ["apps", "queue"], queryFn: () => callQueue(), refetchInterval: 60_000 });
   const bookingsQ = useQuery({ queryKey: ["apps", "bookings"], queryFn: () => callBookings() });
 
-  useAppsRealtime(profileQ.data?.profile?.user_id ?? undefined);
+  useAppsRealtime(authUid);
 
   const profile = profileQ.data?.profile;
   const queue = queueQ.data?.queue;
