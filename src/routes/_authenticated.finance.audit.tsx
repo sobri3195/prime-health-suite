@@ -95,6 +95,7 @@ function AuditPage() {
   const [entity, setEntity] = useState("all");
   const [action, setAction] = useState("all");
   const [detail, _setDetail] = useState<any | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const setDetail = (r: any | null) => {
     _setDetail(r);
     if (typeof window !== "undefined") {
