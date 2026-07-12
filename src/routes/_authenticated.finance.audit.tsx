@@ -108,6 +108,7 @@ function AuditPage() {
   const [q, setQ] = useState(() => initialParams?.get("q") ?? "");
   const [entity, setEntity] = useState(() => initialParams?.get("entity") ?? "all");
   const [action, setAction] = useState(() => initialParams?.get("action") ?? "all");
+  const [onlyStar, setOnlyStar] = useState(() => initialParams?.get("star") === "1");
   useEffect(() => {
     if (typeof window === "undefined") return;
     const u = new URL(window.location.href);
