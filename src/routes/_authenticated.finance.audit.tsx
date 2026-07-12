@@ -405,7 +405,19 @@ function AuditPage() {
               const visibleCount = COLS.filter((c) => cols[c.key]).length || 1;
               if (isLoading) return <TableRow><TableCell colSpan={visibleCount} className="py-6 text-center">Loading…</TableCell></TableRow>;
               if (rows.length === 0) return <TableRow><TableCell colSpan={visibleCount} className="py-12 text-center text-sm text-muted-foreground">Belum ada audit log.</TableCell></TableRow>;
-              return rows.map((r: any) => (
+              let lastDay = "";
+              return (rows as any[]).flatMap((r: any) => {
+                const day = new Date(r.created_at).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+                const nodes: any[] = [];
+                if (day !== lastDay) {
+                  lastDay = day;
+                  nodes.push(
+                    <TableRow key={`day-${day}`} className="hover:bg-transparent">
+                      <TableCell colSpan={visibleCount} className="bg-muted/40 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{day}</TableCell>
+                    </TableRow>
+                  );
+                }
+                nodes.push(
                 <TableRow
                   key={r.id}
                   ref={(el) => {
@@ -470,7 +482,9 @@ function AuditPage() {
                   {cols.fields && <TableCell className="text-xs">{(r.changed_fields ?? []).slice(0, 5).map((f: string) => <Badge key={f} variant="outline" className="mr-1 mb-1 text-[10px]">{f}</Badge>)}</TableCell>}
                   {cols.alasan && <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>}
                 </TableRow>
-              ));
+                );
+                return nodes;
+              });
             })()}
           </TableBody>
         </Table>
