@@ -538,6 +538,11 @@ function AuditPage() {
         window.print();
         toast.success("Cetak halaman (p)");
       }
+      else if (!typing && e.key === "\\") {
+        e.preventDefault();
+        if (q) { setQ(""); toast.success("Query pencarian dibersihkan (\\)"); }
+        else toast.info("Query sudah kosong");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
