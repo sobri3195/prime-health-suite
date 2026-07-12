@@ -392,13 +392,20 @@ export const upsertMedicalRecord = createServerFn({ method: "POST" })
     const sb = context.supabase as Supa;
     const payload: Record<string, unknown> = { ...data };
     delete payload.id;
+    delete payload.visit_id;   // immutable — trigger juga menjaga
+    delete payload.pasien_id;  // immutable
     if (data.id) {
+      // Cek is_final tersimpan; trigger klinik_medrec_final_guard juga menolak, tapi kita mau error lebih ramah.
+      const { data: cur, error: ce } = await sb.from("klinik_medical_record").select("is_final").eq("id", data.id).maybeSingle();
+      if (ce) throw ce;
+      if (cur?.is_final && !data.is_final) throw new Error("Rekam medis sudah difinalisasi dan tidak dapat diubah.");
+      if (cur?.is_final && data.is_final) throw new Error("Rekam medis sudah difinalisasi.");
       const { data: row, error } = await sb.from("klinik_medical_record").update(payload).eq("id", data.id).select("*").single();
       if (error) throw error;
       await appendAuditRow(sb, { actor_id: context.userId, module: "RekamMedis", action: "update", target: data.id });
       return row;
     }
-    const { data: row, error } = await sb.from("klinik_medical_record").upsert(payload, { onConflict: "visit_id" }).select("*").single();
+    const { data: row, error } = await sb.from("klinik_medical_record").upsert({ ...payload, visit_id: data.visit_id, pasien_id: data.pasien_id }, { onConflict: "visit_id" }).select("*").single();
     if (error) throw error;
     if (data.is_final) {
       await sb.from("klinik_visit").update({ status: "billing" }).eq("id", data.visit_id);
