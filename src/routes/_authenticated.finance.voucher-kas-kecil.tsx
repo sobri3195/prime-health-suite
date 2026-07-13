@@ -27,7 +27,7 @@ function Page() {
       .then(({ data }) => { setRows(data ?? []); setLoading(false); });
   }, []);
 
-  const isMasuk = (t: any) => t === "masuk" || t === "in" || t === "penerimaan" || t === "replenish";
+  const isMasuk = (t: any) => t === "masuk";
   const sum = useMemo(() => {
     let masuk = 0, keluar = 0;
     for (const r of rows.filter((r) => r.status !== "void")) {
