@@ -3667,6 +3667,16 @@ export type Database = {
           total_kredit: number
         }[]
       }
+      fin_void_invoice_atomic: {
+        Args: {
+          _actor_email?: string
+          _actor_id?: string
+          _invoice_id: string
+          _kind?: string
+          _reason: string
+        }
+        Returns: Json
+      }
       fin_void_invoice_locked: {
         Args: { _invoice_id: string; _kind?: string; _reason: string }
         Returns: {
