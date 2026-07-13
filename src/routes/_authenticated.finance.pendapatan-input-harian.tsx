@@ -67,6 +67,10 @@ function Page() {
     }
     prevTotal.current = total;
   }, [total]);
+  useEffect(() => {
+    // Reset dirty flag when kembali ke satu baris pembayaran agar auto-sync jumlah↔total kembali aktif.
+    if (pays.length === 1) paysDirty.current = false;
+  }, [pays.length]);
 
   const updateItem = (idx: number, patch: Partial<Item>) =>
     setItems((arr) => arr.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
