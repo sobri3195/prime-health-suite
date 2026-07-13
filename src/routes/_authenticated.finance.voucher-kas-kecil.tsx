@@ -27,10 +27,11 @@ function Page() {
       .then(({ data }) => { setRows(data ?? []); setLoading(false); });
   }, []);
 
+  const isMasuk = (t: any) => t === "masuk" || t === "in" || t === "penerimaan" || t === "replenish";
   const sum = useMemo(() => {
     let masuk = 0, keluar = 0;
     for (const r of rows.filter((r) => r.status !== "void")) {
-      if (r.tipe === "masuk" || r.tipe === "in" || r.tipe === "penerimaan" || r.tipe === "replenish") masuk += Number(r.amount || 0);
+      if (isMasuk(r.tipe)) masuk += Number(r.amount || 0);
       else keluar += Number(r.amount || 0);
     }
     return { masuk, keluar, saldo: masuk - keluar };
@@ -62,14 +63,14 @@ function Page() {
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs">{r.no_voucher}</TableCell>
                   <TableCell>{r.tanggal}</TableCell>
-                  <TableCell><Badge variant="secondary" className={r.tipe === "penerimaan" || r.tipe === "replenish" ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}>{r.tipe}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className={isMasuk(r.tipe) ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}>{r.tipe ?? "-"}</Badge></TableCell>
                   <TableCell>{r.penerima ?? "-"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{r.keterangan ?? ""}</TableCell>
                   <TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell>
                   <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
-                      const isIn = r.tipe === "penerimaan" || r.tipe === "replenish";
+                      const isIn = isMasuk(r.tipe);
                       const doc = await generateVoucherPDF({
                         jenis: "KAS KECIL",
                         no_voucher: r.no_voucher,
@@ -77,7 +78,7 @@ function Page() {
                         pihak_label: isIn ? "Diterima dari" : "Dibayarkan kepada",
                         pihak_nama: r.penerima ?? "-",
                         keterangan: r.keterangan ?? "",
-                        items: [{ label: `${r.tipe.toUpperCase()} — ${r.keterangan ?? ""}`, nominal: Number(r.amount) || 0 }],
+                        items: [{ label: `${String(r.tipe ?? "").toUpperCase()} — ${r.keterangan ?? ""}`, nominal: Number(r.amount) || 0 }],
                         total: Number(r.amount) || 0,
                       });
                       downloadPDF(doc, `KK-${r.no_voucher}.pdf`);
