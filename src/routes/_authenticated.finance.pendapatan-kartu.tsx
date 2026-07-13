@@ -98,7 +98,7 @@ function Page() {
                 <TableCell className="font-mono text-xs">{r.invoice}</TableCell>
                 <TableCell className="text-xs">{new Date(r.date).toLocaleDateString("id-ID")}</TableCell>
                 <TableCell><Badge variant="secondary">{r.bank}</Badge></TableCell>
-                <TableCell><Badge variant={r.metode === "qris" ? "outline" : "default"}>{r.metode.toUpperCase()}</Badge></TableCell>
+                <TableCell><Badge variant={r.metode === "qris" ? "outline" : "default"}>{String(r.metode ?? "").toUpperCase() || "-"}</Badge></TableCell>
                 <TableCell className="text-right font-mono text-xs">{formatIDR(r.gross)}</TableCell>
                 <TableCell className="text-right font-mono text-xs text-rose-600">-{formatIDR(r.mdr)}</TableCell>
                 <TableCell className="text-right font-mono text-xs text-emerald-600">{formatIDR(r.net)}</TableCell>
