@@ -70,7 +70,7 @@ function Page() {
                   <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" variant="outline" className="h-7 gap-1" onClick={async () => {
-                      const isIn = r.tipe === "penerimaan" || r.tipe === "replenish";
+                      const isIn = isMasuk(r.tipe);
                       const doc = await generateVoucherPDF({
                         jenis: "KAS KECIL",
                         no_voucher: r.no_voucher,
@@ -78,7 +78,7 @@ function Page() {
                         pihak_label: isIn ? "Diterima dari" : "Dibayarkan kepada",
                         pihak_nama: r.penerima ?? "-",
                         keterangan: r.keterangan ?? "",
-                        items: [{ label: `${r.tipe.toUpperCase()} — ${r.keterangan ?? ""}`, nominal: Number(r.amount) || 0 }],
+                        items: [{ label: `${String(r.tipe ?? "").toUpperCase()} — ${r.keterangan ?? ""}`, nominal: Number(r.amount) || 0 }],
                         total: Number(r.amount) || 0,
                       });
                       downloadPDF(doc, `KK-${r.no_voucher}.pdf`);
