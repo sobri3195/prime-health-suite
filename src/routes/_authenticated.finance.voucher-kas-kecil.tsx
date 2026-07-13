@@ -27,10 +27,11 @@ function Page() {
       .then(({ data }) => { setRows(data ?? []); setLoading(false); });
   }, []);
 
+  const isMasuk = (t: any) => t === "masuk" || t === "in" || t === "penerimaan" || t === "replenish";
   const sum = useMemo(() => {
     let masuk = 0, keluar = 0;
     for (const r of rows.filter((r) => r.status !== "void")) {
-      if (r.tipe === "masuk" || r.tipe === "in" || r.tipe === "penerimaan" || r.tipe === "replenish") masuk += Number(r.amount || 0);
+      if (isMasuk(r.tipe)) masuk += Number(r.amount || 0);
       else keluar += Number(r.amount || 0);
     }
     return { masuk, keluar, saldo: masuk - keluar };
