@@ -235,20 +235,17 @@ export const voidInvoice = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const sb = await adminClient();
-    const { data: inv } = await sb.from("fin_invoice").select("*").eq("id", data.id).single();
-    if (!inv) throw new Error("Invoice tidak ditemukan");
-    // Void invoice + semua pembayaran terkait + nol-kan `dibayar` (advisory lock).
-    const { error: ve } = await sb.rpc("fin_void_invoice_locked", {
-      _invoice_id: data.id, _reason: data.reason, _kind: data.kind,
+    // Atomic void: locks invoice, updates status, nol-kan dibayar, void semua
+    // pembayaran, dan reverse seluruh jurnal terkait dalam satu transaksi.
+    const email = (context.claims as { email?: string } | null)?.email ?? null;
+    const { error: ve } = await sb.rpc("fin_void_invoice_atomic", {
+      _invoice_id: data.id,
+      _reason: data.reason,
+      _kind: data.kind,
+      _actor_id: context.userId,
+      _actor_email: email,
     });
     if (ve) throw new Error(ve.message);
-    await reverseJournal("invoice", data.id, new Date().toISOString().slice(0, 10), data.reason);
-    // Balikkan jurnal pembayaran juga
-    const { data: pays } = await sb.from("fin_pembayaran").select("id").eq("invoice_id", data.id);
-    for (const p of pays ?? []) {
-      await reverseJournal("payment", p.id, new Date().toISOString().slice(0, 10), `Invoice ${data.kind}: ${data.reason}`);
-    }
-    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "void", entity: "invoice", entity_id: data.id, entity_no: inv.no_invoice, reason: data.reason, before: inv });
     return { ok: true };
   });
 
