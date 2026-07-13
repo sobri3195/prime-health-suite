@@ -63,7 +63,7 @@ function Page() {
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs">{r.no_voucher}</TableCell>
                   <TableCell>{r.tanggal}</TableCell>
-                  <TableCell><Badge variant="secondary" className={r.tipe === "penerimaan" || r.tipe === "replenish" ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}>{r.tipe}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className={isMasuk(r.tipe) ? "bg-emerald-500/15 text-emerald-700" : "bg-rose-500/15 text-rose-700"}>{r.tipe ?? "-"}</Badge></TableCell>
                   <TableCell>{r.penerima ?? "-"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{r.keterangan ?? ""}</TableCell>
                   <TableCell className="text-right font-mono">{fmt(r.amount)}</TableCell>
