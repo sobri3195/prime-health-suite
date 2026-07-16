@@ -14,8 +14,16 @@ import { useAuth, canAccess } from "@/lib/auth";
 import { addAudit, getAudit } from "@/lib/audit-log";
 import { addSync, getSyncLog } from "@/lib/sync-log";
 import { downloadCSV, exportFileName, toCSV } from "@/lib/export";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/_authenticated/qa")({
+  head: () => ({
+    ...pageHead({ title: "QA Console — Prime Health Suite", description: "Quality assurance console internal untuk uji regresi sistem.", path: "/qa" }),
+    meta: [
+      ...pageHead({ title: "QA Console — Prime Health Suite", description: "Quality assurance console internal untuk uji regresi sistem.", path: "/qa" }).meta,
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: () => (
     <AppShell system="apps">
       <QAPage />
