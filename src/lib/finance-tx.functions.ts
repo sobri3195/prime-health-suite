@@ -10,19 +10,16 @@ async function adminClient() {
   return supabaseAdmin as any;
 }
 
-async function nextNo(prefix: string, table: string, col: string) {
+async function nextNo(prefix: string, _table?: string, _col?: string) {
   const sb = await adminClient();
   const yyyymm = new Date().toISOString().slice(0, 7).replace("-", "");
-  const like = `${prefix}-${yyyymm}-%`;
-  const { data } = await (sb.from(table) as any)
-    .select(col)
-    .like(col, like)
-    .order(col, { ascending: false })
-    .limit(1);
-  const last = (data?.[0]?.[col] as string | undefined) ?? "";
-  const n = Number(last.split("-").pop() ?? "0") || 0;
-  return `${prefix}-${yyyymm}-${String(n + 1).padStart(4, "0")}`;
+  // Atomic sequence per (prefix, yyyymm) via SECURITY DEFINER RPC — eliminates
+  // the read-then-increment race in old JS implementation.
+  const { data, error } = await sb.rpc("fin_next_doc_no", { _prefix: prefix, _yyyymm: yyyymm });
+  if (error) throw new Error(error.message);
+  return String(data);
 }
+
 
 async function postJournal(opts: {
   sumber: "invoice" | "payment" | "expense" | "manual";
