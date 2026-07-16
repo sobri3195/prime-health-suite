@@ -3,19 +3,25 @@
 
 export type InvoiceStatus = "unpaid" | "partial" | "paid";
 
+/** Derive invoice status dari total & jumlah terbayar (inklusif 0). */
+export function deriveInvoiceStatus(total: number, paid: number): InvoiceStatus {
+  if (!(total > 0)) throw new Error("Total invoice harus > 0");
+  if (paid < 0) throw new Error("Jumlah terbayar tidak boleh negatif");
+  return paid >= total ? "paid" : paid > 0 ? "partial" : "unpaid";
+}
+
 export function computePaymentStatus(total: number, previouslyPaid: number, amount: number): {
   newPaid: number;
   status: InvoiceStatus;
 } {
-  if (!(total > 0)) throw new Error("Total invoice harus > 0");
   if (!(amount > 0)) throw new Error("Jumlah pembayaran harus > 0");
   const sisa = Math.max(0, total - previouslyPaid);
   if (sisa <= 0) throw new Error("Invoice sudah lunas");
   if (amount > sisa) throw new Error(`Jumlah melebihi sisa tagihan (Rp ${sisa.toLocaleString("id-ID")})`);
   const newPaid = previouslyPaid + amount;
-  const status: InvoiceStatus = newPaid >= total ? "paid" : newPaid > 0 ? "partial" : "unpaid";
-  return { newPaid, status };
+  return { newPaid, status: deriveInvoiceStatus(total, newPaid) };
 }
+
 
 export interface JadwalSlot {
   id?: string;

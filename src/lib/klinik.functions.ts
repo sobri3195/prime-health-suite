@@ -655,9 +655,11 @@ export const generateInvoiceFromVisit = createServerFn({ method: "POST" })
     // Idempotent: bila invoice non-void untuk visit ini sudah ada (partial UNIQUE), kembalikan itu.
     const { data: existing } = await sb.from("fin_invoice").select("*").eq("source_visit_id", data.visit_id).neq("status", "void").maybeSingle();
     if (existing) return existing;
+    const { deriveInvoiceStatus } = await import("./klinik-invariants");
     const subtotal = data.items.reduce((a, b) => a + Number(b.quantity) * Number(b.unit_price), 0);
     const total = Math.max(0, subtotal - Number(data.discount));
-    const status = data.paid_amount >= total ? "paid" : data.paid_amount > 0 ? "partial" : "unpaid";
+    if (!(total > 0)) throw new Error("Total invoice harus > 0");
+    const status = deriveInvoiceStatus(total, Number(data.paid_amount) || 0);
     const now = new Date();
     let inv: any = null;
     for (let attempt = 0; attempt < 3; attempt += 1) {
