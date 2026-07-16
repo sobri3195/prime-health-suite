@@ -172,7 +172,21 @@ function ObatPage() {
               <div><Label>Nama *</Label><Input value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></div>
               <div><Label>Kategori</Label><Input value={edit.category ?? ""} onChange={(e) => setEdit({ ...edit, category: e.target.value })} /></div>
               <div><Label>Satuan</Label><Input value={edit.unit ?? ""} onChange={(e) => setEdit({ ...edit, unit: e.target.value })} /></div>
-              <div><Label>Stok Awal</Label><Input type="number" value={edit.stock ?? 0} onChange={(e) => setEdit({ ...edit, stock: Number(e.target.value) })} /></div>
+              <div>
+                <Label>Stok {edit.id ? "Saat Ini" : "Awal"}</Label>
+                <Input
+                  type="number"
+                  value={edit.stock ?? 0}
+                  onChange={(e) => setEdit({ ...edit, stock: Number(e.target.value) })}
+                  disabled={!!edit.id}
+                  title={edit.id ? "Ubah stok lewat Pergerakan Stok agar tercatat & tervalidasi" : undefined}
+                />
+                {edit.id && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ubah stok lewat tombol <b>Pergerakan Stok</b> agar tervalidasi & tercatat.
+                  </p>
+                )}
+              </div>
               <div><Label>Min Stok</Label><Input type="number" value={edit.min_stock ?? 0} onChange={(e) => setEdit({ ...edit, min_stock: Number(e.target.value) })} /></div>
               <div><Label>Harga</Label><Input type="number" value={edit.price ?? 0} onChange={(e) => setEdit({ ...edit, price: Number(e.target.value) })} /></div>
               <div><Label>Tgl Expired</Label><Input type="date" value={edit.expired_date ?? ""} onChange={(e) => setEdit({ ...edit, expired_date: e.target.value })} /></div>
