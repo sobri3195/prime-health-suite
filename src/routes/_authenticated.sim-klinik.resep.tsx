@@ -27,7 +27,7 @@ function ResepPage() {
   const callList = useServerFn(listPrescription);
   const callDispense = useServerFn(dispensePrescription);
   const [status, setStatus] = useState("sent_to_pharmacy");
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmFor, setConfirmFor] = useState<{ id: string; allergens: string[] } | null>(null);
 
   const listQ = useQuery({ queryKey: ["klinik","prescriptions",status], queryFn: () => callList({ data: { status } }), refetchInterval: 30000 });
   // Invalidate on prefix so status changes made in other tabs also refresh this view
@@ -73,7 +73,7 @@ function ResepPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant={p.status === "dispensed" ? "default" : "secondary"}>{STATUS_LABEL[p.status]}</Badge>
                   {p.status === "sent_to_pharmacy" && (
-                    <Button size="sm" onClick={() => setConfirmId(p.id)}>
+                    <Button size="sm" variant={hits.length > 0 ? "destructive" : "default"} onClick={() => setConfirmFor({ id: p.id, allergens: hits.map((i) => i.obat_name) })}>
                       <CheckCircle2 className="mr-1 h-3 w-3" />Dispense
                     </Button>
                   )}
@@ -105,12 +105,17 @@ function ResepPage() {
           );})}
       </div>
       <ConfirmDialog
-        open={!!confirmId}
-        onOpenChange={(o) => !o && setConfirmId(null)}
-        title="Dispense Resep"
-        description="Beri obat ini ke pasien? Stok akan berkurang otomatis."
-        confirmLabel="Ya, Beri Obat"
-        onConfirm={() => { if (confirmId) dispM.mutate(confirmId); setConfirmId(null); }}
+        open={!!confirmFor}
+        onOpenChange={(o) => !o && setConfirmFor(null)}
+        title={confirmFor?.allergens.length ? "⚠ Peringatan Alergi — Dispense?" : "Dispense Resep"}
+        description={
+          confirmFor?.allergens.length
+            ? `Pasien tercatat ALERGI terhadap komponen dalam obat berikut: ${confirmFor.allergens.join(", ")}. Lanjutkan pemberian obat berarti Anda menerima risiko override alergi.`
+            : "Beri obat ini ke pasien? Stok akan berkurang otomatis."
+        }
+        confirmLabel={confirmFor?.allergens.length ? "Tetap Beri Obat (Override Alergi)" : "Ya, Beri Obat"}
+        destructive={!!confirmFor?.allergens.length}
+        onConfirm={() => { if (confirmFor) dispM.mutate(confirmFor.id); setConfirmFor(null); }}
       />
     </div>
   );

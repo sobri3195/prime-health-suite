@@ -46,7 +46,10 @@ export const listPasien = createServerFn({ method: "POST" })
     let q = sb.from("apps_pasien").select("*").not("no_rm", "is", null).order("created_at", { ascending: false }).limit(data.limit ?? 200);
     if (data.patient_type && data.patient_type !== "all") q = q.eq("patient_type", data.patient_type);
     if (typeof data.is_active === "boolean") q = q.eq("is_active", data.is_active);
-    if (data.q) q = q.or(`nama.ilike.%${data.q}%,no_rm.ilike.%${data.q}%,nik.ilike.%${data.q}%,telp.ilike.%${data.q}%`);
+    if (data.q) {
+      const esc = data.q.replace(/[%_,]/g, (m) => `\\${m}`);
+      q = q.or(`nama.ilike.%${esc}%,no_rm.ilike.%${esc}%,nik.ilike.%${esc}%,telp.ilike.%${esc}%`);
+    }
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
@@ -152,7 +155,10 @@ export const listObat = createServerFn({ method: "POST" })
     const offset = data.offset ?? 0;
     let q = sb.from("klinik_obat").select("*").order("name").range(offset, offset + limit - 1);
     if (data.active_only) q = q.eq("is_active", true);
-    if (data.q) q = q.or(`name.ilike.%${data.q}%,code.ilike.%${data.q}%,category.ilike.%${data.q}%`);
+    if (data.q) {
+      const esc = data.q.replace(/[%_,]/g, (m) => `\\${m}`);
+      q = q.or(`name.ilike.%${esc}%,code.ilike.%${esc}%,category.ilike.%${esc}%`);
+    }
     const { data: rows, error } = await q;
     if (error) throw error;
     let out = rows ?? [];

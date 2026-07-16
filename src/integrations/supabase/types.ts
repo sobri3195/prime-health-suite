@@ -1186,6 +1186,27 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_doc_seq: {
+        Row: {
+          next_no: number
+          prefix: string
+          updated_at: string
+          yyyymm: string
+        }
+        Insert: {
+          next_no?: number
+          prefix: string
+          updated_at?: string
+          yyyymm: string
+        }
+        Update: {
+          next_no?: number
+          prefix?: string
+          updated_at?: string
+          yyyymm?: string
+        }
+        Relationships: []
+      }
       fin_dokter: {
         Row: {
           code: string
@@ -3592,6 +3613,10 @@ export type Database = {
       fin_generate_penyusutan: {
         Args: { _aset_id: string; _from_periode: string; _to_periode: string }
         Returns: number
+      }
+      fin_next_doc_no: {
+        Args: { _prefix: string; _yyyymm: string }
+        Returns: string
       }
       fin_post_journal: {
         Args: {
