@@ -64,30 +64,10 @@ async function postJournal(opts: {
 
 async function reverseJournal(sumber: string, ref_id: string, tanggal: string, reason: string) {
   const sb = await adminClient();
-  const { data: entries } = await sb
-    .from("fin_journal_entry")
-    .select("id, no_jurnal")
-    .eq("sumber", sumber)
-    .eq("ref_id", ref_id)
-    .eq("status", "posted");
-  for (const e of entries ?? []) {
-    const { data: lines } = await sb.from("fin_journal_line").select("*").eq("entry_id", e.id);
-    await postJournal({
-      sumber: sumber as any,
-      ref_id,
-      ref_no: `REV-${e.no_jurnal}`,
-      tanggal,
-      keterangan: `Reversal: ${reason}`,
-      lines: (lines ?? []).map((l: any) => ({
-        coa_code: l.coa_code,
-        coa_nama: l.coa_nama,
-        debit: Number(l.kredit),
-        kredit: Number(l.debit),
-        keterangan: l.keterangan,
-      })),
-    });
-    await sb.from("fin_journal_entry").update({ status: "reversed" }).eq("id", e.id);
-  }
+  const { error } = await sb.rpc("fin_reverse_journal_atomic", {
+    _sumber: sumber, _ref_id: ref_id, _tanggal: tanggal, _reason: reason,
+  });
+  if (error) throw new Error(error.message);
 }
 
 // ---------- INVOICE ----------
@@ -287,11 +267,13 @@ export const createPayment = createServerFn({ method: "POST" })
     let mdr = Number(data.mdr ?? 0);
     let mdrCoa = "6-3100";
     if (!data.mdr && data.metode !== "cash") {
-      const { data: rules } = await sb.from("fin_mdr_rule").select("*").eq("is_active", true).eq("metode", data.metode);
-      const rule = (rules ?? []).find((r: any) => !r.bank || r.bank === data.bank) ?? (rules ?? [])[0];
+      // Deterministic pick: prefers explicit bank match, falls back to generic.
+      const { data: rule } = await sb.rpc("fin_pick_mdr_rule", {
+        _metode: data.metode, _bank: data.bank ?? null,
+      }).maybeSingle();
       if (rule) {
-        mdr = Math.round((Number(data.jumlah) * Number(rule.rate_pct) / 100) + Number(rule.fixed_fee));
-        mdrCoa = rule.coa_code || "6-3100";
+        mdr = Math.round((Number(data.jumlah) * Number((rule as any).rate_pct) / 100) + Number((rule as any).fixed_fee));
+        mdrCoa = (rule as any).coa_code || "6-3100";
       }
     }
     const netto = Number(data.jumlah) - mdr;

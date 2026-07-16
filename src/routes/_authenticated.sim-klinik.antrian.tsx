@@ -54,7 +54,17 @@ function AntrianPage() {
   const rows = sTerm ? allRows.filter((r) => r.queue_no.toLowerCase().includes(sTerm) || (r.apps_pasien?.nama ?? "").toLowerCase().includes(sTerm) || (r.apps_pasien?.no_rm ?? "").toLowerCase().includes(sTerm)) : allRows;
 
   const waiting = rows.filter((r) => r.status === "waiting");
-  const now = rows.find((r) => r.status === "in_service" || r.status === "called");
+  // Now-serving per loket: prefer in_service, fallback to called, per counter.
+  // Menggantikan single global "sedang dilayani" agar semua loket aktif tampak.
+  const perCounter = new Map<string, Row>();
+  for (const r of rows) {
+    if (r.status !== "in_service" && r.status !== "called") continue;
+    const cur = perCounter.get(r.counter);
+    if (!cur) { perCounter.set(r.counter, r); continue; }
+    const rank = (x: Row) => (x.status === "in_service" ? 0 : 1);
+    if (rank(r) < rank(cur)) perCounter.set(r.counter, r);
+  }
+  const nowServing = Array.from(perCounter.values()).sort((a, b) => a.counter.localeCompare(b.counter));
   const inService = rows.find((r) => r.status === "in_service");
   const called = rows.find((r) => r.status === "called");
 
@@ -102,9 +112,21 @@ function AntrianPage() {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8">
         <Button variant="ghost" className="absolute right-4 top-4" onClick={() => setDisplay(false)}>Tutup Display</Button>
         <h2 className="text-3xl font-light text-muted-foreground">Sedang Dilayani</h2>
-        <div className="my-8 text-9xl font-bold tabular-nums">{now?.queue_no ?? "—"}</div>
-        <div className="text-2xl">{now?.apps_pasien?.nama ?? ""}</div>
-        <div className="mt-2 text-lg text-muted-foreground">{now?.fin_dokter?.name ?? ""}</div>
+        {nowServing.length === 0 ? (
+          <div className="my-8 text-6xl font-bold tabular-nums text-muted-foreground">—</div>
+        ) : (
+          <div className="my-8 grid w-full max-w-6xl gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(nowServing.length, 4)}, minmax(0,1fr))` }}>
+            {nowServing.map((r) => (
+              <div key={r.id} className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-6 text-center">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">Loket {r.counter}</div>
+                <div className="my-2 text-7xl font-bold tabular-nums">{r.queue_no}</div>
+                <div className="truncate text-lg">{r.apps_pasien?.nama ?? ""}</div>
+                <div className="text-xs text-muted-foreground">{r.fin_dokter?.name ?? ""}</div>
+                <div className="mt-1 text-[10px] uppercase tracking-wider text-primary">{STATUS_LABEL[r.status]}</div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="mt-12 w-full max-w-4xl">
           <div className="mb-2 text-sm text-muted-foreground">Antrian Berikutnya</div>
           <div className="grid grid-cols-4 gap-3">

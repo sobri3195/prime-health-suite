@@ -22,7 +22,7 @@ export async function writeFinAudit(opts: {
         if (JSON.stringify(a) !== JSON.stringify(b)) changed.push(k);
       }
     }
-    await (supabaseAdmin as any).from("fin_audit_log").insert({
+    const { error } = await (supabaseAdmin as any).from("fin_audit_log").insert({
       actor_id: opts.actor_id ?? null,
       actor_email: opts.actor_email ?? null,
       action: opts.action,
@@ -34,5 +34,18 @@ export async function writeFinAudit(opts: {
       changed_fields: changed.length ? changed : null,
       reason: opts.reason ?? null,
     });
-  } catch {/* swallow */}
+    if (error) {
+      // Audit trail must never be silently lost — log server-side so ops
+      // can detect a hole even if the caller decides not to fail hard.
+      console.error("[writeFinAudit] failed to persist audit row", {
+        action: opts.action, entity: opts.entity, entity_id: opts.entity_id,
+        error: error.message,
+      });
+    }
+  } catch (e) {
+    console.error("[writeFinAudit] threw during audit write", {
+      action: opts.action, entity: opts.entity, entity_id: opts.entity_id,
+      error: (e as Error).message,
+    });
+  }
 }

@@ -94,14 +94,21 @@ export const createTicket = createServerFn({ method: "POST" })
     return row;
   });
 
+// Allowed transitions (state machine). "closed" is terminal — only staff may
+// reopen (closed → open) as a deliberate audit-visible action.
+const ALLOWED_TRANSITIONS: Record<string, readonly string[]> = {
+  open: ["in_progress", "resolved", "closed"],
+  in_progress: ["open", "resolved", "closed"],
+  resolved: ["closed", "open"],
+  closed: ["open"], // reopen only
+};
+
 export const updateTicketStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
       id: z.string().uuid(),
       status: z.enum(VALID_STATUS),
-      // PIC is nullable (unassign) or a trimmed name that must match an
-      // active hr_employee.nama — validated below against the staff table.
       pic: z.string().trim().max(100).nullable().optional(),
     }).parse(d),
   )
@@ -109,6 +116,16 @@ export const updateTicketStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
     if (!isStaff) throw new Error("Hanya staff yang dapat mengubah status tiket");
+
+    // Fetch current state to enforce the transition table.
+    const { data: cur, error: cerr } = await supabase
+      .from("apps_ticket").select("status").eq("id", data.id).maybeSingle();
+    if (cerr) throw new Error(cerr.message);
+    if (!cur) throw new Error("Tiket tidak ditemukan");
+    const from = (cur as { status: string }).status;
+    if (from !== data.status && !(ALLOWED_TRANSITIONS[from] ?? []).includes(data.status)) {
+      throw new Error(`Transisi status tidak diizinkan: ${from} → ${data.status}`);
+    }
 
     const patch: { status: typeof data.status; pic?: string | null } = { status: data.status };
     if (data.pic !== undefined) {
@@ -137,12 +154,18 @@ export const replyTicket = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     const { data: isStaff } = await supabase.rpc("klinik_is_staff", { _uid: userId });
-    if (!isStaff) {
-      const { data: t, error: te } = await supabase
-        .from("apps_ticket").select("user_id").eq("id", data.ticketId).maybeSingle();
-      if (te) throw new Error(te.message);
-      if (!t || t.user_id !== userId) throw new Error("Tidak diizinkan");
+
+    // Fetch owner + status so we can enforce: no reply on closed tickets
+    // (staff must reopen first), and non-staff must own the ticket.
+    const { data: t, error: te } = await supabase
+      .from("apps_ticket").select("user_id, status").eq("id", data.ticketId).maybeSingle();
+    if (te) throw new Error(te.message);
+    if (!t) throw new Error("Tiket tidak ditemukan");
+    if (!isStaff && (t as any).user_id !== userId) throw new Error("Tidak diizinkan");
+    if ((t as any).status === "closed") {
+      throw new Error("Tiket sudah ditutup. Buka kembali (reopen) sebelum membalas.");
     }
+
     const { error } = await supabase.from("apps_ticket_reply").insert({
       ticket_id: data.ticketId,
       author_id: userId,

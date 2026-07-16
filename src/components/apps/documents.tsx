@@ -63,6 +63,8 @@ export function DocumentsPage() {
   const callUpload = useServerFn(uploadDocument);
   const callDelete = useServerFn(deleteDocument);
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(0);
+  const pageSize = 25;
 
   const [type, setType] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -74,10 +76,12 @@ export function DocumentsPage() {
 
 
   const { data: listRes, isLoading } = useQuery({
-    queryKey: ["clinic_document", type],
-    queryFn: () => callList({ data: { type: type === "all" ? undefined : type, pageSize: 200, page: 0 } as any }),
+    queryKey: ["clinic_document", type, page, pageSize],
+    queryFn: () => callList({ data: { type: type === "all" ? undefined : type, pageSize, page } as any }),
   });
   const data = ((listRes as any)?.rows ?? []) as DocRow[];
+  const total = Number((listRes as any)?.total ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
 
   const items = useMemo(() => {
