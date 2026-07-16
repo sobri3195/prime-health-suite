@@ -151,7 +151,7 @@ function ObatPage() {
               <TableBody>
                 {((movesQ.data ?? []) as Array<{ id: string; created_at: string; movement_type: string; quantity: number; note: string | null; klinik_obat?: { name: string; unit: string } }>).map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell className="text-xs">{new Date(m.created_at).toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-xs"><RelativeTime value={m.created_at} /></TableCell>
                     <TableCell>{m.klinik_obat?.name ?? "-"}</TableCell>
                     <TableCell><Badge variant={m.movement_type === "in" ? "default" : m.movement_type === "out" ? "destructive" : "secondary"}>{m.movement_type}</Badge></TableCell>
                     <TableCell className="text-right">{Number(m.quantity)} {m.klinik_obat?.unit}</TableCell>
