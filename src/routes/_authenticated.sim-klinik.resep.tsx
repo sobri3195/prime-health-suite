@@ -14,6 +14,7 @@ import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 import { friendlyError } from "@/lib/apps-error";
+import { RelativeTime } from "@/components/relative-time";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({
   head: () => pageHead({ title: 'Resep Elektronik — SIM Klinik', description: 'Peresepan obat, cek stok, dan interaksi obat.', path: '/sim-klinik/resep' }),
