@@ -199,7 +199,18 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
     setItems(pres);
   }, [detail]);
 
-  void layananQ; // layanan master reserved for future structured tindakan pull
+  type Layanan = { id: string; code: string; name: string; tarif: number };
+  const layananList = (layananQ.data ?? []) as Layanan[];
+  const [layananId, setLayananId] = useState<string>("");
+  function addLayanan() {
+    const svc = layananList.find((l) => l.id === layananId);
+    if (!svc) return;
+    setItems((prev) => [...prev, { description: `Layanan: ${svc.name}`, quantity: 1, unit_price: Number(svc.tarif) || 0, layanan_id: svc.id }]);
+    setLayananId("");
+  }
+  function addManual() {
+    setItems((prev) => [...prev, { description: "", quantity: 1, unit_price: 0, layanan_id: null }]);
+  }
   const subtotal = items.reduce((a, b) => a + b.quantity * b.unit_price, 0);
   const total = Math.max(0, subtotal - discount);
 
@@ -271,17 +282,37 @@ function BillingDialog({ visit_id, onClose, callDetail, callLayanan, callGen, on
               <TableHeader><TableRow><TableHead>Deskripsi</TableHead><TableHead className="w-16">Qty</TableHead><TableHead>Harga</TableHead><TableHead></TableHead></TableRow></TableHeader>
               <TableBody>
                 {items.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-xs text-muted-foreground">Belum ada tindakan/obat dari Perawat/Dokter.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-xs text-muted-foreground">Belum ada tindakan/obat.</TableCell></TableRow>
                 ) : items.map((it, idx) => (
                   <TableRow key={idx}>
-                    <TableCell className="text-sm">{it.description}</TableCell>
-                    <TableCell className="text-sm">{it.quantity}</TableCell>
-                    <TableCell className="text-sm">Rp {Number(it.unit_price).toLocaleString("id-ID")}</TableCell>
-                    <TableCell><Button size="icon" variant="ghost" title="Hapus baris (koreksi)" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3"/></Button></TableCell>
+                    <TableCell>
+                      <Input className="h-7 text-sm" value={it.description} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
+                    </TableCell>
+                    <TableCell>
+                      <Input className="h-7 w-16 text-sm" type="number" min={1} value={it.quantity} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, quantity: Math.max(1, Number(e.target.value || 1)) } : x))} />
+                    </TableCell>
+                    <TableCell>
+                      <Input className="h-7 w-28 text-sm" type="number" min={0} value={it.unit_price} onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, unit_price: Math.max(0, Number(e.target.value || 0)) } : x))} />
+                    </TableCell>
+                    <TableCell><Button size="icon" variant="ghost" title="Hapus baris" onClick={() => setItems(items.filter((_, i) => i !== idx))}><Trash2 className="h-3 w-3" /></Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex-1 min-w-[220px]">
+                <Select value={layananId} onValueChange={setLayananId}>
+                  <SelectTrigger className="h-8"><SelectValue placeholder="Pilih tindakan / layanan…" /></SelectTrigger>
+                  <SelectContent>
+                    {layananList.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>{l.name} — Rp {Number(l.tarif).toLocaleString("id-ID")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="sm" variant="outline" disabled={!layananId} onClick={addLayanan}>+ Tambah Layanan</Button>
+              <Button size="sm" variant="ghost" onClick={addManual}>+ Baris Manual</Button>
+            </div>
           </div>
           <div className="space-y-2">
             <div className="rounded border p-3 text-sm">
