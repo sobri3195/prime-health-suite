@@ -222,8 +222,8 @@ export function DocumentsPage() {
       <PageHeader title="SOP & Documents" desc="Pustaka dokumen internal Klinik Utama Mata." />
 
       <div className="flex flex-wrap items-center gap-3">
-        <SearchInput value={q} onChange={setQ} placeholder="Cari dokumen…" />
-        <Select value={type} onChange={setType} options={DOC_TYPES} />
+        <SearchInput value={q} onChange={(v) => { setQ(v); setPage(0); }} placeholder="Cari dokumen…" />
+        <Select value={type} onChange={(v) => { setType(v); setPage(0); }} options={DOC_TYPES} />
         <button
           onClick={() => fileRef.current?.click()}
           className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-navy px-3 py-1.5 text-sm font-medium text-navy-foreground hover:opacity-95"
@@ -384,6 +384,16 @@ export function DocumentsPage() {
               ))}
             </tbody>
           </table>
+          {total > pageSize && (
+            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground">
+              <div>Menampilkan {page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} dari {total}</div>
+              <div className="flex items-center gap-2">
+                <button className="rounded-md border border-border px-2 py-1 disabled:opacity-40" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>‹ Sebelumnya</button>
+                <span>Halaman {page + 1} / {totalPages}</span>
+                <button className="rounded-md border border-border px-2 py-1 disabled:opacity-40" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Berikutnya ›</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </PageContainer>
