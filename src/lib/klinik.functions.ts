@@ -174,6 +174,9 @@ export const upsertObat = createServerFn({ method: "POST" })
       return row;
     }
     const id = data.id; delete payload.id;
+    // P0: stock must never be mutated directly here — must go through stockMovement
+    // so klinik_guard_stock_movement trigger validates & audit trail is preserved.
+    delete payload.stock;
     const { data: row, error } = await sb.from("klinik_obat").update(payload).eq("id", id).select("*").single();
     if (error) throw error;
     await appendAuditRow(sb, { actor_id: context.userId, module: "Obat", action: "update", target: id });
