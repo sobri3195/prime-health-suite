@@ -114,10 +114,22 @@ export function AppShell({ system, children }: { system: System; children: React
             </Link>
           )}
 
-          <nav className="hidden items-center gap-1.5 text-sm md:flex">
-            {!isApps && <span className="text-muted-foreground">{brand.name}</span>}
-            {!isApps && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-            <span className="font-medium">{current?.label ?? "—"}</span>
+          <nav className="hidden items-center gap-1.5 text-sm md:flex" aria-label="Breadcrumb">
+            {!isApps && (
+              <>
+                <Link to={`/${system}`} className="text-muted-foreground hover:text-foreground">
+                  {brand.name}
+                </Link>
+                {current?.group && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{current.group}</span>
+                  </>
+                )}
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </>
+            )}
+            <span className="font-medium" aria-current="page">{current?.label ?? "—"}</span>
           </nav>
 
 
