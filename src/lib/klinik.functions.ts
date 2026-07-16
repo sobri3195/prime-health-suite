@@ -174,6 +174,9 @@ export const upsertObat = createServerFn({ method: "POST" })
     const payload: Record<string, unknown> = { ...data };
     if (!data.id) {
       delete payload.id;
+      // P0: initial stock must be 0 — opening balance must go through stockMovement
+      // so klinik_guard_stock_movement trigger validates & audit trail is preserved.
+      payload.stock = 0;
       const { data: row, error } = await sb.from("klinik_obat").insert(payload).select("*").single();
       if (error) throw error;
       await appendAuditRow(sb, { actor_id: context.userId, module: "Obat", action: "create", target: row.id, meta: { code: row.code } });

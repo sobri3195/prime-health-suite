@@ -28,3 +28,21 @@ export const requireFinEdit = createMiddleware({ type: "function" })
     if (!data) throw new Error("Forbidden: finance edit access required");
     return next();
   });
+
+// Privileged operations (revert audit, master data destructive ops).
+// Restricted to super_admin / admin_klinik / manajemen — never kasir/dokter/perawat.
+export const requireFinAdmin = createMiddleware({ type: "function" })
+  .middleware([requireSupabaseAuth])
+  .server(async ({ next, context }) => {
+    const roles: Array<"super_admin" | "admin_klinik" | "manajemen"> = [
+      "super_admin", "admin_klinik", "manajemen",
+    ];
+    for (const r of roles) {
+      const { data, error } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId, _role: r,
+      });
+      if (error) throw new Error(`Forbidden: ${error.message}`);
+      if (data) return next();
+    }
+    throw new Error("Forbidden: finance admin access required");
+  });
