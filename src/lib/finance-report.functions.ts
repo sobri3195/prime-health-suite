@@ -223,7 +223,7 @@ const REVERTABLE: Record<string, { table: string; fields: string[] }> = {
 };
 
 export const revertFinAudit = createServerFn({ method: "POST" })
-  .middleware([requireFinEdit])
+  .middleware([requireFinAdmin])
   .inputValidator((d: { audit_id: string; reason?: string }) => d)
   .handler(async ({ data, context }) => {
     const s = await sb();
