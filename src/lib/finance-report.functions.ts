@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireFinView, requireFinEdit } from "./finance-guard";
+import { requireFinView, requireFinEdit, requireFinAdmin } from "./finance-guard";
 import { writeFinAudit } from "./finance-audit.helper";
 
 async function sb() {
