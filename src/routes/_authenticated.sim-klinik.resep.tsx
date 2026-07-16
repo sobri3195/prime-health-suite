@@ -69,7 +69,7 @@ function ResepPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-medium">{p.apps_pasien?.nama ?? "-"} <span className="text-xs text-muted-foreground">({p.apps_pasien?.no_rm})</span></div>
-                  <div className="text-xs text-muted-foreground">{p.fin_dokter?.name} • {new Date(p.created_at).toLocaleString("id-ID")}</div>
+                  <div className="text-xs text-muted-foreground">{p.fin_dokter?.name} · <RelativeTime value={p.created_at} /></div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={p.status === "dispensed" ? "default" : "secondary"}>{STATUS_LABEL[p.status]}</Badge>
