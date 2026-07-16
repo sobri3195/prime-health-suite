@@ -53,6 +53,8 @@ export function PatientChat() {
   const [body, setBody] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const abortRef = useRef<{ canceled: boolean; path: string | null; controller: AbortController | null }>({ canceled: false, path: null, controller: null });
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -63,23 +65,61 @@ export function PatientChat() {
         if (file.size > MAX_ATTACHMENT_BYTES) throw new Error("Ukuran file maksimal 8 MB");
         if (!ALLOWED_MIMES.test(file.type)) throw new Error("Format tidak didukung (gambar/PDF saja)");
         setUploading(true);
-        const { data: sess } = await supabase.auth.getUser();
-        const uid = sess.user?.id;
-        if (!uid) throw new Error("Not authenticated");
+        setProgress(10);
+        const { data: sess } = await supabase.auth.getSession();
+        const uid = sess.session?.user?.id;
+        const token = sess.session?.access_token;
+        if (!uid || !token) throw new Error("Sesi tidak valid");
         const path = `${uid}/chat/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-        const { error: upErr } = await supabase.storage.from("apps-mata").upload(path, file, { contentType: file.type });
-        setUploading(false);
-        if (upErr) throw new Error(upErr.message);
-        attach = { attachment_path: path, attachment_name: file.name, attachment_mime: file.type };
+        const controller = new AbortController();
+        abortRef.current = { canceled: false, path, controller };
+        try {
+          // Bypass supabase-js supaya AbortSignal benar-benar membatalkan request.
+          const url = `${(supabase as any).storageUrl ?? ""}/object/apps-mata/${encodeURI(path)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": file.type, "x-upsert": "false", Authorization: `Bearer ${token}` },
+            body: file,
+            signal: controller.signal,
+          }).catch((e) => {
+            if (e?.name === "AbortError") throw new Error("Upload dibatalkan");
+            throw e;
+          });
+          if (abortRef.current.canceled) {
+            await supabase.storage.from("apps-mata").remove([path]).catch(() => {});
+            throw new Error("Upload dibatalkan");
+          }
+          if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Upload gagal");
+          setProgress(90);
+          attach = { attachment_path: path, attachment_name: file.name, attachment_mime: file.type };
+        } finally {
+          setUploading(false);
+        }
       }
-      return callSend({ data: { room_id: room!.id, body: body.trim(), ...attach } });
+      const out = await callSend({ data: { room_id: room!.id, body: body.trim(), ...attach } });
+      setProgress(100);
+      return out;
     },
     onSuccess: () => {
-      setBody(""); setFile(null); if (fileRef.current) fileRef.current.value = "";
+      setBody(""); setFile(null); setProgress(0);
+      if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["apps", "chat-msgs", room!.id] });
     },
-    onError: (e: unknown) => { setUploading(false); toast.error(friendlyError(e)); },
+    onError: (e: unknown) => { setUploading(false); setProgress(0); toast.error(friendlyError(e)); },
   });
+
+  const onCancelUpload = () => {
+    abortRef.current.canceled = true;
+    abortRef.current.controller?.abort();
+    setUploading(false);
+    setProgress(0);
+    toast.message("Upload dibatalkan");
+  };
+
+  useEffect(() => () => {
+    abortRef.current.canceled = true;
+    abortRef.current.controller?.abort();
+  }, []);
 
   useEffect(() => {
     if (!room?.id) return;
@@ -94,6 +134,7 @@ export function PatientChat() {
 
   const messages = msgsQ.data?.messages ?? [];
   const canSend = (!!body.trim() || !!file) && !sendM.isPending && !uploading;
+
 
   return (
     <div className="mx-auto flex h-[calc(100vh-160px)] max-w-2xl flex-col">
@@ -145,6 +186,17 @@ export function PatientChat() {
             <span className="opacity-60">({Math.ceil(file.size/1024)} KB)</span>
             <button type="button" onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
               aria-label="hapus lampiran" className="ml-auto rounded p-0.5 hover:bg-black/5"><X className="h-3.5 w-3.5" /></button>
+          </div>
+        )}
+        {(uploading || progress > 0) && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-[#5a4a14]">
+            <div className="h-1.5 flex-1 overflow-hidden rounded bg-[#e9dfb8]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full bg-[#a08a2a] transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="tabular-nums">{progress}%</span>
+            {uploading && (
+              <button type="button" onClick={onCancelUpload} className="rounded border border-[#e9dfb8] px-2 py-0.5 hover:bg-[#fdf2c4]">Batal</button>
+            )}
           </div>
         )}
         <div className="flex gap-2">
