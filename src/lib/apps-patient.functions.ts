@@ -92,29 +92,34 @@ export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateBookingInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    if (data.tanggal < today) throw new Error("Tanggal booking tidak boleh di masa lalu");
+    // WIB (UTC+7) reference for both "today" comparison and cutoff, so the
+    // check here matches listAvailableSlots which also uses WIB.
+    const nowWib = new Date(Date.now() + 7 * 3600 * 1000);
+    const todayWib = nowWib.toISOString().slice(0, 10);
+    if (data.tanggal < todayWib) throw new Error("Tanggal booking tidak boleh di masa lalu");
     // Cutoff jam praktik: bila booking untuk hari ini, slot harus setidaknya
-    // 30 menit dari sekarang (waktu lokal WIB, offset +7).
-    if (data.tanggal === today) {
-      const wib = new Date(now.getTime() + 7 * 3600 * 1000);
-      const cutoff = new Date(wib.getTime() + 30 * 60 * 1000);
+    // 30 menit dari sekarang (WIB).
+    if (data.tanggal === todayWib) {
       const [h, m] = data.jam_slot.split(":").map(Number);
       const slotMin = h * 60 + m;
-      const cutoffMin = cutoff.getUTCHours() * 60 + cutoff.getUTCMinutes();
+      const cutoffMin = nowWib.getUTCHours() * 60 + nowWib.getUTCMinutes() + 30;
       if (slotMin < cutoffMin) throw new Error("Slot sudah lewat. Pilih jam berikutnya atau tanggal lain.");
     }
 
     // Resolve patient row (auto-created by handle_new_apps_user trigger).
-    const { data: pas } = await supabase
+    // Reject bookings without a linked pasien row — downstream visit/queue
+    // joins expect a non-null pasien_id, and a null here yields orphan rows
+    // that break dashboard filters and staff workflows.
+    const { data: pas, error: pasErr } = await supabase
       .from("apps_pasien").select("id").eq("user_id", userId).maybeSingle();
+    if (pasErr) throw new Error(pasErr.message);
+    if (!pas?.id) throw new Error("Profil pasien belum lengkap. Lengkapi profil sebelum booking.");
 
     const { data: row, error } = await supabase
       .from("apps_booking")
       .insert({
         user_id: userId,
-        pasien_id: pas?.id ?? null,
+        pasien_id: pas.id,
         dokter_id: data.dokter_id,
         dokter_nama: data.dokter_nama,
         tanggal: data.tanggal,
@@ -130,6 +135,7 @@ export const createBooking = createServerFn({ method: "POST" })
     }
     return { booking: row };
   });
+
 
 const RescheduleInput = z.object({
   id: z.string().uuid(),
