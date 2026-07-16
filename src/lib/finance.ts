@@ -6,10 +6,11 @@ export const formatIDR = (n: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
 export const formatCompactIDR = (n: number) => {
-  if (n >= 1e9) return `Rp ${(n / 1e9).toFixed(1)}M`;
-  if (n >= 1e6) return `Rp ${(n / 1e6).toFixed(1)}jt`;
-  if (n >= 1e3) return `Rp ${(n / 1e3).toFixed(0)}rb`;
-  return `Rp ${n}`;
+  const v = Number(n) || 0;
+  if (Math.abs(v) >= 1e9) return `Rp ${(v / 1e9).toLocaleString("id-ID", { maximumFractionDigits: 1 })}M`;
+  if (Math.abs(v) >= 1e6) return `Rp ${(v / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 1 })}jt`;
+  if (Math.abs(v) >= 1e3) return `Rp ${(v / 1e3).toLocaleString("id-ID", { maximumFractionDigits: 0 })}rb`;
+  return "Rp " + Math.round(v).toLocaleString("id-ID");
 };
 
 export function applyFilter(rows: Invoice[], f: FinanceFilter): Invoice[] {
