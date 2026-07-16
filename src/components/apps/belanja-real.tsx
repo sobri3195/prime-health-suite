@@ -286,7 +286,8 @@ export function PatientCheckout() {
                             type="button"
                             className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] px-2 py-1 hover:bg-[#fdf2c4]"
                             onClick={async () => {
-                              try { await navigator.clipboard.writeText(b.no_rek); toast.success("No. rek disalin"); } catch { /* ignore */ }
+                              try { await navigator.clipboard.writeText(b.no_rek); toast.success("No. rek disalin"); }
+                              catch { toast.error("Gagal menyalin — salin manual"); }
                             }}
                           >
                             <Copy className="h-3 w-3" /> Salin
@@ -360,7 +361,10 @@ export function PatientOrders() {
                       <button
                         type="button"
                         className="inline-flex items-center gap-1 rounded-lg border border-[#e9dfb8] bg-white px-2 py-0.5 hover:bg-[#fdf2c4]"
-                        onClick={async () => { try { await navigator.clipboard.writeText(o.resi); toast.success("Resi disalin"); } catch { /* ignore */ } }}
+                        onClick={async () => {
+                          try { await navigator.clipboard.writeText(o.resi); toast.success("Resi disalin"); }
+                          catch { toast.error("Gagal menyalin — salin manual"); }
+                        }}
                       >
                         <Copy className="h-3 w-3" /> Salin
                       </button>
