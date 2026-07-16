@@ -474,9 +474,17 @@ export const voidExpense = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = await adminClient();
     const { data: before } = await sb.from("fin_expense").select("*").eq("id", data.id).single();
-    await sb.from("fin_expense").update({ status: "void", void_reason: data.reason }).eq("id", data.id);
-    await reverseJournal("expense", data.id, new Date().toISOString().slice(0, 10), data.reason);
-    await writeFinAudit({ actor_id: context.userId, actor_email: (context.claims as { email?: string } | null)?.email ?? null, action: "void", entity: "expense", entity_id: data.id, entity_no: before?.no_voucher, reason: data.reason, before });
+    if (!before) throw new Error("Voucher tidak ditemukan");
+    const email = (context.claims as { email?: string } | null)?.email ?? null;
+    // Atomic: lock header, mark void, reverse jurnal semua dalam satu transaksi.
+    const { error: ve } = await sb.rpc("fin_void_expense_atomic", {
+      _expense_id: data.id,
+      _reason: data.reason,
+      _actor_id: context.userId,
+      _actor_email: email,
+    });
+    if (ve) throw new Error(ve.message);
+    await writeFinAudit({ actor_id: context.userId, actor_email: email, action: "void", entity: "expense", entity_id: data.id, entity_no: before.no_voucher, reason: data.reason, before });
     return { ok: true };
   });
 
