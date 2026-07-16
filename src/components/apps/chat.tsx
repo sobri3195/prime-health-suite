@@ -188,6 +188,17 @@ export function PatientChat() {
               aria-label="hapus lampiran" className="ml-auto rounded p-0.5 hover:bg-black/5"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
+        {(uploading || progress > 0) && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-[#5a4a14]">
+            <div className="h-1.5 flex-1 overflow-hidden rounded bg-[#e9dfb8]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full bg-[#a08a2a] transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="tabular-nums">{progress}%</span>
+            {uploading && (
+              <button type="button" onClick={onCancelUpload} className="rounded border border-[#e9dfb8] px-2 py-0.5 hover:bg-[#fdf2c4]">Batal</button>
+            )}
+          </div>
+        )}
         <div className="flex gap-2">
           <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
