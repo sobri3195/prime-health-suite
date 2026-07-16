@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
 import { useDebounce } from "@/hooks/use-debounce";
 import { friendlyError } from "@/lib/apps-error";
+import { RelativeTime } from "@/components/relative-time";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
   head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
