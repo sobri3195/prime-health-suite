@@ -204,13 +204,15 @@ export const upsertInvoice = createServerFn({ method: "POST" })
     if (ie) throw new Error(ie.message);
 
     if (data.id) await reverseJournal("invoice", invoice.id, data.tanggal, "Edit invoice");
+    const actorEmail = (context.claims as { email?: string } | null)?.email ?? null;
+    const actorLabel = actorEmail ?? context.userId ?? null;
     const invEntry = await postJournal({
       sumber: "invoice",
       ref_id: invoice.id,
       ref_no: invoice.no_invoice,
       tanggal: data.tanggal,
       keterangan: `Invoice ${invoice.no_invoice} - ${data.patient_name ?? data.patient_code}`,
-      created_by: data.actor,
+      created_by: actorLabel,
       lines: [
         { coa_code: "1-1300", coa_nama: "Piutang Pasien", debit: total },
         ...(diskon > 0 ? [{ coa_code: "4-9000", coa_nama: "Diskon Penjualan", debit: diskon }] : []),
@@ -312,13 +314,14 @@ export const createPayment = createServerFn({ method: "POST" })
     if (error || !pay) throw new Error(error?.message ?? "Gagal memuat pembayaran");
 
     const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const payActorEmail = (context.claims as { email?: string } | null)?.email ?? null;
     const payEntry = await postJournal({
       sumber: "payment",
       ref_id: pay.id,
       ref_no: `PAY-${inv.no_invoice}`,
       tanggal: data.tanggal,
       keterangan: `Pembayaran ${inv.no_invoice} via ${data.metode}`,
-      created_by: data.actor,
+      created_by: payActorEmail ?? context.userId ?? null,
       lines: [
         { coa_code: kasCoa, coa_nama: data.metode === "cash" ? "Kas" : "Bank", debit: netto },
         ...(mdr > 0 ? [{ coa_code: mdrCoa, coa_nama: "Beban MDR", debit: mdr }] : []),
@@ -436,7 +439,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
         metode: data.metode,
         bank: data.bank ?? null,
         status: "draft",
-        created_by: data.actor ?? null,
+        created_by: (context.claims as { email?: string } | null)?.email ?? context.userId ?? null,
       }).select().single();
       if (error) throw new Error(error.message);
       hdr = row;
@@ -455,13 +458,14 @@ export const upsertExpense = createServerFn({ method: "POST" })
 
     if (data.id) await reverseJournal("expense", hdr.id, data.tanggal, "Edit voucher");
     const kasCoa = data.metode === "cash" ? "1-1000" : "1-1200";
+    const expActorEmail = (context.claims as { email?: string } | null)?.email ?? null;
     const expEntry = await postJournal({
       sumber: "expense",
       ref_id: hdr.id,
       ref_no: hdr.no_voucher,
       tanggal: data.tanggal,
       keterangan: `Voucher ${hdr.no_voucher} - ${data.vendor_nama ?? "-"}`,
-      created_by: data.actor,
+      created_by: expActorEmail ?? context.userId ?? null,
       lines: [
         ...itemsPayload.map((it) => ({
           coa_code: it.coa_code || "6-3000",
