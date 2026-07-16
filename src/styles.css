@@ -119,17 +119,47 @@
   h1, h2, h3, h4 { letter-spacing: -0.02em; }
 }
 
-/* Print-friendly styles for Finance reports (Batch 4 polish) */
+/* Print-friendly styles for invoice / resep / laporan */
 @media print {
   @page { margin: 12mm; size: A4; }
-  html, body { background: #fff !important; color: #000 !important; }
-  .no-print, aside, [data-sidebar], .sonner-toaster { display: none !important; }
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Hide app chrome */
+  .no-print,
+  aside, nav, header[data-app-header],
+  [data-sidebar], [data-app-shell-sidebar],
+  [role="navigation"], [role="banner"], [role="complementary"],
+  .sonner-toaster, [data-sonner-toaster],
+  button, [role="button"],
+  [data-radix-popper-content-wrapper] { display: none !important; }
+  /* Show print-only blocks */
+  .print-only { display: block !important; }
+  /* Reset containers */
+  main, [role="main"], .app-shell-main {
+    padding: 0 !important; margin: 0 !important;
+    max-width: 100% !important; width: 100% !important;
+    background: #fff !important;
+  }
+  /* Strip decorative surfaces */
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+  [class*="bg-gradient"], [class*="bg-muted"], [class*="bg-card"], [class*="bg-secondary"] {
+    background: #fff !important;
+  }
+  .border, [class*="border-"] { border-color: #d4d4d8 !important; }
+  a, a:visited { color: #000 !important; text-decoration: none !important; }
   a[href]:after { content: "" !important; }
-  .shadow, .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
-  main, [role="main"] { padding: 0 !important; margin: 0 !important; }
-  [class*="bg-gradient"] { background: #fff !important; }
-  .border { border-color: #d4d4d8 !important; }
-  table { page-break-inside: auto; }
-  tr { page-break-inside: avoid; page-break-after: auto; }
-  h1, h2, h3 { page-break-after: avoid; }
+  /* Table pagination */
+  table { page-break-inside: auto; width: 100% !important; border-collapse: collapse !important; }
+  tr, tr:nth-child(even) { page-break-inside: avoid; page-break-after: auto; background: #fff !important; }
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  h1, h2, h3 { page-break-after: avoid; color: #000 !important; }
+  .page-break { page-break-before: always; }
+  .avoid-break { page-break-inside: avoid; }
 }
+.print-only { display: none; }
+
