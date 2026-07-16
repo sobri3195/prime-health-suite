@@ -3618,6 +3618,14 @@ export type Database = {
         Args: { _prefix: string; _yyyymm: string }
         Returns: string
       }
+      fin_pick_mdr_rule: {
+        Args: { _bank: string; _metode: string }
+        Returns: {
+          coa_code: string
+          fixed_fee: number
+          rate_pct: number
+        }[]
+      }
       fin_post_journal: {
         Args: {
           _keterangan: string
@@ -3676,9 +3684,19 @@ export type Database = {
           type: string
         }[]
       }
+      fin_reset_transactional_atomic: { Args: never; Returns: Json }
       fin_resolve_cash_bank_coa: {
         Args: { _bank: string; _metode: string }
         Returns: string
+      }
+      fin_reverse_journal_atomic: {
+        Args: {
+          _reason: string
+          _ref_id: string
+          _sumber: string
+          _tanggal: string
+        }
+        Returns: number
       }
       fin_unbalanced_entries: {
         Args: { _from: string; _to: string }
@@ -3738,6 +3756,17 @@ export type Database = {
       klinik_next_queue_no: {
         Args: { _counter?: string; _date?: string }
         Returns: string
+      }
+      klinik_queue_now_serving: {
+        Args: { _date?: string }
+        Returns: {
+          counter: string
+          dokter_nama: string
+          nama: string
+          no_rm: string
+          queue_no: string
+          status: string
+        }[]
       }
     }
     Enums: {

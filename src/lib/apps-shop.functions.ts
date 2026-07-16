@@ -53,6 +53,21 @@ export const updateCartQty = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; qty: number }) =>
     z.object({ id: z.string().uuid(), qty: z.number().int().min(1).max(20) }).parse(d))
   .handler(async ({ data, context }) => {
+    // Fetch cart row + linked product stock; validate before UPDATE so that a
+    // user tapping "+" past available stock gets a clean error, not a silent
+    // over-quantity row that only fails at checkout.
+    const { data: row, error: gerr } = await context.supabase
+      .from("apps_cart_item")
+      .select("id, produk_id, apps_produk(stok, nama, is_active)")
+      .eq("id", data.id).eq("user_id", context.userId)
+      .maybeSingle();
+    if (gerr) throw new Error(gerr.message);
+    if (!row) throw new Error("Item keranjang tidak ditemukan");
+    const p = (row as any).apps_produk as { stok: number; nama: string; is_active: boolean } | null;
+    if (!p || p.is_active === false) throw new Error("Produk tidak tersedia");
+    if (data.qty > Number(p.stok ?? 0)) {
+      throw new Error(`Stok ${p.nama} tersisa ${p.stok}. Kurangi qty.`);
+    }
     const { error } = await context.supabase.from("apps_cart_item")
       .update({ qty: data.qty }).eq("id", data.id).eq("user_id", context.userId);
     if (error) throw new Error(error.message);

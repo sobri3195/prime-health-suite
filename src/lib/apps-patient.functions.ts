@@ -297,11 +297,22 @@ export const listAvailableSlots = createServerFn({ method: "POST" })
     const fmt = (m: number) =>
       `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
+    // If tanggal === hari ini (WIB), buang slot yang <= (sekarang + 30 menit)
+    // supaya UI tidak menawarkan slot yang akan langsung ditolak oleh
+    // createBooking cutoff.
+    const nowWib = new Date(Date.now() + 7 * 3600 * 1000);
+    const todayWib = nowWib.toISOString().slice(0, 10);
+    const cutoffMin = data.tanggal === todayWib
+      ? nowWib.getUTCHours() * 60 + nowWib.getUTCMinutes() + 30
+      : -1;
+
     const slotSet = new Set<string>();
     for (const j of jadwal ?? []) {
       const start = toMin(j.start_time);
       const end = toMin(j.end_time);
-      for (let t = start; t + 30 <= end; t += 30) slotSet.add(fmt(t));
+      for (let t = start; t + 30 <= end; t += 30) {
+        if (t >= cutoffMin) slotSet.add(fmt(t));
+      }
     }
     const slots = Array.from(slotSet).sort();
 
