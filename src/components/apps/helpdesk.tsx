@@ -11,6 +11,7 @@ import {
   listTickets, listTicketReplies, createTicket, updateTicketStatus, replyTicket,
 } from "@/lib/apps-helpdesk.functions";
 import { friendlyError } from "@/lib/apps-error";
+import { RelativeTime } from "@/components/relative-time";
 
 type Ticket = {
   id: string; ticket_no: string; user_id: string; reporter: string;
@@ -266,7 +267,7 @@ function TicketDrawer({ ticket, onClose, onStatus }: { ticket: Ticket; onClose: 
                 {repliesQ.data!.items.map((r: any) => (
                   <li key={r.id}>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(r.created_at).toLocaleString("id-ID")} · {r.author_label}
+                      <RelativeTime value={r.created_at} /> · {r.author_label}
                     </div>
                     <div className="text-sm whitespace-pre-wrap">{r.message}</div>
                   </li>

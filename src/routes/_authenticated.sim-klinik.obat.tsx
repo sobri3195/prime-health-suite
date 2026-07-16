@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { listObat, upsertObat, stockMovement, listStockMovement } from "@/lib/klinik.functions";
 import { useDebounce } from "@/hooks/use-debounce";
 import { friendlyError } from "@/lib/apps-error";
+import { RelativeTime } from "@/components/relative-time";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/obat")({
   head: () => pageHead({ title: 'Master Obat — SIM Klinik', description: 'Stok obat, mutasi persediaan, dan alert stok minimum.', path: '/sim-klinik/obat' }),
@@ -150,7 +151,7 @@ function ObatPage() {
               <TableBody>
                 {((movesQ.data ?? []) as Array<{ id: string; created_at: string; movement_type: string; quantity: number; note: string | null; klinik_obat?: { name: string; unit: string } }>).map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell className="text-xs">{new Date(m.created_at).toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-xs"><RelativeTime value={m.created_at} /></TableCell>
                     <TableCell>{m.klinik_obat?.name ?? "-"}</TableCell>
                     <TableCell><Badge variant={m.movement_type === "in" ? "default" : m.movement_type === "out" ? "destructive" : "secondary"}>{m.movement_type}</Badge></TableCell>
                     <TableCell className="text-right">{Number(m.quantity)} {m.klinik_obat?.unit}</TableCell>

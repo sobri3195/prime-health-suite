@@ -14,6 +14,7 @@ import { listPrescription, dispensePrescription } from "@/lib/klinik.functions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 import { friendlyError } from "@/lib/apps-error";
+import { RelativeTime } from "@/components/relative-time";
 
 export const Route = createFileRoute("/_authenticated/sim-klinik/resep")({
   head: () => pageHead({ title: 'Resep Elektronik — SIM Klinik', description: 'Peresepan obat, cek stok, dan interaksi obat.', path: '/sim-klinik/resep' }),
@@ -68,7 +69,7 @@ function ResepPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-medium">{p.apps_pasien?.nama ?? "-"} <span className="text-xs text-muted-foreground">({p.apps_pasien?.no_rm})</span></div>
-                  <div className="text-xs text-muted-foreground">{p.fin_dokter?.name} • {new Date(p.created_at).toLocaleString("id-ID")}</div>
+                  <div className="text-xs text-muted-foreground">{p.fin_dokter?.name} · <RelativeTime value={p.created_at} /></div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={p.status === "dispensed" ? "default" : "secondary"}>{STATUS_LABEL[p.status]}</Badge>
