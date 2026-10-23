@@ -3,6 +3,7 @@ import { ArrowRight, Users, Stethoscope, BarChart3 } from "lucide-react";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
 import { z } from "zod";
 import { OAuthCallback } from "@/components/auth/oauth-callback";
+import { DemoAccountDetails } from "@/components/auth/demo-access";
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({
@@ -95,9 +96,7 @@ function ChooserPage() {
           })}
         </div>
 
-        <div className="mt-10 rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-center text-xs text-slate-400">
-          Akun demo bersama: <b className="text-slate-200">demo@prime.id</b> · <b className="text-slate-200">demo1234</b>
-        </div>
+        <DemoAccountDetails className="mt-10 border-slate-800 bg-slate-900/40 p-4 text-center text-slate-300" />
       </div>
     </div>
   );

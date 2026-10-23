@@ -55,6 +55,17 @@ penyedia layanan berubah. Jangan simpan secret atau data pengguna.
 - URL preview yang dilaporkan pengguna dilindungi Vercel Authentication saat
   diperiksa. Akses Vercel merupakan lapisan berbeda dari login pengguna aplikasi.
 
+## Akses demo bersama
+
+- Identitas demo kasir yang sudah ada berhasil diautentikasi melalui Auth.
+  Pemeriksaan RPC terverifikasi: `klinik_is_staff=true`, `fin_can_view=true`,
+  `fin_can_edit=false`. Tidak ada account atau role baru yang dibuat pada sesi ini.
+- Ketiga form serta chooser memakai identitas dari `src/lib/demo-account.ts`.
+  Demo login tidak melakukan sign-up atau menambahkan role ketika gagal.
+- Kontrol demo aktif saat development dan dapat diaktifkan pada build deployment
+  demo dengan `VITE_ENABLE_DEMO_LOGIN=true`; default produksi menyembunyikannya.
+  Flag tampilan tidak menggantikan pemeriksaan role pada server atau RLS.
+
 ## Format catatan baru
 
 ```text
