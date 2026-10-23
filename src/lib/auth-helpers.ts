@@ -3,6 +3,8 @@ import { DEMO_ACCOUNT } from "./demo-account";
 
 export function translateAuthError(msg: string): string {
   const m = msg.toLowerCase();
+  if (m.includes("missing supabase environment variable"))
+    return "Layanan login belum dikonfigurasi. Hubungi administrator.";
   if (m.includes("invalid login credentials")) return "Email atau password salah.";
   if (m.includes("email not confirmed")) return "Email belum diverifikasi. Cek inbox Anda.";
   if (m.includes("user already registered") || m.includes("already registered"))

@@ -5,6 +5,7 @@ import { SystemLoginForm } from "@/components/system-login-form";
 import { LoginSkeleton } from "@/components/auth/login-skeleton";
 import { useAuth } from "@/lib/auth";
 import { brandHead } from "@/lib/brand";
+import { getSafeSignInRedirect } from "@/lib/oauth-redirect";
 
 export const Route = createFileRoute("/finance/login")({
   validateSearch: z.object({ redirect: z.string().optional() }).optional(),
@@ -21,7 +22,7 @@ function Page() {
 
   useEffect(() => {
     if (hydrated && user) {
-      const safe = search?.redirect?.startsWith("/finance") ? search.redirect : "/finance";
+      const safe = getSafeSignInRedirect("finance", search?.redirect);
       navigate({ to: safe, replace: true });
     }
   }, [hydrated, user, navigate, search]);

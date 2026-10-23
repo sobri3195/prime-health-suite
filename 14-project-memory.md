@@ -66,6 +66,25 @@ penyedia layanan berubah. Jangan simpan secret atau data pengguna.
   demo dengan `VITE_ENABLE_DEMO_LOGIN=true`; default produksi menyembunyikannya.
   Flag tampilan tidak menggantikan pemeriksaan role pada server atau RLS.
 
+## Perbaikan konfigurasi server login
+
+- Laporan login Vercel menunjukkan client browser telah dikonfigurasi, tetapi
+  pemeriksaan role gagal karena middleware hanya membaca nama `SUPABASE_*` pada
+  runtime. Resolver bersama menambahkan fallback ke konfigurasi publik
+  `VITE_SUPABASE_*` runtime/build tanpa mengubah kebutuhan service-role key.
+- Redirect login ke dirinya sendiri dipetakan ke beranda sistem pada form,
+  callback, dan route login yang sudah memiliki sesi.
+- Konfigurasi build Vercel sekarang mengaktifkan tombol demo secara default
+  untuk repositori ini; environment `VITE_ENABLE_DEMO_LOGIN=false` tetap dapat
+  menonaktifkannya.
+- Build dengan preset Vercel berhasil. Handler hasil build dijalankan lokal
+  tanpa binding `SUPABASE_*` maupun `VITE_SUPABASE_*` runtime. Login demo Apps,
+  SIM Klinik, dan Finance berhasil; Auth serta resolver role staf memakai layanan
+  Supabase sebenarnya, sedangkan query data domain diintercept agar tidak
+  mengubah atau menampilkan data aplikasi. Redirect login ke dirinya sendiri
+  berakhir pada beranda sistem. Ini merupakan validasi artefak lokal, bukan
+  publikasi deployment Vercel baru.
+
 ## Format catatan baru
 
 ```text

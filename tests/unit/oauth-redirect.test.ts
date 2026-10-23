@@ -47,6 +47,20 @@ test("OAuth: reject external, malformed, cross-system, and traversal redirects",
   }
 });
 
+test("OAuth: login self-redirects resolve to the selected system home", () => {
+  for (const system of ["apps", "sim-klinik", "finance"] as const) {
+    for (const suffix of [
+      "/login",
+      "/login/",
+      "/LOGIN",
+      "/%6cogin",
+      "/login?redirect=%2Fapps%2Flogin",
+    ]) {
+      assert.equal(getSafeSignInRedirect(system, `/${system}${suffix}`), `/${system}`);
+    }
+  }
+});
+
 test("OAuth: callback uses the current deployment and preserves the clinic destination", () => {
   const origin = "https://prime-health-suite-i8igbc41t-sobri3195s-projects.vercel.app";
   const callback = new URL(getOAuthCallbackUrl(origin, "sim-klinik", "/sim-klinik/registrasi"));

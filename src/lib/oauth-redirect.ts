@@ -16,6 +16,10 @@ export function getSafeSignInRedirect(system: System, redirect?: string): string
     ) {
       return fallback;
     }
+    // A login page is never a post-login destination. Check the decoded path
+    // because the router also accepts encoded segments and case variants.
+    const pathname = decodeURIComponent(target.pathname).replace(/\/+$/, "").toLowerCase();
+    if (pathname === `${fallback}/login`) return fallback;
     return target.pathname + target.search + target.hash;
   } catch {
     return fallback;
