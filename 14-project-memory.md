@@ -34,6 +34,27 @@ penyedia layanan berubah. Jangan simpan secret atau data pengguna.
 - Panduan peran berada pada dokumen bernomor di root. Panduan ini tidak menambahkan
   orkestrator atau agent runtime.
 
+## Investigasi Google OAuth pada Vercel
+
+- Kedua form login semula menggunakan broker relatif `/~oauth/initiate` yang
+  disediakan hosting Lovable. Perbaikan memakai OAuth Supabase untuk host lain
+  dan mempertahankan broker pada domain Lovable.
+- Callback aplikasi memakai route `/login` dengan parameter `oauth=google`,
+  `system`, dan redirect internal tervalidasi. Sesi diperiksa sebelum navigasi;
+  guard role yang ada tetap menentukan akses klinik dan finance.
+- Pemeriksaan layanan Auth menemukan Google ditandai aktif, tetapi endpoint
+  authorize mengembalikan HTTP 400 `Unsupported provider: missing OAuth secret`.
+  Broker Lovable juga menolak callback Vercel dengan `redirect_uri is not allowed`.
+  Konfigurasi provider serta allowlist redirect memerlukan tindakan pengelola
+  Auth; jangan menyimpan client secret di kode atau percakapan.
+- Validasi lokal perbaikan: build produksi berhasil; tujuh unit test OAuth dan
+  tujuh skenario browser dengan layanan eksternal diintercept lulus. Suite unit
+  keseluruhan menghasilkan 43 lulus dan satu kegagalan invoice yang sudah ada.
+  Empat diagnostik TypeScript cocok persis dengan pemeriksaan baseline `main`.
+  Ini bukan bukti login Google langsung ke layanan produksi telah berhasil.
+- URL preview yang dilaporkan pengguna dilindungi Vercel Authentication saat
+  diperiksa. Akses Vercel merupakan lapisan berbeda dari login pengguna aplikasi.
+
 ## Format catatan baru
 
 ```text

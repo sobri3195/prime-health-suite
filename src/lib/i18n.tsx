@@ -10,6 +10,11 @@ const KEY = "pp:lang";
 
 const DICT: Record<Lang, Record<string, string>> = {
   id: {
+    "auth.oauth.loading": "Menyelesaikan login Google…",
+    "auth.oauth.cancelled": "Login Google dibatalkan. Silakan coba lagi.",
+    "auth.oauth.failed": "Login Google gagal. Silakan coba lagi atau gunakan email dan password.",
+    "auth.oauth.noSession": "Sesi Google belum tersedia. Silakan ulangi login.",
+    "auth.oauth.retry": "Kembali ke login",
     "nav.home": "Beranda",
     "nav.ai": "AI",
     "nav.shop": "Belanja",
@@ -205,6 +210,11 @@ const DICT: Record<Lang, Record<string, string>> = {
     "shell.toggle_theme": "Ganti tema",
   },
   en: {
+    "auth.oauth.loading": "Completing Google sign-in…",
+    "auth.oauth.cancelled": "Google sign-in was cancelled. Please try again.",
+    "auth.oauth.failed": "Google sign-in failed. Please try again or use your email and password.",
+    "auth.oauth.noSession": "Your Google session is unavailable. Please sign in again.",
+    "auth.oauth.retry": "Back to sign-in",
     "nav.home": "Home",
     "nav.ai": "AI",
     "nav.shop": "Shop",

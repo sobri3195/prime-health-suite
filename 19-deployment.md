@@ -37,6 +37,42 @@ jangan menyalin nilainya ke PR atau dokumentasi.
 6. Setelah rilis, periksa beranda, halaman login, dan operasi baca yang representatif
    dengan akun uji yang sesuai. Jangan membuat data pasien nyata sebagai smoke test.
 
+## Login Google pada Vercel dan domain sendiri
+
+Endpoint `/~oauth/initiate` adalah broker hosting Lovable. Pada host Lovable,
+aplikasi mempertahankan broker tersebut; pada Vercel, localhost, dan domain
+sendiri, tombol Google memakai `supabase.auth.signInWithOAuth` secara langsung.
+Callback kembali ke `/login?oauth=google&system=...&redirect=...` pada origin yang
+memulai login. Callback memverifikasi sesi sebelum membuka area tujuan; izin
+klinik dan finance tetap diperiksa oleh guard yang ada.
+
+Pada Supabase **Authentication → URL Configuration**, tambahkan URL redirect
+untuk origin deployment yang digunakan. Untuk preview Vercel tim ini, pola yang
+sesuai adalah `https://*-sobri3195s-projects.vercel.app/**`. Batasi pola pada tim
+sendiri dan tambahkan origin produksi/custom domain secara terpisah, misalnya
+`https://<domain-produksi>/login**`. Untuk pengembangan, izinkan
+`http://localhost:8080/login**`. Jangan gunakan wildcard global.
+
+Pastikan provider Google aktif pada pengaturan autentikasi Supabase. Bila
+memakai OAuth client Google milik sendiri, **Authorized redirect URIs** di
+Google Cloud harus memuat callback Supabase yang ditampilkan pengaturan provider
+(`https://<project-ref>.supabase.co/auth/v1/callback`), bukan endpoint broker pada
+Vercel. Jangan menaruh Google client secret dalam variabel `VITE_*`.
+
+Status provider `enabled` saja belum membuktikan OAuth siap. Jika request ke
+`/auth/v1/authorize?provider=google` mengembalikan
+`Unsupported provider: missing OAuth secret`, lengkapi Google client ID dan
+client secret pada konfigurasi provider Supabase atau pengelola Auth proyek.
+Credential ini merupakan konfigurasi layanan Auth, bukan secret frontend atau
+variabel Vercel. Broker Google terkelola Lovable dapat menolak callback ke
+Vercel dengan `redirect_uri is not allowed`; mengganti URL broker menjadi URL
+Lovable absolut tidak menghilangkan batas callback tersebut.
+
+Callback yang kembali ke Site URL lain biasanya menandakan redirect URL belum
+diizinkan. Preview dengan Vercel Authentication juga memerlukan akses Vercel
+sebelum halaman aplikasi dapat dibuka; jangan mematikan proteksi secara otomatis
+untuk memperbaiki login aplikasi.
+
 ## Pemeriksaan status dari GitHub
 
 Jika akses API tersedia, status integrasi dapat dibaca tanpa memicu rilis baru:

@@ -4,6 +4,12 @@ Regression suite covering SIM Klinik registrasi flow & dokter list access.
 
 ## Scripts
 
+- `google_oauth_smoke.py` — Verifikasi tombol Google pada ketiga sistem, callback
+  sukses, pembatalan, dan sesi tidak tersedia. Request eksternal diintercept;
+  tidak memerlukan akun Google/demo dan tidak menulis ke database. Jalankan
+  tersendiri dengan `python3 tests/e2e/google_oauth_smoke.py` setelah dev server
+  aktif; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` dapat menunjuk browser Chromium lokal.
+
 - `sim_reg_happy.py` — Login demo, buat pasien baru, pilih dokter, submit booking.
 - `sim_reg_empty.py` — Intercept `listDokter` → `[]`, verifikasi banner "Daftar dokter kosong" & tombol disabled.
 - `sim_reg_denied.py` — Abort `listDokter`, verifikasi banner "Akses ditolak" & alur dihentikan.
