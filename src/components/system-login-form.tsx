@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowRight, Loader2, Mail, ShieldAlert, CheckCircle2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithGoogle } from "@/lib/google-auth";
+import { getSafeSignInRedirect } from "@/lib/oauth-redirect";
 import { ROLE_LABEL, rolesFor, useAuth, type Role, type System } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
 import { getMyRoles } from "@/lib/auth.functions";
@@ -47,7 +48,7 @@ export function SystemLoginForm({
   const pwId = useId();
   const errId = useId();
 
-  const safe = redirect && redirect.startsWith(`/${system}`) ? redirect : `/${system}`;
+  const safe = getSafeSignInRedirect(system, redirect);
   const otherSessions = OTHER_SYSTEMS[system]
     .map((s) => ({ system: s, user: userFor(s) }))
     .filter((x) => !!x.user);
@@ -114,9 +115,7 @@ export function SystemLoginForm({
     setLoading(true);
     setError(null);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/${system}`,
-      });
+      const result = await signInWithGoogle(system, safe);
       if (result.error) throw result.error;
       if (result.redirected) return;
       // Token returned inline (rare on this stack). Resolve role.

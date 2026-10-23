@@ -4,7 +4,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ArrowRight, Loader2, Mail, User as UserIcon, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithGoogle } from "@/lib/google-auth";
+import { getSafeSignInRedirect } from "@/lib/oauth-redirect";
 import { useAuth } from "@/lib/auth";
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordStrength } from "@/components/auth/password-strength";
@@ -31,7 +32,7 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
   const errId = useId();
 
 
-  const safeRedirect = redirect && redirect.startsWith("/apps") ? redirect : "/apps";
+  const safeRedirect = getSafeSignInRedirect("apps", redirect);
 
   // Anti-bruteforce: client-side rate limit. 5 failed attempts → 60s lockout.
   // Stored in localStorage so refresh doesn't bypass it.
@@ -123,10 +124,9 @@ export function PatientAuthForm({ redirect }: { redirect?: string }) {
 
   async function handleGoogle() {
     setLoading(true);
+    setError(null);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/apps`,
-      });
+      const result = await signInWithGoogle("apps", safeRedirect);
       if (result.error) throw result.error;
       if (result.redirected) return;
       navigate({ to: safeRedirect, replace: true });

@@ -1,8 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Users, Stethoscope, BarChart3 } from "lucide-react";
 import { BRAND, faviconDataUrl } from "@/lib/brand";
+import { z } from "zod";
+import { OAuthCallback } from "@/components/auth/oauth-callback";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: z.object({
+    oauth: z.literal("google").optional().catch(undefined),
+    system: z.enum(["apps", "sim-klinik", "finance"]).optional().catch(undefined),
+    redirect: z.string().optional().catch(undefined),
+  }),
   head: () => ({
     meta: [
       { title: "Masuk — Prime Health Suite" },
@@ -36,6 +43,11 @@ const SYSTEMS = [
 ];
 
 function ChooserPage() {
+  const search = Route.useSearch();
+  if (search.oauth === "google") {
+    return <OAuthCallback system={search.system ?? "apps"} redirect={search.redirect} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-6 py-16 text-slate-100">
       <div className="mx-auto max-w-3xl">

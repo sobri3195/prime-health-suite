@@ -15,6 +15,7 @@ HERE = Path(__file__).parent
 LOGS = HERE / "logs"; LOGS.mkdir(exist_ok=True)
 
 SCRIPTS = [
+    "google_oauth_smoke.py",
     "sim_reg_happy.py",
     "sim_reg_with_data.py",
     "sim_reg_empty.py",
