@@ -37,6 +37,32 @@ jangan menyalin nilainya ke PR atau dokumentasi.
 6. Setelah rilis, periksa beranda, halaman login, dan operasi baca yang representatif
    dengan akun uji yang sesuai. Jangan membuat data pasien nyata sebagai smoke test.
 
+## Akun demo untuk tiga sistem
+
+`src/lib/demo-account.ts` menentukan satu identitas demo kasir yang dipakai oleh
+Apps, SIM Klinik, dan Finance. Akun yang sudah tersedia telah diverifikasi bisa
+login, memenuhi pemeriksaan staf klinik dan lihat Finance, serta tidak memiliki
+izin edit Finance. Tidak ada perubahan role atau pembuatan akun pada proses login.
+
+Kontrol demo muncul secara default saat development. Untuk deployment demo di
+Vercel, set `VITE_ENABLE_DEMO_LOGIN=true` pada environment yang sesuai, lalu build
+dan deploy ulang; flag `VITE_*` dibaca saat build. Nilai `false` menonaktifkan
+kontrol demo, termasuk saat development. Aktifkan pada deployment berisi data
+demo. Flag ini mengatur tampilan, bukan menggantikan otorisasi database.
+
+Ketiga form menampilkan akun yang sama dan tombol **Masuk dengan akun demo**.
+Login Apps memakai alur pasien biasa; login staf tetap mengambil role dari
+server. Password salah atau role tidak sesuai menampilkan error tanpa melakukan
+sign-up atau memberikan privilege tambahan. Login email/password manual tetap
+tersedia ketika tombol demo dimatikan.
+
+Pada proyek database baru, pengelola harus menyediakan identitas tersebut
+melalui administrasi Auth sebelum dipakai. Berikan role `kasir` melalui alur
+administrasi yang berwenang; jangan memberi `super_admin` atau menambahkan
+auto-seeding ke endpoint login publik. Account dan role pada database yang
+dipakai dalam sesi ini sudah tersedia, sehingga tidak diperlukan migrasi atau
+credential admin tambahan.
+
 ## Login Google pada Vercel dan domain sendiri
 
 Endpoint `/~oauth/initiate` adalah broker hosting Lovable. Pada host Lovable,

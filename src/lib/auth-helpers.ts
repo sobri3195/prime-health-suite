@@ -1,4 +1,5 @@
 // Helpers for auth UX: error translation & default credentials gating.
+import { DEMO_ACCOUNT } from "./demo-account";
 
 export function translateAuthError(msg: string): string {
   const m = msg.toLowerCase();
@@ -16,8 +17,8 @@ export function translateAuthError(msg: string): string {
   return msg;
 }
 
-// In development we prefill demo credentials; in production we leave inputs empty
-// to avoid leaking demo accounts to real clients.
+// Prefill the shared demo in development; production fields remain empty.
+// Demo buttons use their own explicit deployment setting.
 export const IS_PROD = import.meta.env.PROD;
-export const DEFAULT_EMAIL = IS_PROD ? "" : "demo@prime.id";
-export const DEFAULT_PASSWORD = IS_PROD ? "" : "demo1234";
+export const DEFAULT_EMAIL = IS_PROD ? "" : DEMO_ACCOUNT.email;
+export const DEFAULT_PASSWORD = IS_PROD ? "" : DEMO_ACCOUNT.password;

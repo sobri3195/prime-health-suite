@@ -10,6 +10,11 @@ const KEY = "pp:lang";
 
 const DICT: Record<Lang, Record<string, string>> = {
   id: {
+    "auth.demo.button": "Masuk dengan akun demo",
+    "auth.demo.description": "Satu akun demo untuk Apps, SIM Klinik, dan Finance.",
+    "auth.demo.email": "Email",
+    "auth.demo.password": "Password",
+    "auth.demo.scope": "Akses kasir; Finance tersedia untuk dilihat sesuai izin akun.",
     "auth.oauth.loading": "Menyelesaikan login Google…",
     "auth.oauth.cancelled": "Login Google dibatalkan. Silakan coba lagi.",
     "auth.oauth.failed": "Login Google gagal. Silakan coba lagi atau gunakan email dan password.",
@@ -210,6 +215,11 @@ const DICT: Record<Lang, Record<string, string>> = {
     "shell.toggle_theme": "Ganti tema",
   },
   en: {
+    "auth.demo.button": "Sign in with the demo account",
+    "auth.demo.description": "One demo account for Apps, SIM Klinik, and Finance.",
+    "auth.demo.email": "Email",
+    "auth.demo.password": "Password",
+    "auth.demo.scope": "Cashier access; Finance can be viewed within the account's permissions.",
     "auth.oauth.loading": "Completing Google sign-in…",
     "auth.oauth.cancelled": "Google sign-in was cancelled. Please try again.",
     "auth.oauth.failed": "Google sign-in failed. Please try again or use your email and password.",
