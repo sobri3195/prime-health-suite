@@ -4,6 +4,7 @@ import { z } from "zod";
 import { PatientAuthForm } from "@/components/apps/auth-form";
 import { supabase } from "@/integrations/supabase/client";
 import { brandHead } from "@/lib/brand";
+import { getSafeSignInRedirect } from "@/lib/oauth-redirect";
 
 export const Route = createFileRoute("/apps/login")({
   validateSearch: z.object({ redirect: z.string().optional() }).optional(),
@@ -20,7 +21,7 @@ function Page() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        const safe = search?.redirect?.startsWith("/apps") ? search.redirect : "/apps";
+        const safe = getSafeSignInRedirect("apps", search?.redirect);
         navigate({ to: safe, replace: true });
       } else {
         setChecked(true);

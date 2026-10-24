@@ -22,6 +22,17 @@ menyediakannya pada layanan lain. Jangan menaruh service-role key dalam `VITE_*`
 atau Git. Audit pola konfigurasi `.env` yang sudah ada sebelum menambahkan file;
 jangan menyalin nilainya ke PR atau dokumentasi.
 
+Middleware Auth server menerima `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`
+sebagai prioritas. Jika tidak tersedia, server memakai binding `VITE_SUPABASE_*`
+runtime, kemudian nilai publik `VITE_SUPABASE_*` yang sudah tertanam saat build.
+Dengan demikian deployment yang sudah berhasil mengonfigurasi client browser
+tidak memerlukan duplikasi binding hanya untuk pemeriksaan sesi dan role.
+Konfigurasi dibaca saat handler dijalankan, tanpa mengubah `process.env`.
+
+Fallback ini hanya untuk URL dan publishable key. `SUPABASE_SERVICE_ROLE_KEY`
+tetap wajib tersedia di runtime untuk endpoint admin yang memakainya; jangan
+menjadikannya variabel `VITE_*` atau menggantinya dengan publishable key.
+
 ## Persiapan dan rilis
 
 1. Pilih commit yang ditinjau dan periksa diff dependensi beserta lockfile.
@@ -44,17 +55,24 @@ Apps, SIM Klinik, dan Finance. Akun yang sudah tersedia telah diverifikasi bisa
 login, memenuhi pemeriksaan staf klinik dan lihat Finance, serta tidak memiliki
 izin edit Finance. Tidak ada perubahan role atau pembuatan akun pada proses login.
 
-Kontrol demo muncul secara default saat development. Untuk deployment demo di
-Vercel, set `VITE_ENABLE_DEMO_LOGIN=true` pada environment yang sesuai, lalu build
-dan deploy ulang; flag `VITE_*` dibaca saat build. Nilai `false` menonaktifkan
-kontrol demo, termasuk saat development. Aktifkan pada deployment berisi data
-demo. Flag ini mengatur tampilan, bukan menggantikan otorisasi database.
+Kontrol demo muncul secara default saat development. `vercel.json` juga
+mengaktifkan `VITE_ENABLE_DEMO_LOGIN=true` saat build Vercel untuk deployment demo
+repositori ini, sehingga tidak diperlukan pengaturan manual agar tombol muncul.
+Nilai environment eksplisit `false` tetap dihormati dan menonaktifkan tombol;
+build dan deploy ulang diperlukan setelah menggantinya. Untuk penyedia lain,
+aktifkan `VITE_ENABLE_DEMO_LOGIN=true` pada environment build yang sesuai.
+Flag ini mengatur tampilan, bukan menggantikan otorisasi database.
 
 Ketiga form menampilkan akun yang sama dan tombol **Masuk dengan akun demo**.
 Login Apps memakai alur pasien biasa; login staf tetap mengambil role dari
 server. Password salah atau role tidak sesuai menampilkan error tanpa melakukan
 sign-up atau memberikan privilege tambahan. Login email/password manual tetap
 tersedia ketika tombol demo dimatikan.
+
+Redirect ke halaman login sendiri, termasuk
+`/sim-klinik/login?redirect=%2Fsim-klinik%2Flogin`, dinormalisasi ke beranda sistem
+setelah login berhasil. Aturan yang sama berlaku ketika sesi sudah aktif dan
+pengguna membuka kembali halaman login; deep link ke halaman lain tetap dijaga.
 
 Pada proyek database baru, pengelola harus menyediakan identitas tersebut
 melalui administrasi Auth sebelum dipakai. Berikan role `kasir` melalui alur

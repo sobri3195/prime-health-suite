@@ -9,7 +9,7 @@ import json
 import os
 import re
 import time
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 
 from playwright.async_api import async_playwright, expect
 
@@ -29,7 +29,7 @@ USER = {
 }
 
 
-async def check_login(browser, system, *, invalid_password=False, roles=None):
+async def check_login(browser, system, *, invalid_password=False, roles=None, self_redirect=False):
     granted_roles = ["kasir"] if roles is None else roles
     context = await browser.new_context()
     requests = {"token": 0, "signup": 0, "roles": 0}
@@ -40,7 +40,7 @@ async def check_login(browser, system, *, invalid_password=False, roles=None):
             requests["roles"] += 1
             await route.fulfill(
                 content_type="application/json",
-                body=json.dumps({"result": {"roles": granted_roles}, "context": {}}),
+                body=json.dumps({"result": {"roles": granted_roles, "bookings": [], "profile": None, "queue": []}, "context": {}}),
             )
         elif url.netloc == urlparse(BASE_URL).netloc:
             await route.continue_()
@@ -85,7 +85,9 @@ async def check_login(browser, system, *, invalid_password=False, roles=None):
     await context.route("**/*", intercept)
     page = await context.new_page()
     # Return to the system root; any domain data requests are intercepted above.
-    await page.goto(BASE_URL + f"/{system}/login")
+    login_url = BASE_URL + f"/{system}/login"
+    self_url = login_url + "?" + urlencode({"redirect": f"/{system}/login"})
+    await page.goto(self_url if self_redirect else login_url)
     button = page.get_by_role("button", name="Masuk dengan akun demo")
     await expect(button).to_be_visible()
     await expect(page.get_by_text(DEMO_EMAIL, exact=True)).to_be_visible()
@@ -108,11 +110,14 @@ async def check_login(browser, system, *, invalid_password=False, roles=None):
         assert user["role"] == ("front_office" if system == "apps" else "kasir")
         if system != "apps":
             assert requests["roles"] >= 1, "Staff demo login must resolve roles through the server"
+        # Re-opening a login URL while authenticated must also leave the login page.
+        await page.goto(self_url)
+        await page.wait_for_url(re.compile(re.escape(BASE_URL) + f"/{system}/?$"))
 
     assert requests["token"] == 1
     assert requests["signup"] == 0, "A failed demo login must not create a new account"
     await context.close()
-    scenario = "bad password" if invalid_password else "role denied" if not granted_roles else "success"
+    scenario = "bad password" if invalid_password else "role denied" if not granted_roles else "login self-redirect" if self_redirect else "success"
     print(f"PASS: {system} demo {scenario}; existing identity and server permissions retained")
 
 
@@ -138,11 +143,12 @@ async def main():
             for system in ("apps", "sim-klinik", "finance"):
                 await check_login(browser, system)
                 await check_login(browser, system, invalid_password=True)
+                await check_login(browser, system, self_redirect=True)
             for system in ("sim-klinik", "finance"):
                 await check_login(browser, system, roles=[])
         finally:
             await browser.close()
-    print("PASS: all 9 demo-access browser scenarios completed")
+    print("PASS: all 12 demo-access browser scenarios completed")
 
 
 if __name__ == "__main__":

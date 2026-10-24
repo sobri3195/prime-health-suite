@@ -5,7 +5,7 @@ Regression suite covering SIM Klinik registrasi flow & dokter list access.
 ## Scripts
 
 - `demo_access_smoke.py` — Verifikasi akun demo bersama di chooser dan ketiga
-  form, password salah, serta penolakan role staf. Request Auth dan server
+  form, password salah, redirect login ke dirinya sendiri, serta penolakan role staf. Request Auth dan server
   functions diintercept; tidak membuat akun atau menulis database. Aktifkan demo
   di dev server (default) atau set `VITE_ENABLE_DEMO_LOGIN=true` pada server uji.
 

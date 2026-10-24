@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "VITE_ENABLE_DEMO_LOGIN=\"${VITE_ENABLE_DEMO_LOGIN:-true}\" bun run build"
+}

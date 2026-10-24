@@ -34,7 +34,12 @@ def callback(system="sim-klinik", redirect="/sim-klinik/login", **params):
 
 async def intercept_external(route, *, authorize=None, authenticated=False):
     url = urlparse(route.request.url)
-    if url.netloc == urlparse(BASE_URL).netloc:
+    if url.netloc == urlparse(BASE_URL).netloc and "/_serverFn/" in url.path and authenticated:
+        await route.fulfill(
+            content_type="application/json",
+            body=json.dumps({"result": {"profile": None, "bookings": [], "queue": []}, "context": {}}),
+        )
+    elif url.netloc == urlparse(BASE_URL).netloc:
         await route.continue_()
     elif url.path == "/auth/v1/authorize" and authorize is not None:
         authorize.append(route.request.url)
@@ -83,7 +88,7 @@ async def check_cancelled(browser, fragment=False):
     await expect(page.get_by_role("alert")).to_contain_text("Login Google dibatalkan")
     link = page.get_by_role("link", name="Kembali ke login")
     await expect(link).to_have_attribute(
-        "href", "/sim-klinik/login?redirect=%2Fsim-klinik%2Flogin"
+        "href", "/sim-klinik/login?redirect=%2Fsim-klinik"
     )
     assert "private-provider-details" not in await page.locator("body").inner_text()
     assert "error_description" not in page.url
@@ -109,7 +114,7 @@ async def check_success(browser):
     )
     page = await context.new_page()
     # Synthetic token accepted only by our intercepted user endpoint; never sent
-    # to a real service. Returning to login avoids protected domain mutations.
+    # to a real service. Domain requests are intercepted above as read fixtures.
     claims = {"sub": USER["id"], "exp": int(time.time()) + 3600}
     payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
     fragment = urlencode(
@@ -120,9 +125,8 @@ async def check_success(browser):
             "token_type": "bearer",
         }
     )
-    await page.goto(callback() + "#" + fragment)
-    await page.wait_for_url(BASE_URL + "/sim-klinik/login")
-    await expect(page.get_by_role("button", name="Lanjutkan dengan Google")).to_be_visible()
+    await page.goto(callback(system="apps", redirect="/apps") + "#" + fragment)
+    await page.wait_for_url(BASE_URL + "/apps")
     assert "access_token" not in page.url
     session = await page.evaluate(
         """() => Object.entries(localStorage).some(([key, value]) =>
