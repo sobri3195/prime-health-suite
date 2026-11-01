@@ -74,12 +74,28 @@ Redirect ke halaman login sendiri, termasuk
 setelah login berhasil. Aturan yang sama berlaku ketika sesi sudah aktif dan
 pengguna membuka kembali halaman login; deep link ke halaman lain tetap dijaga.
 
-Pada proyek database baru, pengelola harus menyediakan identitas tersebut
-melalui administrasi Auth sebelum dipakai. Berikan role `kasir` melalui alur
-administrasi yang berwenang; jangan memberi `super_admin` atau menambahkan
-auto-seeding ke endpoint login publik. Account dan role pada database yang
-dipakai dalam sesi ini sudah tersedia, sehingga tidak diperlukan migrasi atau
-credential admin tambahan.
+Pada proyek database baru, pengelola menyediakan identitas tersebut dengan seed
+lokal satu kali. Jalankan dari checkout yang sudah mengisi `.env`:
+
+```bash
+bun run demo:seed --check   # verifikasi read-only, tanpa service role
+bun run demo:seed           # buat akun + role kasir, idempoten
+```
+
+Seed hanya berjalan di mesin pengelola yang memiliki
+`SUPABASE_SERVICE_ROLE_KEY`; script tidak dipanggil kode aplikasi, tidak ikut
+build atau deploy, dan tidak mencetak password. Role yang dipasang hanya
+`kasir`. Mode `--check` membuktikan login serta nilai `current_user_roles`,
+`klinik_is_staff`, `fin_can_view`, dan `fin_can_edit` (terakhir `false`).
+Gunakan `--update-password` bila password demo sudah diganti dan perlu
+kembali ke nilai di `src/lib/demo-account.ts`.
+
+Alternatifnya, pengelola dapat menyediakan akun melalui administrasi Auth dan
+memberikan role `kasir` melalui alur administrasi yang berwenang; jangan memberi
+`super_admin` atau menambahkan auto-seeding ke endpoint login publik. Account
+dan role pada database yang dipakai dalam sesi ini sudah tersedia, sehingga
+untuk sesi tersebut tidak diperlukan seed ulang, migrasi, atau credential admin
+tambahan.
 
 ## Login Google pada Vercel dan domain sendiri
 

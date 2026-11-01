@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "demo:seed": "bun scripts/seed-demo-account.mjs",
     "lint": "eslint .",
     "lint:i18n": "node scripts/i18n-lint.mjs",
     "lint:i18n:strict": "I18N_LINT_STRICT=1 node scripts/i18n-lint.mjs",
